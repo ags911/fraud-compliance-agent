@@ -5,7 +5,7 @@
 Shared product material now lives in `docs/product/`, regardless of its
 candidate approval status:
 
-- `product/PRD.md` is the candidate consolidated PRD.
+- `product/prd.md` is the candidate consolidated PRD.
 - `product/IMPLEMENTATION-PLAN.md` is the single active
   candidate delivery plan for the showcase and gated later increments.
 
@@ -28,7 +28,7 @@ to overlap:
 | Material | Authority | Lifecycle |
 | --- | --- | --- |
 | `project-context.md` | Canonical repository guidance | Keep current; link to it rather than repeating it. |
-| `product/PRD.md` | Candidate product baseline | Promote once its approval record is complete. |
+| `product/prd.md` | Candidate product baseline | Promote once its approval record is complete. |
 | `docs/contracts/` | Accepted integration contracts only | Change through an ADR and matching tests. |
 | `product/IMPLEMENTATION-PLAN.md` | Candidate delivery planning | Keep one active plan; it may organise candidate work but cannot approve PRD, contract, or post-gate scope. |
 | `docs/proposals/` | Non-binding review material | Promote accepted decisions; archive closed proposals. |
@@ -40,6 +40,15 @@ can be updated. Approval status, owner, and supersession should be visible in
 the document itself. Consolidation may remove superseded planning notes while
 the PRD is still a candidate, but it must preserve experiment/review evidence
 and must never be presented as approval.
+
+## File naming
+
+Use uppercase only for conventional files that GitHub or the agent tooling
+recognise by name (`README.md`, `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`,
+`CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`). Name every other Markdown file in
+lowercase kebab-case (for example `data-governance.md`). Apply this to new files;
+rename an existing file only when it is otherwise being changed, and fix its
+links in the same change.
 
 ## Shared engineering governance
 

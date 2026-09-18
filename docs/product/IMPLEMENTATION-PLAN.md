@@ -13,7 +13,7 @@ showcase completion checklist without duplicating those sources.
 ## Source material
 
 - Candidate consolidated product requirements:
-  `PRD.md` (becomes authoritative only after approval)
+  `prd.md` (becomes authoritative only after approval)
 - Canonical project rules: `../project-context.md`
 - Current API implementation and existing-demo limits: `../../apps/api/README.md`
 - Notebook/data gates: `../../notebooks/NOTEBOOK-PLAN.md` and

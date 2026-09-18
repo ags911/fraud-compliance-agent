@@ -51,7 +51,7 @@ not present synthetic demo data as live customer, Plaid, or model output.
   a read-only portfolio summary endpoint. They demonstrate reproducibility and
   evaluation only; neither is a model-serving, payment-decision, or production
   data capability.
-- The candidate consolidated PRD is [`docs/product/PRD.md`](product/PRD.md).
+- The candidate consolidated PRD is [`docs/product/prd.md`](product/prd.md).
 - The proposed fast-path model technical record is
   [`docs/proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md`](proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
 - The single active candidate delivery plan is
