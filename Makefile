@@ -1,4 +1,4 @@
-.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check
+.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
 
 check: web-lint web-design-check web-build web-test api-lint api-notebook-lint api-docstring-lint notebook-policy-check api-test
 
@@ -65,3 +65,8 @@ corpus-sparkov-build-mechanics:
 
 api-smoke:
 	cd apps/api && uv run python -c "from server.main import create_app; app = create_app(); assert app.title == 'Fraud Compliance Agent Console API'; print('API import smoke check passed')"
+
+# Data-preparation and evidence checks: the Sparkov build's quality gates on
+# seeded synthetic data, contract/report consistency, and the notebook 08 guard.
+data-check:
+	cd apps/api && uv run pytest tests/test_sparkov_build.py tests/test_contracts_consistency.py tests/test_notebook_08_report_path.py -q

@@ -1,8 +1,25 @@
 # Data-engineering showcase: proposed additions
 
-Status: **Proposed — not approved scope; not a contract**  
+Status: **A1 and A3 implemented (2026-09-19); A2 folded into A1. Not a contract.**  
 Owner: Backend/data lead (to assign)  
-Last updated: 2026-09-18
+Last updated: 2026-09-19
+
+## Implementation status
+
+- **A1 — done.** `scripts/build_sparkov_mechanics_dataset.py` now fails on an
+  unapproved column, missing values, out-of-range features, a non-binary target,
+  row counts that do not reconcile, or partitions that are not chronological.
+  Rebuilding the real dataset produced byte-identical output (the contract's
+  pinned checksum) and all checks passed.
+- **A2 — folded into A1.** The build manifest now records the passed checks,
+  source row counts, and each partition's time span. There is no separate
+  lineage tooling.
+- **A3 — done.** `apps/api/tests/sparkov_fixtures.py` generates seeded
+  Sparkov-shaped data and seven deliberately broken variants; each is asserted to
+  fail for the right reason. CI runs this on a clean checkout.
+- `make data-check` runs the data-path tests on their own.
+
+The sections below are the original proposal, kept for its reasoning.
 
 ## Purpose
 
