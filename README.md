@@ -39,8 +39,7 @@ make api-test
 make check
 ```
 
-`make check` runs the repository inventory check, web lint and design contract,
-the production web build, Playwright browser tests, Python lint and docstring
+`make check` runs web lint and design contract, the production web build, Playwright browser tests, Python lint and docstring
 checks, the API smoke check, and API tests. It does not fetch dependencies or
 imply that the two current apps are already integrated. Install the web and API
 dependencies, including the Playwright Chrome browser, before running it in a

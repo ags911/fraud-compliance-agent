@@ -58,6 +58,11 @@ approval, add trusted-key signature verification if the product requires a
 verified claim, and enforce authentication/rate limiting/retention at the
 deployment edge before any public live-provider release.
 
+Later status note: the SDK gitlink was recorded in the repository's first commit,
+and the repository-inventory check has since been removed from `make check` and
+CI; the inventory is now a local, git-ignored report. This file was moved from
+the repository root to `docs/audits/`. The findings below are unchanged.
+
 Post-remediation verification on 18 September 2026 completed successfully:
 `make check` passed, including 43 passing Playwright tests with one intentional
 mobile-only skip, 21 passing API tests, the production build, payments design

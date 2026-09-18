@@ -40,3 +40,6 @@ models/
 .DS_Store
 .idea/
 .vscode/
+
+# Markdown
+docs/repository-inventory.md

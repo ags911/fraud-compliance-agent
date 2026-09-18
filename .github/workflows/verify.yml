@@ -45,7 +45,6 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync
-      - run: uv run python ../../scripts/generate_repository_inventory.py --check
       - run: uv run ruff check server
       - run: uv run ruff check ../../notebooks ../../scripts
       - run: uv run ruff check --select D103 server ../../notebooks ../../scripts

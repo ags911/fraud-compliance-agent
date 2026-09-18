@@ -1,6 +1,6 @@
 .PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check
 
-check: repository-inventory-check web-lint web-design-check web-build web-test api-lint api-notebook-lint api-docstring-lint notebook-policy-check api-test
+check: web-lint web-design-check web-build web-test api-lint api-notebook-lint api-docstring-lint notebook-policy-check api-test
 
 web-build:
 	npm --prefix apps/web run build

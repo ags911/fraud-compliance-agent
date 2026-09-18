@@ -1,0 +1,27 @@
+# Optional local hooks. CI (.github/workflows/verify.yml) remains the gate.
+# Install once with `pre-commit install`; run manually with
+# `pre-commit run --all-files`.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: check-yaml
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # Runs the same Ruff checks as `make check`, from apps/api, so the project's
+  # Ruff configuration applies to server code, notebooks, and scripts alike.
+  - repo: local
+    hooks:
+      - id: ruff-project-checks
+        name: Ruff (server, notebooks, scripts, docstrings)
+        entry: make api-lint api-notebook-lint api-docstring-lint
+        language: system
+        types_or: [python, jupyter]
+        pass_filenames: false

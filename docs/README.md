@@ -33,7 +33,7 @@ to overlap:
 | `product/IMPLEMENTATION-PLAN.md` | Candidate delivery planning | Keep one active plan; it may organise candidate work but cannot approve PRD, contract, or post-gate scope. |
 | `docs/proposals/` | Non-binding review material | Promote accepted decisions; archive closed proposals. |
 | `docs/experiments/` and `notebooks/` | Reproducibility evidence | Retain as evidence; do not treat it as product authority. |
-| audits, inventories, and standards | Point-in-time control evidence | Keep the current standard; label or archive superseded audit snapshots. |
+| `audits/`, generated inventories, and standards | Point-in-time control evidence | Keep the current standard; date-stamped audit snapshots live in `audits/`; the inventory is a local, git-ignored report. |
 
 Do not add another planning document when an existing canonical or active plan
 can be updated. Approval status, owner, and supersession should be visible in

@@ -2,17 +2,16 @@
 
 This map explains ownership, authority, and the important entry points in the
 Fraud Compliance Agent monorepo. It is intentionally not a hand-maintained
-description of every source file. For a complete, generated list of tracked
-project files, see [repository-inventory.md](repository-inventory.md).
-
-Regenerate the inventory after adding, moving, or deleting an in-scope file:
+description of every source file. For a complete list of project files,
+generate a local report on demand:
 
 ```bash
 make repository-inventory
 ```
 
-CI runs `make repository-inventory-check`; it fails when the committed
-inventory is stale and never rewrites or commits repository files itself.
+The report is written to `docs/repository-inventory.md`, which is git-ignored.
+It is not committed and CI does not check it, so adding a file never fails a
+build.
 
 ## Root ownership
 
@@ -41,7 +40,7 @@ inventory is stale and never rewrites or commits repository files itself.
 | `docs/project-context.md` | Stable project, architecture, safety, and delivery rules for every contributor. |
 | `README.md` | Monorepo orientation, independently runnable applications, and common commands. |
 | `Makefile` | Local verification and safe notebook/corpus commands. `make check` is the standard handoff gate. |
-| `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, test, and repository-inventory checks. |
+| `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, and test checks. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
 | `apps/api/server/models.py` | API-side domain/data models. |
 | `apps/web/src/main.tsx` | Primary React application entry point. |
@@ -63,7 +62,7 @@ inventory is stale and never rewrites or commits repository files itself.
 
 ## Generated inventory scope
 
-`repository-inventory.md` lists project-managed source, documentation,
+The local `repository-inventory.md` report lists project-managed source, documentation,
 configuration, workflow, notebook, fixture, and infrastructure files. It
 excludes dependencies, build output, virtual environments, Git metadata,
 notebook checkpoints, and vendor trees. Those exclusions are deliberate: they
