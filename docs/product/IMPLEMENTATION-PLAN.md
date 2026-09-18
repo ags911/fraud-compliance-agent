@@ -78,7 +78,7 @@ The approved Rules Performance page is frozen as the visual starting point:
   `tests/payments-design-system.spec.ts-snapshots/rules-performance-desktop.png`
 - Mobile baseline:
   `tests/payments-design-system.spec.ts-snapshots/rules-performance-mobile.png`
-- Shared design contract: `../../apps/web/PAYMENTS-DESIGN-SYSTEM.md`
+- Shared design contract: `../../apps/web/docs/design/PAYMENTS-DESIGN-SYSTEM.md`
 
 The reference source is not the live product implementation. Do not edit it to
 implement application behavior. Shared primitives may evolve only when the
