@@ -55,7 +55,7 @@ not present synthetic demo data as live customer, Plaid, or model output.
 - The proposed fast-path model technical record is
   [`docs/proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md`](proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
 - The single active candidate delivery plan is
-  [`docs/product/IMPLEMENTATION-PLAN.md`](product/IMPLEMENTATION-PLAN.md).
+  [`docs/product/implementation-plan.md`](product/implementation-plan.md).
 
 These documents are candidate/proposed until explicitly approved. Do not
 silently turn proposed endpoints, thresholds, models, scenarios, hosting, or

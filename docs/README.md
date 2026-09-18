@@ -6,7 +6,7 @@ Shared product material now lives in `docs/product/`, regardless of its
 candidate approval status:
 
 - `product/prd.md` is the candidate consolidated PRD.
-- `product/IMPLEMENTATION-PLAN.md` is the single active
+- `product/implementation-plan.md` is the single active
   candidate delivery plan for the showcase and gated later increments.
 
 This move establishes one discoverable source for cross-application product
@@ -30,7 +30,7 @@ to overlap:
 | `project-context.md` | Canonical repository guidance | Keep current; link to it rather than repeating it. |
 | `product/prd.md` | Candidate product baseline | Promote once its approval record is complete. |
 | `docs/contracts/` | Accepted integration contracts only | Change through an ADR and matching tests. |
-| `product/IMPLEMENTATION-PLAN.md` | Candidate delivery planning | Keep one active plan; it may organise candidate work but cannot approve PRD, contract, or post-gate scope. |
+| `product/implementation-plan.md` | Candidate delivery planning | Keep one active plan; it may organise candidate work but cannot approve PRD, contract, or post-gate scope. |
 | `docs/proposals/` | Non-binding review material | Promote accepted decisions; archive closed proposals. |
 | `docs/experiments/` and `notebooks/` | Reproducibility evidence | Retain as evidence; do not treat it as product authority. |
 | `audits/`, generated inventories, and standards | Point-in-time control evidence | Keep the current standard; date-stamped audit snapshots live in `audits/`; the inventory is a local, git-ignored report. |

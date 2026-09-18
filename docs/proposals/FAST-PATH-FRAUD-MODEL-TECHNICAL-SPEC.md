@@ -216,6 +216,6 @@ API code—not in exploratory notebooks.
 ## Related artifacts
 
 - [Candidate PRD](../product/prd.md)
-- [Active showcase delivery plan](../product/IMPLEMENTATION-PLAN.md)
+- [Active showcase delivery plan](../product/implementation-plan.md)
 - [Notebook plan](../../notebooks/NOTEBOOK-PLAN.md)
 - [Notebook 08 experiment record](../experiments/08-fast-path-model-training-and-evaluation.md)
