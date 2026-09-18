@@ -11,7 +11,10 @@ permissions:
 jobs:
   web:
     name: Web build
-    runs-on: ubuntu-latest
+    # Visual baselines are recorded with Chrome on macOS, so the browser tests
+    # must run on macOS to keep text rasterisation stable. Its Chrome is
+    # preinstalled, so no browser install step is needed.
+    runs-on: macos-14
     defaults:
       run:
         working-directory: apps/web
@@ -26,7 +29,6 @@ jobs:
       - run: npm run lint
       - run: npm run check:payments-design
       - run: npm run build
-      - run: npx playwright install --with-deps chrome
       - run: npm run test:payments
 
   api:
