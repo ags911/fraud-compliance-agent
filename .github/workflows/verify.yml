@@ -17,8 +17,6 @@ jobs:
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,8 +37,22 @@ jobs:
         working-directory: apps/api
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      # The SDK submodule lives in a separate private repository, which the
+      # default workflow token cannot read. A read-only deploy key scoped to
+      # that one repository fetches it; the key file is removed afterwards.
+      - name: Fetch private SDK submodule
+        working-directory: .
+        env:
+          SDK_DEPLOY_KEY: ${{ secrets.ARBIRIS_SDK_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SDK_DEPLOY_KEY" > ~/.ssh/arbiris_sdk
+          chmod 600 ~/.ssh/arbiris_sdk
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          GIT_SSH_COMMAND="ssh -i $HOME/.ssh/arbiris_sdk -o IdentitiesOnly=yes" \
+            git -c "url.git@github.com:ags911/arbiris-sdk.git.insteadOf=https://github.com/ags911/arbiris-sdk.git" \
+            submodule update --init apps/api/vendor/arbiris-sdk
+          rm -f ~/.ssh/arbiris_sdk
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
