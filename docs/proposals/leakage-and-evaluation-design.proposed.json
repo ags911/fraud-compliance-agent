@@ -1,0 +1,50 @@
+{
+  "artifact": "leakage-and-evaluation-design",
+  "version": "0.1-proposed",
+  "status": "review-pending-not-approved-for-training",
+  "prediction_unit": "One Sparkov simulated card transaction evaluated against its source is_fraud label.",
+  "sanitised_temporal_observations": {
+    "source_train": {
+      "event_time_range": ["2019-01-01T00:00:18Z", "2020-06-21T12:13:37Z"],
+      "rows": 1296675,
+      "positive_labels": 7506,
+      "missing_event_times": 0,
+      "missing_event_references": 0
+    },
+    "source_test": {
+      "event_time_range": ["2020-06-21T12:14:25Z", "2020-12-31T23:59:34Z"],
+      "rows": 555719,
+      "positive_labels": 2145,
+      "missing_event_times": 0,
+      "missing_event_references": 0
+    },
+    "cross_partition": {
+      "event_reference_overlap_count": 0,
+      "customer_like_reference_overlap_count": 908,
+      "finding": "Source train/test order is chronological by observed event time; customer-like continuity spans the boundary."
+    }
+  },
+  "proposed_partition_protocol": {
+    "ordering": "Sort only by parsed trans_date_trans_time ascending, with trans_num as an audit/deduplication reference rather than a feature.",
+    "base_model_fit": "An early chronological prefix of source_train, with an explicit cutpoint selected and recorded before fitting.",
+    "calibration_selection": "A later, disjoint chronological segment of source_train. It must not be used for base-model fitting.",
+    "final_test": "The untouched source_test partition, after checksum verification and a run-time assertion that its minimum event time exceeds source_train maximum event time.",
+    "cutpoint_rule": "No numeric cutpoint or minimum-positive-label rule is accepted yet. The reviewer must approve them before any approved-data run."
+  },
+  "required_leakage_controls": [
+    "Exclude is_fraud from all model inputs.",
+    "Exclude unnamed CSV index, cc_num, personal names, address/location, date of birth, job, and all raw source identifiers from model inputs.",
+    "Forbid random row splitting and all preprocessing/statistics fitted across calibration or final-test partitions.",
+    "Forbid any feature whose source availability is after decision time; label availability remains unknown and labels are evaluation-only.",
+    "Treat the 908 cross-boundary customer-like references as historical continuity, not a licence to use card references. Any future entity-history feature needs an approved keyed pseudonymisation and point-in-time state calculation.",
+    "Assert no event-reference overlap across fit, calibration, and final-test partitions.",
+    "Fit category encoders, imputers, scalers, and resampling only on the base-model-fit partition."
+  ],
+  "required_reports": [
+    "PR-AUC, ROC-AUC, Brier score, and reliability/calibration evidence.",
+    "Threshold sweep with precision, recall, false-positive rate, review-rate, and explicit non-authoritative cost assumptions.",
+    "Partition dates, label prevalence, feature schema hash, data checksums, code/config revision, and random seed.",
+    "Limitations: simulated mechanics, unknown label maturity, incomplete Plaid parity, and no production-performance claim."
+  ],
+  "decision_recommendation": "Use this only as a proposed protocol for mechanics-only evaluation. An authorised reviewer must accept target, cutpoints, label treatment, feature set, and release criteria before Notebook 08 approved-data mode."
+}

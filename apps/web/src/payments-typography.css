@@ -1,0 +1,443 @@
+/* Kepler product typography. Role recipes own family, size, weight, leading and tracking. */
+:root {
+  --payments-font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --payments-type-page-title-size: 1.625rem;
+  --payments-type-page-title-weight: 700;
+  --payments-type-page-title-leading: 1.2;
+  --payments-type-page-title-tracking: -0.025em;
+  --payments-type-metric-value-size: 1.25rem;
+  --payments-type-metric-value-weight: 700;
+  --payments-type-metric-value-leading: 1.5;
+  --payments-type-metric-value-tracking: -0.02em;
+  --payments-type-brand-size: 1.0625rem;
+  --payments-type-brand-weight: 600;
+  --payments-type-brand-leading: 1.25rem;
+  --payments-type-brand-tracking: -0.01em;
+  --payments-type-state-body-size: 1.0625rem;
+  --payments-type-state-body-weight: 400;
+  --payments-type-state-body-leading: 1.5;
+  --payments-type-state-body-tracking: normal;
+  --payments-type-section-title-size: 1rem;
+  --payments-type-section-title-weight: 700;
+  --payments-type-section-title-leading: 1.5;
+  --payments-type-section-title-tracking: normal;
+  --payments-type-data-expanded-size: 0.9375rem;
+  --payments-type-data-expanded-weight: 400;
+  --payments-type-data-expanded-leading: 1.4286;
+  --payments-type-data-expanded-tracking: normal;
+  --payments-type-disclosure-size: 0.9375rem;
+  --payments-type-disclosure-weight: 500;
+  --payments-type-disclosure-leading: 1.4286;
+  --payments-type-disclosure-tracking: normal;
+  --payments-type-calendar-caption-size: 0.9375rem;
+  --payments-type-calendar-caption-weight: 500;
+  --payments-type-calendar-caption-leading: 1.4286;
+  --payments-type-calendar-caption-tracking: normal;
+  --payments-type-calendar-day-size: 0.9375rem;
+  --payments-type-calendar-day-weight: 400;
+  --payments-type-calendar-day-leading: 1;
+  --payments-type-calendar-day-tracking: normal;
+  --payments-type-body-size: 0.875rem;
+  --payments-type-body-weight: 400;
+  --payments-type-body-leading: 1.5;
+  --payments-type-body-tracking: normal;
+  --payments-type-navigation-size: 0.875rem;
+  --payments-type-navigation-weight: 400;
+  --payments-type-navigation-leading: 1.25rem;
+  --payments-type-navigation-tracking: normal;
+  --payments-type-input-size: 0.875rem;
+  --payments-type-input-weight: 400;
+  --payments-type-input-leading: 1.25rem;
+  --payments-type-input-tracking: normal;
+  --payments-type-date-filter-size: 0.875rem;
+  --payments-type-date-filter-weight: 400;
+  --payments-type-date-filter-leading: 1.25rem;
+  --payments-type-date-filter-tracking: normal;
+  --payments-type-calendar-weekday-size: 0.875rem;
+  --payments-type-calendar-weekday-weight: 400;
+  --payments-type-calendar-weekday-leading: 1.25rem;
+  --payments-type-calendar-weekday-tracking: normal;
+  --payments-type-control-size: 0.8125rem;
+  --payments-type-control-weight: 600;
+  --payments-type-control-leading: 1.5;
+  --payments-type-control-tracking: normal;
+  --payments-type-data-size: 0.8125rem;
+  --payments-type-data-weight: 400;
+  --payments-type-data-leading: 1.4286;
+  --payments-type-data-tracking: normal;
+  --payments-type-metadata-size: 0.8125rem;
+  --payments-type-metadata-weight: 400;
+  --payments-type-metadata-leading: 1.5;
+  --payments-type-metadata-tracking: normal;
+  --payments-type-support-size: 0.75rem;
+  --payments-type-support-weight: 400;
+  --payments-type-support-leading: 1.5;
+  --payments-type-support-tracking: normal;
+  --payments-type-metric-label-size: 0.75rem;
+  --payments-type-metric-label-weight: 400;
+  --payments-type-metric-label-leading: 1.5;
+  --payments-type-metric-label-tracking: normal;
+  --payments-type-data-support-size: 0.75rem;
+  --payments-type-data-support-weight: 400;
+  --payments-type-data-support-leading: 1.5;
+  --payments-type-data-support-tracking: normal;
+  --payments-type-identifier-size: 0.75rem;
+  --payments-type-identifier-weight: 400;
+  --payments-type-identifier-leading: 1.4286;
+  --payments-type-identifier-tracking: normal;
+  --payments-type-range-control-size: 0.75rem;
+  --payments-type-range-control-weight: 400;
+  --payments-type-range-control-leading: 1.4286;
+  --payments-type-range-control-tracking: normal;
+  --payments-type-table-header-size: 0.6875rem;
+  --payments-type-table-header-weight: 700;
+  --payments-type-table-header-leading: 1.4286;
+  --payments-type-table-header-tracking: 0.05em;
+  --payments-type-status-size: 0.6875rem;
+  --payments-type-status-weight: 700;
+  --payments-type-status-leading: 1.4286;
+  --payments-type-status-tracking: normal;
+  --payments-type-axis-size: 0.6875rem;
+  --payments-type-axis-weight: 400;
+  --payments-type-axis-leading: 1.3333;
+  --payments-type-axis-tracking: normal;
+  --payments-type-tooltip-size: 0.6875rem;
+  --payments-type-tooltip-weight: 400;
+  --payments-type-tooltip-leading: 1.7;
+  --payments-type-tooltip-tracking: normal;
+  --payments-type-panel-title-size: var(--payments-type-section-title-size);
+  --payments-type-panel-title-weight: var(--payments-type-section-title-weight);
+  --payments-type-panel-title-leading: var(--payments-type-section-title-leading);
+  --payments-type-panel-title-tracking: var(--payments-type-section-title-tracking);
+  --payments-type-data-value-size: var(--payments-type-metric-value-size);
+  --payments-type-data-value-weight: var(--payments-type-metric-value-weight);
+  --payments-type-data-value-leading: var(--payments-type-metric-value-leading);
+  --payments-type-data-value-tracking: var(--payments-type-metric-value-tracking);
+  --payments-type-table-size: var(--payments-type-data-size);
+  --payments-type-micro-size: var(--payments-type-data-support-size);
+  --payments-type-label-size: var(--payments-type-support-size);
+}
+
+.payments-type-page-title,
+.payments-page-heading h1 {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-page-title-size);
+  font-weight: var(--payments-type-page-title-weight);
+  line-height: var(--payments-type-page-title-leading);
+  letter-spacing: var(--payments-type-page-title-tracking);
+}
+
+.payments-type-metric-value,
+.payments-kpi-strip__value,
+.payments-type-data-value {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-metric-value-size);
+  font-weight: var(--payments-type-metric-value-weight);
+  line-height: var(--payments-type-metric-value-leading);
+  letter-spacing: var(--payments-type-metric-value-tracking);
+}
+
+.payments-type-brand {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-brand-size);
+  font-weight: var(--payments-type-brand-weight);
+  line-height: var(--payments-type-brand-leading);
+  letter-spacing: var(--payments-type-brand-tracking);
+}
+
+.payments-type-state-body,
+.payments-state-panel {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-state-body-size);
+  font-weight: var(--payments-type-state-body-weight);
+  line-height: var(--payments-type-state-body-leading);
+  letter-spacing: var(--payments-type-state-body-tracking);
+}
+
+.payments-type-section-title,
+.payments-panel__title,
+.payments-type-panel-title,
+.payments-catalog__heading h2,
+.overview-section-heading h2,
+.overview-demo-dialog__header h2 {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-section-title-size);
+  font-weight: var(--payments-type-section-title-weight);
+  line-height: var(--payments-type-section-title-leading);
+  letter-spacing: var(--payments-type-section-title-tracking);
+}
+
+.payments-type-data-expanded {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-data-expanded-size);
+  font-weight: var(--payments-type-data-expanded-weight);
+  line-height: var(--payments-type-data-expanded-leading);
+  letter-spacing: var(--payments-type-data-expanded-tracking);
+}
+
+.payments-type-disclosure {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-disclosure-size);
+  font-weight: var(--payments-type-disclosure-weight);
+  line-height: var(--payments-type-disclosure-leading);
+  letter-spacing: var(--payments-type-disclosure-tracking);
+}
+
+.payments-type-calendar-caption {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-calendar-caption-size);
+  font-weight: var(--payments-type-calendar-caption-weight);
+  line-height: var(--payments-type-calendar-caption-leading);
+  letter-spacing: var(--payments-type-calendar-caption-tracking);
+}
+
+.payments-type-calendar-day {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-calendar-day-size);
+  font-weight: var(--payments-type-calendar-day-weight);
+  line-height: var(--payments-type-calendar-day-leading);
+  letter-spacing: var(--payments-type-calendar-day-tracking);
+}
+
+.payments-type-body,
+.payments-page-heading p {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-body-size);
+  font-weight: var(--payments-type-body-weight);
+  line-height: var(--payments-type-body-leading);
+  letter-spacing: var(--payments-type-body-tracking);
+}
+
+.payments-type-navigation,
+.payments-subnav__item {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-navigation-size);
+  font-weight: var(--payments-type-navigation-weight);
+  line-height: var(--payments-type-navigation-leading);
+  letter-spacing: var(--payments-type-navigation-tracking);
+}
+
+.payments-type-input,
+.payments-topbar__search input {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-input-size);
+  font-weight: var(--payments-type-input-weight);
+  line-height: var(--payments-type-input-leading);
+  letter-spacing: var(--payments-type-input-tracking);
+}
+
+.payments-type-date-filter,
+.payments-date-range {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-date-filter-size);
+  font-weight: var(--payments-type-date-filter-weight);
+  line-height: var(--payments-type-date-filter-leading);
+  letter-spacing: var(--payments-type-date-filter-tracking);
+}
+
+.payments-type-calendar-weekday {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-calendar-weekday-size);
+  font-weight: var(--payments-type-calendar-weekday-weight);
+  line-height: var(--payments-type-calendar-weekday-leading);
+  letter-spacing: var(--payments-type-calendar-weekday-tracking);
+}
+
+.payments-type-control,
+.payments-button,
+.payments-demo-session__run,
+.payments-demo-session__reset,
+.overview-demo-help,
+.overview-demo-dialog__done,
+.overview-checklist__action,
+.overview-notice button,
+.overview-checklist__body strong,
+.overview-checklist__list li[data-state="complete"] .overview-checklist__body strong,
+.overview-outcome__metrics > strong,
+.overview-actions__grid strong {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-control-size);
+  font-weight: var(--payments-type-control-weight);
+  line-height: var(--payments-type-control-leading);
+  letter-spacing: var(--payments-type-control-tracking);
+}
+
+.payments-type-data,
+.payments-type-table-data,
+.payments-table-panel [data-slot="table"],
+.payments-table-panel [data-slot="table-cell"],
+.overview-time {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-data-size);
+  font-weight: var(--payments-type-data-weight);
+  line-height: var(--payments-type-data-leading);
+  letter-spacing: var(--payments-type-data-tracking);
+}
+
+.payments-type-metadata,
+.payments-demo-session__trigger,
+.payments-demo-session__heading strong,
+.overview-checklist__heading strong {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-metadata-size);
+  font-weight: var(--payments-type-metadata-weight);
+  line-height: var(--payments-type-metadata-leading);
+  letter-spacing: var(--payments-type-metadata-tracking);
+}
+
+.payments-type-support,
+.payments-panel__description,
+.payments-demo-session__heading p,
+.payments-demo-session__copy > span,
+.payments-catalog__heading p,
+.payments-catalog__section-description,
+.overview-demo-dialog__header p,
+.overview-demo-dialog__checklist p,
+.overview-demo-dialog__footer,
+.overview-checklist__body p,
+.overview-notice,
+.overview-health__note,
+.overview-section-heading p,
+.overview-actions__grid small,
+.overview-demo-dialog,
+.overview-outcome__identity,
+.overview-outcome__identity > strong,
+.overview-outcome__metrics > span,
+.overview-health__list > div,
+.overview-health__list .overview-health__unavailable {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-support-size);
+  font-weight: var(--payments-type-support-weight);
+  line-height: var(--payments-type-support-leading);
+  letter-spacing: var(--payments-type-support-tracking);
+}
+
+.payments-type-metric-label,
+.payments-kpi-strip__label {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-metric-label-size);
+  font-weight: var(--payments-type-metric-label-weight);
+  line-height: var(--payments-type-metric-label-leading);
+  letter-spacing: var(--payments-type-metric-label-tracking);
+}
+
+.payments-type-data-support,
+.payments-type-micro-data,
+.payments-table-panel__footer,
+.payments-demo-session__copy small,
+.overview-checklist__heading span,
+.overview-outcome,
+.overview-outcome__count,
+.overview-section-heading > span,
+.overview-health__list dd {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-data-support-size);
+  font-weight: var(--payments-type-data-support-weight);
+  line-height: var(--payments-type-data-support-leading);
+  letter-spacing: var(--payments-type-data-support-tracking);
+}
+
+.payments-type-identifier,
+.overview-transaction-id {
+  font-family: var(--payments-font-code);
+  font-size: var(--payments-type-identifier-size);
+  font-weight: var(--payments-type-identifier-weight);
+  line-height: var(--payments-type-identifier-leading);
+  letter-spacing: var(--payments-type-identifier-tracking);
+}
+
+.payments-type-range-control,
+.payments-range-toggle__item,
+.overview-demo-dialog__step-icon,
+.overview-demo-dialog__checklist strong,
+.overview-checklist__check {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-range-control-size);
+  font-weight: var(--payments-type-range-control-weight);
+  line-height: var(--payments-type-range-control-leading);
+  letter-spacing: var(--payments-type-range-control-tracking);
+}
+
+.payments-type-table-header,
+.payments-table-panel [data-slot="table-head"],
+.overview-demo-dialog__eyebrow {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-table-header-size);
+  font-weight: var(--payments-type-table-header-weight);
+  line-height: var(--payments-type-table-header-leading);
+  letter-spacing: var(--payments-type-table-header-tracking);
+}
+
+.payments-type-status,
+.payments-status-pill,
+.overview-demo-badge {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-status-size);
+  font-weight: var(--payments-type-status-weight);
+  line-height: var(--payments-type-status-leading);
+  letter-spacing: var(--payments-type-status-tracking);
+}
+
+.payments-type-axis {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-axis-size);
+  font-weight: var(--payments-type-axis-weight);
+  line-height: var(--payments-type-axis-leading);
+  letter-spacing: var(--payments-type-axis-tracking);
+}
+
+.payments-type-tooltip {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-tooltip-size);
+  font-weight: var(--payments-type-tooltip-weight);
+  line-height: var(--payments-type-tooltip-leading);
+  letter-spacing: var(--payments-type-tooltip-tracking);
+}
+
+.payments-type-data, .payments-type-data-expanded, .payments-type-data-support, .payments-type-metric-value { font-variant-numeric: tabular-nums; }
+.payments-type-strong, .payments-type-state-body strong { font-weight: 700; }
+.payments-type-medium { font-weight: 500; }
+.payments-type-navigation[data-active="true"] { font-weight: 700; }
+.payments-type-navigation[aria-current="page"], .payments-type-range-control[aria-pressed="true"] { font-weight: 600; }
+.payments-type-brand > span { font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit; }
+.payments-calendar { font-family: var(--payments-font-ui); }
+.payments-calendar[data-slot="calendar"] .rdp-caption_label {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-calendar-caption-size);
+  font-weight: var(--payments-type-calendar-caption-weight);
+  line-height: var(--payments-type-calendar-caption-leading);
+}
+.payments-calendar[data-slot="calendar"] .rdp-weekday {
+  font-family: var(--payments-font-ui);
+  font-size: var(--payments-type-calendar-weekday-size);
+  font-weight: var(--payments-type-calendar-weekday-weight);
+  line-height: var(--payments-type-calendar-weekday-leading);
+}
+.payments-calendar[data-slot="calendar"] button[data-day] {
+  font-family: var(--payments-font-data);
+  font-size: var(--payments-type-calendar-day-size);
+  font-weight: var(--payments-type-calendar-day-weight);
+  line-height: var(--payments-type-calendar-day-leading);
+}
+
+.payments-type-tooltip-value { font-family: var(--payments-font-data); font-weight: 700; }
+.payments-type-expanded-header { font-family: var(--payments-font-ui); font-weight: 500; }
+
+/* Emphasis variants keep the base role size and family. */
+.overview-checklist__body strong,
+.overview-demo-dialog__checklist strong,
+.overview-outcome__identity > strong { font-weight: 600; }
+.overview-outcome__metrics > strong,
+.overview-health__list dd { font-family: var(--payments-font-data); font-weight: 700; }
+.overview-outcome__metrics > span { font-family: var(--payments-font-data); font-weight: 500; }
+.payments-state-panel strong { font-weight: 700; }
+.payments-table-panel [data-slot="table-cell"].overview-transaction-id,
+.payments-table-panel [data-slot="table-cell"].payments-type-identifier {
+  font-family: var(--payments-font-code);
+  font-size: var(--payments-type-identifier-size);
+  font-weight: var(--payments-type-identifier-weight);
+  line-height: var(--payments-type-identifier-leading);
+}
+.payments-table-panel [data-slot="table-cell"].payments-type-table-copy {
+  font-family: var(--payments-font-ui);
+}

@@ -1,0 +1,718 @@
+{
+  "artifact": "plaid-source-inventory",
+  "endpoint": "/transactions/sync",
+  "environment_name": "sandbox",
+  "field_inventory": [
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "array"
+      ],
+      "path": "$.accounts",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.accounts[]",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].account_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.accounts[].apy",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.accounts[].balances",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "integer",
+        "null",
+        "number"
+      ],
+      "path": "$.accounts[].balances.available",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "integer"
+      ],
+      "path": "$.accounts[].balances.current",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].balances.iso_currency_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "integer",
+        "null"
+      ],
+      "path": "$.accounts[].balances.limit",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.accounts[].balances.unofficial_currency_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].holder_category",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].mask",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].name",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].official_name",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].subtype",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.accounts[].type",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "array"
+      ],
+      "path": "$.added",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.added[]",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].account_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].account_owner",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "integer",
+        "number"
+      ],
+      "path": "$.added[].amount",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].authorized_date",
+      "timestamp_precision": "inspect_format_before_mapping"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].authorized_datetime",
+      "timestamp_precision": "indeterminate"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "array",
+        "null"
+      ],
+      "path": "$.added[].category",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].category[]",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].category_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].check_number",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "array"
+      ],
+      "path": "$.added[].counterparties",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.added[].counterparties[]",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].counterparties[].confidence_level",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].counterparties[].entity_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].counterparties[].logo_url",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].counterparties[].name",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].counterparties[].phone_number",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].counterparties[].type",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].counterparties[].website",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].date",
+      "timestamp_precision": "inspect_format_before_mapping"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].datetime",
+      "timestamp_precision": "indeterminate"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].iso_currency_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.added[].location",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.address",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.city",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.country",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "number"
+      ],
+      "path": "$.added[].location.lat",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "number"
+      ],
+      "path": "$.added[].location.lon",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.postal_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.region",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].location.store_number",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].logo_url",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].merchant_category_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].merchant_entity_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].merchant_name",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].name",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].payment_channel",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.added[].payment_meta",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.by_order_of",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.payee",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.payer",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].payment_meta.payment_method",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].payment_meta.payment_processor",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.ppd_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.reason",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].payment_meta.reference_number",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "boolean"
+      ],
+      "path": "$.added[].pending",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].pending_transaction_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "object"
+      ],
+      "path": "$.added[].personal_finance_category",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].personal_finance_category.confidence_level",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].personal_finance_category.detailed",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].personal_finance_category.primary",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].personal_finance_category.version",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].personal_finance_category_icon_url",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].running_balance",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].transaction_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].transaction_id",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.added[].transaction_type",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null"
+      ],
+      "path": "$.added[].unofficial_currency_code",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": true,
+      "observed_types": [
+        "null",
+        "string"
+      ],
+      "path": "$.added[].website",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "boolean"
+      ],
+      "path": "$.has_more",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "array"
+      ],
+      "path": "$.modified",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.next_cursor",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "array"
+      ],
+      "path": "$.removed",
+      "timestamp_precision": "not_applicable"
+    },
+    {
+      "nullable": false,
+      "observed_types": [
+        "string"
+      ],
+      "path": "$.transactions_update_status",
+      "timestamp_precision": "not_applicable"
+    }
+  ],
+  "git_revision": "unavailable",
+  "limitations": [
+    "Sandbox availability does not prove production availability or freshness.",
+    "Field names and types do not establish canonical semantics.",
+    "Pending-to-posted, modification, removal, duplicate, and cursor behaviour require notebook 02."
+  ],
+  "notebook": "01-plaid-sandbox-source-inventory.ipynb",
+  "readiness": {
+    "page_count": 6,
+    "pagination_restart_count": 1,
+    "status": "HISTORICAL_UPDATE_COMPLETE",
+    "timed_out": false,
+    "transaction_fields_observed": true,
+    "wait_seconds": 12.05
+  },
+  "report_sha256": "d1cd383debbab8579033aab7d8383beebbdfa92473c78e53a386fcb70ba12204",
+  "response_counts": {
+    "added": 331,
+    "modified": 0,
+    "removed": 0
+  },
+  "run_at": "2026-09-18T21:02:23.399201+00:00",
+  "source_system": "plaid_sandbox",
+  "status": "observation_ready"
+}

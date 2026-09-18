@@ -1,0 +1,120 @@
+{
+  "artifact": "plaid-to-canonical-mapping",
+  "version": "0.2-proposed",
+  "status": "accepted_for_sandbox_analysis_only",
+  "approval_scope": "Approved on 2026-09-18 for local, zero-retention Plaid Sandbox schema and aggregate data-quality analysis only. This does not accept a canonical contract, feature set, model dataset, runtime connector, direction policy, money normalisation, or payment action.",
+  "evidence": [
+    "docs/proposals/plaid-source-inventory.observation.json",
+    "docs/proposals/plaid-lifecycle-probes.observation.json",
+    "docs/proposals/canonical-transaction-contract.proposed.md"
+  ],
+  "scope": "Plaid Sandbox /transactions/sync added transaction observations only",
+  "mapping": [
+    {
+      "canonical_field": "SourceEvent.source_event_id",
+      "source": "approved ingestion-boundary generator",
+      "classification": "candidate_derivation",
+      "handling": "Generate an internal immutable source-observation ID. Do not relabel Plaid transaction_id as a source event ID.",
+      "limitations": ["The source-event ID generation and idempotency contract are not accepted."]
+    },
+    {
+      "canonical_field": "SourceEvent.source_system",
+      "source": "local connector configuration",
+      "classification": "deterministic_derivation",
+      "handling": "Set to plaid_sandbox for the observed environment.",
+      "limitations": ["Does not establish a production provider mapping."]
+    },
+    {
+      "canonical_field": "SourceEvent.source_revision",
+      "source": null,
+      "classification": "unavailable",
+      "handling": "Do not map next_cursor to a per-transaction source revision. A cursor is a page-level checkpoint, not a record revision.",
+      "limitations": ["Modified and removed event semantics remain indeterminate in the bounded probe."]
+    },
+    {
+      "canonical_field": "SourceEvent.event_type",
+      "source": "$.added[]",
+      "classification": "candidate_derivation",
+      "handling": "Classify the observed sync patch as source_observed only after the event-type vocabulary is accepted; added does not prove when the payment occurred.",
+      "limitations": ["Initial historical sync also uses added; modification and removal mappings require separate review."]
+    },
+    {
+      "canonical_field": "SourceEvent.observed_at and available_at",
+      "source": null,
+      "classification": "unavailable",
+      "handling": "Do not derive from transaction dates or notebook execution time.",
+      "limitations": ["Blocks point-in-time velocity features and production feature parity."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.provider_transaction_reference",
+      "source": "$.added[].transaction_id",
+      "classification": "candidate_derivation",
+      "handling": "Derive a keyed pseudonym at the provider boundary for source lineage. Do not persist or expose the raw Plaid transaction_id.",
+      "limitations": ["The approved keyed pseudonymisation method and key lifecycle do not yet exist."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.account_reference",
+      "source": "$.added[].account_id",
+      "classification": "candidate_derivation",
+      "handling": "Pseudonymise before any persistence outside the provider boundary.",
+      "limitations": ["No customer-level reference was approved from the observed source."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.event_time",
+      "source": "$.added[].date",
+      "classification": "unavailable",
+      "handling": "Do not map date directly to canonical event_time. For pending transactions it is the occurrence date; for posted transactions it is the posting date. Preserve it only as source metadata until a state-aware time policy is accepted.",
+      "limitations": ["$.added[].datetime and authorized_datetime were null in the observed run; date semantics differ by pending state."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.money.amount_minor",
+      "source": "$.added[].amount",
+      "classification": "observed_but_not_normalised",
+      "handling": "Do not map floating-point source money to minor units until currency exponent, source amount semantics, rounding, and sign policy are approved.",
+      "limitations": ["No canonical money conversion is implemented."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.money.currency",
+      "source": "$.added[].iso_currency_code",
+      "classification": "candidate_derivation",
+      "handling": "Use only with an approved money-normalisation policy and validate ISO 4217 input. Account for the mutually exclusive unofficial_currency_code path.",
+      "limitations": ["The bounded Sandbox run observed a non-null ISO code but does not establish all-provider availability."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.direction",
+      "source": null,
+      "classification": "candidate_derivation",
+      "handling": "Plaid documents positive amounts as money moving out of the account and negative amounts as money moving in. Derive direction only after an approved sign, product-scope, and normalisation policy.",
+      "limitations": ["The canonical direction policy and its interaction with the money-normalisation blocker are not accepted."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.payment_channel",
+      "source": "$.added[].payment_channel",
+      "classification": "candidate_derivation",
+      "handling": "Candidate categorical mapping; enumerations are not yet accepted.",
+      "limitations": []
+    },
+    {
+      "canonical_field": "CanonicalTransaction.category",
+      "source": "$.added[].personal_finance_category.primary and detailed",
+      "classification": "unavailable",
+      "handling": "Do not collapse Plaid primary, detailed, and versioned categories into one neutral canonical category. Retain provider taxonomy only after an approved category structure exists.",
+      "limitations": ["No neutral category taxonomy or versioned category object has been accepted."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.country_code",
+      "source": "$.added[].location.country",
+      "classification": "unavailable",
+      "handling": "Do not map a merchant location country to an ambiguous canonical country_code. Define whether the canonical field means merchant location, account country, payment origin, or another concept first.",
+      "limitations": ["Location country is nullable and is not evidence of account, customer, or payment-origin country."]
+    },
+    {
+      "canonical_field": "CanonicalTransaction.payee_reference",
+      "source": "$.added[].counterparties[].entity_id or merchant_name",
+      "classification": "unavailable_by_default",
+      "handling": "Do not persist names; an approved pseudonymisation and primary-counterparty rule is required first.",
+      "limitations": ["Entity ID was nullable and merchant_name was nullable in the observed inventory."]
+    }
+  ],
+  "decision_recommendation": "Accepted only as a boundary for local zero-retention Sandbox analysis. Do not implement a runtime connector, canonical transformation, model feature set, or payment action from this artifact."
+}

@@ -1,0 +1,49 @@
+{
+  "artifact": "enrichment-pipeline",
+  "version": "0.1-proposed",
+  "status": "review-pending",
+  "purpose": "Define a point-in-time-safe feature-snapshot boundary without ingesting raw records or implementing runtime scoring.",
+  "candidate_snapshot": {
+    "feature_schema_version": "0.1-proposed",
+    "required_lineage": ["source_system", "pseudonymised_source_event_reference", "source_revision", "as_of", "available_at", "transformation_version", "provenance"],
+    "eligible_model_features": [],
+    "unknown_policy": "Unknown remains explicit; it is not converted to zero, false, or an empty category."
+  },
+  "proposed_transformations": [
+    {
+      "name": "reference_pseudonymisation",
+      "input": "provider transaction/account identifiers",
+      "output": "stable keyed pseudonym",
+      "status": "design_only",
+      "constraint": "Requires an approved key-management and retention policy; never use unhashed source IDs outside the source boundary."
+    },
+    {
+      "name": "money_normalisation",
+      "input": "Plaid amount and ISO currency",
+      "output": "integer minor units",
+      "status": "blocked",
+      "constraint": "Requires source amount-sign semantics, ISO exponent, and rounding approval."
+    },
+    {
+      "name": "merchant_category_normalisation",
+      "input": "provider primary/detailed category and corpus category",
+      "output": "neutral category code",
+      "status": "design_only",
+      "constraint": "Requires a versioned taxonomy and explicit unknown policy."
+    },
+    {
+      "name": "history_and_velocity_aggregation",
+      "input": "prior eligible facts for an approved pseudonymous entity",
+      "output": "windowed counts and amount aggregates",
+      "status": "blocked",
+      "constraint": "Each input must have available_at strictly before as_of; this is not proven by the observed Plaid data."
+    }
+  ],
+  "parity_test_cases": [
+    "A date-only event cannot produce time-of-day or hourly velocity features.",
+    "A future, corrected, removed, or late-available record is ineligible for an earlier snapshot.",
+    "A missing category, payee, country, or event time stays unknown.",
+    "The historical and online transformations must share the same named version before a feature is eligible."
+  ],
+  "decision_recommendation": "No reusable runtime enrichment code or online features are approved. Review the mapping and feature matrix first."
+}

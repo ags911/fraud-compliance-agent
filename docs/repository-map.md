@@ -1,0 +1,71 @@
+# Repository map
+
+This map explains ownership, authority, and the important entry points in the
+Fraud Compliance Agent monorepo. It is intentionally not a hand-maintained
+description of every source file. For a complete, generated list of tracked
+project files, see [repository-inventory.md](repository-inventory.md).
+
+Regenerate the inventory after adding, moving, or deleting an in-scope file:
+
+```bash
+make repository-inventory
+```
+
+CI runs `make repository-inventory-check`; it fails when the committed
+inventory is stale and never rewrites or commits repository files itself.
+
+## Root ownership
+
+| Location | Owner and purpose | Authority / edit rule |
+| --- | --- | --- |
+| `apps/web` | React/Vite operator console, accessibility, browser state, and browser tests | UI consumes accepted contracts only; never imports API internals or secrets. |
+| `apps/api` | FastAPI modular monolith for operational facts, risk routing, integrations, persistence, and API tests | Backend/domain owner. `apps/api/vendor` is pinned third-party material: do not edit except during an explicit SDK upgrade. |
+| `apps/api/prototypes` | Retained source-snapshot prototypes | Not active product surfaces, build inputs, or contract authority. |
+| `docs/contracts` | Versioned HTTP, event, and domain contracts shared by applications | Contract authority after explicit acceptance. |
+| `docs/product` | Candidate PRD and the single active cross-application delivery plan | Product planning authority after the documented approval record is complete; location alone is not approval. |
+| `docs/proposals` | Review artifacts that are not yet runtime inputs | Proposed only; promote through an ADR, contract, and tests. |
+| `docs/experiments` | Sanitised notebook experiment records | Evidence, never runtime authority. |
+| `notebooks` | Reproducible, sanitised feasibility and evaluation evidence | Follow the notebook plan, data governance, and approved gates. |
+| `fixtures` | Future deterministic canonical scenarios | No provider/raw data; only accepted fixtures become runtime candidates. |
+| `config` | Non-secret configuration examples and model configuration | Never add credentials or local environment values. |
+| `data` | Local/managed data staging locations | Ignored by Git; raw, processed, and model data never belong in commits. |
+| `infra` | Local orchestration and deployment configuration | No application-domain logic. |
+| `scripts` | Reproducible maintenance, corpus, and notebook pipeline utilities | Keep scripts documented, linted, and safe to run. |
+| `.github/workflows` | CI verification workflows | Changes must preserve mandatory quality gates. |
+
+## Key entry points
+
+| File | Responsibility |
+| --- | --- |
+| `AGENTS.md`, `CLAUDE.md` | Minimal agent entry points. Both direct agents to the canonical project context. |
+| `docs/project-context.md` | Stable project, architecture, safety, and delivery rules for every contributor. |
+| `README.md` | Monorepo orientation, independently runnable applications, and common commands. |
+| `Makefile` | Local verification and safe notebook/corpus commands. `make check` is the standard handoff gate. |
+| `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, test, and repository-inventory checks. |
+| `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
+| `apps/api/server/models.py` | API-side domain/data models. |
+| `apps/web/src/main.tsx` | Primary React application entry point. |
+| `apps/web/src/*-main.tsx` | Standalone design/reference page entry points. |
+| `apps/web/work/payments-design-concept.html` | Frozen approved visual reference for Rules Performance; do not alter during feature work. |
+| `notebooks/NOTEBOOK-PLAN.md` | Ordered 01–10 notebook scope, gates, inputs, and definition of done. |
+| `notebooks/README.md` | Notebook kernel, safety, structure, and quality standards. |
+| `docs/data-governance.md` | Data, provider, output, and artifact handling policy. |
+
+## Product and decision authority
+
+1. The candidate PRD and the single active delivery plan live in
+   `docs/product/`; their proposal status is explicit in
+   `docs/project-context.md`.
+2. Accepted cross-application semantics live in `docs/contracts/`. A proposal,
+   notebook result, or frontend mock does not silently become an API contract.
+3. Approval decisions belong in the PRD or an ADR. The project context captures
+   only durable constraints, not a mutable work log.
+
+## Generated inventory scope
+
+`repository-inventory.md` lists project-managed source, documentation,
+configuration, workflow, notebook, fixture, and infrastructure files. It
+excludes dependencies, build output, virtual environments, Git metadata,
+notebook checkpoints, and vendor trees. Those exclusions are deliberate: they
+are not project-owned implementation files and would create a large, unstable
+document.

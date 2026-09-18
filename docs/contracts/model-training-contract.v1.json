@@ -1,0 +1,42 @@
+{
+  "contract_version": "1.0",
+  "approval_status": "accepted",
+  "approval_scope": "mechanics-only benchmark evaluation authorised by the project owner on 2026-09-17",
+  "training_scope": "synthetic benchmark mechanics only; never production training, runtime scoring, or a fraud-performance claim",
+  "dataset_path": "data/processed/sparkov-mechanics-v1.csv",
+  "dataset_sha256": "7b046eebd61ba04575e64e2c8c029552511e49c1554e95345b2f1e229650360f",
+  "target_column": "is_fraud",
+  "feature_columns": ["amount_source_value", "event_hour_utc", "event_day_of_week_utc", "is_weekend"],
+  "partition_column": "partition",
+  "train_partition": "train",
+  "calibration_partition": "calibration",
+  "test_partition": "test",
+  "partition_protocol": "Chronological 80% prefix of the source training file for fitting; later 20% for calibration/selection; later source test file remains untouched. The fixed cutpoint is 2020-03-06T07:15:17Z.",
+  "calibration_procedure": "Reserved chronological calibration/selection partition. Notebook 08 reports uncalibrated candidate diagnostics only; no probability-calibration method, operating threshold, or release decision is selected.",
+  "slice_columns": ["category", "amount_band"],
+  "release_criteria_version": "mechanics-only-v1",
+  "release_boundary": [
+    "No model weight is a runtime artifact.",
+    "No score can approve, challenge, hold, release, block, or execute a payment.",
+    "No threshold is selected by this contract or Notebook 08.",
+    "Results must be described as Sparkov synthetic benchmark mechanics, not production fraud performance.",
+    "Deterministic controls, authority, oversight, and review remain independent."
+  ],
+  "source_exclusions": [
+    "source identifiers",
+    "customer/card-like references",
+    "names",
+    "addresses",
+    "location/coordinates",
+    "date of birth",
+    "job",
+    "labels from model features",
+    "unapproved history and velocity features"
+  ],
+  "lineage": {
+    "source": "Kaggle kartik2112/fraud-detection (Sparkov simulated transactions)",
+    "archive_sha256": "4e32829b9ba5a6b17af707c513c15204011044df0e8971e431cedca3d8c0a8a1",
+    "adapter": "scripts/build_sparkov_mechanics_dataset.py",
+    "local_manifest": "data/manifests/sparkov-mechanics-v1.manifest.json"
+  }
+}

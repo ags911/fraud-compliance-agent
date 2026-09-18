@@ -1,0 +1,71 @@
+{
+  "artifact": "plaid-canonical-fixture-manifest",
+  "version": "0.1-proposed",
+  "status": "review-pending",
+  "purpose": "Sanitised draft-schema examples for P0-03 mapping review; not provider payloads, an accepted contract, or a runtime fixture set.",
+  "evidence": [
+    "docs/proposals/plaid-to-canonical-mapping.proposed.json",
+    "docs/proposals/canonical-transaction-contract.proposed.md"
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "draft-canonical-valid-shape",
+      "classification": "synthetic_schema_only",
+      "expected_result": "valid_draft_shape",
+      "limitation": "This proves only the draft shape. It does not establish that Plaid supplies the required timing, correction, direction, or money-normalisation semantics.",
+      "source_event": {
+        "source_event_id": "fixture-source-event-001",
+        "source_system": "synthetic",
+        "source_revision": "fixture-revision-001",
+        "event_type": "transaction_observed",
+        "observed_at": "2026-01-15T10:30:00Z",
+        "available_at": "2026-01-15T10:31:00Z",
+        "event_time": "2026-01-15T10:29:00Z",
+        "event_time_precision": "second",
+        "correction_of_source_event_id": null,
+        "payload_reference": "sanitised-fixture://draft-canonical-valid-shape"
+      },
+      "canonical_transaction": {
+        "transaction_id": "fixture-transaction-001",
+        "source_event_id": "fixture-source-event-001",
+        "source_revision": "fixture-revision-001",
+        "correction_of_transaction_id": null,
+        "customer_reference": "fixture-customer-pseudonym",
+        "account_reference": "fixture-account-pseudonym",
+        "payee_reference": null,
+        "event_time": "2026-01-15T10:29:00Z",
+        "event_time_precision": "second",
+        "available_at": "2026-01-15T10:31:00Z",
+        "money": { "amount_minor": 4200, "currency": "GBP" },
+        "direction": "outbound",
+        "payment_channel": "online",
+        "country_code": "GB",
+        "category": "TRANSFER_OUT",
+        "field_availability": { "payee_reference": "unavailable", "country_code": "synthetic" }
+      }
+    },
+    {
+      "fixture_id": "plaid-date-precision-blocker",
+      "classification": "plaid_mapping_blocker",
+      "expected_result": "blocked_for_time_window_features",
+      "observed_shape": {
+        "source_system": "plaid_sandbox",
+        "event_time_precision": "date",
+        "available_at": null
+      },
+      "required_handling": "Do not fabricate a time of day, available_at, or a six-hour velocity aggregate from a date-only observation."
+    },
+    {
+      "fixture_id": "plaid-money-and-direction-blocker",
+      "classification": "plaid_mapping_blocker",
+      "expected_result": "blocked_for_canonical_money_and_direction",
+      "observed_shape": {
+        "source_system": "plaid_sandbox",
+        "amount_representation": "decimal source amount",
+        "direction": null
+      },
+      "required_handling": "Do not convert to integer minor units or infer economic direction until the approved provider-semantics, currency-exponent, rounding, and sign policy exists."
+    }
+  ],
+  "decision_recommendation": "Proposed review fixtures only. They do not promote the mapping, accept a contract, or enable a runtime connector."
+}

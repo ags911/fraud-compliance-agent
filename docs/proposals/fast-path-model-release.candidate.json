@@ -1,0 +1,360 @@
+{
+  "artifact": "fast-path-model-release",
+  "decision_recommendation": "proposed \u2014 no runtime promotion or policy decision is implied",
+  "input_manifest": {
+    "dataset_sha256": "synthetic-mechanics-only",
+    "feature_columns": [
+      "amount_minor",
+      "velocity_6h",
+      "account_age_days",
+      "is_new_payee"
+    ],
+    "release_criteria_version": "not-applicable",
+    "target_column": "target"
+  },
+  "limitations": [
+    "No policy threshold was selected; model scores have no payment authority.",
+    "Deterministic controls, authority, oversight, and review remain independent runtime controls.",
+    "Synthetic mechanics results are not fraud-model performance evidence and cannot support release or promotion."
+  ],
+  "models": {
+    "logistic_regression_baseline": {
+      "metrics": {
+        "brier_score": 0.10374058208209039,
+        "pr_auc": 0.6326738786066778,
+        "roc_auc": 0.8854222700376547
+      },
+      "slice_metrics": [
+        {
+          "count": 93,
+          "pr_auc": 0.5215204678362573,
+          "prevalence": 0.053763440860215055,
+          "roc_auc": 0.9431818181818182,
+          "slice": "synthetic_slice",
+          "value": "known_payee"
+        },
+        {
+          "count": 87,
+          "pr_auc": 0.6964543812104788,
+          "prevalence": 0.06896551724137931,
+          "roc_auc": 0.831275720164609,
+          "slice": "synthetic_slice",
+          "value": "new_payee"
+        }
+      ],
+      "threshold_sweep": [
+        {
+          "block_rate": 0.7888888888888889,
+          "false_positive_rate": 0.7751479289940828,
+          "precision": 0.07746478873239436,
+          "recall": 1.0,
+          "threshold": 0.05
+        },
+        {
+          "block_rate": 0.6166666666666667,
+          "false_positive_rate": 0.5976331360946746,
+          "precision": 0.09009009009009009,
+          "recall": 0.9090909090909091,
+          "threshold": 0.1
+        },
+        {
+          "block_rate": 0.4666666666666667,
+          "false_positive_rate": 0.4378698224852071,
+          "precision": 0.11904761904761904,
+          "recall": 0.9090909090909091,
+          "threshold": 0.15
+        },
+        {
+          "block_rate": 0.38333333333333336,
+          "false_positive_rate": 0.34911242603550297,
+          "precision": 0.14492753623188406,
+          "recall": 0.9090909090909091,
+          "threshold": 0.2
+        },
+        {
+          "block_rate": 0.32222222222222224,
+          "false_positive_rate": 0.28994082840236685,
+          "precision": 0.15517241379310345,
+          "recall": 0.8181818181818182,
+          "threshold": 0.25
+        },
+        {
+          "block_rate": 0.2722222222222222,
+          "false_positive_rate": 0.23668639053254437,
+          "precision": 0.1836734693877551,
+          "recall": 0.8181818181818182,
+          "threshold": 0.3
+        },
+        {
+          "block_rate": 0.22777777777777777,
+          "false_positive_rate": 0.1893491124260355,
+          "precision": 0.21951219512195122,
+          "recall": 0.8181818181818182,
+          "threshold": 0.35
+        },
+        {
+          "block_rate": 0.2111111111111111,
+          "false_positive_rate": 0.17159763313609466,
+          "precision": 0.23684210526315788,
+          "recall": 0.8181818181818182,
+          "threshold": 0.4
+        },
+        {
+          "block_rate": 0.19444444444444445,
+          "false_positive_rate": 0.15384615384615385,
+          "precision": 0.2571428571428571,
+          "recall": 0.8181818181818182,
+          "threshold": 0.45
+        },
+        {
+          "block_rate": 0.16111111111111112,
+          "false_positive_rate": 0.11834319526627218,
+          "precision": 0.3103448275862069,
+          "recall": 0.8181818181818182,
+          "threshold": 0.5
+        },
+        {
+          "block_rate": 0.15,
+          "false_positive_rate": 0.10650887573964497,
+          "precision": 0.3333333333333333,
+          "recall": 0.8181818181818182,
+          "threshold": 0.55
+        },
+        {
+          "block_rate": 0.1388888888888889,
+          "false_positive_rate": 0.09467455621301775,
+          "precision": 0.36,
+          "recall": 0.8181818181818182,
+          "threshold": 0.6
+        },
+        {
+          "block_rate": 0.12222222222222222,
+          "false_positive_rate": 0.07692307692307693,
+          "precision": 0.4090909090909091,
+          "recall": 0.8181818181818182,
+          "threshold": 0.65
+        },
+        {
+          "block_rate": 0.10555555555555556,
+          "false_positive_rate": 0.0650887573964497,
+          "precision": 0.42105263157894735,
+          "recall": 0.7272727272727273,
+          "threshold": 0.7
+        },
+        {
+          "block_rate": 0.09444444444444444,
+          "false_positive_rate": 0.05325443786982249,
+          "precision": 0.47058823529411764,
+          "recall": 0.7272727272727273,
+          "threshold": 0.75
+        },
+        {
+          "block_rate": 0.08888888888888889,
+          "false_positive_rate": 0.047337278106508875,
+          "precision": 0.5,
+          "recall": 0.7272727272727273,
+          "threshold": 0.8
+        },
+        {
+          "block_rate": 0.06666666666666667,
+          "false_positive_rate": 0.029585798816568046,
+          "precision": 0.5833333333333334,
+          "recall": 0.6363636363636364,
+          "threshold": 0.85
+        },
+        {
+          "block_rate": 0.06111111111111111,
+          "false_positive_rate": 0.029585798816568046,
+          "precision": 0.5454545454545454,
+          "recall": 0.5454545454545454,
+          "threshold": 0.9
+        },
+        {
+          "block_rate": 0.03888888888888889,
+          "false_positive_rate": 0.011834319526627219,
+          "precision": 0.7142857142857143,
+          "recall": 0.45454545454545453,
+          "threshold": 0.95
+        }
+      ]
+    },
+    "xgboost_candidate": {
+      "metrics": {
+        "brier_score": 0.06284032762050629,
+        "pr_auc": 0.5879858113203013,
+        "roc_auc": 0.8897256589564282
+      },
+      "slice_metrics": [
+        {
+          "count": 93,
+          "pr_auc": 0.4793650793650793,
+          "prevalence": 0.053763440860215055,
+          "roc_auc": 0.9295454545454546,
+          "slice": "synthetic_slice",
+          "value": "known_payee"
+        },
+        {
+          "count": 87,
+          "pr_auc": 0.7258658008658008,
+          "prevalence": 0.06896551724137931,
+          "roc_auc": 0.8683127572016461,
+          "slice": "synthetic_slice",
+          "value": "new_payee"
+        }
+      ],
+      "threshold_sweep": [
+        {
+          "block_rate": 0.38333333333333336,
+          "false_positive_rate": 0.34911242603550297,
+          "precision": 0.14492753623188406,
+          "recall": 0.9090909090909091,
+          "threshold": 0.05
+        },
+        {
+          "block_rate": 0.2722222222222222,
+          "false_positive_rate": 0.23076923076923078,
+          "precision": 0.20408163265306123,
+          "recall": 0.9090909090909091,
+          "threshold": 0.1
+        },
+        {
+          "block_rate": 0.20555555555555555,
+          "false_positive_rate": 0.16568047337278108,
+          "precision": 0.24324324324324326,
+          "recall": 0.8181818181818182,
+          "threshold": 0.15
+        },
+        {
+          "block_rate": 0.19444444444444445,
+          "false_positive_rate": 0.15384615384615385,
+          "precision": 0.2571428571428571,
+          "recall": 0.8181818181818182,
+          "threshold": 0.2
+        },
+        {
+          "block_rate": 0.16666666666666666,
+          "false_positive_rate": 0.1301775147928994,
+          "precision": 0.26666666666666666,
+          "recall": 0.7272727272727273,
+          "threshold": 0.25
+        },
+        {
+          "block_rate": 0.1388888888888889,
+          "false_positive_rate": 0.10059171597633136,
+          "precision": 0.32,
+          "recall": 0.7272727272727273,
+          "threshold": 0.3
+        },
+        {
+          "block_rate": 0.13333333333333333,
+          "false_positive_rate": 0.09467455621301775,
+          "precision": 0.3333333333333333,
+          "recall": 0.7272727272727273,
+          "threshold": 0.35
+        },
+        {
+          "block_rate": 0.1111111111111111,
+          "false_positive_rate": 0.07100591715976332,
+          "precision": 0.4,
+          "recall": 0.7272727272727273,
+          "threshold": 0.4
+        },
+        {
+          "block_rate": 0.1,
+          "false_positive_rate": 0.0650887573964497,
+          "precision": 0.3888888888888889,
+          "recall": 0.6363636363636364,
+          "threshold": 0.45
+        },
+        {
+          "block_rate": 0.1,
+          "false_positive_rate": 0.0650887573964497,
+          "precision": 0.3888888888888889,
+          "recall": 0.6363636363636364,
+          "threshold": 0.5
+        },
+        {
+          "block_rate": 0.08888888888888889,
+          "false_positive_rate": 0.05325443786982249,
+          "precision": 0.4375,
+          "recall": 0.6363636363636364,
+          "threshold": 0.55
+        },
+        {
+          "block_rate": 0.08888888888888889,
+          "false_positive_rate": 0.05325443786982249,
+          "precision": 0.4375,
+          "recall": 0.6363636363636364,
+          "threshold": 0.6
+        },
+        {
+          "block_rate": 0.08333333333333333,
+          "false_positive_rate": 0.047337278106508875,
+          "precision": 0.4666666666666667,
+          "recall": 0.6363636363636364,
+          "threshold": 0.65
+        },
+        {
+          "block_rate": 0.07777777777777778,
+          "false_positive_rate": 0.04142011834319527,
+          "precision": 0.5,
+          "recall": 0.6363636363636364,
+          "threshold": 0.7
+        },
+        {
+          "block_rate": 0.07222222222222222,
+          "false_positive_rate": 0.03550295857988166,
+          "precision": 0.5384615384615384,
+          "recall": 0.6363636363636364,
+          "threshold": 0.75
+        },
+        {
+          "block_rate": 0.06111111111111111,
+          "false_positive_rate": 0.023668639053254437,
+          "precision": 0.6363636363636364,
+          "recall": 0.6363636363636364,
+          "threshold": 0.8
+        },
+        {
+          "block_rate": 0.05555555555555555,
+          "false_positive_rate": 0.023668639053254437,
+          "precision": 0.6,
+          "recall": 0.5454545454545454,
+          "threshold": 0.85
+        },
+        {
+          "block_rate": 0.05555555555555555,
+          "false_positive_rate": 0.023668639053254437,
+          "precision": 0.6,
+          "recall": 0.5454545454545454,
+          "threshold": 0.9
+        },
+        {
+          "block_rate": 0.027777777777777776,
+          "false_positive_rate": 0.011834319526627219,
+          "precision": 0.6,
+          "recall": 0.2727272727272727,
+          "threshold": 0.95
+        }
+      ]
+    }
+  },
+  "partition_counts": {
+    "calibration": 180,
+    "test": 180,
+    "train": 540
+  },
+  "prevalence": {
+    "calibration": 0.05,
+    "test": 0.06111111111111111,
+    "train": 0.07407407407407407
+  },
+  "report_sha256": "7fda7e62b1aaa5bf58db99f82d901856cd3e8f0b7e375d5a1fc072ce84a83e56",
+  "run_context": {
+    "git_revision": "uncommitted-or-unavailable",
+    "mode": "synthetic",
+    "random_seed": 20260916,
+    "run_at_utc": "2026-09-18T21:08:17.291499+00:00"
+  },
+  "status": "synthetic_mechanics_only"
+}

@@ -1,0 +1,70 @@
+/* Payments theme: the repository's shadcn radix-nova defaults + product colors. */
+@import "@fontsource-variable/geist";
+/* Inter and Satoshi are loaded by each payments page's own <link> tags
+   (Google Fonts + Fontshare — see overview.html etc.), not from here.
+   An @fontsource-variable/inter import used to live on this line too, but
+   it duplicated that existing Google Fonts load with a second, competing
+   Inter source — that was the actual cause of a visible font swap, not a
+   missing font. */
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #0a2540;
+  --card: #ffffff;
+  --card-foreground: #0a2540;
+  --popover: #ffffff;
+  --popover-foreground: #0a2540;
+  --primary: #635bff;
+  --primary-foreground: #ffffff;
+  --secondary: #f6f8fa;
+  --secondary-foreground: #425466;
+  --muted: #f6f8fa;
+  --muted-foreground: #5f708a;
+  --accent: #f0ebff;
+  --accent-foreground: #5543cd;
+  --destructive: #c93451;
+  --border: #e3e8ee;
+  --input: #cdd5e0;
+  --ring: #635bff;
+  --chart-1: #0073e6;
+  --chart-2: #00bce8;
+  --chart-3: #635bff;
+  --chart-4: #ffd049;
+  --chart-5: #ff7900;
+  --chart-previous: #bdcbe0;
+  --chart-successful: #0073e6;
+  --chart-blocked: #00bce8;
+  --chart-refunded: #635bff;
+  --chart-disputed: #ffd049;
+  --chart-fraud-warning: #ff7900;
+  --success: #087f45;
+  --success-soft: #e5f7ec;
+  --warning: #946000;
+  --warning-soft: #fff2cc;
+  --danger-soft: #ffedf1;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3f3f46;
+  --sidebar-primary: #635bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(99, 91, 255, 0.05);
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #635bff;
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", sans-serif;
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-chart-successful: var(--chart-successful);
+  --color-chart-blocked: var(--chart-blocked);
+  --color-chart-refunded: var(--chart-refunded);
+  --color-chart-disputed: var(--chart-disputed);
+  --color-chart-fraud-warning: var(--chart-fraud-warning);
+  --color-chart-previous: var(--chart-previous);
+}

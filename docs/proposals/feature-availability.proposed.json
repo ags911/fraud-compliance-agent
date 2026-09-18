@@ -1,0 +1,113 @@
+{
+  "artifact": "feature-availability",
+  "version": "0.1-proposed",
+  "status": "review-pending",
+  "sources": [
+    "Plaid Sandbox observation",
+    "legacy A-F scenario characterisation",
+    "Sparkov proposed research/demo corpus"
+  ],
+  "features": [
+    {
+      "feature": "amount_minor",
+      "plaid": "observed_but_not_normalised",
+      "legacy": "simulated_float",
+      "sparkov": "observed_float_without_currency",
+      "point_in_time": "not_proven",
+      "permission": "neither",
+      "reason": "Canonical integer-money conversion and source amount semantics are not accepted."
+    },
+    {
+      "feature": "currency_code",
+      "plaid": "observed",
+      "legacy": "simulated_GBP",
+      "sparkov": "unavailable",
+      "point_in_time": "not_applicable",
+      "permission": "neither",
+      "reason": "Useful lineage candidate, but corpus parity and accepted canonical enumerations are absent."
+    },
+    {
+      "feature": "payment_channel",
+      "plaid": "observed",
+      "legacy": "simulated",
+      "sparkov": "unavailable",
+      "point_in_time": "not_applicable",
+      "permission": "neither",
+      "reason": "No neutral categorical mapping or corpus parity."
+    },
+    {
+      "feature": "merchant_category",
+      "plaid": "observed_provider_taxonomy",
+      "legacy": "simulated",
+      "sparkov": "observed",
+      "point_in_time": "not_applicable",
+      "permission": "offline_candidate_only",
+      "reason": "Schema overlap exists, but taxonomy normalisation and online parity remain unapproved."
+    },
+    {
+      "feature": "merchant_reference",
+      "plaid": "nullable_observed",
+      "legacy": "unavailable",
+      "sparkov": "observed",
+      "point_in_time": "not_applicable",
+      "permission": "neither",
+      "reason": "Requires an approved primary-payee and pseudonymisation rule."
+    },
+    {
+      "feature": "country_code",
+      "plaid": "nullable_observed",
+      "legacy": "simulated",
+      "sparkov": "unavailable",
+      "point_in_time": "not_applicable",
+      "permission": "neither",
+      "reason": "No corpus parity and no approved unknown policy."
+    },
+    {
+      "feature": "account_or_customer_history",
+      "plaid": "account_reference_observed",
+      "legacy": "simulated_aggregate_only",
+      "sparkov": "source_specific_card_reference_excluded",
+      "point_in_time": "not_proven",
+      "permission": "neither",
+      "reason": "available_at, stable entity semantics, and historical/online parity are not proven."
+    },
+    {
+      "feature": "event_time_or_time_of_day",
+      "plaid": "date_precision_only",
+      "legacy": "unavailable",
+      "sparkov": "source_timestamp_observed",
+      "point_in_time": "not_proven",
+      "permission": "neither",
+      "reason": "Plaid exact time and source availability time are unavailable; source timestamps cannot be backfilled into online eligibility."
+    },
+    {
+      "feature": "velocity_aggregates",
+      "plaid": "unavailable",
+      "legacy": "simulated",
+      "sparkov": "derivable_offline_only",
+      "point_in_time": "not_proven",
+      "permission": "neither",
+      "reason": "Requires exact time, available_at, correction handling, and entity-link approval."
+    },
+    {
+      "feature": "balance_remaining",
+      "plaid": "account_balance_observed_separately",
+      "legacy": "simulated",
+      "sparkov": "unavailable",
+      "point_in_time": "not_proven",
+      "permission": "neither",
+      "reason": "No event-time balance/availability alignment or corpus parity."
+    },
+    {
+      "feature": "fraud_label",
+      "plaid": "unavailable",
+      "legacy": "simulated_outcome",
+      "sparkov": "observed_simulated_label",
+      "point_in_time": "late_label_required",
+      "permission": "offline_evaluation_candidate_only",
+      "reason": "The source label is simulated and its maturity/availability semantics are unverified."
+    }
+  ],
+  "default_v1_online_feature_set": [],
+  "decision_recommendation": "No feature is approved for online scoring. Use this matrix to drive an explicit review, not to enable a model."
+}

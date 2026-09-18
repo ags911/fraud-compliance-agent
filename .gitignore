@@ -1,0 +1,42 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# JavaScript
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+
+# Raw browser captures are local reference material, not project source. They
+# may contain provider account identifiers and copied third-party assets.
+apps/web/Radar*
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local or managed data and model artifacts — store only sanitised fixtures,
+# schemas, manifests, and experiment records in Git.
+data/
+artifacts/
+models/
+*.joblib
+*.onnx
+*.pt
+*.pth
+*.pkl
+
+# Platform/editor files
+.DS_Store
+.idea/
+.vscode/

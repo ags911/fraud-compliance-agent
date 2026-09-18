@@ -1,0 +1,427 @@
+<div id="kepler-mvp-one-mockup">
+  <div class="screen-picker" role="group" aria-label="Choose MVP 1 screen">
+    <button type="button" data-screen-button="overview" aria-pressed="true">Overview</button>
+    <button type="button" data-screen-button="not-found" aria-pressed="false">Not Found</button>
+  </div>
+
+  <section class="app-frame" aria-label="Kepler MVP 1 screen preview">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+            <line x1="12" y1="12" x2="5.5" y2="5.5"></line>
+            <line x1="12" y1="12" x2="18" y2="4.5"></line>
+            <line x1="12" y1="12" x2="20" y2="12.5"></line>
+            <line x1="12" y1="12" x2="17" y2="19"></line>
+            <line x1="12" y1="12" x2="5" y2="18"></line>
+          </g>
+          <circle cx="5.5" cy="5.5" r="2"></circle>
+          <circle cx="18" cy="4.5" r="2.6"></circle>
+          <circle cx="20" cy="12.5" r="1.6"></circle>
+          <circle cx="17" cy="19" r="2.2"></circle>
+          <circle cx="5" cy="18" r="2.6"></circle>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span>Kepler</span>
+      </div>
+
+      <nav>
+        <button type="button" class="nav-item active" data-nav="overview">
+          <span aria-hidden="true">▦</span><span>Overview</span>
+        </button>
+        <button type="button" class="nav-item"><span aria-hidden="true">↔</span><span>Transactions</span></button>
+        <button type="button" class="nav-item"><span aria-hidden="true">◉</span><span>Reviews</span></button>
+        <button type="button" class="nav-item"><span aria-hidden="true">⬡</span><span>Rules</span></button>
+        <button type="button" class="nav-item"><span aria-hidden="true">▥</span><span>Insights</span></button>
+        <button type="button" class="nav-item"><span aria-hidden="true">⚙</span><span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <strong>Demo environment</strong>
+        <span><i></i> API connected</span>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button type="button" class="sidebar-trigger" aria-label="Toggle navigation menu">◧</button>
+        <span class="topbar-divider" aria-hidden="true"></span>
+        <label class="search-field">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" aria-label="Search transactions" placeholder="Search transaction or review ID" />
+        </label>
+      </header>
+
+      <main class="overview-screen" data-screen="overview">
+        <div class="page-heading">
+          <div>
+            <h1>Overview</h1>
+            <p>Monitor the demo environment and start a fraud assessment.</p>
+          </div>
+          <div class="heading-actions">
+            <button type="button" class="secondary-button">Run scenario</button>
+            <button type="button" class="primary-button">Analyse transaction</button>
+          </div>
+        </div>
+
+        <section class="metric-strip" aria-label="Current environment status">
+          <div><span>API status</span><strong class="status-value"><i></i>Connected</strong></div>
+          <div><span>Available scenarios</span><strong>6</strong></div>
+          <div><span>Active run</span><strong>None</strong></div>
+          <div><span>Environment</span><strong>Local demo</strong></div>
+        </section>
+
+        <section class="panel start-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Start an analysis</h2>
+              <p>Use a supplied scenario or enter a transaction manually.</p>
+            </div>
+          </div>
+          <div class="start-options">
+            <button type="button" class="option-row">
+              <span class="option-icon">▶</span>
+              <span><strong>Run a demo scenario</strong><small>Explore known pass, challenge, hold and outage cases.</small></span>
+              <b aria-hidden="true">›</b>
+            </button>
+            <button type="button" class="option-row">
+              <span class="option-icon">＋</span>
+              <span><strong>Analyse a custom transaction</strong><small>Enter payment and account signals for a new assessment.</small></span>
+              <b aria-hidden="true">›</b>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel activity-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Recent activity</h2>
+              <p>Runs completed during this browser session.</p>
+            </div>
+          </div>
+          <div class="empty-table">
+            <span class="empty-icon" aria-hidden="true">↔</span>
+            <strong>No analyses yet</strong>
+            <p>Completed runs will appear here for the current session.</p>
+          </div>
+        </section>
+      </main>
+
+      <main class="not-found-screen" data-screen="not-found" hidden>
+        <div class="not-found-content">
+          <span class="error-code">404</span>
+          <h1>Page not found</h1>
+          <p>The page may have moved, or you may not have access to it.</p>
+          <div class="not-found-actions">
+            <button type="button" class="primary-button" data-return-overview>Return to overview</button>
+            <button type="button" class="secondary-button">Go back</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+</div>
+
+<style>
+  #kepler-mvp-one-mockup {
+    width: 100%;
+    color: #0a2540;
+    font-family: Satoshi, Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+  #kepler-mvp-one-mockup * { box-sizing: border-box; }
+  #kepler-mvp-one-mockup button,
+  #kepler-mvp-one-mockup input { font: inherit; }
+  #kepler-mvp-one-mockup button { color: inherit; }
+  #kepler-mvp-one-mockup .screen-picker {
+    display: flex;
+    width: max-content;
+    margin: 0 auto 12px;
+    padding: 3px;
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    background: #f6f8fa;
+  }
+  #kepler-mvp-one-mockup .screen-picker button {
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #kepler-mvp-one-mockup .screen-picker button[aria-pressed="true"] {
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(10, 37, 64, 0.08);
+    font-weight: 600;
+  }
+  #kepler-mvp-one-mockup .app-frame {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    min-height: 680px;
+    overflow: hidden;
+    border: 1px solid #e3e8ee;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  #kepler-mvp-one-mockup .sidebar {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border-right: 1px solid #e3e8ee;
+    padding: 18px 8px 8px;
+    color: #3f3f46;
+  }
+  #kepler-mvp-one-mockup .brand {
+    display: flex;
+    height: 20px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+    color: #18181b;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  #kepler-mvp-one-mockup .brand svg { width: 20px; height: 20px; fill: currentColor; }
+  #kepler-mvp-one-mockup nav { display: grid; gap: 4px; margin-top: 30px; }
+  #kepler-mvp-one-mockup .nav-item {
+    display: flex;
+    width: 100%;
+    height: 32px;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    padding: 8px;
+    font-size: 13px;
+    text-align: left;
+  }
+  #kepler-mvp-one-mockup .nav-item span:first-child {
+    display: inline-flex;
+    width: 16px;
+    justify-content: center;
+    font-size: 15px;
+  }
+  #kepler-mvp-one-mockup .nav-item.active { color: #635bff; font-weight: 500; }
+  #kepler-mvp-one-mockup .sidebar-footer {
+    display: grid;
+    gap: 5px;
+    margin-top: auto;
+    border-top: 1px solid #e3e8ee;
+    padding: 10px 8px 2px;
+    font-size: 11px;
+  }
+  #kepler-mvp-one-mockup .sidebar-footer strong { font-weight: 500; }
+  #kepler-mvp-one-mockup .sidebar-footer span { color: #697386; }
+  #kepler-mvp-one-mockup .sidebar-footer i,
+  #kepler-mvp-one-mockup .status-value i {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: #087f45;
+  }
+  #kepler-mvp-one-mockup .workspace { min-width: 0; background: #ffffff; }
+  #kepler-mvp-one-mockup .topbar {
+    display: flex;
+    height: 56px;
+    align-items: center;
+    border-bottom: 1px solid #e3e8ee;
+    padding: 0 28px;
+  }
+  #kepler-mvp-one-mockup .sidebar-trigger {
+    width: 28px;
+    height: 28px;
+    margin-left: -6px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    padding: 0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #kepler-mvp-one-mockup .topbar-divider {
+    width: 1px;
+    height: 20px;
+    margin-left: 6px;
+    background: #e3e8ee;
+  }
+  #kepler-mvp-one-mockup .search-field {
+    display: flex;
+    width: 380px;
+    height: 36px;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+    border: 1px solid #e3e8ee;
+    border-radius: 10px;
+    padding: 0 12px;
+    color: #697386;
+  }
+  #kepler-mvp-one-mockup .search-field input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    color: #0a2540;
+    font-size: 13px;
+  }
+  #kepler-mvp-one-mockup .search-field input::placeholder { color: #697386; }
+  #kepler-mvp-one-mockup main { padding: 28px; }
+  #kepler-mvp-one-mockup .page-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  #kepler-mvp-one-mockup h1,
+  #kepler-mvp-one-mockup h2,
+  #kepler-mvp-one-mockup p { margin: 0; }
+  #kepler-mvp-one-mockup h1 {
+    color: #0a2540;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 30px;
+  }
+  #kepler-mvp-one-mockup .page-heading p {
+    margin-top: 5px;
+    color: #425466;
+    font-size: 13px;
+    line-height: 19px;
+  }
+  #kepler-mvp-one-mockup .heading-actions,
+  #kepler-mvp-one-mockup .not-found-actions { display: flex; gap: 8px; }
+  #kepler-mvp-one-mockup .primary-button,
+  #kepler-mvp-one-mockup .secondary-button {
+    min-height: 34px;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #kepler-mvp-one-mockup .primary-button { border: 1px solid #635bff; background: #635bff; color: #ffffff; }
+  #kepler-mvp-one-mockup .secondary-button { border: 1px solid #e3e8ee; background: #ffffff; }
+  #kepler-mvp-one-mockup .metric-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 18px;
+    overflow: hidden;
+    border: 1px solid #e3e8ee;
+    border-radius: 12px;
+  }
+  #kepler-mvp-one-mockup .metric-strip > div { min-width: 0; padding: 15px 17px; }
+  #kepler-mvp-one-mockup .metric-strip > div + div { border-left: 1px solid #e3e8ee; }
+  #kepler-mvp-one-mockup .metric-strip span { display: block; margin-bottom: 5px; color: #425466; font-size: 11px; }
+  #kepler-mvp-one-mockup .metric-strip strong { font-family: Inter, sans-serif; font-size: 17px; font-weight: 600; }
+  #kepler-mvp-one-mockup .metric-strip .status-value { color: #087f45; font-size: 14px; }
+  #kepler-mvp-one-mockup .panel { overflow: hidden; border: 1px solid #e3e8ee; border-radius: 12px; }
+  #kepler-mvp-one-mockup .panel + .panel { margin-top: 18px; }
+  #kepler-mvp-one-mockup .panel-heading { padding: 17px 18px; border-bottom: 1px solid #e3e8ee; }
+  #kepler-mvp-one-mockup .panel-heading h2 { font-size: 15px; font-weight: 600; line-height: 20px; }
+  #kepler-mvp-one-mockup .panel-heading p { margin-top: 3px; color: #425466; font-size: 11px; }
+  #kepler-mvp-one-mockup .start-options { display: grid; grid-template-columns: 1fr 1fr; }
+  #kepler-mvp-one-mockup .option-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    border: 0;
+    background: #ffffff;
+    padding: 18px;
+    text-align: left;
+    cursor: pointer;
+  }
+  #kepler-mvp-one-mockup .option-row + .option-row { border-left: 1px solid #e3e8ee; }
+  #kepler-mvp-one-mockup .option-icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 8px;
+    background: #f0ebff;
+    color: #5543cd;
+    font-size: 13px;
+  }
+  #kepler-mvp-one-mockup .option-row strong { display: block; font-size: 13px; font-weight: 600; }
+  #kepler-mvp-one-mockup .option-row small { display: block; margin-top: 3px; color: #425466; font-size: 11px; line-height: 16px; }
+  #kepler-mvp-one-mockup .option-row b { color: #697386; font-size: 20px; font-weight: 400; }
+  #kepler-mvp-one-mockup .empty-table { display: grid; min-height: 132px; place-items: center; align-content: center; text-align: center; }
+  #kepler-mvp-one-mockup .empty-table .empty-icon { margin-bottom: 8px; color: #697386; font-size: 20px; }
+  #kepler-mvp-one-mockup .empty-table strong { font-size: 13px; font-weight: 600; }
+  #kepler-mvp-one-mockup .empty-table p { margin-top: 4px; color: #697386; font-size: 11px; }
+  #kepler-mvp-one-mockup .not-found-screen { min-height: 624px; padding: 28px; }
+  #kepler-mvp-one-mockup .not-found-content {
+    display: flex;
+    max-width: 430px;
+    min-height: 420px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  #kepler-mvp-one-mockup .error-code {
+    margin-bottom: 12px;
+    color: #635bff;
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  #kepler-mvp-one-mockup .not-found-content p { margin: 8px 0 20px; color: #425466; font-size: 13px; line-height: 19px; }
+  #kepler-mvp-one-mockup [hidden] { display: none !important; }
+  @media (max-width: 720px) {
+    #kepler-mvp-one-mockup .app-frame { grid-template-columns: 48px minmax(0, 1fr); }
+    #kepler-mvp-one-mockup .sidebar { padding-left: 8px; padding-right: 8px; }
+    #kepler-mvp-one-mockup .brand span,
+    #kepler-mvp-one-mockup .nav-item span:last-child,
+    #kepler-mvp-one-mockup .sidebar-footer { display: none; }
+    #kepler-mvp-one-mockup .brand { padding: 0 4px; overflow: hidden; }
+    #kepler-mvp-one-mockup .nav-item { width: 32px; padding: 8px; overflow: hidden; }
+    #kepler-mvp-one-mockup .topbar { padding: 0 20px; }
+    #kepler-mvp-one-mockup .search-field { width: min(380px, calc(100% - 35px)); }
+    #kepler-mvp-one-mockup main { padding: 24px 20px; }
+    #kepler-mvp-one-mockup .page-heading { display: block; }
+    #kepler-mvp-one-mockup .heading-actions { margin-top: 16px; }
+    #kepler-mvp-one-mockup .metric-strip { grid-template-columns: 1fr 1fr; }
+    #kepler-mvp-one-mockup .metric-strip > div:nth-child(3) { border-left: 0; border-top: 1px solid #e3e8ee; }
+    #kepler-mvp-one-mockup .metric-strip > div:nth-child(4) { border-top: 1px solid #e3e8ee; }
+    #kepler-mvp-one-mockup .start-options { grid-template-columns: 1fr; }
+    #kepler-mvp-one-mockup .option-row + .option-row { border-top: 1px solid #e3e8ee; border-left: 0; }
+  }
+  @media (max-width: 470px) {
+    #kepler-mvp-one-mockup .app-frame { grid-template-columns: 1fr; }
+    #kepler-mvp-one-mockup .sidebar { display: none; }
+    #kepler-mvp-one-mockup .topbar { padding: 0 14px; }
+    #kepler-mvp-one-mockup main { padding: 24px 14px; }
+    #kepler-mvp-one-mockup .heading-actions { flex-wrap: wrap; }
+    #kepler-mvp-one-mockup .metric-strip { grid-template-columns: 1fr; }
+    #kepler-mvp-one-mockup .metric-strip > div + div { border-top: 1px solid #e3e8ee; border-left: 0; }
+    #kepler-mvp-one-mockup .not-found-actions { flex-wrap: wrap; }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById("kepler-mvp-one-mockup");
+    const buttons = Array.from(root.querySelectorAll("[data-screen-button]"));
+    const screens = Array.from(root.querySelectorAll("[data-screen]"));
+    const overviewNav = root.querySelector('[data-nav="overview"]');
+
+    function showScreen(name) {
+      screens.forEach((screen) => { screen.hidden = screen.dataset.screen !== name; });
+      buttons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.screenButton === name));
+      });
+      overviewNav.classList.toggle("active", name === "overview");
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => showScreen(button.dataset.screenButton));
+    });
+    root.querySelector("[data-return-overview]").addEventListener("click", () => showScreen("overview"));
+  })();
+</script>

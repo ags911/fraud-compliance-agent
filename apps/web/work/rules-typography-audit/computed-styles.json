@@ -1,0 +1,5452 @@
+{
+  "desktop": [
+    {
+      "text": "Kepler",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "17px",
+      "weight": "600",
+      "lineHeight": "20px",
+      "letterSpacing": "-0.17px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Overview",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Transactions",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Reviews",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "7",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "500",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Rules",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "700",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Insights",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Settings",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Policy set v12",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "500",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "All systems operational",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Toggle navigation menu",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Search transaction, customer, or review ID",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "INPUT",
+      "slot": "input"
+    },
+    {
+      "text": "Rules performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "26px",
+      "weight": "700",
+      "lineHeight": "31.2px",
+      "letterSpacing": "-0.65px",
+      "tag": "H1",
+      "slot": null
+    },
+    {
+      "text": "Monitor payment outcomes, identify changes in rule behavior, and inspect the transactions behind them.",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "Select rules",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Create rule",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Overview",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "650",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Lists",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Activity",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–23 Sep 2026",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "popover-trigger"
+    },
+    {
+      "text": "Matching payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "3,424",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Success rate",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "93.5%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "6.8%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early warnings",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Payment outcomes",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "22.8571px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-title"
+    },
+    {
+      "text": "Payment volume by outcome, GBP",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-description"
+    },
+    {
+      "text": "7D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "30D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "650",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "90D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£599,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£118,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£45,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£24,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£20,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "1 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "3 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "5 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "7 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "9 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "11 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "13 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "15 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "17 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "19 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "21 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "23 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£20k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£40k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£60k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£80k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "View chart data",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "SUMMARY",
+      "slot": null
+    },
+    {
+      "text": "Matching payments",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "tag": "H2",
+      "slot": null
+    },
+    {
+      "text": "Transactions influenced by the selected rules and date range",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "AMOUNT",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "STATUS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "CUSTOMER",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "DATE",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "ACTIONS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£141.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Disputed",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_JF019FNas284NF",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:54",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£84.20 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Succeeded",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_NAQk8Q825nadfh",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:41",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£62.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_mxbOQJE25T7nzkN",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£11.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Refund pending",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_fgbs8152ABSbf46",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 08:57",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–4 of 3,424 payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    }
+  ],
+  "chartTable": [
+    {
+      "text": "Date",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "1 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "£37k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "£8k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px"
+    }
+  ],
+  "distribution": [
+    {
+      "text": "Kepler",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "17px",
+      "weight": "600",
+      "lineHeight": "20px",
+      "letterSpacing": "-0.17px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Overview",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Transactions",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Reviews",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "7",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "500",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Rules",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "700",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Insights",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Settings",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Policy set v12",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "500",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "All systems operational",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Toggle navigation menu",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Search transaction, customer, or review ID",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "INPUT",
+      "slot": "input"
+    },
+    {
+      "text": "Rules performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "26px",
+      "weight": "700",
+      "lineHeight": "31.2px",
+      "letterSpacing": "-0.65px",
+      "tag": "H1",
+      "slot": null
+    },
+    {
+      "text": "Monitor payment outcomes, identify changes in rule behavior, and inspect the transactions behind them.",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "Select rules",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Create rule",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Overview",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "650",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Lists",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Activity",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–23 Sep 2026",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "popover-trigger"
+    },
+    {
+      "text": "Matching payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "3,424",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Success rate",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "93.5%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "6.8%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early warnings",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Payment outcomes",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "22.8571px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-title"
+    },
+    {
+      "text": "Payment volume by outcome, GBP",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-description"
+    },
+    {
+      "text": "7D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "30D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "650",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "90D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Successful",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "18.7px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£599,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "18.7px",
+      "letterSpacing": "normal",
+      "tag": "STRONG",
+      "slot": null
+    },
+    {
+      "text": "Share",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "18.7px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "74.3%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "18.7px",
+      "letterSpacing": "normal",
+      "tag": "STRONG",
+      "slot": null
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£599,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£118,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£45,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£24,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£20,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "1 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "3 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "5 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "7 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "9 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "11 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "13 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "15 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "17 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "19 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "21 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "23 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£20k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£40k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£60k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£80k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "View chart data",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "SUMMARY",
+      "slot": null
+    },
+    {
+      "text": "Date",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "1 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£37k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£8k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "3 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£43k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "5 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£35k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£7k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "7 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£51k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "9 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£46k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£11k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "11 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£55k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "13 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£48k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£12k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "15 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£58k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "17 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£52k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£11k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "19 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£61k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "21 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£54k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£12k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "23 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£59k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Matching payments",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "tag": "H2",
+      "slot": null
+    },
+    {
+      "text": "Transactions influenced by the selected rules and date range",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "AMOUNT",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "STATUS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "CUSTOMER",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "DATE",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "ACTIONS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£141.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Disputed",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_JF019FNas284NF",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:54",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£84.20 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Succeeded",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_NAQk8Q825nadfh",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:41",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£62.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_mxbOQJE25T7nzkN",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£11.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Refund pending",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_fgbs8152ABSbf46",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 08:57",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–4 of 3,424 payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    }
+  ],
+  "calendar": [
+    {
+      "text": "September 2026",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px"
+    },
+    {
+      "text": "Su",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "Mo",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "Tu",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "We",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "Th",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "Fr",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "Sa",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px"
+    },
+    {
+      "text": "30",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px"
+    },
+    {
+      "text": "31",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px"
+    },
+    {
+      "text": "1",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px"
+    },
+    {
+      "text": "2",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px"
+    }
+  ],
+  "fontFaces": [
+    {
+      "family": "Satoshi",
+      "weight": "400",
+      "status": "loaded"
+    },
+    {
+      "family": "Satoshi",
+      "weight": "500",
+      "status": "loaded"
+    },
+    {
+      "family": "Satoshi",
+      "weight": "700",
+      "status": "loaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "status": "loaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "500",
+      "status": "loaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "600",
+      "status": "loaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "unloaded"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "status": "loaded"
+    },
+    {
+      "family": "Geist Variable",
+      "weight": "100 900",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "weight": "100 900",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "weight": "100 900",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "weight": "100 900",
+      "status": "unloaded"
+    },
+    {
+      "family": "Geist Variable",
+      "weight": "100 900",
+      "status": "loaded"
+    }
+  ],
+  "mobile": [
+    {
+      "text": "Toggle navigation menu",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Search transaction, customer, or review ID",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "tag": "INPUT",
+      "slot": "input"
+    },
+    {
+      "text": "Rules performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "26px",
+      "weight": "700",
+      "lineHeight": "31.2px",
+      "letterSpacing": "-0.65px",
+      "tag": "H1",
+      "slot": null
+    },
+    {
+      "text": "Monitor payment outcomes, identify changes in rule behavior, and inspect the transactions behind them.",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "Select rules",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Create rule",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "650",
+      "lineHeight": "19.5px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Overview",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Performance",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "650",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Lists",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Activity",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–23 Sep 2026",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "popover-trigger"
+    },
+    {
+      "text": "Matching payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "3,424",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Success rate",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "93.5%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "6.8%",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early warnings",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "20px",
+      "weight": "670",
+      "lineHeight": "30px",
+      "letterSpacing": "-0.4px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Payment outcomes",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "22.8571px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-title"
+    },
+    {
+      "text": "Payment volume by outcome, GBP",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "DIV",
+      "slot": "card-description"
+    },
+    {
+      "text": "7D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "30D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "650",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "90D",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£599,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£118,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£45,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£24,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "700",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£20,000",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "1 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "3 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "5 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "7 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "9 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "11 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "13 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "15 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "17 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "19 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "21 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "23 Sep",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£20k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£40k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£60k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "£80k",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "14.6667px",
+      "letterSpacing": "normal",
+      "tag": "tspan",
+      "slot": null
+    },
+    {
+      "text": "View chart data",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "SUMMARY",
+      "slot": null
+    },
+    {
+      "text": "Date",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Successful",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Failed & blocked",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Refunded",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Disputed",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "500",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "1 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£37k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£8k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "3 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£43k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "5 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£35k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£7k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "7 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£51k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "9 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£46k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£11k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "11 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£55k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "13 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£48k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£12k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "15 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£58k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "17 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£52k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£11k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "19 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£61k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£9k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£1k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "21 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£54k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£12k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£5k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£3k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "23 Sep",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£59k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£10k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£4k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "£2k",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "21.4286px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Matching payments",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "16px",
+      "weight": "700",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "tag": "H2",
+      "slot": null
+    },
+    {
+      "text": "Transactions influenced by the selected rules and date range",
+      "family": "Satoshi, Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "P",
+      "slot": null
+    },
+    {
+      "text": "AMOUNT",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "STATUS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "CUSTOMER",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "DATE",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "TH",
+      "slot": "table-head"
+    },
+    {
+      "text": "ACTIONS",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "0.55px",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£141.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Disputed",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_JF019FNas284NF",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:54",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£84.20 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Succeeded",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_NAQk8Q825nadfh",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:41",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£62.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Early fraud warning",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_mxbOQJE25T7nzkN",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 09:18",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "£11.00 GBP",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "700",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Refund pending",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "11px",
+      "weight": "700",
+      "lineHeight": "15.7143px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "cus_fgbs8152ABSbf46",
+      "family": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "17.1429px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "Today, 08:57",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "TD",
+      "slot": "table-cell"
+    },
+    {
+      "text": "•••",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "13px",
+      "weight": "400",
+      "lineHeight": "18.5714px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": null
+    },
+    {
+      "text": "1–4 of 3,424 payments",
+      "family": "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+      "size": "12px",
+      "weight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "£0k",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "11px",
+      "weight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "September 2026",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Su",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Mo",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Tu",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "We",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Th",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Fr",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Sa",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "30",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "31",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "1",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "2",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "3",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "4",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "5",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "6",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "7",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "8",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "9",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "10",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "11",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "12",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "13",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "14",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "15",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "16",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "17",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "18",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "19",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "20",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "21",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "22",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "23",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "24",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "25",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "26",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "27",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "28",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "29",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "30",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "1",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "2",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "3",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "October 2026",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "14px",
+      "weight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "tag": "SPAN",
+      "slot": null
+    },
+    {
+      "text": "Su",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Mo",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Tu",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "We",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Th",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Fr",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "Sa",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "13.8px",
+      "weight": "400",
+      "lineHeight": "19.7143px",
+      "letterSpacing": "normal",
+      "tag": "TH",
+      "slot": null
+    },
+    {
+      "text": "27",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "28",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "29",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "30",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "1",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "2",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "3",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "4",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "5",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "6",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "7",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "8",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "9",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "10",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "11",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "12",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "13",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "14",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "15",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "16",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "17",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "18",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "19",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "20",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "21",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "22",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "23",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "24",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "25",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "26",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "27",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "28",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "29",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "30",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    },
+    {
+      "text": "31",
+      "family": "\"Geist Variable\", sans-serif",
+      "size": "15px",
+      "weight": "400",
+      "lineHeight": "15px",
+      "letterSpacing": "normal",
+      "tag": "BUTTON",
+      "slot": "button"
+    }
+  ]
+}

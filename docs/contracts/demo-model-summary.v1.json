@@ -1,0 +1,30 @@
+{
+  "contract_version": "1.0",
+  "approval_status": "accepted",
+  "scope": "Read-only portfolio demonstration endpoint; no runtime model scoring or payment action.",
+  "http": {
+    "method": "GET",
+    "path": "/demo/model-summary",
+    "success_status": 200,
+    "unavailable_status": 503,
+    "unavailable_error": "demo_model_summary_unavailable"
+  },
+  "response": {
+    "artifact": "synthetic_benchmark_model_summary",
+    "status": "mechanics_evaluation_complete_not_deployable",
+    "data_source": "Sparkov simulated credit-card transactions",
+    "training_scope": "string",
+    "dataset_sha256": "string",
+    "feature_columns": ["string"],
+    "partition_counts": {"train": "integer", "calibration": "integer", "test": "integer"},
+    "test_prevalence": "number",
+    "model_results": [{"model_id": "string", "label": "string", "pr_auc": "number", "roc_auc": "number", "brier_score": "number"}],
+    "release_boundary": ["string"],
+    "report_sha256": "string"
+  },
+  "prohibitions": [
+    "No model weights, scores, source rows, identifiers, thresholds, or payment actions are exposed.",
+    "The endpoint cannot be used as a fraud-decision or model-release API.",
+    "The UI must display the synthetic and not-deployable status with the metrics."
+  ]
+}

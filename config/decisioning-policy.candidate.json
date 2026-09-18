@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1",
+  "status": "candidate",
+  "owner": "fraud-risk",
+  "effective_scope": "not configured",
+  "purpose": "Reserved location for the approved deterministic-control and routing policy.",
+  "policy_version": null,
+  "controls": [],
+  "routing": null,
+  "notes": "This file is deliberately not consumed by runtime code. Populate only after Phase 0 policy and contract approval."
+}

@@ -1,0 +1,36 @@
+{
+  "artifact": "corpus-and-label-feasibility",
+  "version": "0.1-proposed",
+  "status": "review-pending-not-approved-for-training",
+  "candidate": "Sparkov simulated credit-card transactions",
+  "purpose": "Research/demo evidence for pipeline mechanics, not a production fraud-performance claim.",
+  "access_and_lineage": {
+    "source": "https://www.kaggle.com/datasets/kartik2112/fraud-detection",
+    "declared_licence": "CC0: Public Domain (verified in Kaggle metadata on 2026-09-17)",
+    "raw_storage": "ignored local data/raw/sparkov",
+    "archive_sha256": "4e32829b9ba5a6b17af707c513c15204011044df0e8971e431cedca3d8c0a8a1"
+  },
+  "observed_schema_evidence": {
+    "train_rows": 1296675,
+    "train_label_counts": {"0": 1289169, "1": 7506},
+    "test_rows": 555719,
+    "test_label_counts": {"0": 553574, "1": 2145},
+    "required_fields_present": ["trans_date_trans_time", "amt", "merchant", "category", "trans_num", "is_fraud"],
+    "excluded_source_fields": ["cc_num", "first", "last", "gender", "street", "city", "state", "zip", "lat", "long", "dob", "job", "merch_lat", "merch_long"]
+  },
+  "proposed_prediction_unit": "One simulated card transaction assessed for the source is_fraud label.",
+  "label_assessment": {
+    "observed_field": "is_fraud",
+    "label_type": "simulated binary source label",
+    "availability_time": "unknown",
+    "maturity": "unknown",
+    "conclusion": "May support mechanics-only offline evaluation after protocol review; cannot support a production target or a mature-outcome claim."
+  },
+  "temporal_assessment": {
+    "event_time_field": "trans_date_trans_time",
+    "source_train_test_split": "present but not accepted as chronological or leakage-safe evidence",
+    "conclusion": "Notebook 07 must independently freeze chronological partitions and test entity/time leakage."
+  },
+  "feature_parity_assessment": "Insufficient for online scoring: Plaid availability time, exact time, direction, canonical money conversion, and neutral feature taxonomy are unresolved.",
+  "decision_recommendation": "Admit Sparkov only as a proposed research/demo corpus for further feasibility and evaluation-protocol work. Do not create an approved-data training contract or serve a model."
+}

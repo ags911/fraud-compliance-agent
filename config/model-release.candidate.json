@@ -1,0 +1,13 @@
+{
+  "schema_version": "0.1",
+  "status": "candidate",
+  "owner": "model-risk",
+  "effective_scope": "not configured",
+  "purpose": "Reserved location for approved promoted-model metadata.",
+  "model_version": null,
+  "artifact_uri": null,
+  "training_data_manifest": null,
+  "evaluation_record": null,
+  "approved_by": null,
+  "notes": "This file is deliberately not consumed by runtime code. A model cannot be promoted without an approved target, dataset, evaluation, and release decision."
+}

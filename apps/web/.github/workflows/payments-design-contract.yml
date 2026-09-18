@@ -1,0 +1,22 @@
+name: Payments design contract
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    # Visual baselines are recorded with Chrome on macOS to keep text
+    # rasterisation stable between local approval and CI.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check:payments-design
+      - run: npm run build
+      - run: npm run test:payments

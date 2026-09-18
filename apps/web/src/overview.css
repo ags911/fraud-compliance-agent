@@ -1,0 +1,629 @@
+
+/* Informational only, never clickable — styled as a small pill tag (like
+   payments-status-pill) rather than button chrome, so it doesn't imply an
+   affordance it doesn't have. */
+.overview-demo-badge {
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-help {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0 2px;
+  background: transparent;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-help:hover {
+  color: var(--payments-color-foreground);
+}
+
+.overview-demo-dialog__overlay {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  background: rgba(10, 37, 64, 0.16);
+}
+
+.overview-demo-dialog {
+  position: fixed;
+  z-index: 61;
+  top: 50%;
+  left: 50%;
+  width: min(440px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--payments-color-border);
+  border-radius: var(--payments-radius-panel);
+  background: var(--payments-color-background);
+  box-shadow: 0 18px 48px rgba(10, 37, 64, 0.2);
+  color: var(--payments-color-foreground);
+}
+
+.overview-demo-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--payments-color-divider);
+  padding: 20px 20px 16px;
+}
+
+.overview-demo-dialog__eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--payments-color-muted-foreground);
+
+  text-transform: uppercase;
+}
+
+.overview-demo-dialog__header h2 {
+  margin: 0;
+}
+
+.overview-demo-dialog__header p {
+  margin: 7px 0 0;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-dialog__close {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: var(--payments-radius-control);
+  background: transparent;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-dialog__close:hover {
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-foreground);
+}
+
+.overview-demo-dialog__checklist {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 12px 20px;
+  list-style: none;
+}
+
+.overview-demo-dialog__checklist li {
+  display: grid;
+  grid-template-columns: var(--payments-onboarding-step-marker-size) minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.overview-demo-dialog__step-icon {
+  display: grid;
+  width: var(--payments-onboarding-step-marker-size);
+  height: var(--payments-onboarding-step-marker-size);
+  place-items: center;
+  border: 1px solid var(--payments-color-border);
+  border-radius: 999px;
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-secondary-foreground);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-demo-dialog__checklist li[data-complete="true"] .overview-demo-dialog__step-icon {
+  border-color: var(--payments-color-success);
+  background: var(--payments-color-success-soft);
+  color: var(--payments-color-success);
+}
+
+.overview-demo-dialog__checklist strong {
+  display: block;
+}
+
+.overview-demo-dialog__checklist p {
+  margin: 3px 0 0;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-top: 1px solid var(--payments-color-divider);
+  padding: 13px 20px;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-demo-dialog__done {
+  height: 30px;
+  flex: 0 0 auto;
+  border: 1px solid var(--payments-color-primary);
+  border-radius: var(--payments-radius-control);
+  padding: 0 10px;
+  background: var(--payments-color-primary);
+  color: #ffffff;
+}
+
+/* A dismissible "Getting started" checklist card — a vertical todo list
+   with a progress bar and per-row completion state, rather than a
+   horizontal stepper. */
+.overview-checklist {
+  display: block;
+  margin: -2px 0 18px;
+  border: 1px solid var(--payments-color-border);
+  border-radius: var(--payments-radius-panel);
+  background: var(--payments-color-background);
+}
+
+.overview-checklist__header {
+  display: flex;
+  /* Matches a checklist row's natural height (padding + two lines of
+     title/description text) so the header bar doesn't look shorter than
+     the rows below it. */
+  min-height: 68px;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--payments-color-divider);
+  padding: var(--payments-space-7) var(--payments-onboarding-panel-padding);
+}
+
+.overview-checklist__heading {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.overview-checklist__heading strong {
+  color: var(--payments-color-foreground);
+}
+
+.overview-checklist__heading span {
+  color: var(--payments-color-muted-foreground);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-checklist__progress {
+  flex: 1 1 auto;
+}
+
+.overview-checklist__dismiss {
+  display: grid;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--payments-radius-control);
+  background: transparent;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-checklist__dismiss:hover {
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-foreground);
+}
+
+.overview-checklist__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.overview-checklist__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--payments-space-7) var(--payments-onboarding-panel-padding);
+}
+
+.overview-checklist__list li + li {
+  border-top: 1px solid var(--payments-color-divider);
+}
+
+.overview-checklist__list li[data-state="upcoming"] {
+  opacity: 0.55;
+}
+
+.overview-checklist__check {
+  display: grid;
+  flex-shrink: 0;
+  width: var(--payments-onboarding-step-marker-size);
+  height: var(--payments-onboarding-step-marker-size);
+  place-items: center;
+  border: 1px solid var(--payments-color-border);
+  border-radius: 999px;
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-secondary-foreground);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-checklist__list li[data-state="current"] .overview-checklist__check {
+  border-color: var(--payments-color-primary);
+  background: var(--payments-color-primary);
+  color: var(--payments-color-primary-foreground);
+}
+
+.overview-checklist__list li[data-state="complete"] .overview-checklist__check {
+  border-color: var(--payments-color-success);
+  background: var(--payments-color-success-soft);
+  color: var(--payments-color-success);
+}
+
+.overview-checklist__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.overview-checklist__body strong {
+  display: block;
+  color: var(--payments-color-foreground);
+}
+
+.overview-checklist__list li[data-state="complete"] .overview-checklist__body strong {
+  color: var(--payments-color-muted-foreground);
+
+  text-decoration: line-through;
+  text-decoration-color: var(--payments-color-border);
+}
+
+.overview-checklist__body p {
+  margin: 3px 0 0;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-checklist__action {
+  display: inline-flex;
+  height: var(--payments-control-height);
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--payments-color-primary);
+  border-radius: var(--payments-radius-control);
+  padding: 0 10px;
+  background: var(--payments-color-primary);
+  color: var(--payments-color-primary-foreground);
+}
+
+.overview-notice {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -4px 0 18px;
+  border: 1px solid var(--payments-color-border);
+  border-radius: var(--payments-radius-control);
+  padding: 0 12px;
+  background: var(--payments-color-muted-background);
+  color: var(--payments-color-secondary-foreground);
+}
+
+.overview-notice button {
+  border: 0;
+  padding: 4px;
+  background: transparent;
+  color: var(--payments-color-primary);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 18px;
+}
+
+.overview-outcomes {
+  display: grid;
+  gap: 17px;
+  padding: 18px;
+}
+
+.overview-outcome {
+  display: grid;
+  gap: 7px;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-outcome__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+}
+
+.overview-outcome__identity {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr);
+  min-width: 0;
+  align-items: center;
+  gap: 3px 7px;
+}
+
+.overview-outcome__marker {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.overview-outcome__count {
+  grid-column: 2;
+  overflow: hidden;
+  color: var(--payments-color-muted-foreground);
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-outcome__count::before {
+  content: none;
+}
+
+.overview-outcome__metrics {
+  display: grid;
+  grid-template-columns: 92px 54px;
+  align-items: center;
+  text-align: right;
+}
+
+.overview-outcome__metrics > strong {
+  color: var(--payments-color-foreground);
+}
+
+.overview-outcome__metrics > span {
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-outcome__track {
+  /* Shared progress geometry and track are supplied by PaymentsProgress. */
+}
+
+/* Sourced from the shared --payments-color-* tokens (brand green/orange/
+   red), full opacity for the marker and the shared progress-bar fill. */
+.overview-outcome__marker[data-tone="success"] {
+  background: var(--payments-color-success);
+}
+
+.overview-outcome__marker[data-tone="warning"] {
+  background: var(--payments-color-warning);
+}
+
+.overview-outcome__marker[data-tone="danger"] {
+  background: var(--payments-color-danger);
+}
+
+.overview-health {
+  padding: 0;
+}
+
+.overview-health__list {
+  margin: 0;
+}
+
+.overview-health__list > div {
+  display: flex;
+  min-height: 39px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--payments-color-divider);
+  padding: 0 18px;
+}
+
+.overview-health__list dt {
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-health__list dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-health__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--payments-color-success);
+}
+
+.overview-health__list .overview-health__unavailable {
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-health__note {
+  margin: 0;
+  padding: 12px 18px 13px;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-actions,
+.overview-decisions {
+  margin-top: 18px;
+}
+
+.overview-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--payments-color-border);
+  border-bottom: 0;
+  border-radius: var(--payments-radius-panel) var(--payments-radius-panel) 0 0;
+  padding: 14px 18px;
+  background: var(--payments-color-background);
+}
+
+.overview-section-heading h2 {
+  margin: 0;
+}
+
+.overview-section-heading p {
+  margin: 5px 0 0;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-section-heading > span {
+  color: var(--payments-color-muted-foreground);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--payments-color-border);
+  border-radius: 0 0 var(--payments-radius-panel) var(--payments-radius-panel);
+}
+
+.overview-actions__grid > button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  border: 0;
+  border-right: 1px solid var(--payments-color-divider);
+  padding: 12px 18px;
+  background: var(--payments-color-background);
+  color: var(--payments-color-foreground);
+  text-align: left;
+}
+
+.overview-actions__grid > button:last-child {
+  border-right: 0;
+}
+
+.overview-actions__grid > button:hover {
+  background: var(--payments-color-muted-background);
+}
+
+.overview-actions__grid > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.overview-actions__grid > button:disabled:hover {
+  background: var(--payments-color-background);
+}
+
+.overview-action__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: var(--payments-radius-control);
+  background: var(--payments-color-active-background);
+  color: var(--payments-color-active-foreground);
+}
+
+.overview-action__icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5;
+}
+
+.overview-actions__grid strong,
+.overview-actions__grid small {
+  display: block;
+}
+
+.overview-actions__grid small {
+  margin-top: 4px;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-actions__grid > button > svg {
+  color: var(--payments-color-muted-foreground);
+  stroke-width: 1.5;
+}
+
+.overview-table {
+  margin-top: 0;
+  border-radius: 0 0 var(--payments-radius-panel) var(--payments-radius-panel);
+}
+
+.overview-transaction-id {
+  color: var(--payments-color-secondary-foreground);
+}
+
+.overview-time {
+  color: var(--payments-color-muted-foreground);
+}
+
+.payments-table-panel [data-slot="table-cell"].overview-table__empty {
+  height: 96px;
+  color: var(--payments-color-muted-foreground);
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+.overview-demo-help {
+    min-height: 34px;
+  }
+
+  .overview-demo-dialog__header,
+  .overview-demo-dialog__checklist,
+  .overview-demo-dialog__footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .overview-checklist__header {
+    flex-wrap: wrap;
+  }
+
+  .overview-checklist__progress {
+    order: 3;
+    flex: 1 1 100%;
+  }
+
+.overview-checklist__action {
+    align-self: flex-start;
+  }
+
+  .overview-outcome__metrics {
+    grid-template-columns: 76px 46px;
+  }
+
+  .overview-actions__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview-actions__grid > button {
+    border-right: 0;
+    border-bottom: 1px solid var(--payments-color-divider);
+  }
+
+  .overview-actions__grid > button:last-child {
+    border-bottom: 0;
+  }
+
+.overview-section-heading > span {
+    display: none;
+  }
+}
