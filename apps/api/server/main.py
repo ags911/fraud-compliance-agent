@@ -146,17 +146,36 @@ def _find_scenario(scenario_id: str) -> dict | None:
     return None
 
 
+_REPOSITORY_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_MODEL_REPORT_PATH = _REPOSITORY_ROOT / "docs" / "proposals" / "fast-path-model-release.candidate.json"
+_MODEL_CONTRACT_PATH = _REPOSITORY_ROOT / "docs" / "contracts" / "model-training-contract.v1.json"
+# Only an approved-mode notebook run may back the Sparkov label below; a
+# synthetic or gated run writes a different status and must never be served.
+_ACCEPTED_REPORT_STATUS = "candidate_evaluation_pending_review"
+
+
 def _demo_model_summary() -> DemoModelSummary:
-    """Read only sanitised benchmark evidence; never load a model or source rows."""
-    repository_root = Path(__file__).resolve().parent.parent.parent.parent
-    report_path = repository_root / "docs" / "proposals" / "fast-path-model-release.candidate.json"
-    contract_path = repository_root / "docs" / "contracts" / "model-training-contract.v1.json"
+    """Read only sanitised benchmark evidence; never load a model or source rows.
+
+    Raises:
+        HTTPException: 503 when the report or contract is missing or malformed,
+            or when the report is not an approved-mode run of the accepted
+            contract (wrong status, feature list, or dataset checksum).
+    """
+    report_path = _MODEL_REPORT_PATH
+    contract_path = _MODEL_CONTRACT_PATH
     if not report_path.is_file() or not contract_path.is_file():
         raise HTTPException(status_code=503, detail="demo_model_summary_unavailable")
     try:
         report = json.loads(report_path.read_text(encoding="utf-8"))
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
         input_manifest = report["input_manifest"]
+        if (
+            report.get("status") != _ACCEPTED_REPORT_STATUS
+            or input_manifest["feature_columns"] != contract["feature_columns"]
+            or input_manifest["dataset_sha256"] != contract["dataset_sha256"]
+        ):
+            raise HTTPException(status_code=503, detail="demo_model_summary_unavailable")
         model_labels = {
             "logistic_regression_baseline": "Logistic Regression baseline",
             "xgboost_candidate": "XGBoost candidate",

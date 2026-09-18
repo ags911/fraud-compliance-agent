@@ -8,7 +8,10 @@ Decision supported: Post-Phase-0 — candidate model release review
 
 - Date/time (UTC): 2026-09-18 (accepted mechanics-only Sparkov rerun after
   output-isolation and repository-relative path fixes)
-- Git revision: `uncommitted-or-unavailable` (the monorepo has no initial commit yet)
+- Git revision: `538651a7c3abec5daec3da9bbc7592e536bef348`. The artifact was
+  regenerated in approved mode at 2026-09-18T22:15Z after a direct default-mode
+  notebook run overwrote it with a synthetic report. Partition counts,
+  prevalence, and all six headline metrics matched the earlier accepted run.
 - Approved configuration/data revision: `model-training-contract.v1.json`, mechanics-only scope
 - Data class: Sanitised evidence only; no raw provider records, identifiers, secrets, or model artifacts in Git
 
@@ -51,7 +54,9 @@ training, model serving, or payment authority.
 `docs/proposals/fast-path-model-release.candidate.json`  
 Status: `candidate_evaluation_pending_review`  
 Report payload SHA-256:
-`5403cfb9a5ab1f4a31bf2b1a72b39e4a41f4cb6c07b3af66aa7990f35a1b8679`
+`ad479ad6cc123bfeda714c8afcf757d93ecc750a36cf00e44eba75753c092161`
+(the hash covers the run timestamp and revision, so it differs from the earlier
+run's `5403cfb9…` although the metrics are identical)
 
 ## Proposed next decision
 
