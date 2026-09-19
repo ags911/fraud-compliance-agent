@@ -2,7 +2,7 @@
 
 Reviewed: 2026-09-13. Scope: the latest supplied PRD, the API checkout, and selected normative documents and source in the pinned SDK. This is a planning assessment, not a completed implementation or compliance assessment. The frontend and live GitHub delivery status were not audited.
 
-Source PRD: `/Users/darrengidado/.codex/attachments/7867a6f5-17f6-4252-9c62-b4eefb9bfb6e/pasted-text.txt`.
+Source PRD: a pasted document held outside the repository (local path omitted).
 
 API baseline: `e67d795243816ed5cc4abc1b472c26faed86f759`.
 SDK baseline: `27844250f926fe0ade2250dd99975c7283defc80`.

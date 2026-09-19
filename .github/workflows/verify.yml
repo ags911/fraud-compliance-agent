@@ -33,6 +33,9 @@ jobs:
 
   api:
     name: API checks
+    # Fork pull requests cannot read the deploy-key secret, so this job is skipped
+    # for them; the no-SDK job below still runs and covers what a fork can test.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     defaults:
       run:
