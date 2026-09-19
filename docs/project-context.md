@@ -53,7 +53,7 @@ not present synthetic demo data as live customer, Plaid, or model output.
   data capability.
 - The candidate consolidated PRD is [`docs/product/prd.md`](product/prd.md).
 - The proposed fast-path model technical record is
-  [`docs/proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md`](proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
+  [`docs/proposals/fast-path-fraud-model-technical-spec.md`](proposals/fast-path-fraud-model-technical-spec.md).
 - The single active candidate delivery plan is
   [`docs/product/implementation-plan.md`](product/implementation-plan.md).
 

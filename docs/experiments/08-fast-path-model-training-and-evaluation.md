@@ -66,4 +66,4 @@ calibration method, production release criteria, and independent review remain
 required before any model can be considered beyond this demonstration.
 
 The proposed model strategy, data gates, and later monitoring plan are captured
-in [the fast-path model technical specification](../proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
+in [the fast-path model technical specification](../proposals/fast-path-fraud-model-technical-spec.md).

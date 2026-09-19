@@ -217,5 +217,5 @@ API code—not in exploratory notebooks.
 
 - [Candidate PRD](../product/prd.md)
 - [Active showcase delivery plan](../product/implementation-plan.md)
-- [Notebook plan](../../notebooks/NOTEBOOK-PLAN.md)
+- [Notebook plan](../../notebooks/notebook-plan.md)
 - [Notebook 08 experiment record](../experiments/08-fast-path-model-training-and-evaluation.md)

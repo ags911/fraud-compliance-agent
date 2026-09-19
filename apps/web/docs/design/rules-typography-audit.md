@@ -96,6 +96,6 @@ The larger redesign was replaced at the user's request. The current page restore
 
 Calendar weekday labels increase from 12.8px to 13.8px. Font families, weights, tracking, and the original hierarchy are retained. The initial recommendations above remain an audit record; the current implementation follows the user's preference for a modest increase.
 
-Follow-up browser measurement found that the month-caption override does not win: captions remain 14px, not the intended 15px listed above. See [the complete measured inventory](RULES-TYPOGRAPHY-INVENTORY.md) and [the typography standard](TYPOGRAPHY-STANDARD.md) for current families, weights, line heights, and adoption decisions.
+Follow-up browser measurement found that the month-caption override does not win: captions remain 14px, not the intended 15px listed above. See [the complete measured inventory](rules-typography-inventory.md) and [the typography standard](typography-standard.md) for current families, weights, line heights, and adoption decisions.
 
 Rules navigation opts into the larger shared sidebar typography; Overview retains its current navigation size. The Rules reference entry point shares the updated page implementation. Current desktop and mobile previews are saved in `work/rules-typography-preview/`.

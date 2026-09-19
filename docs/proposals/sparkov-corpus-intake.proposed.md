@@ -96,4 +96,4 @@ label maturity; Notebook 07 must establish those independently.
 - [Fraud Dataset Benchmark data-source inventory](https://github.com/amazon-science/fraud-dataset-benchmark#data-sources)
 - [Fraud Dataset Benchmark paper](https://arxiv.org/abs/2208.14417)
 - [Project data governance](../data-governance.md)
-- [Fast-path model technical specification](FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md)
+- [Fast-path model technical specification](fast-path-fraud-model-technical-spec.md)

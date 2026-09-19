@@ -16,10 +16,10 @@ showcase completion checklist without duplicating those sources.
   `prd.md` (becomes authoritative only after approval)
 - Canonical project rules: `../project-context.md`
 - Current API implementation and existing-demo limits: `../../apps/api/README.md`
-- Notebook/data gates: `../../notebooks/NOTEBOOK-PLAN.md` and
+- Notebook/data gates: `../../notebooks/notebook-plan.md` and
   `../data-governance.md`
 - Model evidence/limits:
-  `../proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md`
+  `../proposals/fast-path-fraud-model-technical-spec.md`
 
 This monorepo's PRD, project context, contracts, and experiment records are the
 current planning sources. Do not rely on a local attachment or a former
@@ -78,7 +78,7 @@ The approved Rules Performance page is frozen as the visual starting point:
   `tests/payments-design-system.spec.ts-snapshots/rules-performance-desktop.png`
 - Mobile baseline:
   `tests/payments-design-system.spec.ts-snapshots/rules-performance-mobile.png`
-- Shared design contract: `../../apps/web/docs/design/PAYMENTS-DESIGN-SYSTEM.md`
+- Shared design contract: `../../apps/web/docs/design/payments-design-system.md`
 
 The reference source is not the live product implementation. Do not edit it to
 implement application behavior. Shared primitives may evolve only when the

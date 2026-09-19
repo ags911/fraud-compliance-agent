@@ -1,9 +1,9 @@
 # Payments UI design system
 
 The current typography target is documented in
-[Kepler typography standard](TYPOGRAPHY-STANDARD.md), based on the
+[Kepler typography standard](typography-standard.md), based on the
 Rules page's original hierarchy with a 1px increase. The
-[measured Rules inventory](RULES-TYPOGRAPHY-INVENTORY.md) records
+[measured Rules inventory](rules-typography-inventory.md) records
 the pre-migration rendered values and known drift. Shared recipes in
 `src/payments-typography.css` now apply the standard across Rules, Overview,
 and the catalog; automated checks validate the common roles.

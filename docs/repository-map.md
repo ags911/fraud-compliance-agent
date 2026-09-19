@@ -46,7 +46,7 @@ build.
 | `apps/web/src/main.tsx` | Primary React application entry point. |
 | `apps/web/src/*-main.tsx` | Standalone design/reference page entry points. |
 | `apps/web/work/payments-design-concept.html` | Frozen approved visual reference for Rules Performance; do not alter during feature work. |
-| `notebooks/NOTEBOOK-PLAN.md` | Ordered 01–10 notebook scope, gates, inputs, and definition of done. |
+| `notebooks/notebook-plan.md` | Ordered 01–10 notebook scope, gates, inputs, and definition of done. |
 | `notebooks/README.md` | Notebook kernel, safety, structure, and quality standards. |
 | `docs/data-governance.md` | Data, provider, output, and artifact handling policy. |
 

@@ -61,5 +61,5 @@ links in the same change.
 - [`proposals/`](proposals/) contains Phase 0 review artifacts. They are not
   runtime inputs or accepted API contracts; approved material is promoted into
   `contracts/` with an ADR and tests.
-- [`../notebooks/NOTEBOOK-PLAN.md`](../notebooks/NOTEBOOK-PLAN.md) sequences
+- [`../notebooks/notebook-plan.md`](../notebooks/notebook-plan.md) sequences
   the reproducible Plaid, data-feasibility, and evaluation-design work.

@@ -8,7 +8,7 @@ adds only rules that are specific to `apps/web`.
   Node 22.
 - The Payments design system is frozen. `work/payments-design-concept.html` is
   the approved visual source, and the frozen Rules Performance reference and the
-  tokens in `docs/design/PAYMENTS-DESIGN-SYSTEM.md` must not change as a side
+  tokens in `docs/design/payments-design-system.md` must not change as a side
   effect of feature work. Use the documented tokens and components; do not
   approximate a value with the nearest utility class.
 - For dashboard, chart, navigation, or shared UI work, use the

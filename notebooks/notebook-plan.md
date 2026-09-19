@@ -13,7 +13,7 @@ decisions—not a substitute for accepted contracts or an implementation plan.
 
 The proposed model strategy, data requirements, and current implementation
 status are maintained in
-[the fast-path model technical specification](../docs/proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
+[the fast-path model technical specification](../docs/proposals/fast-path-fraud-model-technical-spec.md).
 
 Each notebook must have one clear question, record its Git/config revision in
 an experiment record, clear outputs before commit, and produce only sanitised,

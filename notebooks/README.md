@@ -11,7 +11,7 @@ secrets, PII, live account exports, or production ingestion logic.
 - Name notebooks in the approved execution order. The current sequence is
   `01-plaid-sandbox-source-inventory.ipynb` through
   `10-model-monitoring-and-champion-challenger.ipynb`; names and gates are defined in
-  [`NOTEBOOK-PLAN.md`](NOTEBOOK-PLAN.md).
+  [`notebook-plan.md`](notebook-plan.md).
 - Begin with purpose, inputs, expected outputs, source revision, and how to run
   it. Record the Git commit in the matching experiment record.
 - Use a local `.env` or approved secret manager for credentials; never place a
@@ -23,7 +23,7 @@ secrets, PII, live account exports, or production ingestion logic.
 
 See [`docs/data-governance.md`](../docs/data-governance.md) and
 [`docs/experiments/README.md`](../docs/experiments/README.md). The ordered
-Phase 0 workstream is defined in [`NOTEBOOK-PLAN.md`](NOTEBOOK-PLAN.md).
+Phase 0 workstream is defined in [`notebook-plan.md`](notebook-plan.md).
 
 ## Quality standard
 

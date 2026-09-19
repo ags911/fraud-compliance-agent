@@ -1,6 +1,6 @@
 # Kepler product typography standard
 
-Version 1.1, 15 September 2026. Scope: the Payments product UI, using the current Rules page's original scale +1px as the visual baseline. Implemented in `src/payments-typography.css` across Rules, Overview, and the Payments catalog. The pre-migration measured inventory is in [RULES-TYPOGRAPHY-INVENTORY.md](RULES-TYPOGRAPHY-INVENTORY.md).
+Version 1.1, 15 September 2026. Scope: the Payments product UI, using the current Rules page's original scale +1px as the visual baseline. Implemented in `src/payments-typography.css` across Rules, Overview, and the Payments catalog. The pre-migration measured inventory is in [rules-typography-inventory.md](rules-typography-inventory.md).
 
 ## Audit findings
 

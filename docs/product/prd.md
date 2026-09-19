@@ -181,7 +181,7 @@ state.
 Use the ordered, **sanitised, reproducible Jupyter notebook** workstream in the
 monorepo as Phase 0 discovery evidence, not as production ingestion service or
 model-training evidence. The complete scope, gates, and structures are in the
-[notebook plan](../../notebooks/NOTEBOOK-PLAN.md).
+[notebook plan](../../notebooks/notebook-plan.md).
 
 The notebook must:
 
@@ -267,7 +267,7 @@ API delivery phase.
 
 The proposed model strategy, current harness status, real-data requirements,
 evaluation evidence, and deferred monitoring plan are maintained in
-[the fast-path model technical specification](../proposals/FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md).
+[the fast-path model technical specification](../proposals/fast-path-fraud-model-technical-spec.md).
 It is a proposal, not a release or model-selection approval.
 
 ## 10. Non-functional and safety requirements

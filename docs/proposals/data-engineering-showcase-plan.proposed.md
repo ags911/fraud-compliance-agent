@@ -31,7 +31,7 @@ covers only what the existing documents do not, and does not restate them:
 - Provider lifecycle, cursors, and corrections: P0-03 in the same backlog.
 - Idempotency, replay, and durability: P0-07 (ADR-009) and PRD FR-07.
 - Online/offline feature parity and drift: the
-  [fast-path model spec](FAST-PATH-FRAUD-MODEL-TECHNICAL-SPEC.md) and
+  [fast-path model spec](fast-path-fraud-model-technical-spec.md) and
   Notebook 10.
 
 The additions below need no accepted contract, add no service, and use
