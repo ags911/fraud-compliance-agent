@@ -6,12 +6,16 @@ Decision supported: Post-Phase-0 — candidate model release review
 
 ## Run context
 
-- Date/time (UTC): 2026-09-18 (accepted mechanics-only Sparkov rerun after
-  output-isolation and repository-relative path fixes)
-- Git revision: `538651a7c3abec5daec3da9bbc7592e536bef348`. The artifact was
-  regenerated in approved mode at 2026-09-18T22:15Z after a direct default-mode
-  notebook run overwrote it with a synthetic report. Partition counts,
-  prevalence, and all six headline metrics matched the earlier accepted run.
+- Date/time (UTC): 2026-09-19T18:12Z (approved-mode rerun on the refactored
+  harness; see "Harness refactor" below). The previous accepted runs were
+  2026-09-18T22:15Z and, before that, the first accepted run.
+- Git revision: `13052540137e26914c720d53482132e49845f623`, the checkout the
+  run was made from. As with the earlier runs, this is the revision preceding
+  the commit that carries the report: the harness refactor was in the working
+  tree at run time and lands in the same change set as this artifact.
+- Every metric, threshold-sweep row, and slice row is bit-for-bit identical to
+  the 2026-09-18 artifact. Only the run timestamp, revision, the new
+  `config_version` field, and the resulting payload digest changed.
 - Approved configuration/data revision: `model-training-contract.v1.json`, mechanics-only scope
 - Data class: Sanitised evidence only; no raw provider records, identifiers, secrets, or model artifacts in Git
 
@@ -39,6 +43,29 @@ training, model serving, or payment authority.
   and threshold trade-offs).
 - No weights, source rows, identifiers, or action threshold were written.
 
+## Harness refactor (2026-09-19)
+
+The training and evaluation logic moved out of the notebook into
+`apps/api/modelling/` (configuration, paths, datasets, features, training,
+evaluation, diagnostics, report, pipeline), with parameters in
+`config/fast-path-model-training.v1.json` and tests in
+`apps/api/tests/test_modelling_*.py`. The notebook is now a thin runner.
+
+- Behaviour is unchanged: on the synthetic fixture the refactored modules
+  reproduce the previous notebook's evaluation output exactly, field for field,
+  and the fixture itself is byte-identical.
+- Approved mode was re-run through the refactored notebook against the
+  checksum-verified local Sparkov mechanics CSV, and the committed report is the
+  output of that run. All five diagnostics were built; figure display was
+  suppressed, because a committed notebook carries no outputs either way. A dry run to a temporary path was compared against the
+  2026-09-18 artifact first: all six headline metrics, both 19-row threshold
+  sweeps, and both 19-row slice tables matched exactly, as did partition counts
+  and prevalence.
+- The report now records `config_version` in `run_context` alongside the
+  revision and seed, so an artifact names the configuration file that produced
+  it. That field is why the payload digest differs from `ad479ad6…` even though
+  no metric changed.
+
 ## Limitations and unknowns
 
 - Sparkov is simulated. Its labels, fraud scenarios, source-time semantics, and
@@ -48,15 +75,19 @@ training, model serving, or payment authority.
   feature contract.
 - No probability-calibration method, operating threshold, runtime release, or
   payment authority was selected.
+- The refactor adds tests, not evidence. Module tests run on a tiny fixed
+  fixture and the synthetic mechanics fixture; they say nothing about fraud
+  performance.
 
 ## Sanitised artifact
 
 `docs/proposals/fast-path-model-release.candidate.json`  
 Status: `candidate_evaluation_pending_review`  
 Report payload SHA-256:
-`ad479ad6cc123bfeda714c8afcf757d93ecc750a36cf00e44eba75753c092161`
-(the hash covers the run timestamp and revision, so it differs from the earlier
-run's `5403cfb9…` although the metrics are identical)
+`357883fcbf51967340ce2cdeb12f28c4e020f0f01d424b2726e2b7ebddc6b5fd`
+(the hash covers the run timestamp, revision, and configuration version, so it
+differs from the 2026-09-18 run's `ad479ad6…` and the earlier `5403cfb9…`
+although the metrics are identical)
 
 ## Proposed next decision
 

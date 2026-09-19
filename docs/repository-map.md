@@ -20,6 +20,7 @@ build.
 | `apps/web` | React/Vite operator console, accessibility, browser state, and browser tests | UI consumes accepted contracts only; never imports API internals or secrets. |
 | `apps/api` | FastAPI modular monolith for operational facts, risk routing, integrations, persistence, and API tests | Backend/domain owner. `apps/api/vendor` is pinned third-party material: do not edit except during an explicit SDK upgrade. |
 | `apps/api/prototypes` | Retained source-snapshot prototypes, kept for reference | Not active product surfaces, build inputs, or contract authority. |
+| `apps/api/modelling` | Offline fast-path model training, evaluation, diagnostics, and release-report library that Notebook 08 runs | Not part of the served API: `server/` never imports it, and its ML dependencies stay development-only. |
 | `docs/contracts` | Versioned HTTP, event, and domain contracts shared by applications | Contract authority after explicit acceptance. |
 | `docs/product` | Candidate PRD and the single active cross-application delivery plan | Product planning authority after the documented approval record is complete; location alone is not approval. |
 | `docs/proposals` | Review artifacts that are not yet runtime inputs | Proposed only; promote through an ADR, contract, and tests. |
@@ -43,6 +44,8 @@ build.
 | `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, and test checks. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
 | `apps/api/server/models.py` | API-side domain/data models. |
+| `apps/api/modelling/pipeline.py` | Run setup and the mode-dependent decision about what data an evaluation run may read. |
+| `config/fast-path-model-training.v1.json` | Accepted seed, hyperparameters, threshold grid, and synthetic-fixture shape for the mechanics-only benchmark. |
 | `apps/web/src/main.tsx` | Primary React application entry point. |
 | `apps/web/src/*-main.tsx` | Standalone design/reference page entry points. |
 | `apps/web/work/payments-design-concept.html` | Frozen approved visual reference for Rules Performance; do not alter during feature work. |

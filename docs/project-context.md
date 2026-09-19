@@ -75,7 +75,13 @@ an ADR rather than in this file.
   authority, oversight, integrations, and backend tests.
 - `docs/contracts` owns versioned API and event contracts shared between apps.
 - `fixtures` will own canonical deterministic scenario fixtures once specified.
-- `notebooks` contains reproducible, sanitised feasibility work only.
+- `notebooks` contains reproducible, sanitised feasibility work only. Once an
+  approach is accepted, its reusable logic moves into tested modules under
+  `apps/api` and its parameters into a versioned file under `config`, leaving
+  the notebook as a thin runner: `apps/api/modelling` and
+  `config/fast-path-model-training.v1.json` are the worked example. Such an
+  offline library is not part of the served API and `apps/api/server` must not
+  import it.
 - `infra` contains local orchestration and deployment configuration, never
   application domain logic.
 

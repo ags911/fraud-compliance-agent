@@ -1,16 +1,15 @@
 """Repository-root detection must ignore scoped `AGENTS.md` files.
 
-Notebooks and scripts locate the monorepo root by walking up from the working
-directory. A scoped `AGENTS.md` in `apps/api` once made that walk stop at the
-wrong folder, so the marker is now a file that exists only at the root.
+Notebooks, scripts, and the modelling library locate the monorepo root by
+walking up from the working directory. A scoped `AGENTS.md` in `apps/api` once
+made that walk stop at the wrong folder, so the marker is now a file that exists
+only at the root.
 """
-
-import json
 
 import pytest
 from conftest import load_script
 
-NOTEBOOK_08 = "notebooks/08-fast-path-model-training-and-evaluation.ipynb"
+from modelling.paths import UNAVAILABLE_REVISION, find_repository_root, git_revision
 
 
 @pytest.fixture
@@ -46,23 +45,27 @@ def test_notebook_validator_finds_the_root_from_a_scoped_folder(monorepo) -> Non
     assert finder(api) == root
 
 
-def test_notebook_08_finds_the_root_from_a_scoped_folder(
-    monorepo, repository_root
-) -> None:
-    """Notebook 08's own root finder ignores a scoped AGENTS.md."""
+def test_the_modelling_library_finds_the_root_from_a_scoped_folder(monorepo) -> None:
+    """Notebook 08 resolves every path through this one finder."""
     root, api = monorepo
-    notebook = json.loads((repository_root / NOTEBOOK_08).read_text(encoding="utf-8"))
-    setup = next(
-        "".join(cell["source"])
-        for cell in notebook["cells"]
-        if cell["cell_type"] == "code"
-        and "def find_repository_root" in "".join(cell["source"])
-    )
-    # Run only the helper's definition, not the rest of the cell's work.
-    definition = setup[
-        setup.index("def find_repository_root") : setup.index("REPOSITORY_ROOT = ")
-    ]
-    namespace: dict = {"Path": type(root)}
-    exec(compile(definition, "notebook-08-root-finder", "exec"), namespace)
 
-    assert namespace["find_repository_root"](api) == root
+    assert find_repository_root(api) == root
+
+
+def test_a_directory_outside_the_repository_is_refused(tmp_path) -> None:
+    """Without the root marker no path can be trusted, so the run stops."""
+    with pytest.raises(RuntimeError, match="inside the fraud-compliance-agent"):
+        find_repository_root(tmp_path)
+
+
+def test_the_revision_is_reported_for_this_repository(repository_root) -> None:
+    """The report records the revision that produced it."""
+    revision = git_revision(repository_root)
+
+    assert len(revision) == 40
+    assert int(revision, 16) >= 0
+
+
+def test_a_non_repository_reports_an_unavailable_revision(tmp_path) -> None:
+    """Git's own error text never reaches notebook output."""
+    assert git_revision(tmp_path) == UNAVAILABLE_REVISION

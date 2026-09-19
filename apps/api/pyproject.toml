@@ -53,4 +53,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["server"]
+# `server` is the served API. `modelling` is the offline fast-path evaluation
+# library that Notebook 08 runs; it is listed so the editable install puts it on
+# the notebook kernel's import path. The API never imports it (enforced by
+# tests/test_modelling_boundaries.py), and its scikit-learn/XGBoost/Plotly
+# dependencies stay in the dev group, out of the API runtime.
+packages = ["server", "modelling"]

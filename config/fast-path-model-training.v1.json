@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "config_version": "fast-path-mechanics-v1",
+  "status": "accepted",
+  "owner": "model-risk",
+  "approval_scope": "Harness parameters for the mechanics-only benchmark evaluation authorised by the project owner on 2026-09-17, matching docs/contracts/model-training-contract.v1.json.",
+  "effective_scope": "Offline use by the apps/api modelling library and Notebook 08 only. It is never read by the served API, never scores a payment, and selects no operating threshold.",
+  "random_seed": 20260916,
+  "models": {
+    "logistic_regression_baseline": {
+      "imputation_strategy": "median",
+      "class_weight": "balanced",
+      "max_iter": 1000
+    },
+    "xgboost_candidate": {
+      "imputation_strategy": "median",
+      "objective": "binary:logistic",
+      "eval_metric": "logloss",
+      "n_estimators": 200,
+      "max_depth": 3,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "n_jobs": 1,
+      "tree_method": "hist"
+    }
+  },
+  "evaluation": {
+    "threshold_sweep": {
+      "start": 0.05,
+      "stop": 1.0,
+      "step": 0.05
+    },
+    "reliability_bins": 10
+  },
+  "synthetic_fixture": {
+    "rows": 900,
+    "train_rows": 540,
+    "calibration_rows": 180,
+    "start_timestamp_utc": "2025-01-01T00:00:00Z",
+    "amount_lognormal_mean": 4.3,
+    "amount_lognormal_sigma": 1.0,
+    "velocity_poisson_lambda": 1.8,
+    "account_age_days_minimum": 1,
+    "account_age_days_maximum_exclusive": 1200,
+    "target_logit": {
+      "intercept": -6.0,
+      "amount": 0.01,
+      "velocity_6h": 0.42,
+      "is_new_payee": 1.1,
+      "account_age_days": -0.001
+    }
+  },
+  "notes": "These values reproduce the recorded approved-mode run in docs/proposals/fast-path-model-release.candidate.json (git revision 538651a7c3abec5daec3da9bbc7592e536bef348). Changing any of them invalidates that committed report, which must then be regenerated in approved mode and re-reviewed. The class-imbalance weight for the candidate is derived from the train partition at fit time and is deliberately not fixed here. This file holds no fraud threshold, promotion criterion, or action limit."
+}

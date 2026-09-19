@@ -23,18 +23,18 @@ api-test: api-smoke
 	@if [ -d apps/api/tests ]; then cd apps/api && $(UV_RUN) pytest tests; else echo "No API-owned tests yet; smoke check completed."; fi
 
 api-lint:
-	cd apps/api && $(UV_RUN) ruff check server
+	cd apps/api && $(UV_RUN) ruff check server modelling
 
 # Formatting is enforced for API code, tests, and scripts. Notebooks are excluded on purpose: they
 # are prototyping artefacts, and reformatting them rewrites cell sources for no review value.
 api-format-check:
-	cd apps/api && $(UV_RUN) ruff format --check server tests ../../scripts
+	cd apps/api && $(UV_RUN) ruff format --check server modelling tests ../../scripts
 
 api-notebook-lint:
 	cd apps/api && $(UV_RUN) ruff check ../../notebooks ../../scripts
 
 api-docstring-lint:
-	cd apps/api && $(UV_RUN) ruff check --select D103 server ../../notebooks ../../scripts
+	cd apps/api && $(UV_RUN) ruff check --select D103 server modelling ../../notebooks ../../scripts
 
 api-notebook-kernel:
 	cd apps/api && $(UV_RUN) python -m ipykernel install --user \
@@ -77,6 +77,7 @@ api-smoke:
 	cd apps/api && $(UV_RUN) python -c "from server.main import create_app; app = create_app(); assert app.title == 'Fraud Compliance Agent Console API'; print('API import smoke check passed')"
 
 # Data-preparation and evidence checks: the Sparkov build's quality gates on
-# seeded synthetic data, contract/report consistency, and the notebook 08 guard.
+# seeded synthetic data, contract/report/configuration consistency, the
+# approved-mode write guard, and the rule that Notebook 08 stays a thin runner.
 data-check:
-	cd apps/api && $(UV_RUN) pytest tests/test_sparkov_build.py tests/test_contracts_consistency.py tests/test_notebook_08_report_path.py -q
+	cd apps/api && $(UV_RUN) pytest tests/test_sparkov_build.py tests/test_contracts_consistency.py tests/test_modelling_boundaries.py tests/test_modelling_report.py tests/test_notebook_08_runner.py -q

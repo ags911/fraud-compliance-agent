@@ -621,12 +621,13 @@
     "test": 0.0038598644278853163,
     "train": 0.005753176393467908
   },
-  "report_sha256": "ad479ad6cc123bfeda714c8afcf757d93ecc750a36cf00e44eba75753c092161",
+  "report_sha256": "357883fcbf51967340ce2cdeb12f28c4e020f0f01d424b2726e2b7ebddc6b5fd",
   "run_context": {
-    "git_revision": "538651a7c3abec5daec3da9bbc7592e536bef348",
+    "config_version": "fast-path-mechanics-v1",
+    "git_revision": "13052540137e26914c720d53482132e49845f623",
     "mode": "approved",
     "random_seed": 20260916,
-    "run_at_utc": "2026-09-18T22:15:35.047175+00:00"
+    "run_at_utc": "2026-09-19T18:12:38.065062+00:00"
   },
   "status": "candidate_evaluation_pending_review"
 }

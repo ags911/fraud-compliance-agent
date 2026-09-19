@@ -16,5 +16,15 @@ and not unapproved production policy.
 - When runtime configuration is approved, validate it at process start and log
   its version/checksum with each decision. Do not log secret values.
 
-The two starter artifacts establish the format while Phase 0 resolves their
+`decisioning-policy.candidate.json` and `model-release.candidate.json` are
+starter artifacts that establish the format while Phase 0 resolves their
 semantics.
+
+`fast-path-model-training.v1.json` is different: it is a live, accepted artifact
+that the offline evaluation library in `apps/api/modelling` reads. It holds the
+seed, model hyperparameters, threshold-reporting grid, and synthetic-fixture
+shape for the mechanics-only benchmark, so those parameters are reviewable
+instead of living in notebook cells. It is never read by the served API, holds
+no fraud threshold or promotion criterion, and its values describe the recorded
+run in `docs/proposals/fast-path-model-release.candidate.json`: changing one
+invalidates that report until approved mode is re-run and re-reviewed.

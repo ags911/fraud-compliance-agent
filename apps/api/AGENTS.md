@@ -23,6 +23,17 @@ adds only rules that are specific to `apps/api`.
 - `GET /demo/model-summary` serves only an approved-mode report that matches
   `docs/contracts/model-training-contract.v1.json`. Do not loosen that guard or
   edit the report by hand.
+- `modelling/` is the offline fast-path training and evaluation library that
+  Notebook 08 runs. It is not part of the served API: `server/` must never
+  import it, and its scikit-learn, XGBoost, Plotly, and pandas dependencies stay
+  in the dev group. `tests/test_modelling_boundaries.py` enforces both.
+- Seeds, hyperparameters, the threshold grid, and the synthetic fixture's shape
+  live in `config/fast-path-model-training.v1.json`. Change a parameter there,
+  not in code or a notebook cell, and re-run approved mode before claiming the
+  committed report still describes it.
+- Notebook 08 stays a thin runner: no function or class definitions, no
+  estimator, metric, seed, or digest logic, and no hard-coded report path.
+  `tests/test_notebook_08_runner.py` enforces that.
 - Only an approved-mode run of Notebook 08 may write
   `docs/proposals/fast-path-model-release.candidate.json`. Synthetic and gated
   runs must write elsewhere.

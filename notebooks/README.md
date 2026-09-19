@@ -20,6 +20,10 @@ secrets, PII, live account exports, or production ingestion logic.
   review, or a manifest pointing to approved secure storage.
 - Once an approach is accepted, move reusable logic and validation into
   `apps/api`; keep the notebook as an explanatory, reproducible record.
+  Notebook 08 is the worked example: its data loading, features, training,
+  evaluation, diagnostics, and report assembly live in `apps/api/modelling`,
+  with parameters in `config/fast-path-model-training.v1.json` and tests in
+  `apps/api/tests/test_modelling_*.py`.
 
 See [`docs/data-governance.md`](../docs/data-governance.md) and
 [`docs/experiments/README.md`](../docs/experiments/README.md). The ordered
@@ -112,4 +116,6 @@ notebook dependencies without relying on a global Python installation.
 
 After cloning or recreating the environment, run `uv sync` in `apps/api`, then
 run `make api-notebook-kernel` from the repository root. Select the named kernel
-in VS Code or Jupyter before running a notebook.
+in VS Code or Jupyter before running a notebook. That environment also installs
+`apps/api` itself, which is what makes Notebook 08's `modelling` imports
+resolve; a notebook run outside the kernel will not find them.
