@@ -164,150 +164,6 @@
   color: #ffffff;
 }
 
-/* A dismissible "Getting started" checklist card — a vertical todo list
-   with a progress bar and per-row completion state, rather than a
-   horizontal stepper. */
-.overview-checklist {
-  display: block;
-  margin: -2px 0 18px;
-  border: 1px solid var(--payments-color-border);
-  border-radius: var(--payments-radius-panel);
-  background: var(--payments-color-background);
-}
-
-.overview-checklist__header {
-  display: flex;
-  /* Matches a checklist row's natural height (padding + two lines of
-     title/description text) so the header bar doesn't look shorter than
-     the rows below it. */
-  min-height: 68px;
-  align-items: center;
-  gap: 14px;
-  border-bottom: 1px solid var(--payments-color-divider);
-  padding: var(--payments-space-7) var(--payments-onboarding-panel-padding);
-}
-
-.overview-checklist__heading {
-  display: flex;
-  flex-shrink: 0;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.overview-checklist__heading strong {
-  color: var(--payments-color-foreground);
-}
-
-.overview-checklist__heading span {
-  color: var(--payments-color-muted-foreground);
-
-  font-variant-numeric: tabular-nums;
-}
-
-.overview-checklist__progress {
-  flex: 1 1 auto;
-}
-
-.overview-checklist__dismiss {
-  display: grid;
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border: 0;
-  border-radius: var(--payments-radius-control);
-  background: transparent;
-  color: var(--payments-color-muted-foreground);
-}
-
-.overview-checklist__dismiss:hover {
-  background: var(--payments-color-muted-background);
-  color: var(--payments-color-foreground);
-}
-
-.overview-checklist__list {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.overview-checklist__list li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: var(--payments-space-7) var(--payments-onboarding-panel-padding);
-}
-
-.overview-checklist__list li + li {
-  border-top: 1px solid var(--payments-color-divider);
-}
-
-.overview-checklist__list li[data-state="upcoming"] {
-  opacity: 0.55;
-}
-
-.overview-checklist__check {
-  display: grid;
-  flex-shrink: 0;
-  width: var(--payments-onboarding-step-marker-size);
-  height: var(--payments-onboarding-step-marker-size);
-  place-items: center;
-  border: 1px solid var(--payments-color-border);
-  border-radius: 999px;
-  background: var(--payments-color-muted-background);
-  color: var(--payments-color-secondary-foreground);
-
-  font-variant-numeric: tabular-nums;
-}
-
-.overview-checklist__list li[data-state="current"] .overview-checklist__check {
-  border-color: var(--payments-color-primary);
-  background: var(--payments-color-primary);
-  color: var(--payments-color-primary-foreground);
-}
-
-.overview-checklist__list li[data-state="complete"] .overview-checklist__check {
-  border-color: var(--payments-color-success);
-  background: var(--payments-color-success-soft);
-  color: var(--payments-color-success);
-}
-
-.overview-checklist__body {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.overview-checklist__body strong {
-  display: block;
-  color: var(--payments-color-foreground);
-}
-
-.overview-checklist__list li[data-state="complete"] .overview-checklist__body strong {
-  color: var(--payments-color-muted-foreground);
-
-  text-decoration: line-through;
-  text-decoration-color: var(--payments-color-border);
-}
-
-.overview-checklist__body p {
-  margin: 3px 0 0;
-  color: var(--payments-color-muted-foreground);
-}
-
-.overview-checklist__action {
-  display: inline-flex;
-  height: var(--payments-control-height);
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--payments-color-primary);
-  border-radius: var(--payments-radius-control);
-  padding: 0 10px;
-  background: var(--payments-color-primary);
-  color: var(--payments-color-primary-foreground);
-}
-
 .overview-notice {
   display: flex;
   min-height: 38px;
@@ -603,19 +459,6 @@
     padding-left: 16px;
   }
 
-  .overview-checklist__header {
-    flex-wrap: wrap;
-  }
-
-  .overview-checklist__progress {
-    order: 3;
-    flex: 1 1 100%;
-  }
-
-.overview-checklist__action {
-    align-self: flex-start;
-  }
-
   .overview-outcome__metrics {
     grid-template-columns: 76px 46px;
   }
@@ -636,4 +479,86 @@
 .overview-section-heading > span {
     display: none;
   }
+}
+
+/* Guided tour (driver.js). The mask sits just below Radix menus (z-index 50), so the
+   open scenario picker stays visible and clickable while the tour is running. */
+.driver-overlay {
+  z-index: 40 !important;
+}
+
+/* driver.js switches off pointer events for the whole page except the highlighted
+   element. The scenario picker is rendered outside that element, so turn its events
+   back on while it is open; otherwise its options cannot be clicked. */
+.driver-active [data-radix-popper-content-wrapper],
+.driver-active [data-radix-popper-content-wrapper] * {
+  pointer-events: auto;
+}
+
+.driver-popover.overview-tour {
+  max-width: 300px;
+  padding: 16px;
+  border: 1px solid var(--payments-color-border);
+  border-radius: var(--payments-radius-panel);
+  background: var(--payments-color-background);
+  color: var(--payments-color-foreground);
+  font-family: var(--payments-font-ui);
+  box-shadow: 0 12px 32px rgba(10, 37, 64, 0.18);
+}
+
+.overview-tour .driver-popover-title {
+  font-family: var(--payments-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--payments-color-foreground);
+}
+
+.overview-tour .driver-popover-description {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-tour .driver-popover-progress-text {
+  font-size: 12px;
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-tour .driver-popover-close-btn {
+  color: var(--payments-color-muted-foreground);
+}
+
+.overview-tour .driver-popover-footer button {
+  height: 30px;
+  border: 1px solid var(--payments-color-primary);
+  border-radius: var(--payments-radius-control);
+  padding: 0 10px;
+  background: var(--payments-color-primary);
+  color: var(--payments-color-primary-foreground);
+  font-family: var(--payments-font-ui);
+  font-size: 12.5px;
+  text-shadow: none;
+}
+
+/* Back is the secondary action, and there is nothing to go back to on step 1. */
+.overview-tour .driver-popover-footer .driver-popover-prev-btn {
+  border-color: var(--payments-color-border);
+  background: var(--payments-color-background);
+  color: var(--payments-color-foreground);
+}
+
+.overview-tour .driver-popover-footer .driver-popover-prev-btn.driver-popover-btn-disabled {
+  visibility: hidden;
+}
+
+.overview-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--payments-color-background); }
+.overview-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--payments-color-background); }
+.overview-tour .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: var(--payments-color-background); }
+.overview-tour .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--payments-color-background); }
+
+/* While the scenario menu is open it occupies the space under the trigger, so the
+   tour's tooltip steps aside until the menu closes. */
+.driver-active:has(#payments-demo-scenario-trigger[data-state="open"]) .driver-popover.overview-tour {
+  visibility: hidden;
 }

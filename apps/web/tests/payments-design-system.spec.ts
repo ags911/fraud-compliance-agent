@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect, test } from "./base"
 
 async function waitForFonts(page: import("@playwright/test").Page) {
   await page.evaluate(() => document.fonts.ready)
@@ -317,16 +317,6 @@ test.describe("Overview behavior contracts", () => {
     const kpis = page.locator('[data-payments-component="kpi-strip"] .payments-kpi-strip__value')
     await expect(kpis).toHaveText(["£0.00", "0", "£0.00", "0"])
     await expect(page.getByText("No results yet. Select a demo scenario in the header, then choose Run.")).toBeVisible()
-    const gettingStartedProgress = page.getByRole("progressbar", { name: "Getting started progress" })
-    await expect(gettingStartedProgress).toHaveCSS("height", "6px")
-    await expect(gettingStartedProgress).toHaveCSS("border-radius", "999px")
-    await expect(gettingStartedProgress).toHaveCSS("background-color", "rgb(238, 241, 244)")
-    const checklistMarkers = page.locator(".overview-checklist__check")
-    await expect(checklistMarkers).toHaveText(["1", "2", "3"])
-    await expect(checklistMarkers.nth(0)).toHaveCSS("font-size", "12px")
-    await expect(checklistMarkers.nth(1)).toHaveCSS("font-size", "12px")
-    await expect(checklistMarkers.nth(2)).toHaveCSS("font-size", "12px")
-    await expect(checklistMarkers.nth(1)).toHaveCSS("color", "rgb(66, 84, 102)")
     const run = page.getByRole("button", { name: "Run", exact: true })
     await expect(run).toBeDisabled()
 
@@ -384,9 +374,6 @@ test.describe("Overview behavior contracts", () => {
     await expect(kpis).toHaveText(["£320.00", "1", "£0.00", "1"])
     await expect(page.getByText("TXN-DEMO-1046", { exact: true })).toBeVisible()
     await expect(page.getByRole("status")).toContainText("New-device purchase scenario completed")
-    await expect(page.getByText("2 of 3 completed", { exact: true })).toBeVisible()
-    await page.getByRole("button", { name: "View results" }).click()
-    await expect(page.getByText("3 of 3 completed", { exact: true })).toBeVisible()
     await page.getByRole("button", { name: "Dismiss", exact: true }).click()
     await expect(page.getByRole("status")).not.toBeVisible()
   })

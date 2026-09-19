@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowRight, Check, CircleHelp, Play, ShieldCheck, X } from "lucide-react"
+import { ArrowRight, CircleHelp, Play, ShieldCheck, X } from "lucide-react"
 import { Dialog } from "radix-ui"
 import type { DateRange } from "react-day-picker"
 
@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useOverviewTour } from "@/lib/useOverviewTour"
 
 type Route = "PASS" | "CHALLENGE" | "HOLD"
 
@@ -200,21 +201,23 @@ function RoutePill({ route }: { route: Route }) {
   )
 }
 
-function DemoHelpDialog({
-  selectedScenario,
-  activeScenario,
-  resultsInspected,
-  guideDismissed,
-  onReopenGuide,
-}: {
-  selectedScenario: DemoScenarioId | null
-  activeScenario: DemoScenarioId | null
-  resultsInspected: boolean
-  guideDismissed: boolean
-  onReopenGuide: () => void
-}) {
-  const steps = checklistItemsFor(selectedScenario, activeScenario, resultsInspected)
+// The three steps of the demo, shown as reference in the help dialog and covered by the tour.
+const demoSteps = [
+  {
+    title: "Choose a scenario",
+    description: "Pick a realistic payment path from the scenario control in the header.",
+  },
+  {
+    title: "Run the scenario",
+    description: "Generate representative decisions, outcome mix, and operational health signals.",
+  },
+  {
+    title: "Inspect the results",
+    description: "Use the outcomes and recent decisions below to trace the effect of the selected path.",
+  },
+]
 
+function DemoHelpDialog({ onStartTour }: { onStartTour: () => void }) {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
@@ -241,11 +244,9 @@ function DemoHelpDialog({
             </Dialog.Close>
           </header>
           <ol className="overview-demo-dialog__checklist">
-            {steps.map((step, index) => (
-              <li key={step.title} data-complete={step.complete}>
-                <span className="overview-demo-dialog__step-icon" aria-hidden="true">
-                  {step.complete ? <Check size={13} strokeWidth={2} /> : index + 1}
-                </span>
+            {demoSteps.map((step, index) => (
+              <li key={step.title}>
+                <span className="overview-demo-dialog__step-icon" aria-hidden="true">{index + 1}</span>
                 <div>
                   <strong>{step.title}</strong>
                   <p>{step.description}</p>
@@ -255,13 +256,12 @@ function DemoHelpDialog({
           </ol>
           <footer className="overview-demo-dialog__footer">
             <span>Try another path any time with Reset in the header.</span>
-            {guideDismissed ? (
-              <Dialog.Close asChild>
-                <button className="overview-demo-dialog__secondary" type="button" onClick={onReopenGuide}>
-                  Show getting started guide
-                </button>
-              </Dialog.Close>
-            ) : null}
+            <Dialog.Close asChild>
+              {/* Start after the dialog has finished closing so the page is clickable again. */}
+              <button className="overview-demo-dialog__secondary" type="button" onClick={() => window.setTimeout(onStartTour, 150)}>
+                Take the tour
+              </button>
+            </Dialog.Close>
             <Dialog.Close asChild>
               <button className="overview-demo-dialog__done" type="button">Got it</button>
             </Dialog.Close>
@@ -272,30 +272,52 @@ function DemoHelpDialog({
   )
 }
 
-const checklistItemsFor = (
-  selectedScenario: DemoScenarioId | null,
-  activeScenario: DemoScenarioId | null,
-  resultsInspected: boolean,
-) => [
-  {
-    id: "select",
-    title: "Choose a scenario",
-    description: "Pick a realistic payment path from the scenario control in the header.",
-    complete: Boolean(selectedScenario),
-  },
-  {
-    id: "run",
-    title: "Run the scenario",
-    description: "Generate representative decisions, outcome mix, and operational health signals.",
-    complete: Boolean(activeScenario),
-  },
-  {
-    id: "inspect",
-    title: "Inspect the results",
-    description: "Use the outcomes and recent decisions below to trace the effect of the selected path.",
-    complete: resultsInspected,
-  },
-]
+// Shown once per browser session on the first visit. Answering it, in either
+// direction, is remembered so it does not come back on reload or navigation.
+function WelcomeDialog({
+  open,
+  onAnswer,
+  onStartTour,
+}: {
+  open: boolean
+  onAnswer: () => void
+  onStartTour: () => void
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={(next) => { if (!next) onAnswer() }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="overview-demo-dialog__overlay" />
+        <Dialog.Content className="overview-demo-dialog" aria-describedby="welcome-description">
+          <header className="overview-demo-dialog__header">
+            <div>
+              <span className="overview-demo-dialog__eyebrow">Synthetic data</span>
+              <Dialog.Title>Welcome to the payment risk demo</Dialog.Title>
+              <Dialog.Description id="welcome-description">
+                See how a payment moves from signals to a simulated decision. Nothing here can approve, release, or
+                execute a real payment.
+              </Dialog.Description>
+            </div>
+          </header>
+          <footer className="overview-demo-dialog__footer">
+            <span>The tour is also under “How this demo works”.</span>
+            <button className="overview-demo-dialog__secondary" type="button" onClick={onAnswer}>Skip</button>
+            <button
+              className="overview-demo-dialog__done"
+              type="button"
+              onClick={() => {
+                onAnswer()
+                // Start after the dialog has finished closing so the page is clickable again.
+                window.setTimeout(onStartTour, 150)
+              }}
+            >
+              Take the tour
+            </button>
+          </footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
 
 export function OverviewContent() {
   const [search, setSearch] = useState("")
@@ -304,21 +326,11 @@ export function OverviewContent() {
     from: new Date(2026, 8, 1),
     to: new Date(2026, 8, 23),
   })
-  const {
-    activeScenario,
-    selectedScenario,
-    resultsInspected,
-    guideDismissed,
-    markResultsInspected,
-    dismissGuide,
-    reopenGuide,
-  } = useDemoSession()
+  const { activeScenario, selectedScenario, welcomeSeen, dismissWelcome } = useDemoSession()
+  const { start: startTour } = useOverviewTour({ selectedScenario, activeScenario, onViewResults: scrollToResults })
 
   const result = activeScenario ? scenarioResults[activeScenario] : null
   const visibleDecisions = result?.decisions ?? []
-  const checklistItems = checklistItemsFor(selectedScenario, activeScenario, resultsInspected)
-  const currentIndex = checklistItems.findIndex((item) => !item.complete)
-  const completedCount = checklistItems.filter((item) => item.complete).length
 
   const query = search.trim().toLowerCase()
   const filteredDecisions = query
@@ -339,13 +351,13 @@ export function OverviewContent() {
     setSearch("")
   }
 
-  function inspectResults() {
+  function scrollToResults() {
     document.getElementById("overview-results")?.scrollIntoView({ behavior: "smooth", block: "start" })
-    markResultsInspected()
   }
 
   return (
     <>
+      <WelcomeDialog open={!welcomeSeen} onAnswer={dismissWelcome} onStartTour={startTour} />
       <PaymentsTopBar
         searchValue={search}
         onSearchChange={setSearch}
@@ -362,13 +374,7 @@ export function OverviewContent() {
         rightContent={
           <>
             <span className="overview-demo-badge">Demo data</span>
-            <DemoHelpDialog
-              selectedScenario={selectedScenario}
-              activeScenario={activeScenario}
-              resultsInspected={resultsInspected}
-              guideDismissed={guideDismissed}
-              onReopenGuide={reopenGuide}
-            />
+            <DemoHelpDialog onStartTour={startTour} />
             <span className="payments-topbar__divider" aria-hidden="true" />
           </>
         }
@@ -378,56 +384,6 @@ export function OverviewContent() {
           title="Overview"
           description="Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health."
         />
-
-        {!guideDismissed ? (
-          <section className="overview-checklist" aria-label="Getting started">
-            <header className="overview-checklist__header">
-              <div className="overview-checklist__heading">
-                <strong>Getting started</strong>
-                <span aria-live="polite">{completedCount} of {checklistItems.length} completed</span>
-              </div>
-              <PaymentsProgress
-                className="overview-checklist__progress"
-                ariaLabel="Getting started progress"
-                max={checklistItems.length}
-                value={completedCount}
-              />
-              <button
-                type="button"
-                className="overview-checklist__dismiss"
-                aria-label="Dismiss getting started guide"
-                onClick={dismissGuide}
-              >
-                <X aria-hidden="true" size={14} strokeWidth={1.8} />
-              </button>
-            </header>
-            <ol className="overview-checklist__list">
-              {checklistItems.map((item, index) => {
-                const state = item.complete ? "complete" : index === currentIndex ? "current" : "upcoming"
-                return (
-                  <li key={item.id} data-state={state}>
-                    <span className="overview-checklist__check" aria-hidden="true">
-                      {item.complete ? <Check size={13} strokeWidth={2.2} /> : index + 1}
-                    </span>
-                    <div className="overview-checklist__body">
-                      <strong>
-                        {item.complete ? <span className="sr-only">Completed: </span> : null}
-                        {item.title}
-                      </strong>
-                      {state !== "complete" ? <p>{item.description}</p> : null}
-                    </div>
-                    {item.id === "inspect" && activeScenario && !item.complete ? (
-                      <button className="overview-checklist__action" type="button" onClick={inspectResults}>
-                        View results
-                        <ArrowRight aria-hidden="true" size={14} strokeWidth={1.7} />
-                      </button>
-                    ) : null}
-                  </li>
-                )
-              })}
-            </ol>
-          </section>
-        ) : null}
 
         {notice ? (
           <div className="overview-notice" role="status">

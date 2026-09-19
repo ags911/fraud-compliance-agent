@@ -44,20 +44,16 @@ export const demoScenarios: ReadonlyArray<{
 type DemoSessionState = {
   selectedScenario: DemoScenarioId | null
   activeScenario: DemoScenarioId | null
-  // The guided "Getting started" progress lives with the scenario choice, so it
-  // survives navigation and reloads within the tab and stays consistent between
-  // the checklist and the help dialog.
-  resultsInspected: boolean
-  guideDismissed: boolean
+  // Whether the first-visit welcome dialog has been answered. It lives with the
+  // scenario choice, so it survives navigation and reloads within the tab.
+  welcomeSeen: boolean
 }
 
 type DemoSessionContextValue = DemoSessionState & {
   selectScenario: (scenario: DemoScenarioId) => void
   runScenario: () => void
   resetScenario: () => void
-  markResultsInspected: () => void
-  dismissGuide: () => void
-  reopenGuide: () => void
+  dismissWelcome: () => void
 }
 
 const storageKey = "kepler-demo-session"
@@ -65,8 +61,7 @@ const DemoSessionContext = createContext<DemoSessionContextValue | null>(null)
 const emptySession: DemoSessionState = {
   selectedScenario: null,
   activeScenario: null,
-  resultsInspected: false,
-  guideDismissed: false,
+  welcomeSeen: false,
 }
 
 function readStoredSession(): DemoSessionState {
@@ -82,9 +77,7 @@ function readStoredSession(): DemoSessionState {
     return {
       selectedScenario: validScenario(parsed.selectedScenario) ? parsed.selectedScenario : null,
       activeScenario,
-      // Results can only have been inspected if a scenario has actually run.
-      resultsInspected: parsed.resultsInspected === true && activeScenario !== null,
-      guideDismissed: parsed.guideDismissed === true,
+      welcomeSeen: parsed.welcomeSeen === true,
     }
   } catch {
     return emptySession
@@ -100,23 +93,17 @@ export function DemoSessionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DemoSessionContextValue>(() => ({
     ...session,
-    // A new choice or a new run produces new results, so they need inspecting again.
     selectScenario: (scenario) => setSession((current) => ({
       ...current,
       selectedScenario: scenario,
       activeScenario: null,
-      resultsInspected: false,
     })),
     runScenario: () => setSession((current) => current.selectedScenario
-      ? { ...current, activeScenario: current.selectedScenario, resultsInspected: false }
+      ? { ...current, activeScenario: current.selectedScenario }
       : current),
-    // Reset starts the walkthrough again but respects a guide the user dismissed.
-    resetScenario: () => setSession((current) => ({ ...emptySession, guideDismissed: current.guideDismissed })),
-    markResultsInspected: () => setSession((current) => current.activeScenario
-      ? { ...current, resultsInspected: true }
-      : current),
-    dismissGuide: () => setSession((current) => ({ ...current, guideDismissed: true })),
-    reopenGuide: () => setSession((current) => ({ ...current, guideDismissed: false })),
+    // Reset starts the walkthrough again but does not bring the welcome back.
+    resetScenario: () => setSession((current) => ({ ...emptySession, welcomeSeen: current.welcomeSeen })),
+    dismissWelcome: () => setSession((current) => ({ ...current, welcomeSeen: true })),
   }), [session])
 
   return <DemoSessionContext.Provider value={value}>{children}</DemoSessionContext.Provider>
