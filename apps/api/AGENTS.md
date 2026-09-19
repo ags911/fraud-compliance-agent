@@ -5,6 +5,9 @@ adds only rules that are specific to `apps/api`.
 
 - Python is pinned to 3.13 in `.python-version` (`>=3.11` is supported). Use
   `uv`; change `uv.lock` together with `pyproject.toml`.
+- The private Arbiris SDK is an optional extra. Install it with
+  `uv sync --extra sdk`; a plain `uv sync` leaves it out. `make` uses it
+  automatically when `vendor/arbiris-sdk` exists.
 - Focused checks, run from the repository root: `make api-lint`,
   `make api-docstring-lint`, `make api-test`, and `make data-check`.
 - Do not modify `vendor/`, the pinned Arbiris SDK submodule, without an explicit

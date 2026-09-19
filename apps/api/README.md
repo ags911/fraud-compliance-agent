@@ -134,15 +134,20 @@ npm run dev
 ### Setup
 
 ```bash
-git clone --recurse-submodules https://github.com/ags911/fraud-compliance-agent-api.git
-cd fraud-compliance-agent-api
+git clone --recurse-submodules https://github.com/ags911/fraud-compliance-agent.git
+cd fraud-compliance-agent/apps/api
 
-# If cloned without submodules:
+# If cloned without submodules (this needs access to the private Arbiris SDK):
 git submodule update --init --recursive
 
-uv sync
+uv sync --extra sdk    # with the private SDK: the full demo pipeline
 cp .env.example .env
 ```
+
+Without access to the private SDK, clone without `--recurse-submodules` and use
+`uv sync --frozen` instead (`--frozen` skips validating the absent SDK). The API
+still starts and `/health` and `/demo/model-summary` work, but `/scenarios` and
+the run routes return `503 demo_pipeline_unavailable`.
 
 The safe default sets `DEMO_ALLOW_EXTERNAL_INVESTIGATION=false`: Sim B follows
 its deterministic provider-unavailable path and makes no Groq request. For an
