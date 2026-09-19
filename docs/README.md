@@ -33,6 +33,7 @@ to overlap:
 | `product/implementation-plan.md` | Candidate delivery planning | Keep one active plan; it may organise candidate work but cannot approve PRD, contract, or post-gate scope. |
 | `docs/proposals/` | Non-binding review material | Promote accepted decisions; archive closed proposals. |
 | `docs/experiments/` and `notebooks/` | Reproducibility evidence | Retain as evidence; do not treat it as product authority. |
+| `architecture/` | Structural description of the built and planned system | Keep it in step with the PRD and the plan; it describes structure and approves nothing. |
 | `audits/`, generated inventories, and standards | Point-in-time control evidence | Keep the current standard; date-stamped audit snapshots live in `audits/`; the inventory is a local, git-ignored report. |
 
 Do not add another planning document when an existing canonical or active plan
@@ -54,6 +55,9 @@ links in the same change.
 
 - [`project-context.md`](project-context.md) is the durable, tool-neutral
   project context that both Codex and Claude Code must read before work.
+- [`architecture/system-architecture.md`](architecture/system-architecture.md)
+  maps the system from ingestion to monitoring, marking what is built, planned,
+  and proposed.
 - [`data-governance.md`](data-governance.md) defines safe, reproducible handling
   of provider data, fixtures, notebooks, and model artifacts.
 - [`experiments/`](experiments/) contains reviewable experiment records until a

@@ -25,6 +25,7 @@ build.
 | `docs/product` | Candidate PRD and the single active cross-application delivery plan | Product planning authority after the documented approval record is complete; location alone is not approval. |
 | `docs/proposals` | Review artifacts that are not yet runtime inputs | Proposed only; promote through an ADR, contract, and tests. |
 | `docs/experiments` | Sanitised notebook experiment records | Evidence, never runtime authority. |
+| `docs/architecture` | Structural description of the system, from ingestion to monitoring | Describes structure and build state; approves nothing. |
 | `notebooks` | Reproducible, sanitised feasibility and evaluation evidence | Follow the notebook plan, data governance, and approved gates. |
 | `fixtures` | Future deterministic canonical scenarios | No provider/raw data; only accepted fixtures become runtime candidates. |
 | `config` | Non-secret configuration examples and model configuration | Never add credentials or local environment values. |
@@ -39,6 +40,7 @@ build.
 | --- | --- |
 | `AGENTS.md`, `CLAUDE.md` | Minimal agent entry points. Both direct agents to the canonical project context. |
 | `docs/project-context.md` | Stable project, architecture, safety, and delivery rules for every contributor. |
+| `docs/architecture/system-architecture.md` | Context, containers, pipeline, data and model lifecycle, trust boundaries, and deployment. |
 | `README.md` | Monorepo orientation, independently runnable applications, and common commands. |
 | `Makefile` | Local verification and safe notebook/corpus commands. `make check` is the standard handoff gate. |
 | `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, test, and container-image checks. |

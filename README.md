@@ -15,6 +15,9 @@ Monorepo for the payment-risk engine and its operator console.
 - `notebooks` — reproducible, sanitised feasibility work only.
 - `infra` — local orchestration and deployment configuration.
 
+For how the parts fit together, and what is built rather than planned, read
+[the system architecture](docs/architecture/system-architecture.md).
+
 The copied applications remain independently runnable. Root-level contracts and
 automation are added incrementally; neither app should be moved, rewritten, or
 made dependent on the other as part of this migration.
