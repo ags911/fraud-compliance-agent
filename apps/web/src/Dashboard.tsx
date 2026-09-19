@@ -1,23 +1,22 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react"
-import { format } from "date-fns"
-import type { DateRange } from "react-day-picker"
-import { ArrowRight, BarChart3, CalendarDays, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, Sun } from "lucide-react"
+import { ArrowRight, BarChart3, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, Sun } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
 import { DashboardChat } from "@/components/dashboard-chat"
 import { demoScenarios, type DemoScenarioId } from "@/components/demo-session"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { scenarioResults, zeroKpis, zeroOutcomes, type Route } from "@/lib/overview-data"
+
+type ScenarioResult = (typeof scenarioResults)[keyof typeof scenarioResults]
 
 // The content follows the Overview page contract in the implementation plan: KPI strip,
 // decision outcomes, operational health, and recent decisions. The figures come from the
@@ -32,11 +31,6 @@ const toneColor = { success: "var(--outcome-pass)", warning: "var(--outcome-chal
 const routeColor: Record<Route, string> = { PASS: toneColor.success, CHALLENGE: toneColor.warning, HOLD: toneColor.danger }
 
 const themeKey = "averlynx-dashboard-theme"
-
-function formatRange(range: DateRange | undefined) {
-  if (!range?.from) return "Select dates"
-  return range.to ? `${format(range.from, "d")}–${format(range.to, "d MMM yyyy")}` : format(range.from, "d MMM yyyy")
-}
 
 /**
  * Make a table's scroll container keyboard-reachable, but only while it actually scrolls.
@@ -71,35 +65,28 @@ function useFocusableWhenScrollable(host: React.RefObject<HTMLElement | null>, l
   }, [host, label, rows])
 }
 
-type NavLeaf = {
+type Tab = { title: string; href: string; active?: boolean }
+
+// Live pages are tabs. Everything the plan lists that is not built yet sits under "More",
+// grouped by section, so nothing looks finished that is not.
+const liveTabs: Tab[] = [
+  { title: "Overview", href: "/dashboard.html", active: true },
+  { title: "Analyse a transaction", href: "/transactions/new" },
+  { title: "Insights", href: "/insights" },
+]
+
+type PlannedItem = {
   title: string
-  // Only a page that exists is linked. A leaf without an href is a planned view and is disabled.
+  // A planned page that already exists as a labelled placeholder. Views with no page are disabled.
   href?: string
-  // A linked page that is only a labelled placeholder today.
-  planned?: boolean
 }
 
-type Section = { title: string; href?: string; active?: boolean; children?: NavLeaf[] }
-
-// The sections follow the information architecture in the implementation plan. Live pages link
-// normally, planned pages that already exist show their own "planned" state, and views with no
-// page yet are disabled, so nothing looks built that is not.
-const sections: Section[] = [
-  { title: "Overview", href: "/dashboard.html", active: true },
-  {
-    title: "Transactions",
-    children: [
-      { title: "Analyse a transaction", href: "/transactions/new" },
-      { title: "All decisions", href: "/transactions", planned: true },
-    ],
-  },
-  { title: "Reviews", children: [{ title: "Queue", href: "/reviews", planned: true }] },
-  {
-    title: "Rules",
-    children: [{ title: "Performance", href: "/rules/performance", planned: true }, { title: "Changes" }],
-  },
-  { title: "Insights", children: [{ title: "Model benchmark", href: "/insights" }, { title: "Drift" }] },
-  { title: "Settings", children: [{ title: "Policies" }, { title: "Access" }, { title: "Integrations" }] },
+const plannedSections: Array<{ section: string; items: PlannedItem[] }> = [
+  { section: "Transactions", items: [{ title: "All decisions", href: "/transactions" }] },
+  { section: "Reviews", items: [{ title: "Queue", href: "/reviews" }] },
+  { section: "Rules", items: [{ title: "Performance", href: "/rules/performance" }, { title: "Changes" }] },
+  { section: "Insights", items: [{ title: "Drift" }] },
+  { section: "Settings", items: [{ title: "Policies" }, { title: "Access" }, { title: "Integrations" }] },
 ]
 
 function SoonBadge() {
@@ -110,53 +97,70 @@ const tabClass = (active: boolean) =>
   `-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 text-sm font-medium outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 ${active ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`
 
 /**
- * The section tabs. These are links between pages rather than panels of this one, so they are
- * a navigation landmark, not ARIA tabs. A section with sub-views opens a small menu of them.
+ * The page tabs. These are links between pages rather than panels of this one, so they are a
+ * navigation landmark, not ARIA tabs. "More" lists the planned sections that have no live page.
  */
 function SectionTabs() {
   return (
     <nav aria-label="Sections" className="-mx-4 mt-4 flex gap-6 overflow-x-auto border-b px-4 md:-mx-6 md:px-6">
-      {sections.map((section) => {
-        if (!section.children) {
-          return (
-            <a key={section.title} href={section.href} aria-current={section.active ? "page" : undefined} className={tabClass(Boolean(section.active))}>
-              {section.title}
-            </a>
-          )
-        }
-        const hasLivePage = section.children.some((child) => child.href && !child.planned)
-        return (
-          <Popover key={section.title}>
-            <PopoverTrigger asChild>
-              <button type="button" className={tabClass(false)}>
-                {section.title}
-                {hasLivePage ? null : <SoonBadge />}
-                <ChevronDown className="size-3.5" aria-hidden="true" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-56 p-1">
+      {liveTabs.map((tab) => (
+        <a key={tab.title} href={tab.href} aria-current={tab.active ? "page" : undefined} className={tabClass(Boolean(tab.active))}>
+          {tab.title}
+        </a>
+      ))}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className={tabClass(false)}>
+            More
+            <ChevronDown className="size-3.5" aria-hidden="true" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-64 p-2">
+          <p className="px-2 pb-1 text-xs text-muted-foreground">Planned, not built yet</p>
+          {plannedSections.map((group) => (
+            <div key={group.section} className="pt-2">
+              <p className="px-2 text-[10px] tracking-[0.14em] text-muted-foreground uppercase">{group.section}</p>
               <ul className="flex flex-col">
-                {section.children.map((child) => (
-                  <li key={child.title}>
-                    {child.href ? (
-                      <a href={child.href} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
-                        {child.title}
-                        {child.planned ? <SoonBadge /> : null}
+                {group.items.map((item) => (
+                  <li key={item.title}>
+                    {item.href ? (
+                      <a href={item.href} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+                        {item.title}
+                        <SoonBadge />
                       </a>
                     ) : (
                       <span aria-disabled="true" className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground">
-                        {child.title}
+                        {item.title}
                         <SoonBadge />
                       </span>
                     )}
                   </li>
                 ))}
               </ul>
-            </PopoverContent>
-          </Popover>
-        )
-      })}
+            </div>
+          ))}
+        </PopoverContent>
+      </Popover>
     </nav>
+  )
+}
+
+/**
+ * The right-hand sidebar that holds the Explain panel.
+ *
+ * Args:
+ *   result: The scenario result on screen, or null before a scenario has run.
+ */
+function ExplainSidebar({ result }: { result: ScenarioResult | null }) {
+  const { open, isMobile } = useSidebar()
+  return (
+    <Sidebar side="right" collapsible="offcanvas" widthPx={352} mobileWidthPx={340} className="border-l">
+      {/* A closed desktop drawer is only slid off-screen, so it is made inert to keep its
+          controls out of the tab order and the accessibility tree until it is opened. */}
+      <SidebarContent className="gap-0 overflow-hidden" inert={!isMobile && !open}>
+        <DashboardChat result={result} />
+      </SidebarContent>
+    </Sidebar>
   )
 }
 
@@ -164,7 +168,6 @@ export default function Dashboard() {
   const [selected, setSelected] = useState<DemoScenarioId | null>(null)
   const [active, setActive] = useState<DemoScenarioId | null>(null)
   const [search, setSearch] = useState("")
-  const [range, setRange] = useState<DateRange | undefined>({ from: new Date(2026, 8, 1), to: new Date(2026, 8, 23) })
 
   // Light is the default, and the choice is remembered. Storage can be blocked, so it is optional.
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -194,8 +197,8 @@ export default function Dashboard() {
 
   return (
     <TooltipProvider>
-      {/* The right-hand sidebar holds the Explain panel and is open by default. */}
-      <SidebarProvider style={{ "--sidebar-width": "22rem" } as CSSProperties}>
+      {/* The right-hand sidebar holds the Explain panel. It is closed until asked for. */}
+      <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": "22rem" } as CSSProperties}>
         <SidebarInset className="min-w-0">
           <header className="sticky top-0 z-10 flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b bg-background/85 px-4 py-2 backdrop-blur">
             <AverlynxBrand className="mr-auto h-8 text-foreground sm:mr-2" />
@@ -242,8 +245,9 @@ export default function Dashboard() {
                 </Button>
               ) : null}
             </div>
-            <SidebarTrigger aria-label="Toggle explain panel" title="Explain" className="order-2 sm:order-none sm:ml-1">
+            <SidebarTrigger aria-label="Toggle explain panel" variant="outline" size="sm" className="order-2 gap-1.5 sm:order-none sm:ml-1">
               <PanelRight aria-hidden="true" />
+              <span aria-hidden="true">Explain</span>
             </SidebarTrigger>
           </header>
 
@@ -259,17 +263,12 @@ export default function Dashboard() {
                   Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health. All data is synthetic, and nothing here can approve, release, or execute a real payment.
                 </p>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="bg-card">
-                    <CalendarDays aria-hidden="true" />
-                    {formatRange(range)}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-auto p-0">
-                  <Calendar mode="range" numberOfMonths={2} selected={range} onSelect={setRange} defaultMonth={range?.from} />
-                </PopoverContent>
-              </Popover>
+              <Button asChild>
+                <a href="/transactions/new">
+                  <ScanSearch aria-hidden="true" />
+                  Analyse a transaction
+                </a>
+              </Button>
             </div>
 
             {result ? null : (
@@ -456,12 +455,7 @@ export default function Dashboard() {
             </Card>
           </main>
         </SidebarInset>
-        <Sidebar side="right" collapsible="offcanvas" widthPx={352} mobileWidthPx={340} className="border-l">
-          <SidebarContent className="gap-0 overflow-hidden">
-            {/* Keyed by scenario so a new run starts a fresh conversation about the new figures. */}
-            <DashboardChat key={active ?? "none"} result={result} />
-          </SidebarContent>
-        </Sidebar>
+        <ExplainSidebar key={active ?? "none"} result={result} />
       </SidebarProvider>
     </TooltipProvider>
   )

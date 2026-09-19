@@ -65,32 +65,42 @@ test.describe("Dashboard", () => {
     await expect(page.getByText("Synthetic demo. Nothing here is a real payment.")).toHaveCount(0)
   })
 
-  test("all navigation lives in the section tabs, and only real pages are linked", async ({ page }) => {
+  test("live pages are tabs, and everything planned sits under More", async ({ page }) => {
     const tabs = page.getByRole("navigation", { name: "Sections" })
     await expect(tabs.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page")
+    await expect(tabs.getByRole("link", { name: "Analyse a transaction" })).toHaveAttribute("href", "/transactions/new")
+    await expect(tabs.getByRole("link", { name: "Insights" })).toHaveAttribute("href", "/insights")
     await expect(page.locator('[data-sidebar="menu-button"]')).toHaveCount(0)
 
-    const menu = page.getByRole("dialog").or(page.locator("[data-radix-popper-content-wrapper]")).last()
-    for (const [section, live, missing] of [
-      ["Transactions", [["Analyse a transaction", "/transactions/new"], ["All decisions", "/transactions"]], []],
-      ["Insights", [["Model benchmark", "/insights"]], ["Drift"]],
-      ["Rules", [["Performance", "/rules/performance"]], ["Changes"]],
-      ["Reviews", [["Queue", "/reviews"]], []],
-      ["Settings", [], ["Policies", "Access", "Integrations"]],
-    ] as const) {
-      await tabs.getByRole("button", { name: new RegExp(`^${section}`) }).click()
-      for (const [name, href] of live) await expect(menu.getByRole("link", { name: new RegExp(`^${name}`) })).toHaveAttribute("href", href)
-      for (const name of missing) {
-        await expect(menu.getByText(new RegExp(`^${name}`))).toBeVisible()
-        await expect(menu.getByRole("link", { name: new RegExp(`^${name}`) })).toHaveCount(0)
-      }
-      await page.keyboard.press("Escape")
+    await tabs.getByRole("button", { name: "More" }).click()
+    const more = page.locator("[data-radix-popper-content-wrapper]").last()
+    await expect(more.getByText("Planned, not built yet")).toBeVisible()
+    for (const [name, href] of [["All decisions", "/transactions"], ["Queue", "/reviews"], ["Performance", "/rules/performance"]]) {
+      await expect(more.getByRole("link", { name: new RegExp(`^${name}`) })).toHaveAttribute("href", href)
+    }
+    // Views with no page yet are shown but not linked.
+    for (const name of ["Changes", "Drift", "Policies", "Access", "Integrations"]) {
+      await expect(more.getByText(new RegExp(`^${name}`))).toBeVisible()
+      await expect(more.getByRole("link", { name: new RegExp(`^${name}`) })).toHaveCount(0)
     }
   })
 
+  test("Analyse a transaction is a primary action on the page", async ({ page }) => {
+    await expect(page.getByRole("main").getByRole("link", { name: "Analyse a transaction" }).first()).toHaveAttribute("href", "/transactions/new")
+  })
+
+  test("there is no date-range control, because nothing on the page is date-filtered", async ({ page }) => {
+    await expect(page.getByRole("button", { name: /Sep 2026|Select dates/ })).toHaveCount(0)
+  })
+
   test("the Explain panel is a labelled preview that answers only from the page's figures", async ({ page }) => {
-    // Below 768px the panel is a sheet that opens from the toggle; above it, it is open already.
-    if ((page.viewportSize()?.width ?? 1440) < 768) await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    // The panel is closed until asked for. Closed, it is inert on desktop (slid off-screen but out
+    // of the tab order); on a narrow screen it is a sheet that does not exist until opened.
+    const narrow = (page.viewportSize()?.width ?? 1440) < 768
+    if (narrow) await expect(page.getByRole("region", { name: "Explain" })).toHaveCount(0)
+    else await expect(page.locator("[inert]")).toHaveCount(1)
+    await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    await expect(page.locator("[inert]")).toHaveCount(0)
     const panel = page.getByRole("region", { name: "Explain" })
     await expect(panel.getByText("No language model is connected.")).toBeVisible()
     await expect(panel.getByRole("textbox", { name: "Ask about this page" })).toBeDisabled()
@@ -98,9 +108,8 @@ test.describe("Dashboard", () => {
   })
 
   test("the Explain panel answers from the run, cites its source, and refuses anything else", async ({ page }) => {
-    const narrow = (page.viewportSize()?.width ?? 1440) < 768
     await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
-    if (narrow) await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    await page.getByRole("button", { name: "Toggle explain panel" }).click()
     const panel = page.getByRole("region", { name: "Explain" })
     const log = panel.getByRole("log", { name: "Conversation" })
 
@@ -125,27 +134,28 @@ test.describe("Dashboard", () => {
   test("a new run starts a fresh conversation", async ({ page }) => {
     const narrow = (page.viewportSize()?.width ?? 1440) < 768
     await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
-    if (narrow) await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    await page.getByRole("button", { name: "Toggle explain panel" }).click()
     const panel = page.getByRole("region", { name: "Explain" })
     await panel.getByRole("button", { name: "What is in the review queue?" }).click()
     await expect(panel.getByRole("log")).toContainText("Source: Review queue")
 
+    // On a narrow screen the panel is a modal sheet, so it is closed before the page is used again.
     if (narrow) await page.keyboard.press("Escape")
+    else await page.getByRole("button", { name: "Toggle explain panel" }).click()
     await page.getByRole("button", { name: "Reset demo and return all values to zero" }).click()
-    if (narrow) await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    await page.getByRole("button", { name: "Toggle explain panel" }).click()
     await expect(page.getByRole("region", { name: "Explain" }).getByRole("log")).not.toContainText("Source: Review queue")
   })
 
-  test("has a top bar with search, the demo label, the scenario control and the date range", async ({ page }) => {
+  test("has a top bar with search, the synthetic label, the scenario control and the Explain toggle", async ({ page }) => {
     await expect(page.getByLabel("Search decisions")).toBeDisabled()
     await expect(page.getByRole("combobox", { name: "Demo scenario" })).toBeVisible()
-    await expect(page.getByRole("button", { name: /Sep 2026/ })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Toggle explain panel" })).toBeVisible()
   })
 
   test("has no automatically detectable accessibility violations with the Explain panel used and a section menu open", async ({ page }) => {
-    const narrow = (page.viewportSize()?.width ?? 1440) < 768
     await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
-    if (narrow) await page.getByRole("button", { name: "Toggle explain panel" }).click()
+    await page.getByRole("button", { name: "Toggle explain panel" }).click()
     await page.getByRole("region", { name: "Explain" }).getByRole("button", { name: "Which decision has the highest risk?" }).click()
     await page.waitForTimeout(800)
 
