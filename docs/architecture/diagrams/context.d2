@@ -1,0 +1,62 @@
+# System context: who uses the engine and what it talks to. Source of truth for context.svg.
+# Colour is build state: green built, amber planned, grey dashed proposed.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+    pad: 32
+  }
+}
+
+direction: right
+
+classes: {
+  built: { style: { fill: "#e8f5ee"; stroke: "#0b7a45"; font-color: "#07331f"; border-radius: 8 } }
+  planned: { style: { fill: "#fdf5e3"; stroke: "#946000"; font-color: "#3d2a00"; border-radius: 8; stroke-dash: 3 } }
+  proposed: { style: { fill: "#f2f2f5"; stroke: "#6b7280"; font-color: "#30323a"; border-radius: 8; stroke-dash: 3 } }
+  group: { style: { fill: "#f7f8fb"; stroke: "#c9ced8"; font-color: "#1b1745"; font-size: 18; bold: true; border-radius: 12 } }
+}
+
+people: "People" {
+  class: group
+  operator: "Fraud operator" { class: built }
+  reviewer: "Fraud reviewer" { class: planned }
+  admin: "Administrator /\nmodel approver" { class: planned }
+  visitor: "Recruiter or\nengineer" { class: built }
+}
+
+engine: "Payment risk engine\ndecision engine + operator console\nsynthetic showcase" {
+  style: { fill: "#eef1ff"; stroke: "#4b41c9"; font-color: "#1b1745"; border-radius: 12; bold: true; font-size: 18 }
+}
+
+sources: "Data sources" {
+  class: group
+  provider: "Payment provider\nno adapter selected" { class: proposed }
+  plaid: "Plaid Sandbox\nnotebooks only" { class: built }
+  sparkov: "Sparkov corpus\noffline benchmark" { class: built }
+}
+
+services: "Services" {
+  class: group
+  groq: "Groq API\nbounded investigation" { class: built }
+  arbiris: "Arbiris\nsigned records" { class: built }
+  azure: "Azure\nSWA + Container Apps" { class: planned }
+}
+
+people -> engine
+sources.provider -> engine: "not connected" { style.stroke-dash: 4 }
+sources.plaid -> engine: "sanitised evidence" { style.stroke-dash: 4 }
+sources.sparkov -> engine: "offline only" { style.stroke-dash: 4 }
+engine -> services.groq: "eligible cases"
+engine -> services.arbiris: "evidence"
+engine -> services.azure: "hosted on"
+
+legend: "Legend" {
+  near: bottom-center
+  style.fill: transparent
+  style.stroke: transparent
+  b: "Built" { class: built }
+  p: "Planned" { class: planned }
+  x: "Proposed" { class: proposed }
+}

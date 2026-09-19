@@ -1,0 +1,107 @@
+# The decision pipeline: ingestion -> intelligence -> orchestration -> action -> monitoring.
+# Colour is build state: green built, amber planned. Source of truth for pipeline.svg.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+    pad: 32
+  }
+}
+
+direction: down
+
+classes: {
+  built: {
+    style: {
+      fill: "#e8f5ee"
+      stroke: "#0b7a45"
+      font-color: "#07331f"
+      border-radius: 8
+    }
+  }
+  planned: {
+    style: {
+      fill: "#fdf5e3"
+      stroke: "#946000"
+      font-color: "#3d2a00"
+      border-radius: 8
+      stroke-dash: 3
+    }
+  }
+  stage: {
+    style: {
+      fill: "#f7f8fb"
+      stroke: "#c9ced8"
+      font-color: "#1b1745"
+      font-size: 20
+      bold: true
+      border-radius: 12
+    }
+  }
+}
+
+legend: "Legend" {
+  near: bottom-center
+  style.fill: transparent
+  style.stroke: transparent
+  b: "Built and tested" { class: built }
+  p: "Planned, not built" { class: planned }
+}
+
+ingestion: "1  Ingestion" {
+  class: stage
+  grid-rows: 1
+  grid-gap: 24
+  fixtures: "Scenario fixtures\nS01 to S08" { class: built }
+  canon: "Validate and canonicalise\nversioned source facts" { class: planned }
+  snapshot: "Point-in-time\nfeature snapshot" { class: planned }
+  fixtures -> canon -> snapshot
+}
+
+intelligence: "2  Intelligence" {
+  class: stage
+  # This stage branches, so it keeps the normal graph layout: grid layout
+  # draws straight edges, which cross the boxes between their endpoints.
+  controls: "Deterministic fraud\nand APP controls" { class: built }
+  model: "Calibrated model score" { class: planned }
+  investigate: "Bounded investigation\nambiguous or APP cases only" { class: built }
+  recommend: "Recommendation\nPASS / CHALLENGE / HOLD" { class: built }
+  controls -> model
+  model -> investigate
+  model -> recommend
+  investigate -> recommend
+  controls -> recommend: "hard control\nstops here" { style.stroke-dash: 4 }
+}
+
+orchestration: "3  Orchestration" {
+  class: stage
+  grid-rows: 1
+  grid-gap: 24
+  authority: "Authority check" { class: planned }
+  oversight: "Oversight requirement" { class: planned }
+  review: "Human review\nwhere required" { class: planned }
+  authority -> oversight -> review
+}
+
+action: "4  Action" {
+  class: stage
+  grid-rows: 1
+  grid-gap: 24
+  simulated: "Simulated action\nidempotent" { class: planned }
+  history: "History and\nread-only replay" { class: planned }
+  evidence: "Signed evidence record" { class: built }
+  simulated -> history -> evidence
+}
+
+monitoring: "5  Monitoring" {
+  class: stage
+  grid-rows: 1
+  grid-gap: 24
+  health: "Run and health state" { class: built }
+  benchmark: "Benchmark evidence\nmechanics-only" { class: built }
+  drift: "Drift and\nchampion / challenger" { class: planned }
+  health -> benchmark -> drift
+}
+
+ingestion -> intelligence -> orchestration -> action -> monitoring

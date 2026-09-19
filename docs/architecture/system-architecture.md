@@ -11,6 +11,10 @@ disagree with a picture here, they win and this file is wrong.
 
 ## How to read the diagrams
 
+The context and pipeline views are [D2](https://d2lang.com) diagrams rendered to
+SVG, so they display in any viewer; the source is committed beside each one. The
+remaining views are Mermaid, which GitHub renders inline.
+
 Every node carries its build state, because a diagram that mixes what runs with
 what is planned is how a demo becomes a false claim.
 
@@ -29,45 +33,9 @@ come first; a model recommends; authority, oversight, and human review decide.
 
 Who uses the system and what it talks to.
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
-    classDef proposed fill:#f2f2f5,stroke:#6b7280,color:#30323a,stroke-dasharray:4 3
-    classDef system fill:#eef1ff,stroke:#4b41c9,color:#1b1745
+![System context: people, data sources, and services around the payment risk engine, coloured by build state](diagrams/context.svg)
 
-    subgraph people["People"]
-        direction LR
-        operator["Fraud operator"]:::built
-        reviewer["Fraud reviewer"]:::planned
-        admin["Administrator /<br/>model approver"]:::planned
-        visitor["Recruiter or engineer"]:::built
-    end
-
-    engine["<b>Payment risk engine</b><br/>decision engine + operator console<br/>synthetic showcase"]:::system
-
-    subgraph inputs["Data sources"]
-        direction LR
-        provider["Payment provider<br/>no adapter selected"]:::proposed
-        plaid["Plaid Sandbox<br/>notebooks only"]:::built
-        sparkov["Sparkov corpus<br/>offline benchmark"]:::built
-    end
-
-    subgraph services["Services"]
-        direction LR
-        groq["Groq API<br/>bounded investigation"]:::built
-        arbiris["Arbiris<br/>signed records"]:::built
-        azure["Azure<br/>SWA + Container Apps"]:::planned
-    end
-
-    people --> engine
-    provider -. "not connected" .-> engine
-    plaid -. "sanitised evidence" .-> engine
-    sparkov -. "offline only" .-> engine
-    engine -- "eligible cases" --> groq
-    engine -- "evidence" --> arbiris
-    engine --> azure
-```
+<sub>Source: [`diagrams/context.d2`](diagrams/context.d2). Regenerate with `make architecture-diagrams`.</sub>
 
 The dotted edges matter as much as the solid ones. Plaid informs the canonical
 mapping through sanitised notebooks and never serves a request. Sparkov feeds a
@@ -125,44 +93,9 @@ planned rather than claimed.
 Ingestion, intelligence, orchestration, action, monitoring — and what guards
 each stage.
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
+![The decision pipeline: ingestion, intelligence, orchestration, action, monitoring, coloured by build state](diagrams/pipeline.svg)
 
-    subgraph ingestion["1 · Ingestion"]
-        direction LR
-        i3["Scenario fixtures<br/>S01-S08"]:::built --> i1["Validate and<br/>canonicalise"]:::planned --> i2["Point-in-time<br/>feature snapshot"]:::planned
-    end
-
-    subgraph intelligence["2 · Intelligence"]
-        direction LR
-        m1["Deterministic fraud<br/>and APP controls"]:::built
-        m2["Calibrated<br/>model score"]:::planned
-        m3["Bounded<br/>investigation"]:::built
-        m4["Recommendation<br/>PASS / CHALLENGE / HOLD"]:::built
-        m1 -- "hard control<br/>stops here" --> m4
-        m1 --> m2 --> m4
-        m2 -- "ambiguous or<br/>APP concern only" --> m3 --> m4
-    end
-
-    subgraph orchestration["3 · Orchestration"]
-        direction LR
-        o1["Authority check"]:::planned --> o2["Oversight<br/>requirement"]:::planned --> o3["Human review<br/>where required"]:::planned
-    end
-
-    subgraph action["4 · Action"]
-        direction LR
-        a1["Simulated action,<br/>idempotent"]:::planned --> a2["History and<br/>read-only replay"]:::planned --> a3["Signed evidence<br/>record"]:::built
-    end
-
-    subgraph monitoring["5 · Monitoring"]
-        direction LR
-        n1["Run and health<br/>state"]:::built --> n2["Benchmark evidence,<br/>mechanics-only"]:::built --> n3["Drift and<br/>champion/challenger"]:::planned
-    end
-
-    ingestion --> intelligence --> orchestration --> action --> monitoring
-```
+<sub>Source: [`diagrams/pipeline.d2`](diagrams/pipeline.d2). Regenerate with `make architecture-diagrams`.</sub>
 
 Monitoring feeds back into the next *model decision* — a promotion, a threshold,
 a retrain — through the release gate in section 4. There is no live path from an

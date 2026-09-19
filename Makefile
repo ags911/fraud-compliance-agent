@@ -1,4 +1,4 @@
-.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-contract api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
+.PHONY: architecture-diagrams check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-contract api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
 
 # Use the private Arbiris SDK when its submodule is initialised; otherwise run
 # without it. The SDK-backed demo pipeline tests skip when it is absent.
@@ -35,6 +35,10 @@ api-notebook-lint:
 
 api-docstring-lint:
 	cd apps/api && $(UV_RUN) ruff check --select D103 server modelling ../../notebooks ../../scripts
+
+# Re-render the architecture diagrams from their D2 sources (needs the d2 CLI: `brew install d2`).
+architecture-diagrams:
+	for source in docs/architecture/diagrams/*.d2; do d2 "$$source" "$${source%.d2}.svg"; done
 
 # Regenerate only after deliberately changing the versioned showcase contract.
 # The contract test prevents route drift when this target has not been run.
