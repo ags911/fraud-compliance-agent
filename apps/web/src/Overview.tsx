@@ -203,11 +203,17 @@ function RoutePill({ route }: { route: Route }) {
 function DemoHelpDialog({
   selectedScenario,
   activeScenario,
+  resultsInspected,
+  guideDismissed,
+  onReopenGuide,
 }: {
   selectedScenario: DemoScenarioId | null
   activeScenario: DemoScenarioId | null
+  resultsInspected: boolean
+  guideDismissed: boolean
+  onReopenGuide: () => void
 }) {
-  const steps = checklistItemsFor(selectedScenario, activeScenario, false)
+  const steps = checklistItemsFor(selectedScenario, activeScenario, resultsInspected)
 
   return (
     <Dialog.Root>
@@ -249,6 +255,13 @@ function DemoHelpDialog({
           </ol>
           <footer className="overview-demo-dialog__footer">
             <span>Try another path any time with Reset in the header.</span>
+            {guideDismissed ? (
+              <Dialog.Close asChild>
+                <button className="overview-demo-dialog__secondary" type="button" onClick={onReopenGuide}>
+                  Show getting started guide
+                </button>
+              </Dialog.Close>
+            ) : null}
             <Dialog.Close asChild>
               <button className="overview-demo-dialog__done" type="button">Got it</button>
             </Dialog.Close>
@@ -287,13 +300,19 @@ const checklistItemsFor = (
 export function OverviewContent() {
   const [search, setSearch] = useState("")
   const [notice, setNotice] = useState<string | null>(null)
-  const [checklistDismissed, setChecklistDismissed] = useState(false)
-  const [resultsInspected, setResultsInspected] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2026, 8, 1),
     to: new Date(2026, 8, 23),
   })
-  const { activeScenario, selectedScenario } = useDemoSession()
+  const {
+    activeScenario,
+    selectedScenario,
+    resultsInspected,
+    guideDismissed,
+    markResultsInspected,
+    dismissGuide,
+    reopenGuide,
+  } = useDemoSession()
 
   const result = activeScenario ? scenarioResults[activeScenario] : null
   const visibleDecisions = result?.decisions ?? []
@@ -318,12 +337,11 @@ export function OverviewContent() {
     const scenario = demoScenarios.find((option) => option.id === scenarioId)
     setNotice(`${scenario?.label ?? "Demo"} scenario completed. Start with Decision outcomes, then inspect the Recent decisions table below. Reset in the header to start again.`)
     setSearch("")
-    setResultsInspected(false)
   }
 
   function inspectResults() {
     document.getElementById("overview-results")?.scrollIntoView({ behavior: "smooth", block: "start" })
-    setResultsInspected(true)
+    markResultsInspected()
   }
 
   return (
@@ -336,17 +354,21 @@ export function OverviewContent() {
         onDemoSelectionChange={() => {
           setNotice(null)
           setSearch("")
-          setResultsInspected(false)
         }}
         onDemoReset={() => {
           setNotice(null)
           setSearch("")
-          setResultsInspected(false)
         }}
         rightContent={
           <>
             <span className="overview-demo-badge">Demo data</span>
-            <DemoHelpDialog selectedScenario={selectedScenario} activeScenario={activeScenario} />
+            <DemoHelpDialog
+              selectedScenario={selectedScenario}
+              activeScenario={activeScenario}
+              resultsInspected={resultsInspected}
+              guideDismissed={guideDismissed}
+              onReopenGuide={reopenGuide}
+            />
             <span className="payments-topbar__divider" aria-hidden="true" />
           </>
         }
@@ -357,12 +379,12 @@ export function OverviewContent() {
           description="Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health."
         />
 
-        {!checklistDismissed ? (
+        {!guideDismissed ? (
           <section className="overview-checklist" aria-label="Getting started">
             <header className="overview-checklist__header">
               <div className="overview-checklist__heading">
                 <strong>Getting started</strong>
-                <span>{completedCount} of {checklistItems.length} completed</span>
+                <span aria-live="polite">{completedCount} of {checklistItems.length} completed</span>
               </div>
               <PaymentsProgress
                 className="overview-checklist__progress"
@@ -374,7 +396,7 @@ export function OverviewContent() {
                 type="button"
                 className="overview-checklist__dismiss"
                 aria-label="Dismiss getting started guide"
-                onClick={() => setChecklistDismissed(true)}
+                onClick={dismissGuide}
               >
                 <X aria-hidden="true" size={14} strokeWidth={1.8} />
               </button>
@@ -388,7 +410,10 @@ export function OverviewContent() {
                       {item.complete ? <Check size={13} strokeWidth={2.2} /> : index + 1}
                     </span>
                     <div className="overview-checklist__body">
-                      <strong>{item.title}</strong>
+                      <strong>
+                        {item.complete ? <span className="sr-only">Completed: </span> : null}
+                        {item.title}
+                      </strong>
                       {state !== "complete" ? <p>{item.description}</p> : null}
                     </div>
                     {item.id === "inspect" && activeScenario && !item.complete ? (

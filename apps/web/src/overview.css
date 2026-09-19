@@ -144,6 +144,16 @@
   color: var(--payments-color-muted-foreground);
 }
 
+.overview-demo-dialog__secondary {
+  height: 30px;
+  flex: 0 0 auto;
+  border: 1px solid var(--payments-color-divider);
+  border-radius: var(--payments-radius-control);
+  padding: 0 10px;
+  background: transparent;
+  color: var(--payments-color-foreground);
+}
+
 .overview-demo-dialog__done {
   height: 30px;
   flex: 0 0 auto;

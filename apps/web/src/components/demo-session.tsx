@@ -44,34 +44,50 @@ export const demoScenarios: ReadonlyArray<{
 type DemoSessionState = {
   selectedScenario: DemoScenarioId | null
   activeScenario: DemoScenarioId | null
+  // The guided "Getting started" progress lives with the scenario choice, so it
+  // survives navigation and reloads within the tab and stays consistent between
+  // the checklist and the help dialog.
+  resultsInspected: boolean
+  guideDismissed: boolean
 }
 
 type DemoSessionContextValue = DemoSessionState & {
   selectScenario: (scenario: DemoScenarioId) => void
   runScenario: () => void
   resetScenario: () => void
+  markResultsInspected: () => void
+  dismissGuide: () => void
+  reopenGuide: () => void
 }
 
 const storageKey = "kepler-demo-session"
 const DemoSessionContext = createContext<DemoSessionContextValue | null>(null)
+const emptySession: DemoSessionState = {
+  selectedScenario: null,
+  activeScenario: null,
+  resultsInspected: false,
+  guideDismissed: false,
+}
 
 function readStoredSession(): DemoSessionState {
-  if (typeof window === "undefined") {
-    return { selectedScenario: null, activeScenario: null }
-  }
+  if (typeof window === "undefined") return emptySession
 
   try {
     const stored = window.sessionStorage.getItem(storageKey)
-    if (!stored) return { selectedScenario: null, activeScenario: null }
+    if (!stored) return emptySession
     const parsed = JSON.parse(stored) as Partial<DemoSessionState>
     const validScenario = (value: unknown): value is DemoScenarioId =>
       demoScenarios.some((scenario) => scenario.id === value)
+    const activeScenario = validScenario(parsed.activeScenario) ? parsed.activeScenario : null
     return {
       selectedScenario: validScenario(parsed.selectedScenario) ? parsed.selectedScenario : null,
-      activeScenario: validScenario(parsed.activeScenario) ? parsed.activeScenario : null,
+      activeScenario,
+      // Results can only have been inspected if a scenario has actually run.
+      resultsInspected: parsed.resultsInspected === true && activeScenario !== null,
+      guideDismissed: parsed.guideDismissed === true,
     }
   } catch {
-    return { selectedScenario: null, activeScenario: null }
+    return emptySession
   }
 }
 
@@ -84,11 +100,23 @@ export function DemoSessionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DemoSessionContextValue>(() => ({
     ...session,
-    selectScenario: (scenario) => setSession({ selectedScenario: scenario, activeScenario: null }),
+    // A new choice or a new run produces new results, so they need inspecting again.
+    selectScenario: (scenario) => setSession((current) => ({
+      ...current,
+      selectedScenario: scenario,
+      activeScenario: null,
+      resultsInspected: false,
+    })),
     runScenario: () => setSession((current) => current.selectedScenario
-      ? { ...current, activeScenario: current.selectedScenario }
+      ? { ...current, activeScenario: current.selectedScenario, resultsInspected: false }
       : current),
-    resetScenario: () => setSession({ selectedScenario: null, activeScenario: null }),
+    // Reset starts the walkthrough again but respects a guide the user dismissed.
+    resetScenario: () => setSession((current) => ({ ...emptySession, guideDismissed: current.guideDismissed })),
+    markResultsInspected: () => setSession((current) => current.activeScenario
+      ? { ...current, resultsInspected: true }
+      : current),
+    dismissGuide: () => setSession((current) => ({ ...current, guideDismissed: true })),
+    reopenGuide: () => setSession((current) => ({ ...current, guideDismissed: false })),
   }), [session])
 
   return <DemoSessionContext.Provider value={value}>{children}</DemoSessionContext.Provider>

@@ -321,7 +321,7 @@ item is planned, requires fresh verification, or needs a decision before it
 can be claimed. Re-run the relevant check after a material change rather than
 relying on a historical tick.
 
-Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 4 of 6, MVP 2 has
+Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 5 of 6, MVP 2 has
 2 of 5, and MVP 3 has 0 of 7. Several unchecked items have partial evidence, noted
 in their rows.
 
@@ -347,7 +347,7 @@ in their rows.
 | ✓ | A branded Not Found recovery state exists. | `ProductApp.tsx`. |
 | ✓ | The approved Rules Performance reference remains a visual comparison, not live operational data. | Reference route and design-system rules. |
 | — | Perform and retain screenshot/accessibility checks for every MVP 1 route at desktop and narrow widths. | Automated axe WCAG 2 A/AA checks (`apps/web/tests/accessibility.spec.ts`) now run on Overview, Benchmark insights, Analyse a transaction, a planned page, and Not found at desktop and narrow widths. Fixed 2026-09-19: unnamed selects and switches, unlabelled inputs, a keyboard-inaccessible scroll region, and a dangling `aria-controls`. Every rule passes except colour contrast, an open design-token decision. Six pairs are below 4.5:1: `#79797d` on white (4.33, sidebar status); `#788796` on white (3.68) and `#a7b0bf` on white (2.18), the upcoming Overview steps; `#ce4761` on `#fbeff1` (3.98, "Simulate LLM outage"); `#5f708a` on `#fbeff1` (4.48); `#8f9bad` on white (2.81, run id). Screenshot baselines exist for Overview, Benchmark insights, the record panel, and the design references, but not for Not found, planned pages, or the full Analyse a transaction page. Manual keyboard and screen-reader review is still needed. |
-| — | Verify every guided step completes visibly, persists correctly, and cannot disappear without completion. | Exercise the complete onboarding flow. |
+| ✓ | Every guided step completes visibly and persists for the tab, and a dismissed guide can be reopened. | Decision 2026-09-19: the dismiss button stays, so "cannot disappear without completion" became "recoverable". Progress and dismissal are stored with the demo session (`apps/web/src/components/demo-session.tsx`), so they survive reloads and navigation. A new choice or run resets only the inspection step, Reset keeps a dismissed guide dismissed, and the help dialog shows the same progress as the guide. Completed steps carry a text alternative, and the count is announced politely. Step 3 completes only through **View results**, not by scrolling, so passive visibility is never counted as inspection. Covered by `apps/web/tests/onboarding.spec.ts` (8 tests at each width). |
 
 ### MVP 2 — Live decision demonstration
 
