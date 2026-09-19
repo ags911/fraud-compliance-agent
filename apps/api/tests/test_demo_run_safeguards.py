@@ -105,6 +105,7 @@ def test_boolean_env_rejects_ambiguous_configuration(monkeypatch: pytest.MonkeyP
         main.create_app()
 
 
+@pytest.mark.skipif(not main.SCENARIOS, reason="the private SDK submodule is not initialised")
 @pytest.mark.parametrize(
     ("configured", "expected_outage"),
     [(None, True), ("false", True), ("true", False)],

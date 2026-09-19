@@ -58,6 +58,8 @@ def _broken_links(path: Path, root: Path) -> list[str]:
         raw_path, _, fragment = target.partition("#")
         resolved = path if not raw_path else (path.parent / unquote(raw_path)).resolve()
         location = f"{path.relative_to(root)} -> {target}"
+        if resolved.is_relative_to(root) and SKIPPED_PARTS & set(resolved.relative_to(root).parts):
+            continue  # into a submodule or generated tree that a clone may not contain
         if not resolved.exists():
             problems.append(f"{location} (file not found)")
         elif fragment and resolved.suffix == ".md":
