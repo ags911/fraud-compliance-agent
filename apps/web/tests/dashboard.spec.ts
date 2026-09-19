@@ -23,22 +23,42 @@ test.describe("Dashboard", () => {
     await expect(summary).toContainText("12,842")
     await expect(page.getByText("fraud-risk-v4.2")).toBeVisible()
     await expect(page.getByText("Unavailable")).toBeVisible()
-    await expect(page.getByRole("row")).toHaveCount(6)
+    await expect(page.locator("table").last().getByRole("row")).toHaveCount(6)
 
     await page.getByRole("searchbox", { name: "Search decisions" }).or(page.getByLabel("Search decisions")).fill("Jordan")
-    await expect(page.getByRole("row")).toHaveCount(2)
+    await expect(page.locator("table").last().getByRole("row")).toHaveCount(2)
 
     await page.getByRole("button", { name: "Reset demo and return all values to zero" }).click()
     await expect(summary).toContainText("£0.00")
   })
 
-  test("one click on the empty state runs the mixed portfolio, and Held and Review queue carry context", async ({ page }) => {
+  test("one click on the empty state runs the mixed portfolio, and the KPIs carry trend and queue context", async ({ page }) => {
     await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
 
     const summary = page.getByRole("region", { name: "Dashboard summary" })
-    await expect(summary).toContainText("7.0% of transactions")
+    await expect(summary).toContainText("-10.2% vs prior 7 days")
     await expect(summary).toContainText("Oldest review 46 min")
     await expect(page.getByText("Nothing has run yet")).toHaveCount(0)
+  })
+
+  test("draws a 30-day series and trends that add up to the KPI cards, and says they are synthetic", async ({ page }) => {
+    await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+
+    await expect(page.getByText("Synthetic 30-day series defined by this scenario. It is not recorded run history.")).toBeVisible()
+    // The chart's text alternative carries the same daily figures, and they total the Transactions KPI.
+    await expect(page.getByRole("figure", { name: /Daily transactions by outcome over 30 days/ }).locator("caption")).toContainText("12,842 transactions")
+    await expect(page.getByRole("figure").locator("tbody tr")).toHaveCount(30)
+    await expect(page.getByRole("region", { name: "Dashboard summary" }).getByText(/vs prior 7 days/)).toHaveCount(3)
+  })
+
+  test("a single-transaction scenario has no time series and no invented trend", async ({ page }) => {
+    await page.getByRole("combobox", { name: "Demo scenario" }).click()
+    await page.getByRole("option", { name: /New-device purchase/ }).click()
+    await page.getByRole("button", { name: "Run", exact: true }).click()
+
+    await expect(page.getByText("This scenario is a single transaction, so there is no time series.")).toBeVisible()
+    await expect(page.getByText(/vs prior 7 days/)).toHaveCount(0)
+    await expect(page.getByRole("figure")).toHaveCount(0)
   })
 
   test("Quick actions link to the live decision page and benchmark insights", async ({ page }) => {
@@ -62,7 +82,19 @@ test.describe("Dashboard", () => {
     }
   })
 
-  test("has no automatically detectable accessibility violations", async ({ page }) => {
+  for (const theme of ["light", "dark"] as const) {
+    test(`has no automatically detectable accessibility violations once a scenario has run (${theme})`, async ({ page }) => {
+      if (theme === "dark") await page.getByRole("button", { name: "Switch to dark theme" }).click()
+      await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+      await expect(page.getByText("fraud-risk-v4.2")).toBeVisible()
+      await page.waitForTimeout(1000)
+
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()
+      expect(results.violations.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([])
+    })
+  }
+
+  test("has no automatically detectable accessibility violations before a run", async ({ page }) => {
     await page.waitForTimeout(800)
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()
     expect(results.violations.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([])
