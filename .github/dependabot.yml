@@ -4,6 +4,10 @@ updates:
     directory: /apps/web
     schedule:
       interval: weekly
+    ignore:
+      # Keep the Node type definitions in step with the Node version CI runs (22).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: uv
     directory: /apps/api
