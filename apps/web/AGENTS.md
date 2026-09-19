@@ -21,3 +21,10 @@ adds only rules that are specific to `apps/web`.
   renaming one means updating `vite.config.ts` and the tests together.
 - No API internals, database models, or secrets in browser code; consume only
   accepted contracts.
+- Chart, graph, and table components are presentational: they receive data only
+  through typed props and do not fetch or transform data. Fetching and data
+  shaping live in hooks (for example `useAgentRun`) or in `src/lib`. Local UI
+  state, such as an open menu, a filter, or a draft, is fine in a component.
+- Every component's props are typed with a TypeScript `interface` or `type`.
+  `any` is banned and enforced by lint (`typescript/no-explicit-any`); use
+  `unknown` and narrow it.

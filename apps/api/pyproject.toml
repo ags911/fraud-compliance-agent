@@ -22,7 +22,17 @@ sdk = ["arbiris[db]"]
 arbiris = { path = "vendor/arbiris-sdk", editable = true }
 
 [tool.ruff.lint]
-extend-select = ["I"]
+# I sorts imports. S is Ruff's security ruleset (bandit-equivalent): hard-coded secrets, unsafe
+# subprocess and URL use, weak crypto, and similar. It is the automated half of the review the
+# project asks for before code is finalised.
+extend-select = ["I", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# Developer tooling, never part of the served API. It runs fixed git/uv commands and calls the
+# fixed HTTPS Plaid Sandbox endpoint, so partial executable paths and URL opening are accepted here.
+# The API's own code under server/ has no exceptions.
+"../../notebooks/*.ipynb" = ["S310", "S603", "S607"]
+"../../scripts/*.py" = ["S603", "S607"]
 
 [dependency-groups]
 dev = [

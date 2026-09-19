@@ -26,3 +26,16 @@ adds only rules that are specific to `apps/api`.
 - Only an approved-mode run of Notebook 08 may write
   `docs/proposals/fast-path-model-release.candidate.json`. Synthetic and gated
   runs must write elsewhere.
+- Every endpoint has a strictly typed Pydantic request and response model. Write
+  the endpoint's tests (`pytest`, in `tests/`) before its logic, and keep them
+  green.
+- The API has no database today (the showcase is database-free), so there is no
+  repository layer. When persistence is added, all database access goes through
+  a repository, route handlers never contain raw SQL, and queries are
+  parameterised.
+- Security review is automated first: `make api-lint` runs Ruff's security
+  rules (`S`) on `server/` with no exceptions, and the developer-only notebooks
+  and scripts have a short, justified ignore list in `pyproject.toml`. Fix a
+  finding rather than adding an ignore; a new ignore needs a comment saying why
+  it is safe. Validate and bound every request input, and never build a query,
+  command, or path from unvalidated input.
