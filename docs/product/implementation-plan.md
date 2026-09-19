@@ -316,23 +316,27 @@ move governance into the operator dashboard or display unverifiable metrics.
 ## Showcase MVP completion checklist
 
 This is the operational source of truth for the recruiter-showcase delivery
-state. A checked item has repository evidence as of 2026-09-18; an unchecked
+state. A checked item has repository evidence as of 2026-09-19; an unchecked
 item is planned, requires fresh verification, or needs a decision before it
 can be claimed. Re-run the relevant check after a material change rather than
 relying on a historical tick.
+
+Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 4 of 6, MVP 2 has
+2 of 5, and MVP 3 has 0 of 7. Several unchecked items have partial evidence, noted
+in their rows.
 
 ### MVP 0 — Engineering foundation
 
 | Status | Completion item | Evidence / next action |
 | --- | --- | --- |
 | ✓ | Root monorepo separates web, API, contracts, notebooks, infrastructure, and shared documentation. | Repository map and project context. |
-| ✓ | `make check` and GitHub Actions build the web app, lint Python/notebooks, enforce public-function docstrings, and run API smoke/tests. | `Makefile` and `.github/workflows/verify.yml`. |
+| ✓ | `make check` and GitHub Actions build the web app, lint Python/notebooks, enforce public-function docstrings, and run API smoke/tests. | `Makefile` and `.github/workflows/verify.yml`. CI now has three jobs: the web job (macOS, matching the screenshot baselines), the API job with the private SDK, and an API job with no SDK and no secrets that mirrors a public clone. Actions are pinned to commit SHAs. Data-path quality gates and the accessibility checks run in the same gate. |
 | ✓ | FastAPI exposes current demo health, scenario, model-summary, and streamed-run endpoints. | `apps/api/server/main.py`. |
 | ✓ | The web client contains API/SSE consumers for scenario listing, custom runs, preset runs, and benchmark evidence. | `apps/web/src/lib/useAgentRun.ts` and `demo-model-summary.ts`. |
 | ✓ | Synthetic-data, Plaid Sandbox, Sparkov, notebook, and model-promotion boundaries are documented. | PRD, data governance, notebook plan, and project context. |
 | — | Freeze a versioned showcase API contract for current request, response, error, and SSE-event shapes. | Add an accepted contract under `docs/contracts/`. |
 | — | Run browser-to-local-API end-to-end checks for scenarios A–F and the LLM outage. | API level run 2026-09-19 (real pipeline, in process): A–F each returned HTTP 200 `text/event-stream`, five nodes in order (`data_ingest`, `sim_a`, `sim_b`, `counterfactual`, `evidence_pack`), one terminal `done`, and no error events. The outage flag changes nothing offline: external investigation is disabled by default, so every run is an outage run, and `sim_b` fails safe to HOLD for all six (A, D, F already HOLD at `sim_a`; B, C, E passed `sim_a` with scores 0, 63, 65). The non-outage path needs a live provider key. The browser-driven run is still to do. |
-| — | Verify API error redaction and cross-origin configuration against the public-showcase environment. | Test deployed configuration, not only local defaults. |
+| — | Verify API error redaction and cross-origin configuration against the public-showcase environment. | Local defaults are tested: explicit origins only, no wildcard, and a foreign origin receives no grant (`apps/api/tests/test_demo_endpoints.py`). The stream emits only the stable error categories `processing_timeout` and `processing_failed`. Deployed configuration is still to test. |
 
 ### MVP 1 — Guided product walkthrough
 
@@ -352,7 +356,7 @@ relying on a historical tick.
 | ✓ | Web code can request current scenarios and consume the API's POST/SSE run flow. | `useAgentRun.ts`. |
 | ✓ | API exposes preset and custom-run routes, including the simulated LLM-outage path. | `apps/api/server/main.py`. |
 | — | Connect the final dashboard scenario control to the API-backed run flow, or document the standalone-workspace boundary. | Decide which surface is hosted as the canonical run experience. |
-| — | Verify loading, cancellation, connection failure, malformed stream, API error, and outage states in the browser. | Run the browser/API end-to-end matrix. |
+| — | Verify loading, cancellation, connection failure, malformed stream, API error, and outage states in the browser. | Partly covered by browser tests with a mocked API (`apps/web/tests/live-decision.spec.ts`): a run needs an explicit terminal event, an HTTP failure is not treated as a stream, and cancellation does not report a completed outcome. Loading, connection failure, and the LLM-outage state are not yet exercised in the browser. Run the full matrix against a real local API. |
 | — | Confirm every visible outcome is labelled simulated and no UI presents ephemeral data as durable history. | Review all MVP 2 states and copy. |
 
 ### MVP 3 — Azure public showcase
@@ -364,7 +368,7 @@ relying on a historical tick.
 | — | Configure Doppler `showcase` values and host-side secret injection. | Verify no provider secret reaches Vite/browser output. |
 | — | Configure Container Apps with minimum replicas zero and no database, VNet, cache, queue, or always-ready instance. | Document region and current free-grant limits. |
 | — | Create and verify a budget alert. | Record that alerts notify but do not cap Azure consumption. |
-| — | Deploy both applications and set explicit API allowed origins. | Verify health, cold-start, unavailable, retry, and local-demo fallback. |
+| — | Deploy both applications and set explicit API allowed origins. | Verify health, cold-start, unavailable, retry, and local-demo fallback. `apps/web/public/staticwebapp.config.json` provides the single-page-app fallback and ships in the build, but it has not been tested on Azure. |
 | — | Publish Azure architecture, runbook, teardown steps, and a public-demo smoke-test result. | Link the reviewed infrastructure artifacts and deployed URL. |
 
 ## Frontend architecture
