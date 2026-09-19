@@ -1,9 +1,10 @@
-import { BrowserRouter, Link, Route, Routes, useLocation, useNavigate } from "react-router-dom"
+import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 
-import { OverviewContent } from "@/Overview"
+import Dashboard from "@/Dashboard"
 import { ModelBenchmarkPage } from "@/ModelBenchmark"
 import { NewTransactionPage } from "@/NewTransaction"
 import { AppSidebar } from "@/components/app-sidebar"
+import { DemoSessionProvider } from "@/components/demo-session"
 import {
   PaymentsAppShell,
   PaymentsPageHeading,
@@ -88,7 +89,14 @@ function MissingPage() {
   )
 }
 
-function ProductRoutes() {
+/**
+ * The Payments shell, for every page that is not the Overview dashboard.
+ *
+ * The Overview carries its own header, section tabs, and Explain drawer, so it is
+ * routed outside this layout. The rest of the console keeps the approved Payments
+ * sidebar and top bar until a shell migration is approved.
+ */
+function PaymentsShellLayout() {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -102,24 +110,38 @@ function ProductRoutes() {
         />
       }
     >
-      <Routes>
-        <Route path="/" element={<OverviewContent />} />
-        <Route path="/overview" element={<OverviewContent />} />
+      <Outlet />
+    </PaymentsAppShell>
+  )
+}
+
+function ProductRoutes() {
+  return (
+    <Routes>
+      {/* The dashboard is the Overview. The former Payments Overview remains as a
+          design reference at /overview-reference.html and is no longer a product route. */}
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/overview" element={<Dashboard />} />
+      <Route element={<PaymentsShellLayout />}>
         <Route path="/insights" element={<ModelBenchmarkPage />} />
         <Route path="/transactions/new" element={<NewTransactionPage />} />
         {Object.entries(plannedRoutes).map(([path, route]) => (
           <Route key={path} path={path} element={<PlannedPage route={route} />} />
         ))}
         <Route path="*" element={<MissingPage />} />
-      </Routes>
-    </PaymentsAppShell>
+      </Route>
+    </Routes>
   )
 }
 
 export default function ProductApp() {
   return (
     <BrowserRouter>
-      <ProductRoutes />
+      {/* One demo session for every route: the Overview's scenario control and the
+          Payments pages' control are the same state, so they cannot disagree. */}
+      <DemoSessionProvider>
+        <ProductRoutes />
+      </DemoSessionProvider>
     </BrowserRouter>
   )
 }

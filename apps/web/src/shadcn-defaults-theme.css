@@ -1,7 +1,7 @@
 /* Payments theme: the repository's shadcn radix-nova defaults + product colors. */
 @import "@fontsource-variable/geist";
 /* Inter and Satoshi are loaded by each payments page's own <link> tags
-   (Google Fonts + Fontshare — see overview.html etc.), not from here.
+   (Google Fonts + Fontshare — see index.html and the reference pages), not from here.
    An @fontsource-variable/inter import used to live on this line too, but
    it duplicated that existing Google Fonts load with a second, competing
    Inter source — that was the actual cause of a visible font swap, not a

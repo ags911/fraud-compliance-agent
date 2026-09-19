@@ -84,12 +84,25 @@ function readStoredSession(): DemoSessionState {
   }
 }
 
+/**
+ * Holds the scenario choice and the welcome answer for one browser session.
+ *
+ * Nesting is deliberate and safe: the app mounts one provider around every route,
+ * and `PaymentsAppShell` mounts its own so a standalone page entry still works.
+ * When a provider finds one above it, it defers instead of forking the state,
+ * because two sessions would let the header control and the page disagree.
+ */
 export function DemoSessionProvider({ children }: { children: ReactNode }) {
+  const inherited = useContext(DemoSessionContext)
   const [session, setSession] = useState<DemoSessionState>(readStoredSession)
 
   useEffect(() => {
+    // A deferring provider must not write: its own state is the snapshot it read
+    // at mount, and storing that would undo whatever the real provider has done
+    // since.
+    if (inherited) return
     window.sessionStorage.setItem(storageKey, JSON.stringify(session))
-  }, [session])
+  }, [inherited, session])
 
   const value = useMemo<DemoSessionContextValue>(() => ({
     ...session,
@@ -106,6 +119,7 @@ export function DemoSessionProvider({ children }: { children: ReactNode }) {
     dismissWelcome: () => setSession((current) => ({ ...current, welcomeSeen: true })),
   }), [session])
 
+  if (inherited) return <>{children}</>
   return <DemoSessionContext.Provider value={value}>{children}</DemoSessionContext.Provider>
 }
 

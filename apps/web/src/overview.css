@@ -489,9 +489,16 @@
 
 /* driver.js switches off pointer events for the whole page except the highlighted
    element. The scenario picker is rendered outside that element, so turn its events
-   back on while it is open; otherwise its options cannot be clicked. */
+   back on while it is open; otherwise its options cannot be clicked.
+
+   Two selectors are needed. A Radix popover sits inside a popper wrapper, but the
+   Overview dashboard's scenario control is a Radix select aligned to its trigger,
+   which portals its listbox without that wrapper: with only the first rule, the
+   tour's own step "choose a scenario" could not be completed. */
 .driver-active [data-radix-popper-content-wrapper],
-.driver-active [data-radix-popper-content-wrapper] * {
+.driver-active [data-radix-popper-content-wrapper] *,
+.driver-active [data-slot="select-content"],
+.driver-active [data-slot="select-content"] * {
   pointer-events: auto;
 }
 
@@ -560,5 +567,11 @@
 /* While the scenario menu is open it occupies the space under the trigger, so the
    tour's tooltip steps aside until the menu closes. */
 .driver-active:has(#payments-demo-scenario-trigger[data-state="open"]) .driver-popover.overview-tour {
+  visibility: hidden;
+}
+
+/* The same, for the select-based control on the Overview dashboard: its listbox
+   covers the trigger, so the tooltip waits rather than sitting on top of it. */
+.driver-active:has([data-slot="select-content"]) .driver-popover.overview-tour {
   visibility: hidden;
 }

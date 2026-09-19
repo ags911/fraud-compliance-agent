@@ -9,6 +9,8 @@ dist/
 coverage/
 test-results/
 playwright-report/
+# Browser-automation scratch output (console logs, page snapshots, screenshots).
+.playwright-mcp/
 
 # Raw browser captures are local reference material, not project source. They
 # may contain provider account identifiers and copied third-party assets.

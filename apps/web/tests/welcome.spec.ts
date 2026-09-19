@@ -83,7 +83,7 @@ test.describe("Welcome dialog", () => {
     await openFresh(page)
     await welcome(page).getByRole("button", { name: "Skip" }).click()
     await trigger(page).click()
-    await page.getByRole("radio", { name: /New-device purchase/ }).click()
+    await page.getByRole("option", { name: /New-device purchase/ }).click()
     await page.locator("#payments-demo-run").click()
     await page.getByRole("button", { name: "Reset demo and return all values to zero" }).click()
 

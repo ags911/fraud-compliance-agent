@@ -264,7 +264,7 @@ test.describe("Rules Performance behavior contracts", () => {
 
 test.describe("Overview behavior contracts", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/overview.html")
+    await page.goto("/overview-reference.html")
     await waitForFonts(page)
   })
 
@@ -293,7 +293,8 @@ test.describe("Overview behavior contracts", () => {
     await expect(overviewNavigation).toHaveAttribute("data-active", "true")
     await expect(overviewNavigation).toHaveCSS("color", "rgb(99, 91, 255)")
     if (testInfo.project.name === "mobile") {
-      await overviewNavigation.click()
+      // Close the drawer without following the link: Overview is an app route now.
+      await page.keyboard.press("Escape")
     }
 
     const search = page.getByRole("searchbox", {
@@ -385,7 +386,7 @@ test.describe("Overview behavior contracts", () => {
     await waitForFonts(page)
     const reference = await readSidebarContract(page)
 
-    await page.goto("/overview.html")
+    await page.goto("/overview-reference.html")
     await waitForFonts(page)
     const overview = await readSidebarContract(page)
 
@@ -400,9 +401,9 @@ test.describe("Overview behavior contracts", () => {
 })
 
 test.describe("Product router", () => {
-  test("keeps the dashboard shell while product navigation changes the main route", async ({ page }, testInfo) => {
-    await page.goto("/")
-    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible()
+  test("keeps the Payments shell while product navigation changes the main route", async ({ page }, testInfo) => {
+    await page.goto("/insights")
+    await expect(page.getByRole("heading", { name: "Benchmark insights" })).toBeVisible()
 
     const shell = page.locator('[data-payments-component="app-shell"]')
     await expect(shell).toBeVisible()
@@ -417,6 +418,32 @@ test.describe("Product router", () => {
     if (testInfo.project.name !== "mobile") {
       await expect(page.getByRole("link", { name: "Transactions", exact: true })).toHaveAttribute("data-active", "true")
     }
+  })
+
+  test("the Overview route is the dashboard, outside the Payments shell", async ({ page }) => {
+    for (const path of ["/", "/overview"]) {
+      await page.goto(path)
+      await expect(page.getByRole("heading", { name: "Fraud risk", level: 1 })).toBeVisible()
+      await expect(page.locator('[data-payments-component="app-shell"]')).toHaveCount(0)
+    }
+
+    // The Payments Overview stays available as a design reference, not a route.
+    await page.goto("/overview-reference.html")
+    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible()
+    await expect(page.locator('[data-payments-component="app-shell"]')).toBeVisible()
+  })
+
+  test("the dashboard theme is scoped to its route and leaves the Payments pages alone", async ({ page }) => {
+    const primary = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--primary").trim())
+
+    await page.goto("/overview")
+    expect(await primary()).toBe("#0b0b0b")
+    expect(await page.locator("html").getAttribute("data-app-theme")).toBe("dashboard")
+
+    // Navigating away must restore the Payments tokens, not leave the page restyled.
+    await page.goto("/insights")
+    expect(await primary()).toBe("#635bff")
+    expect(await page.locator("html").getAttribute("data-app-theme")).toBeNull()
   })
 
   test("supports deep links and keeps visual references outside the product routes", async ({ page }) => {
@@ -452,7 +479,7 @@ test.describe("Payments visual contracts", () => {
   })
 
   test("overview", async ({ page }, testInfo) => {
-    await page.goto("/overview.html")
+    await page.goto("/overview-reference.html")
     await waitForFonts(page)
     await expect(page).toHaveScreenshot(`overview-${testInfo.project.name}.png`, { fullPage: true })
   })

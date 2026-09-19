@@ -24,7 +24,7 @@ async function startTour(page: Page) {
 
 async function chooseScenario(page: Page, name: RegExp) {
   await page.locator("#payments-demo-scenario-trigger").click()
-  await page.getByRole("radio", { name }).click()
+  await page.getByRole("option", { name }).click()
 }
 
 test.describe("Overview tour", () => {
@@ -120,7 +120,7 @@ test.describe("Overview tour", () => {
     await expect(title(page)).toHaveText("Go deeper")
     await page.locator(".driver-popover").getByRole("button", { name: "Finish" }).click()
 
-    await page.locator("#overview-quick-actions").getByRole("button", { name: /Analyse a transaction/ }).click()
+    await page.locator("#overview-quick-actions").getByRole("link", { name: /Analyse a transaction/ }).click()
     await expect(page).toHaveURL(/\/transactions\/new$/)
     await expect(page.getByRole("heading", { name: "Analyse a transaction" })).toBeVisible()
   })

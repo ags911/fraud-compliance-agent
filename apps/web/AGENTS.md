@@ -18,7 +18,16 @@ adds only rules that are specific to `apps/web`.
   CI runs the web job on macOS. Do not re-record a baseline to make a test pass.
   Use `npm run test:payments:update` only for an approved visual change.
 - The root `*.html` pages are Vite entries that the tests load by URL. Moving or
-  renaming one means updating `vite.config.ts` and the tests together.
+  renaming one means updating `vite.config.ts` and the tests together. Do not add
+  an entry whose name shadows a product route: the dev server answers `/overview`
+  with an `overview.html` file if one exists, while production serves the app
+  there, and the tests would then exercise the wrong page. The Payments Overview
+  is `overview-reference.html` for exactly that reason.
+- The Overview route is the shadcn dashboard (`src/Dashboard.tsx`), routed
+  outside the Payments shell. Its theme, `src/dashboard-theme.css`, redefines
+  Payments token names, so it is scoped to `:root[data-app-theme="dashboard"]`
+  and the route sets and clears that attribute. Keep the scope: widening it
+  restyles the approved pages.
 - No API internals, database models, or secrets in browser code; consume only
   accepted contracts.
 - Chart, graph, and table components are presentational: they receive data only

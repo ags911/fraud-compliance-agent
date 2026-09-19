@@ -41,9 +41,11 @@ not present synthetic demo data as live customer, Plaid, or model output.
 - The root monorepo is the active project home.
 - `apps/web` is a React/Vite operator-console prototype with approved visual
   reference material and deterministic demo scenarios.
-- `apps/web` also holds a standalone shadcn dashboard prototype
-  (`dashboard.html`) with its own theme, synthetic data only. It is a candidate
-  replacement for the Overview page, not yet routed into the app.
+- The console's Overview is the shadcn dashboard, routed at `/` and `/overview`
+  with synthetic data only. It carries its own header, section tabs, and Explain
+  preview, so it is routed outside the Payments shell that the other pages use.
+  The former Payments Overview is kept as the frozen design reference page
+  `overview-reference.html` and is no longer a product route.
 - `apps/api` is a FastAPI Phase 0 demo. Its current public routes and scenario
   fixtures are not yet the approved target operational API.
 - The public showcase deployment target is Azure Static Web Apps for the React
@@ -160,10 +162,17 @@ the shared Payments design-system documentation/tokens must not be changed as a
 side effect of feature work. New UI follows the documented tokens and reusable
 components; do not approximate approved values with the nearest utility class.
 
-The standalone dashboard prototype's theme (`src/dashboard.css`) is deliberately
-separate from the frozen Payments tokens and is loaded only by its own entry, so
-it cannot change the approved pages. Do not import it elsewhere or copy Payments
-tokens into it.
+The Overview dashboard's theme (`src/dashboard-theme.css`) is deliberately
+separate from the frozen Payments tokens. It redefines the same token names, so
+it is scoped to `:root[data-app-theme="dashboard"]`, an attribute the Overview
+route sets while it is mounted and removes when it unmounts. That scope is what
+keeps the approved pages unchanged: do not widen it, do not copy Payments tokens
+into it, and keep a browser test that reads the tokens on both sides of a
+navigation.
+
+Two shells coexist on purpose while the console migrates: the Overview is the
+shadcn surface, and every other route keeps the approved Payments shell. Do not
+restyle a Payments page to match the Overview without an approved decision.
 
 For dashboard screen, chart, navigation, or shared UI-component work, use the
 `$payments-dashboard-consistency` skill. It records the project chart/tooltip

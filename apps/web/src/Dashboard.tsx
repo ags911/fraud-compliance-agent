@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { Link } from "react-router-dom"
 import { ArrowRight, BarChart3, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, Sun } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
 import { DashboardChat } from "@/components/dashboard-chat"
-import { demoScenarios, type DemoScenarioId } from "@/components/demo-session"
+import { DemoHelpDialog, DemoWelcomeDialog } from "@/components/demo-guide"
+import { demoScenarios, useDemoSession, type DemoScenarioId } from "@/components/demo-session"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +17,7 @@ import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { scenarioResults, zeroKpis, zeroOutcomes, type Route } from "@/lib/overview-data"
+import { useOverviewTour } from "@/lib/useOverviewTour"
 
 type ScenarioResult = (typeof scenarioResults)[keyof typeof scenarioResults]
 
@@ -70,7 +73,7 @@ type Tab = { title: string; href: string; active?: boolean }
 // Live pages are tabs. Everything the plan lists that is not built yet sits under "More",
 // grouped by section, so nothing looks finished that is not.
 const liveTabs: Tab[] = [
-  { title: "Overview", href: "/dashboard.html", active: true },
+  { title: "Overview", href: "/overview", active: true },
   { title: "Analyse a transaction", href: "/transactions/new" },
   { title: "Insights", href: "/insights" },
 ]
@@ -104,9 +107,9 @@ function SectionTabs() {
   return (
     <nav aria-label="Sections" className="-mx-4 mt-4 flex gap-6 overflow-x-auto border-b px-4 md:-mx-6 md:px-6">
       {liveTabs.map((tab) => (
-        <a key={tab.title} href={tab.href} aria-current={tab.active ? "page" : undefined} className={tabClass(Boolean(tab.active))}>
+        <Link key={tab.title} to={tab.href} aria-current={tab.active ? "page" : undefined} className={tabClass(Boolean(tab.active))}>
           {tab.title}
-        </a>
+        </Link>
       ))}
       <Popover>
         <PopoverTrigger asChild>
@@ -124,10 +127,10 @@ function SectionTabs() {
                 {group.items.map((item) => (
                   <li key={item.title}>
                     {item.href ? (
-                      <a href={item.href} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+                      <Link to={item.href} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
                         {item.title}
                         <SoonBadge />
-                      </a>
+                      </Link>
                     ) : (
                       <span aria-disabled="true" className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground">
                         {item.title}
@@ -165,9 +168,29 @@ function ExplainSidebar({ result }: { result: ScenarioResult | null }) {
 }
 
 export default function Dashboard() {
-  const [selected, setSelected] = useState<DemoScenarioId | null>(null)
-  const [active, setActive] = useState<DemoScenarioId | null>(null)
+  const {
+    selectedScenario: selected,
+    activeScenario: active,
+    selectScenario,
+    runScenario,
+    resetScenario,
+    welcomeSeen,
+    dismissWelcome,
+  } = useDemoSession()
   const [search, setSearch] = useState("")
+  const { start: startTour } = useOverviewTour({ selectedScenario: selected, activeScenario: active })
+
+  // The dashboard theme is scoped to this attribute, so the tokens apply while
+  // this route is mounted and the Payments pages keep their own on every other
+  // route. The dark class is removed with it: no other page has a dark theme.
+  useEffect(() => {
+    const root = document.documentElement
+    root.dataset.appTheme = "dashboard"
+    return () => {
+      delete root.dataset.appTheme
+      root.classList.remove("dark")
+    }
+  }, [])
 
   // Light is the default, and the choice is remembered. Storage can be blocked, so it is optional.
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -197,6 +220,8 @@ export default function Dashboard() {
 
   return (
     <TooltipProvider>
+      {/* Shown once per browser session, before anything else on the page is reachable. */}
+      <DemoWelcomeDialog open={!welcomeSeen} onAnswer={dismissWelcome} onStartTour={startTour} />
       {/* The right-hand sidebar holds the Explain panel. It is closed until asked for. */}
       <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": "22rem" } as CSSProperties}>
         <SidebarInset className="min-w-0">
@@ -224,8 +249,8 @@ export default function Dashboard() {
               >
                 {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
               </Button>
-              <Select value={selected ?? undefined} onValueChange={(value) => { setSelected(value as DemoScenarioId); setActive(null) }}>
-                <SelectTrigger aria-label="Demo scenario" className="w-52 bg-card">
+              <Select value={selected ?? undefined} onValueChange={(value) => selectScenario(value as DemoScenarioId)}>
+                <SelectTrigger aria-label="Demo scenario" className="w-52 bg-card" id="payments-demo-scenario-trigger">
                   <SelectValue placeholder="Select demo scenario" />
                 </SelectTrigger>
                 <SelectContent align="end">
@@ -234,17 +259,18 @@ export default function Dashboard() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button disabled={!selected} onClick={() => { setActive(selected); setSearch("") }}>
+              <Button id="payments-demo-run" disabled={!selected} onClick={() => { runScenario(); setSearch("") }}>
                 <Play aria-hidden="true" fill="currentColor" />
                 Run
               </Button>
               {active ? (
-                <Button variant="outline" onClick={() => { setSelected(null); setActive(null); setSearch("") }} aria-label="Reset demo and return all values to zero">
+                <Button variant="outline" onClick={() => { resetScenario(); setSearch("") }} aria-label="Reset demo and return all values to zero">
                   <RotateCcw aria-hidden="true" />
                   <span className="hidden md:inline">Reset</span>
                 </Button>
               ) : null}
             </div>
+            <DemoHelpDialog onStartTour={startTour} />
             <SidebarTrigger aria-label="Toggle explain panel" variant="outline" size="sm" className="order-2 gap-1.5 sm:order-none sm:ml-1">
               <PanelRight aria-hidden="true" />
               <span aria-hidden="true">Explain</span>
@@ -264,10 +290,10 @@ export default function Dashboard() {
                 </p>
               </div>
               <Button asChild>
-                <a href="/transactions/new">
+                <Link to="/transactions/new">
                   <ScanSearch aria-hidden="true" />
                   Analyse a transaction
-                </a>
+                </Link>
               </Button>
             </div>
 
@@ -278,7 +304,7 @@ export default function Dashboard() {
                   <CardDescription>Every figure below is zero until you run a demo scenario. The data is synthetic.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={() => { setSelected("portfolio"); setActive("portfolio") }}>
+                  <Button onClick={() => { selectScenario("portfolio"); runScenario() }}>
                     <Play aria-hidden="true" fill="currentColor" />
                     Run the mixed 30-day portfolio
                   </Button>
@@ -312,7 +338,7 @@ export default function Dashboard() {
               })}
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-2">
+            <section className="grid gap-4 lg:grid-cols-2" id="overview-results">
               <Card>
                 <CardHeader>
                   <CardTitle>Decision outcomes</CardTitle>
@@ -376,7 +402,7 @@ export default function Dashboard() {
               </Card>
             </section>
 
-            <Card>
+            <Card id="overview-quick-actions">
               <CardHeader>
                 <CardTitle>Quick actions</CardTitle>
                 <CardDescription>Open a live decision, or the benchmark evidence behind the model.</CardDescription>
@@ -386,9 +412,9 @@ export default function Dashboard() {
                   { title: "Analyse a transaction", text: "Submit transaction facts for a simulated risk decision.", href: "/transactions/new", icon: ScanSearch },
                   { title: "Benchmark insights", text: "Read the mechanics-only model evaluation.", href: "/insights", icon: BarChart3 },
                 ].map((action) => (
-                  <a
+                  <Link
                     key={action.title}
-                    href={action.href}
+                    to={action.href}
                     className="group flex items-center gap-3 rounded-lg border bg-card p-3 outline-none transition-colors hover:border-primary/40 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -399,7 +425,7 @@ export default function Dashboard() {
                       <span className="text-muted-foreground">{action.text}</span>
                     </span>
                     <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </a>
+                  </Link>
                 ))}
               </CardContent>
             </Card>

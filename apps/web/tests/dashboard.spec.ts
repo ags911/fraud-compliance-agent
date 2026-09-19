@@ -1,11 +1,14 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
 
-// The standalone shadcn dashboard (dashboard.html). It has its own theme and does not
-// share the Payments design system, so it is tested separately from the console.
+import { expect, test } from "./base"
+
+// The dashboard is the app's Overview route. It carries its own header, section tabs,
+// and Explain drawer, and its theme is scoped to the route, so it is tested separately
+// from the Payments pages. The shared fixture answers the welcome dialog; welcome.spec
+// covers the dialog itself.
 test.describe("Dashboard", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/dashboard.html")
+    await page.goto("/overview")
     await expect(page.getByRole("heading", { name: "Fraud risk", level: 1 })).toBeVisible()
   })
 
@@ -171,8 +174,13 @@ test.describe("Dashboard", () => {
 
   test("is light by default even when the system prefers dark, and the toggle is remembered", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL, colorScheme: "dark" })
+    // This test opens its own context, so it answers the first-visit welcome dialog
+    // the way the shared fixture does; the dialog is modal until it is answered.
+    await context.addInitScript(() => {
+      window.sessionStorage.setItem("averlynx-demo-session", JSON.stringify({ welcomeSeen: true }))
+    })
     const page = await context.newPage()
-    await page.goto("/dashboard.html")
+    await page.goto("/overview")
     await expect(page.getByRole("button", { name: "Switch to dark theme" })).toBeVisible()
     await expect(page.locator("html")).not.toHaveClass(/dark/)
 
