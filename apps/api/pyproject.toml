@@ -52,10 +52,15 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# The built wheel is what the container image installs, so it contains the
+# served API only. Keeping `modelling` out means the production image carries no
+# offline evaluation code and no dependency it cannot satisfy.
 [tool.hatch.build.targets.wheel]
-# `server` is the served API. `modelling` is the offline fast-path evaluation
-# library that Notebook 08 runs; it is listed so the editable install puts it on
-# the notebook kernel's import path. The API never imports it (enforced by
-# tests/test_modelling_boundaries.py), and its scikit-learn/XGBoost/Plotly
-# dependencies stay in the dev group, out of the API runtime.
+packages = ["server"]
+
+# The development/editable install also exposes `modelling`, which is what puts
+# the offline library on the notebook kernel's import path. The API never
+# imports it (enforced by tests/test_modelling_boundaries.py), and its
+# scikit-learn/XGBoost/Plotly dependencies stay in the dev group.
+[tool.hatch.build.targets.editable]
 packages = ["server", "modelling"]

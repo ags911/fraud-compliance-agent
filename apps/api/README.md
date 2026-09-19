@@ -194,6 +194,23 @@ git commit -m "Bump arbiris-sdk pin"
 
 Do not rewrite historical AARF records during an SDK update. Existing signed payloads must remain verifiable under their original schema and key.
 
+## Run it as a container
+
+The showcase image is built from the repository root, because it includes the
+two sanitised evidence files the read-only model-summary route serves:
+
+```bash
+docker build -f apps/api/Dockerfile -t fraud-compliance-agent-api .
+docker run --rm -p 8000:8000 fraud-compliance-agent-api
+```
+
+The image installs the runtime dependencies only. The private SDK is excluded,
+so `/scenarios` and the run routes answer `503 demo_pipeline_unavailable` while
+`/health` and `/demo/model-summary` work; the offline `modelling` library is
+excluded as well. It runs as a non-root user on port 8000, and a deployment must
+set `ALLOWED_ORIGINS` and may set `FCA_EVIDENCE_ROOT` if the evidence files are
+mounted elsewhere. See [`infra/README.md`](../../infra/README.md).
+
 ## Current demo deployment
 
 The existing demonstration can run on Render using:

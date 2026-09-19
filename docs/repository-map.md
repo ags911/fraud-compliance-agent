@@ -31,7 +31,7 @@ build.
 | `data` | Local/managed data staging locations | Ignored by Git; raw, processed, and model data never belong in commits. |
 | `infra` | Local orchestration and deployment configuration | No application-domain logic. |
 | `scripts` | Reproducible maintenance, corpus, and notebook pipeline utilities | Keep scripts documented, linted, and safe to run. |
-| `.github/workflows` | CI verification workflows | Changes must preserve mandatory quality gates. |
+| `.github/workflows` | CI verification and security workflows | Changes must preserve mandatory quality gates. |
 
 ## Key entry points
 
@@ -41,7 +41,9 @@ build.
 | `docs/project-context.md` | Stable project, architecture, safety, and delivery rules for every contributor. |
 | `README.md` | Monorepo orientation, independently runnable applications, and common commands. |
 | `Makefile` | Local verification and safe notebook/corpus commands. `make check` is the standard handoff gate. |
-| `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, and test checks. |
+| `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, test, and container-image checks. |
+| `apps/api/Dockerfile` | Showcase API image: digest-pinned bases, non-root, no private SDK or offline ML code. |
+| `.dockerignore` | Allowlist build context for that image; everything is excluded until it is named. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
 | `apps/api/server/models.py` | API-side domain/data models. |
 | `apps/api/modelling/pipeline.py` | Run setup and the mode-dependent decision about what data an evaluation run may read. |

@@ -1,0 +1,32 @@
+# Build context allowlist for apps/api/Dockerfile.
+#
+# Everything is excluded first, then only the files the image needs are added
+# back. A denylist would eventually leak something: this repository holds a
+# private SDK submodule, a local corpus, notebooks, browser captures, and local
+# environment files, and any of them could otherwise reach an image layer by
+# being added later.
+**
+
+# The API's dependency metadata. README.md is declared by pyproject.toml, so
+# the wheel build needs it.
+!apps/api/pyproject.toml
+!apps/api/uv.lock
+!apps/api/README.md
+
+# The served API itself. `modelling` is not here on purpose: it is offline
+# evaluation support and is excluded from the production wheel.
+!apps/api/server/**
+!apps/api/server/**/
+
+# The sanitised benchmark evidence the read-only model-summary route serves.
+# Both files are already public in the repository, aggregate-only, and the
+# route still validates the report's status, feature list, and dataset
+# checksum before serving anything.
+!docs/contracts/model-training-contract.v1.json
+!docs/proposals/fast-path-model-release.candidate.json
+
+# Never, under any pattern above.
+**/__pycache__
+**/*.py[cod]
+**/.env
+**/.env.*

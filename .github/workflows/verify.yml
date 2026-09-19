@@ -88,3 +88,54 @@ jobs:
       - run: uv run --frozen ruff check server modelling
       - run: uv run --frozen ruff format --check server modelling tests ../../scripts
       - run: uv run --frozen pytest tests
+
+  # The MVP 3 deployment artifact. This job mirrors a public clone: no private
+  # SDK submodule and no secrets, which is exactly what the image is built from.
+  container:
+    name: API container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the image
+        run: docker build -f apps/api/Dockerfile -t fraud-compliance-agent-api:ci .
+      - name: Start the container
+        run: docker run --detach --name api --publish 8000:8000 fraud-compliance-agent-api:ci
+      - name: Wait for the health route
+        run: |
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error http://localhost:8000/health; then exit 0; fi
+            sleep 2
+          done
+          echo "The container never became healthy."
+          docker logs api
+          exit 1
+      # This is the check that catches an image built from stale application
+      # code: a cached project build once shipped an older server package, and
+      # the benchmark route was the first thing to notice.
+      - name: The image serves the committed benchmark evidence
+        run: |
+          served=$(curl --fail --silent http://localhost:8000/demo/model-summary \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["report_sha256"])')
+          committed=$(python3 -c 'import json; print(json.load(open("docs/proposals/fast-path-model-release.candidate.json"))["report_sha256"])')
+          if [ "$served" != "$committed" ]; then
+            echo "The image serves $served but the repository holds $committed."
+            exit 1
+          fi
+      - name: The image runs as a non-root user
+        run: |
+          uid=$(docker exec api id -u)
+          if [ "$uid" != "10001" ]; then echo "Container runs as uid $uid."; exit 1; fi
+      # The private SDK, the offline evaluation library, and its ML stack must
+      # never reach a published image.
+      - name: The image carries no private or offline code
+        run: |
+          installed=$(docker exec api ls /opt/venv/lib/python3.13/site-packages)
+          for package in modelling arbiris sklearn pandas xgboost plotly; do
+            if echo "$installed" | grep -qx "$package"; then
+              echo "Unexpected package in the image: $package"
+              exit 1
+            fi
+          done
+      - name: Stop the container
+        if: always()
+        run: docker rm --force api || true

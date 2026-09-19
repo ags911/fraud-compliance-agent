@@ -168,12 +168,31 @@ def _require_demo_pipeline() -> None:
 
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_MODEL_REPORT_PATH = (
-    _REPOSITORY_ROOT / "docs" / "proposals" / "fast-path-model-release.candidate.json"
+_MODEL_REPORT_RELATIVE_PATH = (
+    Path("docs") / "proposals" / "fast-path-model-release.candidate.json"
 )
-_MODEL_CONTRACT_PATH = (
-    _REPOSITORY_ROOT / "docs" / "contracts" / "model-training-contract.v1.json"
+_MODEL_CONTRACT_RELATIVE_PATH = (
+    Path("docs") / "contracts" / "model-training-contract.v1.json"
 )
+
+
+def _evidence_root() -> Path:
+    """Return the directory holding the sanitised benchmark evidence pair.
+
+    Returns:
+        The repository root by default, which is what a local run uses. A
+        packaged image has no repository, so a deployment sets
+        `FCA_EVIDENCE_ROOT` to the directory the two evidence files were copied
+        into. A blank value falls back to the repository rather than resolving
+        to an unintended directory.
+
+    Side effects:
+        Reads one process environment variable.
+    """
+    override = os.getenv("FCA_EVIDENCE_ROOT", "").strip()
+    return Path(override) if override else _REPOSITORY_ROOT
+
+
 # Only an approved-mode notebook run may back the Sparkov label below; a
 # synthetic or gated run writes a different status and must never be served.
 _ACCEPTED_REPORT_STATUS = "candidate_evaluation_pending_review"
@@ -187,8 +206,9 @@ def _demo_model_summary() -> DemoModelSummary:
             or when the report is not an approved-mode run of the accepted
             contract (wrong status, feature list, or dataset checksum).
     """
-    report_path = _MODEL_REPORT_PATH
-    contract_path = _MODEL_CONTRACT_PATH
+    evidence_root = _evidence_root()
+    report_path = evidence_root / _MODEL_REPORT_RELATIVE_PATH
+    contract_path = evidence_root / _MODEL_CONTRACT_RELATIVE_PATH
     if not report_path.is_file() or not contract_path.is_file():
         raise HTTPException(status_code=503, detail="demo_model_summary_unavailable")
     try:
