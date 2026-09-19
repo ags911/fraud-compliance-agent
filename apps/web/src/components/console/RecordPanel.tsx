@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ShieldAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AgentRunState } from '@/lib/useAgentRun'
 import type { SignedRecordSummary } from '@/lib/types'
 
@@ -21,7 +21,9 @@ export function RecordPanel({ run }: { run: AgentRunState }) {
         {record && <Badge variant="secondary" className="font-mono">{record.action_type}</Badge>}
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as RecordTab)}>
+      {/* The panel sits inside Tabs so each trigger's aria-controls points at a real
+          element; the gap matches the spacing this panel had as a sibling. */}
+      <Tabs value={tab} onValueChange={(v) => setTab(v as RecordTab)} className="gap-3.5">
         <TabsList className="w-full">
           {(['sim_a', 'sim_b', 'counterfactual'] as const).map((t) => (
             <TabsTrigger key={t} value={t} disabled={!run.events[t]}>
@@ -29,15 +31,17 @@ export function RecordPanel({ run }: { run: AgentRunState }) {
             </TabsTrigger>
           ))}
         </TabsList>
+        {/* TabsContent defaults to text-sm; inherit instead so the details keep their size. */}
+        <TabsContent value={tab} className="text-[length:inherit]">
+          {!record ? (
+            <div className="py-8 text-center text-[12px] text-muted-foreground">
+              No record yet — run the agent.
+            </div>
+          ) : (
+            <RecordDetail record={record} />
+          )}
+        </TabsContent>
       </Tabs>
-
-      {!record ? (
-        <div className="py-8 text-center text-[12px] text-muted-foreground">
-          No record yet — run the agent.
-        </div>
-      ) : (
-        <RecordDetail record={record} />
-      )}
     </div>
   )
 }

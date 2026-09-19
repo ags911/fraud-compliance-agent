@@ -109,6 +109,7 @@ export function TransactionForm({
         </div>
         <Field label="Amount (£)">
           <Input
+            aria-label="Amount (£)"
             type="number"
             value={form.amount}
             onChange={(e) => update('amount', Number(e.target.value))}
@@ -117,7 +118,7 @@ export function TransactionForm({
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Channel">
             <Select value={form.payment_channel} onValueChange={(v) => update('payment_channel', v as RunFormState['payment_channel'])}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Channel" className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="online">online</SelectItem>
                 <SelectItem value="in store">in store</SelectItem>
@@ -126,12 +127,12 @@ export function TransactionForm({
             </Select>
           </Field>
           <Field label="Country">
-            <Input value={form.country} onChange={(e) => update('country', e.target.value)} />
+            <Input aria-label="Country" value={form.country} onChange={(e) => update('country', e.target.value)} />
           </Field>
         </div>
         <Field label="Category">
           <Select value={form.personal_finance_category} onValueChange={(v) => update('personal_finance_category', v)}>
-            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Category" className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -142,6 +143,7 @@ export function TransactionForm({
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Velocity (6h)">
             <Input
+              aria-label="Velocity (6h)"
               type="number"
               value={form.velocity_6h}
               onChange={(e) => update('velocity_6h', Number(e.target.value))}
@@ -149,6 +151,7 @@ export function TransactionForm({
           </Field>
           <Field label="Balance remaining">
             <Input
+              aria-label="Balance remaining"
               type="number"
               step={0.01}
               min={0}
@@ -175,6 +178,7 @@ export function TransactionForm({
           </div>
         </div>
         <Switch
+          aria-label="Simulate LLM outage"
           checked={form.simulate_llm_outage}
           onCheckedChange={(v) => update('simulate_llm_outage', v)}
           className="mt-0.5 data-checked:bg-destructive"
@@ -214,7 +218,7 @@ function ToggleRow({
   return (
     <div className="flex items-center justify-between py-0.5">
       <span className="text-[12.5px] text-muted-foreground">{label}</span>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
     </div>
   )
 }

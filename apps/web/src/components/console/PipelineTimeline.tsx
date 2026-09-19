@@ -32,7 +32,8 @@ export function PipelineTimeline({ run, runId }: { run: AgentRunState; runId: st
         </div>
         <div className="font-mono text-[11.5px] text-muted-foreground/70">run_id: {runId}</div>
       </div>
-      <div className="flex items-start gap-2.5 overflow-x-auto pb-1.5">
+      {/* A horizontally scrollable region must be reachable by keyboard. */}
+      <div role="region" aria-label="Pipeline stages" tabIndex={0} className="flex items-start gap-2.5 overflow-x-auto pb-1.5">
         {NODE_ORDER.map((name, index) => (
           <div key={name} className="flex items-start gap-2.5">
             <NodeCard name={name} status={statusFor(name, index, run)} event={run.events[name]} />

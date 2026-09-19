@@ -442,7 +442,7 @@ be met without it.
 | API | Python 3.13 (pinned in `apps/api/.python-version`; `>=3.11` supported), FastAPI, Uvicorn, Pydantic/FastAPI models | Typed demo routes, validation, SSE progress, and health | Current routes are demo routes, not the future operational contract. |
 | Agent workflow | LangGraph and Groq SDK | Bounded demonstration investigation | Optional per demo run; no LLM may make a payment decision. |
 | Governance SDK | Pinned Arbiris SDK | Existing signed-record demonstration | Do not edit `apps/api/vendor` outside an explicit SDK upgrade. |
-| Quality | GitHub Actions, Ruff, Pytest, TypeScript build, Playwright | Build, lint, test, and design evidence | CI does not make product or safety decisions. |
+| Quality | GitHub Actions, Ruff, Pytest, TypeScript build, Playwright, axe-core (`@axe-core/playwright`) | Build, lint, test, design, and automated accessibility evidence | CI does not make product or safety decisions. axe-core is a dev-only test library with no runtime dependency; it supplements, and does not replace, manual accessibility review. |
 | Data science | Jupyter, Pandas, scikit-learn, XGBoost, Plotly | Feasibility and mechanics-only evaluation | Notebooks never promote a runtime model. |
 
 ### 14.2 Selected services for the first public showcase
