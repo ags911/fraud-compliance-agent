@@ -6,13 +6,14 @@ Decision supported: Post-Phase-0 — candidate model release review
 
 ## Run context
 
-- Date/time (UTC): 2026-09-19T18:12Z (approved-mode rerun on the refactored
-  harness; see "Harness refactor" below). The previous accepted runs were
-  2026-09-18T22:15Z and, before that, the first accepted run.
-- Git revision: `13052540137e26914c720d53482132e49845f623`, the checkout the
-  run was made from. As with the earlier runs, this is the revision preceding
-  the commit that carries the report: the harness refactor was in the working
-  tree at run time and lands in the same change set as this artifact.
+- Date/time (UTC): 2026-09-19T18:19Z (approved-mode rerun on the refactored
+  harness; see "Harness refactor" below). The previous accepted run was
+  2026-09-18T22:15Z.
+- Git revision: `2807a06c893fc4ae28d32e7c125863b7a38317bd`. Unlike the earlier
+  runs, whose recorded revision preceded the commit carrying the report, this is
+  the commit that contains the harness that produced it: check it out, supply
+  the checksum-pinned corpus, run approved mode, and every figure below is
+  reproduced.
 - Every metric, threshold-sweep row, and slice row is bit-for-bit identical to
   the 2026-09-18 artifact. Only the run timestamp, revision, the new
   `config_version` field, and the resulting payload digest changed.
@@ -84,7 +85,7 @@ evaluation, diagnostics, report, pipeline), with parameters in
 `docs/proposals/fast-path-model-release.candidate.json`  
 Status: `candidate_evaluation_pending_review`  
 Report payload SHA-256:
-`357883fcbf51967340ce2cdeb12f28c4e020f0f01d424b2726e2b7ebddc6b5fd`
+`38dec6a09a2046c18f05880b50ddc52696675283b5e4debe7e97717c307ad988`
 (the hash covers the run timestamp, revision, and configuration version, so it
 differs from the 2026-09-18 run's `ad479ad6…` and the earlier `5403cfb9…`
 although the metrics are identical)
