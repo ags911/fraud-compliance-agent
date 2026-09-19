@@ -85,10 +85,14 @@ class RunRequest(StrictFiniteModel):
     transaction_id: str = Field(default="TXN-CONSOLE-001", min_length=1, max_length=128)
     account_id: str = Field(default="ACC-CONSOLE", min_length=1, max_length=128)
     amount: float
-    iso_currency_code: str = Field(default="GBP", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
+    iso_currency_code: str = Field(
+        default="GBP", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$"
+    )
     payment_channel: Literal["online", "in store", "other"] = "online"
     country: str | None = Field(default=None, max_length=64)
-    personal_finance_category: str = Field(default="OTHER", min_length=1, max_length=128)
+    personal_finance_category: str = Field(
+        default="OTHER", min_length=1, max_length=128
+    )
     velocity_6h: int = Field(default=0, ge=0, le=100_000)
     first_seen_payee: bool = False
     account_balance: float = 0.0

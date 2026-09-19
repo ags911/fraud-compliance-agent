@@ -26,20 +26,34 @@ def test_demo_model_summary_is_explicitly_not_deployable() -> None:
         "logistic_regression_baseline",
         "xgboost_candidate",
     }
-    xgboost = next(model for model in payload["model_results"] if model["model_id"] == "xgboost_candidate")
+    xgboost = next(
+        model
+        for model in payload["model_results"]
+        if model["model_id"] == "xgboost_candidate"
+    )
     assert xgboost["threshold_sweep"]
-    assert {item["slice"] for item in xgboost["slice_metrics"]} == {"category", "amount_band"}
-    assert any("No score can approve" in boundary for boundary in payload["release_boundary"])
+    assert {item["slice"] for item in xgboost["slice_metrics"]} == {
+        "category",
+        "amount_band",
+    }
+    assert any(
+        "No score can approve" in boundary for boundary in payload["release_boundary"]
+    )
 
 
-def test_demo_model_summary_refuses_a_synthetic_run_report(tmp_path, monkeypatch) -> None:
+def test_demo_model_summary_refuses_a_synthetic_run_report(
+    tmp_path, monkeypatch
+) -> None:
     """A synthetic notebook report must not be served under the Sparkov label."""
     report = tmp_path / "report.json"
     report.write_text(
         json.dumps(
             {
                 "status": "synthetic_mechanics_only",
-                "input_manifest": {"feature_columns": ["amount_minor"], "dataset_sha256": "synthetic"},
+                "input_manifest": {
+                    "feature_columns": ["amount_minor"],
+                    "dataset_sha256": "synthetic",
+                },
                 "models": {},
                 "partition_counts": {},
                 "prevalence": {"test": 0.0},

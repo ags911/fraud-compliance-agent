@@ -1,11 +1,11 @@
-.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
+.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
 
 # Use the private Arbiris SDK when its submodule is initialised; otherwise run
 # without it. The SDK-backed demo pipeline tests skip when it is absent.
 SDK_EXTRA := $(if $(wildcard apps/api/vendor/arbiris-sdk/pyproject.toml),--extra sdk,)
 UV_RUN := uv run $(SDK_EXTRA)
 
-check: web-lint web-design-check web-build web-test api-lint api-notebook-lint api-docstring-lint notebook-policy-check api-test
+check: web-lint web-design-check web-build web-test api-lint api-format-check api-notebook-lint api-docstring-lint notebook-policy-check api-test
 
 web-build:
 	npm --prefix apps/web run build
@@ -25,6 +25,11 @@ api-test: api-smoke
 api-lint:
 	cd apps/api && $(UV_RUN) ruff check server
 
+# Formatting is enforced for API code, tests, and scripts. Notebooks are excluded on purpose: they
+# are prototyping artefacts, and reformatting them rewrites cell sources for no review value.
+api-format-check:
+	cd apps/api && $(UV_RUN) ruff format --check server tests ../../scripts
+
 api-notebook-lint:
 	cd apps/api && $(UV_RUN) ruff check ../../notebooks ../../scripts
 
@@ -34,7 +39,7 @@ api-docstring-lint:
 api-notebook-kernel:
 	cd apps/api && $(UV_RUN) python -m ipykernel install --user \
 		--name fraud-compliance-agent-api \
-		--display-name "Fraud Compliance Agent API (Python 3.11)"
+		--display-name "Fraud Compliance Agent API (Python 3.13)"
 
 notebook-policy-check:
 	cd apps/api && $(UV_RUN) python ../../scripts/validate_notebooks.py

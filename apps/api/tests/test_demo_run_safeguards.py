@@ -58,7 +58,9 @@ class _CapturingPipeline:
 
 
 @pytest.mark.parametrize("raw", ["0", "-1", "not-a-number"])
-def test_positive_int_env_rejects_invalid_values(monkeypatch: pytest.MonkeyPatch, raw: str) -> None:
+def test_positive_int_env_rejects_invalid_values(
+    monkeypatch: pytest.MonkeyPatch, raw: str
+) -> None:
     """Invalid concurrency configuration fails during application startup."""
     monkeypatch.setenv("DEMO_MAX_CONCURRENT_RUNS", raw)
 
@@ -66,7 +68,9 @@ def test_positive_int_env_rejects_invalid_values(monkeypatch: pytest.MonkeyPatch
         main.create_app()
 
 
-def test_bounded_stream_emits_redacted_timeout_and_done(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_bounded_stream_emits_redacted_timeout_and_done(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A timed-out run is an explicit failure followed by the terminal event."""
     monkeypatch.setattr(main, "pipeline", _SlowPipeline())
 
@@ -97,7 +101,9 @@ def test_external_investigation_is_opt_in(monkeypatch: pytest.MonkeyPatch) -> No
     assert main._boolean_env("DEMO_ALLOW_EXTERNAL_INVESTIGATION", False) is True
 
 
-def test_boolean_env_rejects_ambiguous_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_boolean_env_rejects_ambiguous_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A typo cannot silently enable or disable an external provider."""
     monkeypatch.setenv("DEMO_ALLOW_EXTERNAL_INVESTIGATION", "sometimes")
 
@@ -105,7 +111,9 @@ def test_boolean_env_rejects_ambiguous_configuration(monkeypatch: pytest.MonkeyP
         main.create_app()
 
 
-@pytest.mark.skipif(not main.SCENARIOS, reason="the private SDK submodule is not initialised")
+@pytest.mark.skipif(
+    not main.SCENARIOS, reason="the private SDK submodule is not initialised"
+)
 @pytest.mark.parametrize(
     ("configured", "expected_outage"),
     [(None, True), ("false", True), ("true", False)],

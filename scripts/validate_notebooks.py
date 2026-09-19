@@ -15,8 +15,8 @@ from pathlib import Path
 import nbformat
 
 EXPECTED_KERNEL_NAME = "fraud-compliance-agent-api"
-EXPECTED_KERNEL_DISPLAY = "Fraud Compliance Agent API (Python 3.11)"
-EXPECTED_LANGUAGE_VERSION = "3.11"
+EXPECTED_KERNEL_DISPLAY = "Fraud Compliance Agent API (Python 3.13)"
+EXPECTED_LANGUAGE_VERSION = "3.13"
 LOCAL_PATH_PATTERN = re.compile(r"(?:/Users/|/home/|[A-Za-z]:\\\\Users\\\\)")
 REQUIRED_REVIEW_PHRASES = (
     "status",
@@ -50,7 +50,9 @@ def repository_root(start: Path) -> Path:
         RuntimeError: If the expected repository markers cannot be found.
     """
     for candidate in (start, *start.parents):
-        if (candidate / "docs" / "project-context.md").is_file() and (candidate / "notebooks").is_dir():
+        if (candidate / "docs" / "project-context.md").is_file() and (
+            candidate / "notebooks"
+        ).is_dir():
             return candidate
     raise RuntimeError("Run from inside the fraud-compliance-agent repository.")
 

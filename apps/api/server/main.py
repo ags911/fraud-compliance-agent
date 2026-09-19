@@ -168,8 +168,12 @@ def _require_demo_pipeline() -> None:
 
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_MODEL_REPORT_PATH = _REPOSITORY_ROOT / "docs" / "proposals" / "fast-path-model-release.candidate.json"
-_MODEL_CONTRACT_PATH = _REPOSITORY_ROOT / "docs" / "contracts" / "model-training-contract.v1.json"
+_MODEL_REPORT_PATH = (
+    _REPOSITORY_ROOT / "docs" / "proposals" / "fast-path-model-release.candidate.json"
+)
+_MODEL_CONTRACT_PATH = (
+    _REPOSITORY_ROOT / "docs" / "contracts" / "model-training-contract.v1.json"
+)
 # Only an approved-mode notebook run may back the Sparkov label below; a
 # synthetic or gated run writes a different status and must never be served.
 _ACCEPTED_REPORT_STATUS = "candidate_evaluation_pending_review"
@@ -196,7 +200,9 @@ def _demo_model_summary() -> DemoModelSummary:
             or input_manifest["feature_columns"] != contract["feature_columns"]
             or input_manifest["dataset_sha256"] != contract["dataset_sha256"]
         ):
-            raise HTTPException(status_code=503, detail="demo_model_summary_unavailable")
+            raise HTTPException(
+                status_code=503, detail="demo_model_summary_unavailable"
+            )
         model_labels = {
             "logistic_regression_baseline": "Logistic Regression baseline",
             "xgboost_candidate": "XGBoost candidate",
@@ -206,8 +212,12 @@ def _demo_model_summary() -> DemoModelSummary:
                 model_id=model_id,
                 label=model_labels.get(model_id, model_id.replace("_", " ")),
                 **metrics["metrics"],
-                threshold_sweep=[DemoThresholdPoint(**point) for point in metrics["threshold_sweep"]],
-                slice_metrics=[DemoSliceMetric(**point) for point in metrics["slice_metrics"]],
+                threshold_sweep=[
+                    DemoThresholdPoint(**point) for point in metrics["threshold_sweep"]
+                ],
+                slice_metrics=[
+                    DemoSliceMetric(**point) for point in metrics["slice_metrics"]
+                ],
             )
             for model_id, metrics in report["models"].items()
         ]
@@ -217,15 +227,23 @@ def _demo_model_summary() -> DemoModelSummary:
             data_source="Sparkov simulated credit-card transactions",
             training_scope=str(contract["training_scope"]),
             dataset_sha256=str(input_manifest["dataset_sha256"]),
-            feature_columns=[str(column) for column in input_manifest["feature_columns"]],
-            partition_counts={name: int(count) for name, count in report["partition_counts"].items()},
+            feature_columns=[
+                str(column) for column in input_manifest["feature_columns"]
+            ],
+            partition_counts={
+                name: int(count) for name, count in report["partition_counts"].items()
+            },
             test_prevalence=float(report["prevalence"]["test"]),
             model_results=model_results,
-            release_boundary=[str(boundary) for boundary in contract["release_boundary"]],
+            release_boundary=[
+                str(boundary) for boundary in contract["release_boundary"]
+            ],
             report_sha256=str(report["report_sha256"]),
         )
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-        raise HTTPException(status_code=503, detail="demo_model_summary_unavailable") from error
+        raise HTTPException(
+            status_code=503, detail="demo_model_summary_unavailable"
+        ) from error
 
 
 def _build_initial_state(
@@ -272,9 +290,15 @@ async def _stream_bounded_run(
         # requests or provider work indefinitely.
         async with asyncio.timeout(timeout_seconds):
             async with run_slots:
-                async for update in pipeline.astream(initial_state, stream_mode="updates"):
+                async for update in pipeline.astream(
+                    initial_state, stream_mode="updates"
+                ):
                     for node_name, node_result in update.items():
-                        payload: dict = {"node": node_name, "result": {}, "record": None}
+                        payload: dict = {
+                            "node": node_name,
+                            "result": {},
+                            "record": None,
+                        }
                         for key, value in node_result.items():
                             if is_dataclass(value):
                                 payload["result"][key] = asdict(value)
@@ -368,14 +392,14 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/run/preset/{scenario_id}")
-    async def run_preset(
-        scenario_id: str, overrides: PresetRunRequest | None = None
-    ):
+    async def run_preset(scenario_id: str, overrides: PresetRunRequest | None = None):
         """Stream a named deterministic demo scenario with optional safe overrides."""
         _require_demo_pipeline()
         scenario = _find_scenario(scenario_id)
         if scenario is None:
-            raise HTTPException(status_code=404, detail=f"Unknown scenario_id: {scenario_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Unknown scenario_id: {scenario_id}"
+            )
         overrides = overrides or PresetRunRequest()
         initial_state = _build_initial_state(
             scenario["customer_id"],

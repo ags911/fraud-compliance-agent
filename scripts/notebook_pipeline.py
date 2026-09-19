@@ -28,16 +28,66 @@ class NotebookStep:
 
 
 STEPS = (
-    NotebookStep(1, "01-plaid-sandbox-source-inventory.ipynb", "observed", "Requires local Doppler-backed Plaid Sandbox configuration for a new observation run."),
-    NotebookStep(2, "02-plaid-sandbox-lifecycle-probes.ipynb", "observed", "Requires local Doppler-backed Plaid Sandbox configuration for a new probe run."),
-    NotebookStep(3, "03-plaid-to-canonical-mapping.ipynb", "proposal-prepared", "Mapping evidence is prepared; P0-03 review must resolve the explicit point-in-time and canonical-semantics gaps."),
-    NotebookStep(4, "04-feature-availability-matrix.ipynb", "proposal-prepared", "Matrix evidence is prepared; no feature is approved for online scoring pending mapping and scenario review."),
-    NotebookStep(5, "05-enrichment-pipeline-prototype.ipynb", "proposal-prepared", "Snapshot design is prepared; no runtime enrichment is authorised pending feature and mapping review."),
-    NotebookStep(6, "06-corpus-and-label-feasibility.ipynb", "proposal-prepared", "Sparkov mechanics evidence is prepared; a separate real target, mature labels, and representative corpus remain required for production-model work."),
-    NotebookStep(7, "07-leakage-and-evaluation-design.ipynb", "proposal-prepared", "A mechanics-only temporal protocol is prepared; production cutpoints, label treatment, feature schema, calibration, and release criteria require independent approval."),
-    NotebookStep(8, "08-fast-path-model-training-and-evaluation.ipynb", "mechanics-evaluated", "The checksum-pinned Sparkov mechanics run is complete and pending review; production training still requires a real corpus, point-in-time feature parity, calibration, and release approval."),
-    NotebookStep(9, "09-slow-path-investigation-evaluation.ipynb", "gated", "Requires accepted eligibility, typed-tool, response-schema, and scenario-suite contracts."),
-    NotebookStep(10, "10-model-monitoring-and-champion-challenger.ipynb", "gated", "Requires an accepted model release, monitoring contract, delayed labels, cohort definitions, and rollback criteria."),
+    NotebookStep(
+        1,
+        "01-plaid-sandbox-source-inventory.ipynb",
+        "observed",
+        "Requires local Doppler-backed Plaid Sandbox configuration for a new observation run.",
+    ),
+    NotebookStep(
+        2,
+        "02-plaid-sandbox-lifecycle-probes.ipynb",
+        "observed",
+        "Requires local Doppler-backed Plaid Sandbox configuration for a new probe run.",
+    ),
+    NotebookStep(
+        3,
+        "03-plaid-to-canonical-mapping.ipynb",
+        "proposal-prepared",
+        "Mapping evidence is prepared; P0-03 review must resolve the explicit point-in-time and canonical-semantics gaps.",
+    ),
+    NotebookStep(
+        4,
+        "04-feature-availability-matrix.ipynb",
+        "proposal-prepared",
+        "Matrix evidence is prepared; no feature is approved for online scoring pending mapping and scenario review.",
+    ),
+    NotebookStep(
+        5,
+        "05-enrichment-pipeline-prototype.ipynb",
+        "proposal-prepared",
+        "Snapshot design is prepared; no runtime enrichment is authorised pending feature and mapping review.",
+    ),
+    NotebookStep(
+        6,
+        "06-corpus-and-label-feasibility.ipynb",
+        "proposal-prepared",
+        "Sparkov mechanics evidence is prepared; a separate real target, mature labels, and representative corpus remain required for production-model work.",
+    ),
+    NotebookStep(
+        7,
+        "07-leakage-and-evaluation-design.ipynb",
+        "proposal-prepared",
+        "A mechanics-only temporal protocol is prepared; production cutpoints, label treatment, feature schema, calibration, and release criteria require independent approval.",
+    ),
+    NotebookStep(
+        8,
+        "08-fast-path-model-training-and-evaluation.ipynb",
+        "mechanics-evaluated",
+        "The checksum-pinned Sparkov mechanics run is complete and pending review; production training still requires a real corpus, point-in-time feature parity, calibration, and release approval.",
+    ),
+    NotebookStep(
+        9,
+        "09-slow-path-investigation-evaluation.ipynb",
+        "gated",
+        "Requires accepted eligibility, typed-tool, response-schema, and scenario-suite contracts.",
+    ),
+    NotebookStep(
+        10,
+        "10-model-monitoring-and-champion-challenger.ipynb",
+        "gated",
+        "Requires an accepted model release, monitoring contract, delayed labels, cohort definitions, and rollback criteria.",
+    ),
 )
 
 
@@ -60,8 +110,12 @@ def inspect(root: Path) -> int:
         missing = missing or not present
         print(f"{step.number:02d}  {step.state:<18} {marker:<7} {step.filename}")
         print(f"    Gate: {step.requirement}")
-    print("\nSafe execution: `make notebook-synthetic` runs only Notebook 08 in synthetic mode in a temporary kernel output directory.")
-    print("Approved/real-data execution is intentionally not implemented by this tool; use the accepted contract and documented review process.")
+    print(
+        "\nSafe execution: `make notebook-synthetic` runs only Notebook 08 in synthetic mode in a temporary kernel output directory."
+    )
+    print(
+        "Approved/real-data execution is intentionally not implemented by this tool; use the accepted contract and documented review process."
+    )
     return 1 if missing else 0
 
 
@@ -69,18 +123,31 @@ def run_synthetic(root: Path) -> int:
     """Execute only Notebook 08's mechanics fixture, writing outputs outside Git."""
     notebook = root / "notebooks" / "08-fast-path-model-training-and-evaluation.ipynb"
     if not notebook.is_file():
-        print("Notebook 08 is missing; synthetic execution cannot start.", file=sys.stderr)
+        print(
+            "Notebook 08 is missing; synthetic execution cannot start.", file=sys.stderr
+        )
         return 1
     runner = root / "scripts" / "run_notebook_safely.py"
     if not runner.is_file():
-        print("Safe notebook runner is missing; synthetic execution cannot start.", file=sys.stderr)
+        print(
+            "Safe notebook runner is missing; synthetic execution cannot start.",
+            file=sys.stderr,
+        )
         return 1
 
     environment = os.environ.copy()
     environment["FCA_NOTEBOOK08_MODE"] = "synthetic"
     environment["FCA_NOTEBOOK08_RENDER_PLOTS"] = "false"
-    with tempfile.TemporaryDirectory(prefix="fraud-compliance-notebook-") as output_directory:
-        command = [sys.executable, str(runner), str(notebook), "--output-directory", output_directory]
+    with tempfile.TemporaryDirectory(
+        prefix="fraud-compliance-notebook-"
+    ) as output_directory:
+        command = [
+            sys.executable,
+            str(runner),
+            str(notebook),
+            "--output-directory",
+            output_directory,
+        ]
         result = subprocess.run(command, cwd=root, env=environment, check=False)
     return result.returncode
 

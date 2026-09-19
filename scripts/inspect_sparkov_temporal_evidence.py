@@ -15,7 +15,9 @@ from typing import Any
 
 import pandas as pd
 
-REQUIRED_COLUMNS = frozenset({"trans_date_trans_time", "cc_num", "trans_num", "is_fraud"})
+REQUIRED_COLUMNS = frozenset(
+    {"trans_date_trans_time", "cc_num", "trans_num", "is_fraud"}
+)
 
 
 def inspect_file(path: Path) -> tuple[dict[str, Any], set[str], set[str]]:
@@ -35,15 +37,25 @@ def inspect_file(path: Path) -> tuple[dict[str, Any], set[str], set[str]]:
         if missing_columns:
             fields = ", ".join(sorted(missing_columns))
             raise ValueError(f"Dataset is missing expected Sparkov columns: {fields}")
-        times = pd.to_datetime(chunk["trans_date_trans_time"], errors="coerce", utc=True)
+        times = pd.to_datetime(
+            chunk["trans_date_trans_time"], errors="coerce", utc=True
+        )
         row_count += len(chunk)
         missing_time += int(times.isna().sum())
         missing_event_reference += int(chunk["trans_num"].isna().sum())
         if times.notna().any():
             chunk_minimum = times.min()
             chunk_maximum = times.max()
-            minimum_time = chunk_minimum if minimum_time is None else min(minimum_time, chunk_minimum)
-            maximum_time = chunk_maximum if maximum_time is None else max(maximum_time, chunk_maximum)
+            minimum_time = (
+                chunk_minimum
+                if minimum_time is None
+                else min(minimum_time, chunk_minimum)
+            )
+            maximum_time = (
+                chunk_maximum
+                if maximum_time is None
+                else max(maximum_time, chunk_maximum)
+            )
             unique_days.update(times.dropna().dt.date.astype(str))
         label_counts.update(chunk["is_fraud"].astype(str))
         customer_like_references.update(chunk["cc_num"].astype(str))
@@ -52,8 +64,12 @@ def inspect_file(path: Path) -> tuple[dict[str, Any], set[str], set[str]]:
     return (
         {
             "row_count": row_count,
-            "minimum_event_time": minimum_time.isoformat() if minimum_time is not None else None,
-            "maximum_event_time": maximum_time.isoformat() if maximum_time is not None else None,
+            "minimum_event_time": minimum_time.isoformat()
+            if minimum_time is not None
+            else None,
+            "maximum_event_time": maximum_time.isoformat()
+            if maximum_time is not None
+            else None,
             "unique_event_days": len(unique_days),
             "missing_event_time": missing_time,
             "missing_event_reference": missing_event_reference,
@@ -69,9 +85,15 @@ def inspect_file(path: Path) -> tuple[dict[str, Any], set[str], set[str]]:
 def parse_args() -> argparse.Namespace:
     """Parse explicit local paths; neither raw path is stored in output."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--train", type=Path, required=True, help="Local Sparkov fraudTrain.csv path.")
-    parser.add_argument("--test", type=Path, required=True, help="Local Sparkov fraudTest.csv path.")
-    parser.add_argument("--output", type=Path, help="Optional destination for sanitised JSON evidence.")
+    parser.add_argument(
+        "--train", type=Path, required=True, help="Local Sparkov fraudTrain.csv path."
+    )
+    parser.add_argument(
+        "--test", type=Path, required=True, help="Local Sparkov fraudTest.csv path."
+    )
+    parser.add_argument(
+        "--output", type=Path, help="Optional destination for sanitised JSON evidence."
+    )
     return parser.parse_args()
 
 
@@ -97,8 +119,12 @@ def main() -> int:
         "train": train_summary,
         "test": test_summary,
         "cross_partition": {
-            "customer_like_reference_overlap_count": len(train_customers.intersection(test_customers)),
-            "event_reference_overlap_count": len(train_events.intersection(test_events)),
+            "customer_like_reference_overlap_count": len(
+                train_customers.intersection(test_customers)
+            ),
+            "event_reference_overlap_count": len(
+                train_events.intersection(test_events)
+            ),
             "interpretation": "Customer-like reference overlap is expected historical continuity, not permission to use raw references as model features.",
         },
         "limitations": [

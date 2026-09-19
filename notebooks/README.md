@@ -88,7 +88,7 @@ template onto source-evidence or safety-evaluation work.
 ## Safe pipeline commands
 
 Run `make notebook-policy-check` to enforce output-free source notebooks,
-portable paths, the documented Python 3.11 kernel metadata, a Markdown
+portable paths, the documented Python 3.13 kernel metadata, a Markdown
 explanation immediately before every code cell, and the required review
 narrative. `make notebook-policy-fix` may be used to clear transient outputs
 and normalise kernel metadata; it never executes a cell or reads data.
@@ -107,7 +107,7 @@ required for any real-data execution.
 ## Kernel
 
 Open these notebooks with the dedicated **Fraud Compliance Agent API (Python
-3.11)** kernel. It runs from `apps/api/.venv`, so it has the project’s approved
+3.13)** kernel. It runs from `apps/api/.venv`, so it has the project’s approved
 notebook dependencies without relying on a global Python installation.
 
 After cloning or recreating the environment, run `uv sync` in `apps/api`, then

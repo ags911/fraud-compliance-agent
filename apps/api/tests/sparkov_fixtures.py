@@ -59,10 +59,14 @@ def make_source_frames(
             {
                 "trans_date_trans_time": timestamps.strftime("%Y-%m-%d %H:%M:%S"),
                 "cc_num": rng.integers(10**15, 10**16, rows),
-                "merchant": [f"merchant_{value}" for value in rng.integers(0, 50, rows)],
+                "merchant": [
+                    f"merchant_{value}" for value in rng.integers(0, 50, rows)
+                ],
                 "first": "Synthetic",
                 "last": "Person",
-                "trans_num": [f"tx{value:012d}" for value in rng.integers(0, 10**12, rows)],
+                "trans_num": [
+                    f"tx{value:012d}" for value in rng.integers(0, 10**12, rows)
+                ],
                 "amt": rng.lognormal(mean=3.5, sigma=1.0, size=rows).round(2),
                 "category": rng.choice(CATEGORIES, rows),
                 "is_fraud": (np.arange(rows) % 17 == 0).astype(int),
@@ -72,7 +76,11 @@ def make_source_frames(
     train_start = pd.Timestamp("2019-01-01 00:00:00")
     train = frame(train_start, train_rows)
     train_end = pd.Timestamp(train["trans_date_trans_time"].iloc[-1])
-    test_start = train_start - pd.Timedelta(days=30) if defect == "test_before_train" else train_end + pd.Timedelta(hours=1)
+    test_start = (
+        train_start - pd.Timedelta(days=30)
+        if defect == "test_before_train"
+        else train_end + pd.Timedelta(hours=1)
+    )
     test = frame(test_start, test_rows)
 
     if defect == "missing_amount":
@@ -91,7 +99,9 @@ def make_source_frames(
     return train, test
 
 
-def write_source_files(directory: Path, defect: str | None = None, **kwargs: int) -> tuple[Path, Path]:
+def write_source_files(
+    directory: Path, defect: str | None = None, **kwargs: int
+) -> tuple[Path, Path]:
     """Write the train and test frames as CSV files and return their paths.
 
     Args:

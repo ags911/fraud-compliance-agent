@@ -58,27 +58,43 @@ def _broken_links(path: Path, root: Path) -> list[str]:
         raw_path, _, fragment = target.partition("#")
         resolved = path if not raw_path else (path.parent / unquote(raw_path)).resolve()
         location = f"{path.relative_to(root)} -> {target}"
-        if resolved.is_relative_to(root) and SKIPPED_PARTS & set(resolved.relative_to(root).parts):
+        if resolved.is_relative_to(root) and SKIPPED_PARTS & set(
+            resolved.relative_to(root).parts
+        ):
             continue  # into a submodule or generated tree that a clone may not contain
         if not resolved.exists():
             problems.append(f"{location} (file not found)")
         elif fragment and resolved.suffix == ".md":
-            if unquote(fragment).lower() not in _anchors(resolved.read_text(encoding="utf-8")):
+            if unquote(fragment).lower() not in _anchors(
+                resolved.read_text(encoding="utf-8")
+            ):
                 problems.append(f"{location} (anchor not found)")
     return problems
 
 
 def test_the_scan_covers_the_project_documents(repository_root) -> None:
     """Guard against the scan silently matching nothing."""
-    names = {path.relative_to(repository_root).as_posix() for path in _markdown_files(repository_root)}
+    names = {
+        path.relative_to(repository_root).as_posix()
+        for path in _markdown_files(repository_root)
+    }
 
-    assert {"README.md", "docs/README.md", "docs/project-context.md", "docs/product/prd.md"} <= names
+    assert {
+        "README.md",
+        "docs/README.md",
+        "docs/project-context.md",
+        "docs/product/prd.md",
+    } <= names
     assert not any(name.startswith("apps/api/vendor/") for name in names)
 
 
 def test_relative_markdown_links_resolve(repository_root) -> None:
     """No project document links to a missing file or a missing heading."""
-    broken = [problem for path in _markdown_files(repository_root) for problem in _broken_links(path, repository_root)]
+    broken = [
+        problem
+        for path in _markdown_files(repository_root)
+        for problem in _broken_links(path, repository_root)
+    ]
 
     assert not broken, "Broken links:\n" + "\n".join(broken)
 
@@ -87,7 +103,10 @@ def test_relative_markdown_links_resolve(repository_root) -> None:
     ("heading", "slug"),
     [
         ("Showcase MVP completion checklist", "showcase-mvp-completion-checklist"),
-        ("R1 — Required oversight is not completed oversight", "r1--required-oversight-is-not-completed-oversight"),
+        (
+            "R1 — Required oversight is not completed oversight",
+            "r1--required-oversight-is-not-completed-oversight",
+        ),
         ("`make check` and CI", "make-check-and-ci"),
     ],
 )

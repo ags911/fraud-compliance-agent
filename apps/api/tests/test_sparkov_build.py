@@ -30,7 +30,10 @@ def test_file_checksum_matches_hashlib(sparkov_build, tmp_path) -> None:
     path = tmp_path / "data.bin"
     path.write_bytes(b"synthetic" * 500_000)
 
-    assert sparkov_build.file_checksum(path) == hashlib.sha256(path.read_bytes()).hexdigest()
+    assert (
+        sparkov_build.file_checksum(path)
+        == hashlib.sha256(path.read_bytes()).hexdigest()
+    )
 
 
 def test_amount_band_uses_fixed_edges(sparkov_build) -> None:
@@ -48,7 +51,9 @@ def test_amount_band_uses_fixed_edges(sparkov_build) -> None:
     ]
 
 
-def test_cutpoint_is_the_chronological_eighty_percent_mark(sparkov_build, tmp_path) -> None:
+def test_cutpoint_is_the_chronological_eighty_percent_mark(
+    sparkov_build, tmp_path
+) -> None:
     """The cutpoint is a real timestamp taken at the requested fraction of sorted time."""
     train_path, _ = write_source_files(tmp_path)
     train, _ = make_source_frames()
@@ -95,14 +100,21 @@ def test_transform_chunk_derives_features_and_partitions(sparkov_build) -> None:
 def test_transform_chunk_requires_a_cutpoint_for_training_data(sparkov_build) -> None:
     """Source training rows cannot be partitioned without an explicit boundary."""
     chunk = pd.DataFrame(
-        {"trans_date_trans_time": ["2019-01-05 13:00:00"], "amt": [1.0], "category": ["misc_pos"], "is_fraud": [0]}
+        {
+            "trans_date_trans_time": ["2019-01-05 13:00:00"],
+            "amt": [1.0],
+            "category": ["misc_pos"],
+            "is_fraud": [0],
+        }
     )
 
     with pytest.raises(ValueError, match="cutpoint is required"):
         sparkov_build.transform_chunk(chunk, "source_train", None)
 
 
-def test_build_writes_only_approved_columns_and_reconciles_rows(sparkov_build, tmp_path) -> None:
+def test_build_writes_only_approved_columns_and_reconciles_rows(
+    sparkov_build, tmp_path
+) -> None:
     """A clean build drops identifiers, keeps every row, and reports passing checks."""
     manifest, output = _build(sparkov_build, tmp_path)
     frame = pd.read_csv(output)
@@ -115,19 +127,34 @@ def test_build_writes_only_approved_columns_and_reconciles_rows(sparkov_build, t
     assert all(count > 0 for count in manifest["partition_positive_counts"].values())
     assert manifest["quality_checks"]["passed"] is True
     assert manifest["quality_checks"]["checks"] == list(sparkov_build.QUALITY_CHECKS)
-    assert manifest["quality_checks"]["source_row_counts"] == {"train_file": 600, "test_file": 200}
+    assert manifest["quality_checks"]["source_row_counts"] == {
+        "train_file": 600,
+        "test_file": 200,
+    }
     assert manifest["dataset_sha256"] == hashlib.sha256(output.read_bytes()).hexdigest()
 
 
-def test_build_partitions_are_chronological_and_disjoint(sparkov_build, tmp_path) -> None:
+def test_build_partitions_are_chronological_and_disjoint(
+    sparkov_build, tmp_path
+) -> None:
     """Train ends at the cutpoint, calibration follows it, and test comes last."""
     manifest, _ = _build(sparkov_build, tmp_path)
-    bounds = {name: [pd.Timestamp(value) for value in span] for name, span in manifest["quality_checks"]["partition_time_bounds_utc"].items()}
+    bounds = {
+        name: [pd.Timestamp(value) for value in span]
+        for name, span in manifest["quality_checks"][
+            "partition_time_bounds_utc"
+        ].items()
+    }
     cutpoint = pd.Timestamp(manifest["chronological_train_cutpoint"])
 
     assert bounds["train"][1] == cutpoint
     assert bounds["calibration"][0] > cutpoint
-    assert bounds["train"][1] < bounds["calibration"][0] <= bounds["calibration"][1] < bounds["test"][0]
+    assert (
+        bounds["train"][1]
+        < bounds["calibration"][0]
+        <= bounds["calibration"][1]
+        < bounds["test"][0]
+    )
 
 
 def test_build_is_deterministic(sparkov_build, tmp_path) -> None:
@@ -149,7 +176,9 @@ def test_build_is_deterministic(sparkov_build, tmp_path) -> None:
         ({"train": 480, "calibration": 120, "test": 199}, "do not reconcile"),
     ],
 )
-def test_row_count_gate_flags_dropped_or_duplicated_rows(sparkov_build, partitions, message) -> None:
+def test_row_count_gate_flags_dropped_or_duplicated_rows(
+    sparkov_build, partitions, message
+) -> None:
     """Train plus calibration must equal the train file, and test must equal the test file."""
     source = {"source_train": 600, "source_test": 200}
 
@@ -160,19 +189,32 @@ def test_row_count_gate_flags_dropped_or_duplicated_rows(sparkov_build, partitio
             sparkov_build.check_row_counts(partitions, source)
 
 
-def test_build_runs_the_row_count_gate_with_real_counts(sparkov_build, tmp_path, monkeypatch) -> None:
+def test_build_runs_the_row_count_gate_with_real_counts(
+    sparkov_build, tmp_path, monkeypatch
+) -> None:
     """The gate is wired into the build and receives the counts actually observed."""
     calls = []
     original = sparkov_build.check_row_counts
-    monkeypatch.setattr(sparkov_build, "check_row_counts", lambda *args: (calls.append(args), original(*args))[1])
+    monkeypatch.setattr(
+        sparkov_build,
+        "check_row_counts",
+        lambda *args: (calls.append(args), original(*args))[1],
+    )
 
     _build(sparkov_build, tmp_path)
 
-    assert calls == [({"train": 480, "calibration": 120, "test": 200}, {"source_train": 600, "source_test": 200})]
+    assert calls == [
+        (
+            {"train": 480, "calibration": 120, "test": 200},
+            {"source_train": 600, "source_test": 200},
+        )
+    ]
 
 
 @pytest.mark.parametrize("fraction", [0, 1, -0.5, 1.5])
-def test_build_rejects_an_invalid_train_fraction(sparkov_build, tmp_path, fraction) -> None:
+def test_build_rejects_an_invalid_train_fraction(
+    sparkov_build, tmp_path, fraction
+) -> None:
     """The train fraction must lie strictly between zero and one."""
     train, test = write_source_files(tmp_path)
 
@@ -238,35 +280,63 @@ def test_quality_gate_rejects_unapproved_columns(sparkov_build) -> None:
 )
 def test_time_order_gate_rejects_bad_partitions(sparkov_build, bounds, message) -> None:
     """Empty, mis-cut, and overlapping partitions are each rejected."""
-    parsed = {name: (pd.Timestamp(low, tz="UTC"), pd.Timestamp(high, tz="UTC")) for name, (low, high) in bounds.items()}
+    parsed = {
+        name: (pd.Timestamp(low, tz="UTC"), pd.Timestamp(high, tz="UTC"))
+        for name, (low, high) in bounds.items()
+    }
 
     with pytest.raises(ValueError, match=message):
-        sparkov_build.check_partition_time_order(parsed, pd.Timestamp("2020-01-05", tz="UTC"))
+        sparkov_build.check_partition_time_order(
+            parsed, pd.Timestamp("2020-01-05", tz="UTC")
+        )
 
 
-def test_command_line_reports_success_and_writes_the_manifest(sparkov_build, tmp_path, monkeypatch, capsys) -> None:
+def test_command_line_reports_success_and_writes_the_manifest(
+    sparkov_build, tmp_path, monkeypatch, capsys
+) -> None:
     """The CLI exits zero and writes a manifest that records the passed checks."""
     train, test = write_source_files(tmp_path)
     manifest_path = tmp_path / "manifest.json"
     monkeypatch.setattr(
         sys,
         "argv",
-        ["build", "--train", str(train), "--test", str(test), "--output", str(tmp_path / "o.csv"), "--manifest-output", str(manifest_path)],
+        [
+            "build",
+            "--train",
+            str(train),
+            "--test",
+            str(test),
+            "--output",
+            str(tmp_path / "o.csv"),
+            "--manifest-output",
+            str(manifest_path),
+        ],
     )
 
     assert sparkov_build.main() == 0
-    assert json.loads(manifest_path.read_text(encoding="utf-8"))["quality_checks"]["passed"] is True
+    assert (
+        json.loads(manifest_path.read_text(encoding="utf-8"))["quality_checks"][
+            "passed"
+        ]
+        is True
+    )
     assert "Wrote sanitised manifest" in capsys.readouterr().out
 
 
-def test_command_line_reports_missing_files_and_bad_data(sparkov_build, tmp_path, monkeypatch, capsys) -> None:
+def test_command_line_reports_missing_files_and_bad_data(
+    sparkov_build, tmp_path, monkeypatch, capsys
+) -> None:
     """A missing input exits 2 and a failed quality gate exits 1, both with a clear message."""
     train, test = write_source_files(tmp_path, defect="negative_amount")
     base = ["build", "--output", str(tmp_path / "o.csv")]
 
-    monkeypatch.setattr(sys, "argv", [*base, "--train", str(tmp_path / "nope.csv"), "--test", str(test)])
+    monkeypatch.setattr(
+        sys, "argv", [*base, "--train", str(tmp_path / "nope.csv"), "--test", str(test)]
+    )
     assert sparkov_build.main() == 2
 
-    monkeypatch.setattr(sys, "argv", [*base, "--train", str(train), "--test", str(test)])
+    monkeypatch.setattr(
+        sys, "argv", [*base, "--train", str(train), "--test", str(test)]
+    )
     assert sparkov_build.main() == 1
     assert "Quality check failed" in capsys.readouterr().out

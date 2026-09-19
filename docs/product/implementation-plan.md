@@ -325,8 +325,8 @@ item is planned, requires fresh verification, or needs a decision before it
 can be claimed. Re-run the relevant check after a material change rather than
 relying on a historical tick.
 
-Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 5 of 6, MVP 2 has
-2 of 6, and MVP 3 has 0 of 10. Several unchecked items have partial evidence, noted
+Progress on 2026-09-19: MVP 0 has 5 of 9 items checked, MVP 1 has 5 of 6, MVP 2 has
+2 of 6, and MVP 3 has 0 of 11. Several unchecked items have partial evidence, noted
 in their rows.
 
 ### MVP 0 — Engineering foundation
@@ -338,6 +338,7 @@ in their rows.
 | ✓ | FastAPI exposes current demo health, scenario, model-summary, and streamed-run endpoints. | `apps/api/server/main.py`. |
 | ✓ | The web client contains API/SSE consumers for scenario listing, custom runs, preset runs, and benchmark evidence. | `apps/web/src/lib/useAgentRun.ts` and `demo-model-summary.ts`. |
 | ✓ | Synthetic-data, Plaid Sandbox, Sparkov, notebook, and model-promotion boundaries are documented. | PRD, data governance, notebook plan, and project context. |
+| — | Move the model training and evaluation logic out of Notebook 08 into tested modules (data loading, features, training, evaluation), leaving the notebook as a thin runner. | Today the training code, seed and parameters live inside the notebook, so there are no model-level tests (output shapes, evaluation on a tiny fixed dataset) and parameters are not in a reviewable config file. Put the modules under `apps/api` (or a shared package), read parameters from a versioned config under `config/`, keep the report's git revision, seed, and SHA-256 fields, and keep the approved-mode guard on the release report. |
 | — | Freeze a versioned showcase API contract for current request, response, error, and SSE-event shapes. | Add an accepted contract under `docs/contracts/`. |
 | — | Run browser-to-local-API end-to-end checks for scenarios A–F and the LLM outage. | API level run 2026-09-19 (real pipeline, in process): A–F each returned HTTP 200 `text/event-stream`, five nodes in order (`data_ingest`, `sim_a`, `sim_b`, `counterfactual`, `evidence_pack`), one terminal `done`, and no error events. The outage flag changes nothing offline: external investigation is disabled by default, so every run is an outage run, and `sim_b` fails safe to HOLD for all six (A, D, F already HOLD at `sim_a`; B, C, E passed `sim_a` with scores 0, 63, 65). The non-outage path needs a live provider key. Browser run on 2026-09-19 against a real local API (nothing mocked): preset A completed end to end, showing Sim A 100/HOLD, Sim B "Stage 2 unavailable — fail-safe" HOLD, and a signed record marked "verification not performed"; Benchmark insights served the real Sparkov figures; with the API stopped, the console showed "Demo scenarios unavailable" and "Benchmark evidence unavailable". **Known defects found:** (1) the console's default custom transaction (category `TRANSFER_OUT` with velocity 3) fails after the first stage with `processing_failed`, because the vendored SDK example formats a missing 30-day average (`sim_a.py` line 173); (2) that failure appears as the raw code `processing_failed` instead of a plain-language message; (3) `/favicon.ico` returns 404 because `index.html` does not link the shipped `favicon.svg`. Presets B–F have not yet been driven through the browser. |
 | — | Verify API error redaction and cross-origin configuration against the public-showcase environment. | Local defaults are tested: explicit origins only, no wildcard, and a foreign origin receives no grant (`apps/api/tests/test_demo_endpoints.py`). The stream emits only the stable error categories `processing_timeout` and `processing_failed`. Deployed configuration is still to test. |
@@ -368,6 +369,7 @@ in their rows.
 
 | Status | Completion item | Evidence / next action |
 | --- | --- | --- |
+| — | Containerise the API with a reviewed Dockerfile and a `.dockerignore`, and build it in CI. | Container Apps needs an image and none exists. Use a pinned Python 3.13 base image, install with `uv sync --frozen --no-dev`, run as a non-root user, and keep the private SDK out of the public image unless the deployment approves it. |
 | — | Add reviewed Bicep under `infra/azure/` for only Azure Static Web Apps and Azure Container Apps Consumption. | No Azure resource definition exists yet. |
 | — | Add GitHub Actions deployment through Azure OIDC. | Never commit Azure credentials or service-principal secrets. |
 | — | Configure Doppler `showcase` values and host-side secret injection. | Verify no provider secret reaches Vite/browser output. |

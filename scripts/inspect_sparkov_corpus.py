@@ -17,8 +17,27 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-REQUIRED_COLUMNS = frozenset({"trans_date_trans_time", "amt", "merchant", "category", "trans_num", "is_fraud"})
-SENSITIVE_COLUMNS = frozenset({"cc_num", "first", "last", "gender", "street", "city", "state", "zip", "lat", "long", "dob", "job", "merch_lat", "merch_long"})
+REQUIRED_COLUMNS = frozenset(
+    {"trans_date_trans_time", "amt", "merchant", "category", "trans_num", "is_fraud"}
+)
+SENSITIVE_COLUMNS = frozenset(
+    {
+        "cc_num",
+        "first",
+        "last",
+        "gender",
+        "street",
+        "city",
+        "state",
+        "zip",
+        "lat",
+        "long",
+        "dob",
+        "job",
+        "merch_lat",
+        "merch_long",
+    }
+)
 
 
 def file_checksum(path: Path) -> str:
@@ -39,7 +58,9 @@ def inspect_csv(path: Path) -> dict[str, Any]:
         columns = [column for column in raw_columns if column]
         missing_required = sorted(REQUIRED_COLUMNS.difference(columns))
         if missing_required:
-            raise ValueError(f"Dataset is missing expected Sparkov columns: {', '.join(missing_required)}")
+            raise ValueError(
+                f"Dataset is missing expected Sparkov columns: {', '.join(missing_required)}"
+            )
 
         label_counts: Counter[str] = Counter()
         blank_counts: Counter[str] = Counter()
@@ -74,8 +95,27 @@ def build_manifest(path: Path) -> dict[str, Any]:
         "source_terms": "Must be re-verified by the reviewer before use; see docs/proposals/sparkov-corpus-intake.proposed.md.",
         "file_sha256": file_checksum(path),
         "schema": inspection,
-        "proposed_target": {"source_field": "is_fraud", "meaning": "unverified simulated source label", "availability_time": "unknown — review required"},
-        "proposed_exclusions": ["cc_num", "first", "last", "gender", "street", "city", "state", "zip", "lat", "long", "dob", "job", "merch_lat", "merch_long"],
+        "proposed_target": {
+            "source_field": "is_fraud",
+            "meaning": "unverified simulated source label",
+            "availability_time": "unknown — review required",
+        },
+        "proposed_exclusions": [
+            "cc_num",
+            "first",
+            "last",
+            "gender",
+            "street",
+            "city",
+            "state",
+            "zip",
+            "lat",
+            "long",
+            "dob",
+            "job",
+            "merch_lat",
+            "merch_long",
+        ],
         "limitations": [
             "Synthetic labels are not evidence of real-world fraud performance.",
             "No Plaid or production feature parity is implied.",
@@ -87,8 +127,17 @@ def build_manifest(path: Path) -> dict[str, Any]:
 def parse_args() -> argparse.Namespace:
     """Parse the narrow, explicit local-file interface."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", type=Path, default=os.environ.get("FCA_SPARKOV_DATASET_PATH"), help="Path to a locally downloaded Sparkov CSV; defaults to FCA_SPARKOV_DATASET_PATH.")
-    parser.add_argument("--output", type=Path, help="Optional path for a sanitised JSON manifest. The raw dataset is never copied.")
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=os.environ.get("FCA_SPARKOV_DATASET_PATH"),
+        help="Path to a locally downloaded Sparkov CSV; defaults to FCA_SPARKOV_DATASET_PATH.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path for a sanitised JSON manifest. The raw dataset is never copied.",
+    )
     return parser.parse_args()
 
 
@@ -96,7 +145,10 @@ def main() -> int:
     """Inspect an explicit local dataset path and optionally write safe metadata."""
     args = parse_args()
     if args.dataset is None:
-        print("Set FCA_SPARKOV_DATASET_PATH or pass --dataset with a local CSV path.", file=sys.stderr)
+        print(
+            "Set FCA_SPARKOV_DATASET_PATH or pass --dataset with a local CSV path.",
+            file=sys.stderr,
+        )
         return 2
     dataset_path = args.dataset.expanduser().resolve()
     if not dataset_path.is_file():

@@ -26,7 +26,9 @@ def setup_source(repository_root) -> str:
     raise AssertionError("Notebook 08 no longer defines REVIEWED_REPORT_PATH.")
 
 
-def _resolve(source: str, monkeypatch, mode: str | None, report_path: Path | None = None) -> dict:
+def _resolve(
+    source: str, monkeypatch, mode: str | None, report_path: Path | None = None
+) -> dict:
     """Run the setup cell with the given environment and return its namespace."""
     monkeypatch.delenv("FCA_NOTEBOOK08_MODE", raising=False)
     monkeypatch.delenv("FCA_NOTEBOOK08_REPORT_PATH", raising=False)
@@ -40,7 +42,9 @@ def _resolve(source: str, monkeypatch, mode: str | None, report_path: Path | Non
 
 
 @pytest.mark.parametrize("mode", [None, "synthetic", "gate"])
-def test_non_approved_modes_never_default_to_the_reviewed_report(setup_source, monkeypatch, repository_root, mode) -> None:
+def test_non_approved_modes_never_default_to_the_reviewed_report(
+    setup_source, monkeypatch, repository_root, mode
+) -> None:
     """Default, synthetic, and gate runs write to a temporary file, not the repository."""
     namespace = _resolve(setup_source, monkeypatch, mode)
     report_path = namespace["REPORT_PATH"]
@@ -55,18 +59,25 @@ def test_default_mode_is_synthetic(setup_source, monkeypatch) -> None:
     assert _resolve(setup_source, monkeypatch, None)["MODE"] == "synthetic"
 
 
-def test_approved_mode_writes_the_reviewed_report(setup_source, monkeypatch, repository_root) -> None:
+def test_approved_mode_writes_the_reviewed_report(
+    setup_source, monkeypatch, repository_root
+) -> None:
     """Approved mode is the only mode that targets the reviewed artifact."""
     namespace = _resolve(setup_source, monkeypatch, "approved")
 
     assert namespace["REPORT_PATH"] == (repository_root / REVIEWED_REPORT).resolve()
 
 
-def test_an_explicit_report_path_is_honoured(setup_source, monkeypatch, tmp_path) -> None:
+def test_an_explicit_report_path_is_honoured(
+    setup_source, monkeypatch, tmp_path
+) -> None:
     """The safe runner redirects output through this variable, whatever the mode."""
     destination = tmp_path / "report.json"
 
-    assert _resolve(setup_source, monkeypatch, "approved", destination)["REPORT_PATH"] == destination.resolve()
+    assert (
+        _resolve(setup_source, monkeypatch, "approved", destination)["REPORT_PATH"]
+        == destination.resolve()
+    )
 
 
 def test_an_unknown_mode_is_rejected(setup_source, monkeypatch) -> None:

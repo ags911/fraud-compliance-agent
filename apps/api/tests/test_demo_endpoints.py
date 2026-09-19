@@ -15,11 +15,18 @@ def test_health_reports_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
-requires_sdk = pytest.mark.skipif(not main.SCENARIOS, reason="the private SDK submodule is not initialised")
+requires_sdk = pytest.mark.skipif(
+    not main.SCENARIOS, reason="the private SDK submodule is not initialised"
+)
 
 
-@pytest.mark.parametrize(("method", "path"), [("get", "/scenarios"), ("post", "/run/preset/A"), ("post", "/run")])
-def test_pipeline_routes_report_unavailable_without_the_sdk(monkeypatch, method, path) -> None:
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [("get", "/scenarios"), ("post", "/run/preset/A"), ("post", "/run")],
+)
+def test_pipeline_routes_report_unavailable_without_the_sdk(
+    monkeypatch, method, path
+) -> None:
     """Without the optional SDK pipeline, its routes say so instead of failing at startup."""
     monkeypatch.setattr(main, "pipeline", None)
     # `amount` is the only required field of a custom run request.
@@ -70,7 +77,10 @@ def test_default_cors_origins_are_explicit_local_origins(monkeypatch) -> None:
 
     assert origins
     assert "*" not in origins
-    assert all(origin.startswith(("http://localhost", "http://127.0.0.1")) for origin in origins)
+    assert all(
+        origin.startswith(("http://localhost", "http://127.0.0.1"))
+        for origin in origins
+    )
 
 
 def test_configured_origins_are_trimmed_and_empty_entries_dropped(monkeypatch) -> None:

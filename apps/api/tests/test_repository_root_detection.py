@@ -37,20 +37,31 @@ def test_notebook_validator_finds_the_root_from_a_scoped_folder(monorepo) -> Non
     """The notebook policy check resolves the root the same way."""
     root, api = monorepo
     validator = load_script("validate_notebooks")
-    finder = next(getattr(validator, name) for name in dir(validator) if name in {"find_repository_root", "repository_root"})
+    finder = next(
+        getattr(validator, name)
+        for name in dir(validator)
+        if name in {"find_repository_root", "repository_root"}
+    )
 
     assert finder(api) == root
 
 
-def test_notebook_08_finds_the_root_from_a_scoped_folder(monorepo, repository_root) -> None:
+def test_notebook_08_finds_the_root_from_a_scoped_folder(
+    monorepo, repository_root
+) -> None:
     """Notebook 08's own root finder ignores a scoped AGENTS.md."""
     root, api = monorepo
     notebook = json.loads((repository_root / NOTEBOOK_08).read_text(encoding="utf-8"))
     setup = next(
-        "".join(cell["source"]) for cell in notebook["cells"] if cell["cell_type"] == "code" and "def find_repository_root" in "".join(cell["source"])
+        "".join(cell["source"])
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+        and "def find_repository_root" in "".join(cell["source"])
     )
     # Run only the helper's definition, not the rest of the cell's work.
-    definition = setup[setup.index("def find_repository_root") : setup.index("REPOSITORY_ROOT = ")]
+    definition = setup[
+        setup.index("def find_repository_root") : setup.index("REPOSITORY_ROOT = ")
+    ]
     namespace: dict = {"Path": type(root)}
     exec(compile(definition, "notebook-08-root-finder", "exec"), namespace)
 
