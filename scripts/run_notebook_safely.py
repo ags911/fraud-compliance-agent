@@ -36,7 +36,7 @@ def main() -> int:
     source = args.notebook.resolve()
     repository_root = source.parent.parent
     output_directory = args.output_directory.resolve()
-    if not source.is_file() or not (repository_root / "AGENTS.md").is_file():
+    if not source.is_file() or not (repository_root / "docs" / "project-context.md").is_file():
         raise RuntimeError("Expected a notebook inside the fraud-compliance-agent repository.")
     if source.name != "08-fast-path-model-training-and-evaluation.ipynb":
         raise RuntimeError("This runner permits only Notebook 08's synthetic mechanics fixture.")

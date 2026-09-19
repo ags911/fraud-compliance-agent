@@ -44,13 +44,13 @@ def repository_root(start: Path) -> Path:
         start: Existing path inside the repository.
 
     Returns:
-        Repository directory containing ``AGENTS.md`` and ``notebooks``.
+        Repository directory containing ``docs/project-context.md`` and ``notebooks``.
 
     Raises:
         RuntimeError: If the expected repository markers cannot be found.
     """
     for candidate in (start, *start.parents):
-        if (candidate / "AGENTS.md").is_file() and (candidate / "notebooks").is_dir():
+        if (candidate / "docs" / "project-context.md").is_file() and (candidate / "notebooks").is_dir():
             return candidate
     raise RuntimeError("Run from inside the fraud-compliance-agent repository.")
 

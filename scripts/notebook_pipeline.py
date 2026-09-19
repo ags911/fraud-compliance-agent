@@ -44,7 +44,7 @@ STEPS = (
 def repository_root(start: Path) -> Path:
     """Find the repository root without depending on the caller's cwd."""
     for candidate in (start, *start.parents):
-        if (candidate / "AGENTS.md").is_file():
+        if (candidate / "docs" / "project-context.md").is_file():
             return candidate
     raise RuntimeError("Run from inside the fraud-compliance-agent repository.")
 
