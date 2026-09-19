@@ -42,6 +42,7 @@ build.
 | `README.md` | Monorepo orientation, independently runnable applications, and common commands. |
 | `Makefile` | Local verification and safe notebook/corpus commands. `make check` is the standard handoff gate. |
 | `.github/workflows/verify.yml` | CI build, lint, docstring, smoke-test, test, and container-image checks. |
+| `.github/workflows/security.yml` | Dependency audit and CodeQL, on every change and weekly. |
 | `apps/api/Dockerfile` | Showcase API image: digest-pinned bases, non-root, no private SDK or offline ML code. |
 | `.dockerignore` | Allowlist build context for that image; everything is excluded until it is named. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |

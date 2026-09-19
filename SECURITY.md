@@ -18,5 +18,20 @@ say so in the report so it can be rotated and removed.
 - Out of scope: availability of the free-tier demo hosting, and findings that
   need real customer or payment data to reproduce.
 
+## Automated checks
+
+These run in CI on every change and weekly against `main`
+(`.github/workflows/security.yml`), and they support review rather than replace
+it:
+
+- **Dependency audit** — `pip-audit` against the API's exported runtime
+  dependency tree, and `npm audit` against the console's production
+  dependencies. Dependabot proposes the upgrades; these jobs fail the build.
+- **CodeQL** — `security-and-quality` queries for Python and
+  TypeScript/JavaScript.
+- **Ruff's security rules** (`S`) on the API, a `no-any` lint rule in the
+  console, and a container job that checks the published image runs as a
+  non-root user and carries no private or offline code.
+
 The project's safety boundaries are described in
 [docs/project-context.md](docs/project-context.md).
