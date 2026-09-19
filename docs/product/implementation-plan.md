@@ -326,7 +326,7 @@ can be claimed. Re-run the relevant check after a material change rather than
 relying on a historical tick.
 
 Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 5 of 6, MVP 2 has
-2 of 6, and MVP 3 has 0 of 9. Several unchecked items have partial evidence, noted
+2 of 6, and MVP 3 has 0 of 10. Several unchecked items have partial evidence, noted
 in their rows.
 
 ### MVP 0 — Engineering foundation
@@ -376,7 +376,8 @@ in their rows.
 | — | Deploy both applications and set explicit API allowed origins. | Verify health, cold-start, unavailable, retry, and local-demo fallback. `apps/web/public/staticwebapp.config.json` provides the single-page-app fallback and ships in the build, but it has not been tested on Azure. |
 | — | Publish Azure architecture, runbook, teardown steps, and a public-demo smoke-test result. | Link the reviewed infrastructure artifacts and deployed URL. |
 | — | Add an API status step to the guided tour for the health and cold-start state. | The first request to a scale-to-zero API can be slow, so explain the connection, cold-start, unavailable, and retry states where the UI shows them. It extends the per-page tours, not a new cross-route tour. |
-| — | Add a read-only "Explain this decision" panel to the decision workspace, with fixed questions such as "Why was this held?" and "What would change the outcome?". | Answers come deterministically from the run's own evidence (reason codes, rule results, model factors, trace, counterfactual), so it cannot invent facts. It is not a free-text chatbot: that would need a PRD showcase-register entry (use case, owner, synthetic-data boundary, removal path), rate limits, and a budget cap, and an LLM could only rephrase evidence, never decide. |
+| — | Rebuild the dashboard's trends and time-series chart from approved Plaid-derived fixtures scored by the decision engine. | The dashboard shows no sparklines or time-series chart until then: there is no recorded run history, and a generated series would misrepresent the demo. Real inputs come from Plaid Sandbox through the approved canonical mapping and sanitised fixtures for S01–S08, and the held, challenged, and passed outcomes come from our own engine, because Plaid supplies no fraud outcomes. Totals, sparklines, and the chart must all come from that one set. Sparkov stays benchmark evidence on Benchmark Insights only, labelled as such. |
+| — | Add a read-only "Explain this decision" panel to the decision workspace (a dashboard-level "Explain" preview already exists on `/dashboard.html`: fixed and keyword questions answered only from the figures on screen, each citing its source card, labelled Preview with no language model), with fixed questions such as "Why was this held?" and "What would change the outcome?". | Answers come deterministically from the run's own evidence (reason codes, rule results, model factors, trace, counterfactual), so it cannot invent facts. It is not a free-text chatbot: that would need a PRD showcase-register entry (use case, owner, synthetic-data boundary, removal path), rate limits, and a budget cap, and an LLM could only rephrase evidence, never decide. |
 
 ## Frontend architecture
 

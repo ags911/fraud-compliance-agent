@@ -1,53 +1,30 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { ArrowRight, BarChart3, CalendarDays, LayoutDashboard, LayoutGrid, Moon, Play, RotateCcw, Search, ShieldCheck, Sun, TrendingDown, TrendingUp } from "lucide-react"
+import { ArrowRight, BarChart3, CalendarDays, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, Sun } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
+import { DashboardChat } from "@/components/dashboard-chat"
 import { demoScenarios, type DemoScenarioId } from "@/components/demo-session"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarRail,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { portfolioSeries, weekOverWeek, type DayPoint } from "@/lib/dashboard-series"
 import { scenarioResults, zeroKpis, zeroOutcomes, type Route } from "@/lib/overview-data"
 
 // The content follows the Overview page contract in the implementation plan: KPI strip,
 // decision outcomes, operational health, and recent decisions. The figures come from the
 // same synthetic scenario data as the Overview page, and stay at zero until a scenario runs.
-// Trends and the 30-day chart are drawn only for the portfolio scenario, from its own
-// deterministic synthetic series. They are never presented as recorded run history.
+// There are deliberately no trend lines or time-series charts: there is no recorded run
+// history, and inventing one would misrepresent the demo. They return when the dashboard is
+// rebuilt from approved, Plaid-derived fixtures scored by the decision engine.
 const routeVariant = { PASS: "outline", CHALLENGE: "secondary", HOLD: "destructive" } as const satisfies Record<Route, string>
 
 // Outcome colours are theme tokens, so they follow light and dark mode.
@@ -55,12 +32,6 @@ const toneColor = { success: "var(--outcome-pass)", warning: "var(--outcome-chal
 const routeColor: Record<Route, string> = { PASS: toneColor.success, CHALLENGE: toneColor.warning, HOLD: toneColor.danger }
 
 const themeKey = "averlynx-dashboard-theme"
-
-const outcomeChartConfig = {
-  passed: { label: "Passed", color: "var(--outcome-pass)" },
-  challenged: { label: "Challenged", color: "var(--outcome-challenge)" },
-  held: { label: "Held", color: "var(--destructive)" },
-} satisfies ChartConfig
 
 function formatRange(range: DateRange | undefined) {
   if (!range?.from) return "Select dates"
@@ -100,75 +71,92 @@ function useFocusableWhenScrollable(host: React.RefObject<HTMLElement | null>, l
   }, [host, label, rows])
 }
 
-/** A small, decorative trend line. The delta text beside it carries the meaning. */
-function Sparkline({ data, dataKey, color }: { data: readonly DayPoint[]; dataKey: keyof DayPoint & ("transactions" | "volume" | "heldVolume"); color: string }) {
-  return (
-    <ChartContainer config={{ [dataKey]: { color } }} className="aspect-auto h-10 w-full" aria-hidden="true">
-      <AreaChart accessibilityLayer={false} data={data as DayPoint[]} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
-        <YAxis hide domain={["dataMin", "dataMax"]} />
-        <Area dataKey={dataKey} type="monotone" stroke={color} strokeWidth={1.5} fill={color} fillOpacity={0.14} dot={false} isAnimationActive={false} />
-      </AreaChart>
-    </ChartContainer>
-  )
+type NavLeaf = {
+  title: string
+  // Only a page that exists is linked. A leaf without an href is a planned view and is disabled.
+  href?: string
+  // A linked page that is only a labelled placeholder today.
+  planned?: boolean
 }
 
-function Delta({ change }: { change: number }) {
-  const Icon = change < 0 ? TrendingDown : TrendingUp
-  return (
-    <span className="inline-flex items-center gap-1">
-      <Icon className="size-3.5" aria-hidden="true" />
-      {`${change >= 0 ? "+" : ""}${(change * 100).toFixed(1)}% vs prior 7 days`}
-    </span>
-  )
-}
+type Section = { title: string; href?: string; active?: boolean; children?: NavLeaf[] }
 
-const navigation = [
-  { title: "Dashboard", href: "/dashboard.html", icon: LayoutDashboard, active: true },
-  { title: "Overview", href: "/overview", icon: LayoutGrid },
-  { title: "Analyse a transaction", href: "/transactions/new", icon: ShieldCheck },
-  { title: "Benchmark insights", href: "/insights", icon: BarChart3 },
+// The sections follow the information architecture in the implementation plan. Live pages link
+// normally, planned pages that already exist show their own "planned" state, and views with no
+// page yet are disabled, so nothing looks built that is not.
+const sections: Section[] = [
+  { title: "Overview", href: "/dashboard.html", active: true },
+  {
+    title: "Transactions",
+    children: [
+      { title: "Analyse a transaction", href: "/transactions/new" },
+      { title: "All decisions", href: "/transactions", planned: true },
+    ],
+  },
+  { title: "Reviews", children: [{ title: "Queue", href: "/reviews", planned: true }] },
+  {
+    title: "Rules",
+    children: [{ title: "Performance", href: "/rules/performance", planned: true }, { title: "Changes" }],
+  },
+  { title: "Insights", children: [{ title: "Model benchmark", href: "/insights" }, { title: "Drift" }] },
+  { title: "Settings", children: [{ title: "Policies" }, { title: "Access" }, { title: "Integrations" }] },
 ]
 
-function DashboardSidebar() {
+function SoonBadge() {
+  return <span className="rounded-full border px-1.5 text-[10px] leading-4 text-muted-foreground">Soon</span>
+}
+
+const tabClass = (active: boolean) =>
+  `-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 text-sm font-medium outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 ${active ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`
+
+/**
+ * The section tabs. These are links between pages rather than panels of this one, so they are
+ * a navigation landmark, not ARIA tabs. A section with sub-views opens a small menu of them.
+ */
+function SectionTabs() {
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        {/* The lockup hard-codes a dark text colour for the Payments sidebar, so it follows this theme instead. */}
-        <AverlynxBrand className="h-8 px-2 text-foreground" />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">Workspace</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  {/* The shared sidebar renders data-active="false", which Tailwind v4's data-active: variant
-                      still matches, so inactive items are reset here rather than editing the shared component. */}
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.active}
-                    tooltip={item.title}
-                    className="rounded-xl data-[active=false]:bg-transparent! data-[active=false]:font-normal! data-[active=false]:hover:bg-sidebar-accent!"
-                  >
-                    <a href={item.href} aria-current={item.active ? "page" : undefined}>
-                      <item.icon aria-hidden="true" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <p className="px-2 text-xs text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-          Synthetic demo. Nothing here is a real payment.
-        </p>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+    <nav aria-label="Sections" className="-mx-4 mt-4 flex gap-6 overflow-x-auto border-b px-4 md:-mx-6 md:px-6">
+      {sections.map((section) => {
+        if (!section.children) {
+          return (
+            <a key={section.title} href={section.href} aria-current={section.active ? "page" : undefined} className={tabClass(Boolean(section.active))}>
+              {section.title}
+            </a>
+          )
+        }
+        const hasLivePage = section.children.some((child) => child.href && !child.planned)
+        return (
+          <Popover key={section.title}>
+            <PopoverTrigger asChild>
+              <button type="button" className={tabClass(false)}>
+                {section.title}
+                {hasLivePage ? null : <SoonBadge />}
+                <ChevronDown className="size-3.5" aria-hidden="true" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-1">
+              <ul className="flex flex-col">
+                {section.children.map((child) => (
+                  <li key={child.title}>
+                    {child.href ? (
+                      <a href={child.href} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+                        {child.title}
+                        {child.planned ? <SoonBadge /> : null}
+                      </a>
+                    ) : (
+                      <span aria-disabled="true" className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground">
+                        {child.title}
+                        <SoonBadge />
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </PopoverContent>
+          </Popover>
+        )
+      })}
+    </nav>
   )
 }
 
@@ -196,7 +184,6 @@ export default function Dashboard() {
   }, [theme])
 
   const result = active ? scenarioResults[active] : null
-  const series = active === "portfolio" ? portfolioSeries : null
   const term = search.trim().toLowerCase()
   const decisions = (result?.decisions ?? []).filter((decision) =>
     !term || [decision.id, decision.customer, decision.amount, decision.route, decision.reason].some((value) => value.toLowerCase().includes(term)),
@@ -207,13 +194,13 @@ export default function Dashboard() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <DashboardSidebar />
-        <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="mr-1 h-4" />
-            <div className="relative w-full max-w-sm">
+      {/* The right-hand sidebar holds the Explain panel and is open by default. */}
+      <SidebarProvider style={{ "--sidebar-width": "22rem" } as CSSProperties}>
+        <SidebarInset className="min-w-0">
+          <header className="sticky top-0 z-10 flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b bg-background/85 px-4 py-2 backdrop-blur">
+            <AverlynxBrand className="mr-auto h-8 text-foreground sm:mr-2" />
+            <Separator orientation="vertical" className="mr-1 hidden h-4 sm:block" />
+            <div className="relative order-4 w-full sm:order-none sm:w-auto sm:min-w-40 sm:flex-1 sm:max-w-sm">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 aria-label="Search decisions"
@@ -224,8 +211,8 @@ export default function Dashboard() {
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Badge variant="outline" className="hidden sm:inline-flex">Demo data</Badge>
+            <div className="order-3 flex w-full flex-wrap items-center gap-2 sm:order-none sm:ml-auto sm:w-auto sm:justify-end">
+              <Badge variant="outline" className="hidden sm:inline-flex">Synthetic data</Badge>
               <Button
                 variant="ghost"
                 size="icon"
@@ -255,14 +242,21 @@ export default function Dashboard() {
                 </Button>
               ) : null}
             </div>
+            <SidebarTrigger aria-label="Toggle explain panel" title="Explain" className="order-2 sm:order-none sm:ml-1">
+              <PanelRight aria-hidden="true" />
+            </SidebarTrigger>
           </header>
 
           <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">Fraud risk</h1>
+              <SectionTabs />
+            </div>
+
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h1 className="sr-only">Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
-                  Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health.
+                  Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health. All data is synthetic, and nothing here can approve, release, or execute a real payment.
                 </p>
               </div>
               <Popover>
@@ -296,24 +290,13 @@ export default function Dashboard() {
             <section aria-label="Dashboard summary" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {(result?.kpis ?? zeroKpis).map((kpi) => {
                 // Held volume and the review queue are the figures an operator acts on, so they also carry a marker.
-                const trend = series
-                  ? kpi.label === "Processed volume"
-                    ? { key: "volume" as const, color: "var(--chart-1)" }
-                    : kpi.label === "Transactions"
-                      ? { key: "transactions" as const, color: "var(--chart-1)" }
-                      : kpi.label === "Held volume"
-                        ? { key: "heldVolume" as const, color: "var(--destructive)" }
-                        : null
-                  : null
-                const note = trend && series
-                  ? <Delta change={weekOverWeek(series, trend.key)} />
-                  : kpi.label === "Processed volume"
-                    ? `${share("Passed")} passed`
-                    : kpi.label === "Transactions"
-                      ? "Across all routes"
-                      : kpi.label === "Held volume"
-                        ? `${share("Held")} of transactions`
-                        : `Oldest review ${result?.oldestReview ?? "0 min"}`
+                const note = kpi.label === "Processed volume"
+                  ? `${share("Passed")} passed`
+                  : kpi.label === "Transactions"
+                    ? "Across all routes"
+                    : kpi.label === "Held volume"
+                      ? `${share("Held")} of transactions`
+                      : `Oldest review ${result?.oldestReview ?? "0 min"}`
                 const marker = kpi.label === "Held volume" ? toneColor.danger : kpi.label === "Review queue" ? toneColor.warning : null
                 return (
                   <Card key={kpi.label}>
@@ -324,89 +307,10 @@ export default function Dashboard() {
                       </CardDescription>
                       <CardTitle className="text-2xl font-semibold tabular-nums">{kpi.value}</CardTitle>
                     </CardHeader>
-                    <CardContent className="mt-auto flex flex-col gap-2">
-                      <span className="text-xs text-muted-foreground">{note}</span>
-                      {trend && series ? <Sparkline data={series} dataKey={trend.key} color={trend.color} /> : null}
-                    </CardContent>
+                    <CardContent className="mt-auto text-xs text-muted-foreground">{note}</CardContent>
                   </Card>
                 )
               })}
-            </section>
-
-            <section className="grid gap-4 lg:grid-cols-3">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Transactions by outcome</CardTitle>
-                  <CardDescription>
-                    {series
-                      ? "Synthetic 30-day series defined by this scenario. It is not recorded run history."
-                      : result
-                        ? "This scenario is a single transaction, so there is no time series."
-                        : "Run the mixed 30-day portfolio to draw the 30-day series."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {series ? (
-                    <figure aria-label="Daily transactions by outcome over 30 days">
-                      <ChartContainer config={outcomeChartConfig} className="aspect-auto h-64 w-full">
-                        <AreaChart data={series as DayPoint[]} margin={{ left: 4, right: 8 }}>
-                          <CartesianGrid vertical={false} />
-                          <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={4} />
-                          <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={(value: number) => value.toLocaleString("en-GB")} />
-                          <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                          <ChartLegend content={<ChartLegendContent />} />
-                          <Area dataKey="passed" type="monotone" stackId="a" fill="var(--color-passed)" fillOpacity={0.3} stroke="var(--color-passed)" />
-                          <Area dataKey="challenged" type="monotone" stackId="a" fill="var(--color-challenged)" fillOpacity={0.4} stroke="var(--color-challenged)" />
-                          <Area dataKey="held" type="monotone" stackId="a" fill="var(--color-held)" fillOpacity={0.5} stroke="var(--color-held)" />
-                        </AreaChart>
-                      </ChartContainer>
-                      {/* A text alternative for the chart: the same daily figures, for assistive technology. */}
-                      <table className="sr-only">
-                        <caption>Daily transactions by outcome, 30 days. Totals: {series.reduce((sum, day) => sum + day.transactions, 0).toLocaleString("en-GB")} transactions.</caption>
-                        <thead><tr><th>Day</th><th>Passed</th><th>Challenged</th><th>Held</th></tr></thead>
-                        <tbody>
-                          {series.map((day) => (
-                            <tr key={day.label}><td>{day.label}</td><td>{day.passed}</td><td>{day.challenged}</td><td>{day.held}</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </figure>
-                  ) : (
-                    <div className="flex h-64 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-                      No time series to show
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Operational health</CardTitle>
-                  <CardDescription>Current production model and review coverage.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                  <dl className="flex flex-col divide-y text-sm">
-                    {[
-                      ["Production model", result ? "fraud-risk-v4.2" : "Not evaluated"],
-                      ["Drift state", result ? "Stable" : "Not evaluated"],
-                      ["p95 scoring latency", result?.latency ?? "0 ms"],
-                      ["Oldest review", result?.oldestReview ?? "0 min"],
-                      ["Estimated false-positive rate", result ? "Unavailable" : "0%"],
-                    ].map(([label, value]) => (
-                      <div key={label} className="flex justify-between gap-4 py-2 first:pt-0">
-                        <dt className="text-muted-foreground">{label}</dt>
-                        <dd className="text-right font-medium">{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <p className="text-xs text-muted-foreground">
-                    {result
-                      ? "Labelled outcomes are required before false-positive rate can be calculated."
-                      : "Run a demo scenario to evaluate operational health."}
-                  </p>
-                </CardContent>
-              </Card>
-
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
@@ -444,34 +348,62 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card>
+            <Card>
                 <CardHeader>
-                  <CardTitle>Quick actions</CardTitle>
-                  <CardDescription>Open a live decision, or the benchmark evidence behind the model.</CardDescription>
+                  <CardTitle>Operational health</CardTitle>
+                  <CardDescription>Current production model and review coverage.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-3">
-                  {[
-                    { title: "Analyse a transaction", text: "Submit transaction facts for a simulated risk decision.", href: "/transactions/new", icon: ShieldCheck },
-                    { title: "Benchmark insights", text: "Read the mechanics-only model evaluation.", href: "/insights", icon: BarChart3 },
-                  ].map((action) => (
-                    <a
-                      key={action.title}
-                      href={action.href}
-                      className="group flex items-center gap-3 rounded-lg border bg-card p-3 outline-none transition-colors hover:border-primary/40 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
-                    >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-                        <action.icon className="size-4" aria-hidden="true" />
-                      </span>
-                      <span className="flex-1 text-sm">
-                        <strong className="block font-medium">{action.title}</strong>
-                        <span className="text-muted-foreground">{action.text}</span>
-                      </span>
-                      <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                    </a>
-                  ))}
+                <CardContent className="flex flex-col gap-3">
+                  <dl className="flex flex-col divide-y text-sm">
+                    {[
+                      ["Production model", result ? "fraud-risk-v4.2" : "Not evaluated"],
+                      ["Drift state", result ? "Stable" : "Not evaluated"],
+                      ["p95 scoring latency", result?.latency ?? "0 ms"],
+                      ["Oldest review", result?.oldestReview ?? "0 min"],
+                      ["Estimated false-positive rate", result ? "Unavailable" : "0%"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex justify-between gap-4 py-2 first:pt-0">
+                        <dt className="text-muted-foreground">{label}</dt>
+                        <dd className="text-right font-medium">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="text-xs text-muted-foreground">
+                    {result
+                      ? "Labelled outcomes are required before false-positive rate can be calculated."
+                      : "Run a demo scenario to evaluate operational health."}
+                  </p>
                 </CardContent>
               </Card>
             </section>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick actions</CardTitle>
+                <CardDescription>Open a live decision, or the benchmark evidence behind the model.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { title: "Analyse a transaction", text: "Submit transaction facts for a simulated risk decision.", href: "/transactions/new", icon: ScanSearch },
+                  { title: "Benchmark insights", text: "Read the mechanics-only model evaluation.", href: "/insights", icon: BarChart3 },
+                ].map((action) => (
+                  <a
+                    key={action.title}
+                    href={action.href}
+                    className="group flex items-center gap-3 rounded-lg border bg-card p-3 outline-none transition-colors hover:border-primary/40 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                      <action.icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <span className="flex-1 text-sm">
+                      <strong className="block font-medium">{action.title}</strong>
+                      <span className="text-muted-foreground">{action.text}</span>
+                    </span>
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
@@ -524,6 +456,12 @@ export default function Dashboard() {
             </Card>
           </main>
         </SidebarInset>
+        <Sidebar side="right" collapsible="offcanvas" widthPx={352} mobileWidthPx={340} className="border-l">
+          <SidebarContent className="gap-0 overflow-hidden">
+            {/* Keyed by scenario so a new run starts a fresh conversation about the new figures. */}
+            <DashboardChat key={active ?? "none"} result={result} />
+          </SidebarContent>
+        </Sidebar>
       </SidebarProvider>
     </TooltipProvider>
   )
