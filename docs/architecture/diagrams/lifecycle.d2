@@ -1,0 +1,40 @@
+# Data and model lifecycle: from a source to a number on screen, and the gate
+# that nothing has crossed.
+...@_shared
+
+direction: down
+
+sources: "Sources" {
+  class: group
+  grid-columns: 3
+  plaid: "Plaid Sandbox" { class: built }
+  sparkov: "Sparkov corpus\nlocal, git-ignored,\nchecksum-pinned" { class: built }
+  partner: "Partner corpus\nwith mature labels" { class: proposed }
+}
+
+workflow: "Offline workflow" {
+  class: group
+  grid-columns: 2
+  nb: "Notebooks 01 to 07\nmapping, features,\nleakage design" { class: built }
+  adapter: "Build adapter\nscripts/build_sparkov_\nmechanics_dataset" { class: built }
+  nb08: "Notebook 08\nthin runner" { class: built }
+  lib: "modelling library\nconfig, datasets, features,\ntraining, evaluation, report" { class: built }
+}
+
+artifacts: "Reviewable artifacts" {
+  class: group
+  grid-columns: 3
+  contract: "Training contract\ntarget, features,\nchecksum" { class: built }
+  report: "Benchmark report\nmetrics, slices,\ndigest" { class: built }
+  fixtures: "Scenario fixtures\nS01 to S08" { class: planned }
+}
+
+console: "Benchmark insights\nread-only in the console" { class: built }
+gate: "Release gate: approved target, corpus, features,\ncalibration, thresholds, and review" { class: proposed }
+runtime: "Runtime scoring" { class: planned }
+
+sources -> workflow: "checksum verified"
+workflow -> artifacts: "approved mode writes"
+artifacts -> console
+artifacts -> gate: "input to review" { style.stroke-dash: 4 }
+gate -> runtime: "not passed:\nno model is promoted" { style.stroke-dash: 4 }

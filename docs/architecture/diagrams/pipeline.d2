@@ -1,40 +1,17 @@
 # The decision pipeline: ingestion -> intelligence -> orchestration -> action -> monitoring.
 # Colour is build state: green built, amber planned. Source of truth for pipeline.svg.
 
-vars: {
-  d2-config: {
-    layout-engine: elk
-    theme-id: 0
-    pad: 32
-  }
-}
+...@_shared
 
 direction: down
 
 classes: {
-  built: {
-    style: {
-      fill: "#e8f5ee"
-      stroke: "#0b7a45"
-      font-color: "#07331f"
-      border-radius: 8
-    }
-  }
-  planned: {
-    style: {
-      fill: "#fdf5e3"
-      stroke: "#946000"
-      font-color: "#3d2a00"
-      border-radius: 8
-      stroke-dash: 3
-    }
-  }
   stage: {
     style: {
       fill: "#f7f8fb"
       stroke: "#c9ced8"
       font-color: "#1b1745"
-      font-size: 20
+      font-size: 18
       bold: true
       border-radius: 12
     }

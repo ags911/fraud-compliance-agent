@@ -1,0 +1,20 @@
+# What the demo does today, over Server-Sent Events.
+...@_shared
+
+shape: sequence_diagram
+
+console: "Console"
+api: "Demo API"
+controls: "Deterministic"
+investigation: "Investigation"
+evidence: "Evidence"
+
+console -> api: "1 POST /run/preset/{id}"
+api -> controls: "2 facts from fixture"
+controls -> api: "3 score, reasons" { style.stroke-dash: 4 }
+controls."a hard control\nends the run here"
+api -> investigation: "4 if eligible"
+investigation -> api: "5 typed result\nor fail-safe HOLD" { style.stroke-dash: 4 }
+investigation."provider down is\na HOLD, never PASS"
+api -> evidence: "6 signed record"
+api -> console: "7 one event per\nnode, then done" { style.stroke-dash: 4 }

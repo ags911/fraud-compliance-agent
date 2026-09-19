@@ -1,0 +1,25 @@
+# Shared look for every architecture diagram, imported with `...@_shared`.
+# One palette and one type scale keep the diagrams visually consistent; build
+# state is the only thing colour encodes: green built, amber planned, grey proposed.
+#
+# Scale rule: each diagram is kept under about 900 units wide, because GitHub
+# shows an image at its natural size up to that width. Wider diagrams are shrunk
+# and their text ends up smaller than the others. When a view is wider, stack it
+# vertically instead of shrinking it. `make architecture-diagrams` reports the
+# width of each diagram and fails if one is over the limit.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+    pad: 32
+  }
+}
+
+classes: {
+  built: { style: { fill: "#e8f5ee"; stroke: "#0b7a45"; font-color: "#07331f"; border-radius: 8 } }
+  planned: { style: { fill: "#fdf5e3"; stroke: "#946000"; font-color: "#3d2a00"; border-radius: 8; stroke-dash: 3 } }
+  proposed: { style: { fill: "#f2f2f5"; stroke: "#6b7280"; font-color: "#30323a"; border-radius: 8; stroke-dash: 3 } }
+  group: { style: { fill: "#f7f8fb"; stroke: "#c9ced8"; font-color: "#1b1745"; font-size: 18; bold: true; border-radius: 12 } }
+  focus: { style: { fill: "#eef1ff"; stroke: "#4b41c9"; font-color: "#1b1745"; font-size: 18; bold: true; border-radius: 12 } }
+}

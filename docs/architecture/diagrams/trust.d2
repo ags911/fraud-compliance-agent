@@ -1,0 +1,30 @@
+# Trust boundaries: what the browser, the service, and external parties may do.
+...@_shared
+
+direction: down
+
+browser: "Browser: never an authority" {
+  class: group
+  ui: "Console renders state\nand sends requests" { class: built }
+}
+
+service: "Service: owns operational facts" {
+  class: group
+  grid-columns: 2
+  cors: "1  Explicit CORS origins,\nno wildcard" { class: built }
+  validate: "2  Typed request\nvalidation" { class: built }
+  deterministic: "3  Deterministic\ncontrols" { class: built }
+  authority: "4  Authority and\noversight" { class: planned }
+  redact: "Error redaction:\nstable categories only" { class: built }
+}
+
+external: "External: untrusted, bounded" {
+  class: group
+  grid-columns: 2
+  llm: "Language model\nmay recommend,\nnever decides" { class: built }
+  provider: "Provider data\nsensitive, redacted" { class: planned }
+}
+
+browser -> service: "requests"
+service -> external: "eligible cases only,\ntyped result or fail-safe HOLD" { style.stroke-dash: 4 }
+external -> service: "raw provider errors\nstop at redaction" { style.stroke-dash: 4 }

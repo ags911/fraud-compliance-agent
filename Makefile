@@ -37,8 +37,14 @@ api-docstring-lint:
 	cd apps/api && $(UV_RUN) ruff check --select D103 server modelling ../../notebooks ../../scripts
 
 # Re-render the architecture diagrams from their D2 sources (needs the d2 CLI: `brew install d2`).
+# Every diagram must stay under 900 units wide, so they all display at the same scale.
 architecture-diagrams:
-	for source in docs/architecture/diagrams/*.d2; do d2 "$$source" "$${source%.d2}.svg"; done
+	@for source in docs/architecture/diagrams/[a-z]*.d2; do \
+		d2 "$$source" "$${source%.d2}.svg" >/dev/null || exit 1; \
+		width=$$(grep -o 'viewBox="0 0 [0-9]*' "$${source%.d2}.svg" | head -1 | grep -o '[0-9]*$$'); \
+		echo "$$(basename "$$source" .d2): $$width wide"; \
+		if [ "$$width" -gt 900 ]; then echo "  over the 900 limit: stack it vertically"; exit 1; fi; \
+	done
 
 # Regenerate only after deliberately changing the versioned showcase contract.
 # The contract test prevents route drift when this target has not been run.

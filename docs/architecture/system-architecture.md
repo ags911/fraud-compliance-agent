@@ -11,9 +11,11 @@ disagree with a picture here, they win and this file is wrong.
 
 ## How to read the diagrams
 
-The context and pipeline views are [D2](https://d2lang.com) diagrams rendered to
-SVG, so they display in any viewer; the source is committed beside each one. The
-remaining views are Mermaid, which GitHub renders inline.
+Every diagram is a [D2](https://d2lang.com) source in [`diagrams/`](diagrams/)
+rendered to SVG, so it displays in any viewer, and all of them share one palette
+and type scale from [`_shared.d2`](diagrams/_shared.d2). They are kept under
+about 900 units wide and stack vertically rather than shrink, so text is the
+same size in every one. Regenerate them with `make architecture-diagrams`.
 
 Every node carries its build state, because a diagram that mixes what runs with
 what is planned is how a demo becomes a false claim.
@@ -35,7 +37,7 @@ Who uses the system and what it talks to.
 
 ![System context: people, data sources, and services around the payment risk engine, coloured by build state](diagrams/context.svg)
 
-<sub>Source: [`diagrams/context.d2`](diagrams/context.d2). Regenerate with `make architecture-diagrams`.</sub>
+<sub>Source: [`diagrams/context.d2`](diagrams/context.d2).</sub>
 
 The dotted edges matter as much as the solid ones. Plaid informs the canonical
 mapping through sanitised notebooks and never serves a request. Sparkov feeds a
@@ -46,39 +48,9 @@ selected, so the system's decision input today is a deterministic fixture.
 
 What is deployed, and what is deliberately absent.
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
-    classDef proposed fill:#f2f2f5,stroke:#6b7280,color:#30323a,stroke-dasharray:4 3
+![Containers: the browser console, the application service, the offline evaluation workflow, and the contracts, coloured by build state](diagrams/containers.svg)
 
-    subgraph browser["Browser"]
-        console["<b>Operator console</b><br/>React 19 + Vite<br/>Overview, Analyse a transaction, Benchmark insights"]:::built
-    end
-
-    subgraph service["Application service"]
-        api["<b>Demo API</b><br/>FastAPI + Uvicorn, Python 3.13<br/>health, scenarios, runs over SSE, model summary"]:::built
-        pipeline["<b>Decision pipeline</b><br/>LangGraph, in process<br/>deterministic stage then bounded investigation"]:::built
-        store[("Operational store<br/>PostgreSQL")]:::planned
-    end
-
-    subgraph offline["Offline, never in a request path"]
-        notebooks["<b>Notebooks 01-10</b><br/>sanitised, reproducible evidence"]:::built
-        modelling["<b>modelling library</b><br/>apps/api/modelling<br/>data, features, training, evaluation"]:::built
-        evidence["<b>Evidence artifacts</b><br/>benchmark report + training contract"]:::built
-    end
-
-    contracts["<b>Versioned contracts</b><br/>docs/contracts"]:::built
-
-    console -- "HTTP + SSE" --> api
-    api --> pipeline
-    api -- "reads, read-only" --> evidence
-    api -. "no database today" .-> store
-    console -- "types generated from" --- contracts
-    api --- contracts
-    notebooks -- "runs" --> modelling
-    modelling -- "writes in approved mode" --> evidence
-```
+<sub>Source: [`diagrams/containers.d2`](diagrams/containers.d2).</sub>
 
 The API is a modular monolith on purpose. The PRD keeps the deterministic tier
 and the investigation tier in one process until profiling shows a real need to
@@ -95,7 +67,7 @@ each stage.
 
 ![The decision pipeline: ingestion, intelligence, orchestration, action, monitoring, coloured by build state](diagrams/pipeline.svg)
 
-<sub>Source: [`diagrams/pipeline.d2`](diagrams/pipeline.d2). Regenerate with `make architecture-diagrams`.</sub>
+<sub>Source: [`diagrams/pipeline.d2`](diagrams/pipeline.d2).</sub>
 
 Monitoring feeds back into the next *model decision* — a promotion, a threshold,
 a retrain — through the release gate in section 4. There is no live path from an
@@ -117,28 +89,9 @@ Stage by stage, with the constraint that defines it:
 The current demo exercises a real slice of that pipeline end to end, in process,
 over Server-Sent Events:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant U as Operator
-    participant W as Console
-    participant A as Demo API
-    participant D as Deterministic stage
-    participant I as Investigation stage
-    participant E as Evidence
+![Sequence of one demo run from the console through the deterministic and investigation stages to a signed record](diagrams/sequence.svg)
 
-    U->>W: choose a scenario, run it
-    W->>A: POST /run/preset/{id}
-    A->>D: canonical facts from the fixture
-    D-->>A: score and reason codes
-    Note over D: a hard control ends the run here
-    A->>I: only if the case is eligible
-    I-->>A: typed recommendation, or fail-safe HOLD
-    Note over I: provider unavailable is a HOLD, never a silent PASS
-    A->>E: signed record, verification not performed
-    A-->>W: one event per completed node, then done
-    W-->>U: route, reasons, record id, states
-```
+<sub>Source: [`diagrams/sequence.d2`](diagrams/sequence.d2).</sub>
 
 The console renders loading, unavailable, error, and outage states from that
 stream rather than inventing a completed decision. With the LLM provider
@@ -150,44 +103,9 @@ screen says so.
 The path from a data source to a number on a screen, and the gate in the middle
 that nothing crosses today.
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
-    classDef proposed fill:#f2f2f5,stroke:#6b7280,color:#30323a,stroke-dasharray:4 3
+![Data and model lifecycle from sources through the offline workflow to reviewable artifacts and the release gate](diagrams/lifecycle.svg)
 
-    subgraph sources["Sources"]
-        plaid["Plaid Sandbox"]:::built
-        sparkov["Sparkov simulated corpus<br/>local, git-ignored, checksum-pinned"]:::built
-        partner["Partner corpus with<br/>mature labels"]:::proposed
-    end
-
-    subgraph offline["Offline workflow"]
-        nb["Notebooks 01-07<br/>inventory, mapping, features,<br/>corpus and leakage design"]:::built
-        adapter["Build adapter<br/>scripts/build_sparkov_mechanics_dataset.py"]:::built
-        lib["modelling library<br/>config, datasets, features,<br/>training, evaluation, report"]:::built
-        nb08["Notebook 08<br/>thin runner"]:::built
-    end
-
-    subgraph artifacts["Reviewable artifacts"]
-        contract["Training contract<br/>target, features, partitions, checksum"]:::built
-        report["Benchmark report<br/>metrics, sweeps, slices, digest"]:::built
-        fixtures["Canonical scenario fixtures"]:::planned
-    end
-
-    gate{{"Release gate:<br/>approved target, corpus, features,<br/>calibration, thresholds, review"}}:::proposed
-    runtime["Runtime scoring"]:::planned
-    console["Benchmark insights<br/>read-only in the console"]:::built
-
-    plaid --> nb --> fixtures
-    sparkov --> adapter --> contract
-    contract --> nb08
-    nb08 --> lib --> report
-    report --> console
-    partner -.-> gate
-    report -.-> gate
-    gate -. "not passed: no model is promoted" .-> runtime
-```
+<sub>Source: [`diagrams/lifecycle.d2`](diagrams/lifecycle.d2).</sub>
 
 Three properties make this reproducible rather than decorative:
 
@@ -208,33 +126,9 @@ appears.
 
 ## 5. Trust boundaries
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
+![Trust boundaries between the browser, the service, and external parties](diagrams/trust.svg)
 
-    subgraph untrusted["Browser — never an authority"]
-        ui["Console: renders state,<br/>sends requests"]:::built
-    end
-
-    subgraph server["Service — owns operational facts"]
-        validate["Typed request validation"]:::built
-        deterministic["Deterministic controls"]:::built
-        authority["Authority and oversight"]:::planned
-        redact["Error redaction:<br/>stable categories only"]:::built
-        cors["Explicit CORS origins,<br/>no wildcard"]:::built
-    end
-
-    subgraph external["External — untrusted, bounded"]
-        llm["Language model:<br/>may recommend, never decides"]:::built
-        provider["Provider data:<br/>sensitive, redacted"]:::planned
-    end
-
-    ui --> cors --> validate --> deterministic --> authority
-    deterministic -. "eligible cases only" .-> llm
-    llm -. "typed result or fail-safe HOLD" .-> authority
-    provider -. "raw errors never reach the UI" .-> redact --> ui
-```
+<sub>Source: [`diagrams/trust.d2`](diagrams/trust.d2).</sub>
 
 - The browser carries no authority. Roles, tenancy, and permissions are
   server-derived, and authentication is a prerequisite for the first mutable
@@ -247,18 +141,9 @@ flowchart TB
 
 ## 6. Deployment
 
-```mermaid
-flowchart TB
-    classDef built fill:#e8f5ee,stroke:#0b7a45,color:#07331f
-    classDef planned fill:#fdf5e3,stroke:#946000,color:#3d2a00
+![Deployment from a developer machine through CI and the API image to the drafted Azure resources](diagrams/deployment.svg)
 
-    dev["Developer<br/>make check"]:::built --> gh["GitHub"]:::built --> ci["Actions: web build, API tests,<br/>notebook policy, container build,<br/>dependency audit, CodeQL"]:::built
-
-    ci --> image["API image<br/>digest-pinned, non-root,<br/>no private SDK"]:::built
-    ci --> swa["Azure Static Web Apps<br/>console: Bicep drafted"]:::planned
-    image --> aca["Azure Container Apps<br/>scale-to-zero API: Bicep drafted"]:::planned
-    aca -. "cold start is a<br/>visible state" .-> swa
-```
+<sub>Source: [`diagrams/deployment.d2`](diagrams/deployment.d2).</sub>
 
 The image exists and is built and smoke-tested in CI, and reviewable Bicep for
 the Static Web App, the scale-to-zero Container App, and a budget alert is in

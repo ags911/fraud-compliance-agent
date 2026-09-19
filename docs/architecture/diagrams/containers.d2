@@ -1,0 +1,31 @@
+# Containers: what is deployed, what runs offline, and what is absent.
+...@_shared
+
+direction: down
+
+browser: "Browser" {
+  class: group
+  console: "Operator console\nReact 19 + Vite\ntypes come from the contracts" { class: built }
+}
+
+service: "Application service" {
+  class: group
+  grid-columns: 2
+  api: "Demo API\nFastAPI, Python 3.13\nhealth, scenarios,\nSSE runs, model summary" { class: built }
+  pipeline: "Decision pipeline\nLangGraph, in process" { class: built }
+  store: "Operational store\nPostgreSQL, none today" { class: planned; shape: cylinder }
+}
+
+offline: "Offline, never in a request path" {
+  class: group
+  grid-columns: 2
+  notebooks: "Notebooks 01 to 10\nsanitised evidence" { class: built }
+  modelling: "modelling library\ndata, features,\ntraining, evaluation" { class: built }
+  evidence: "Evidence artifacts\nbenchmark report,\ntraining contract" { class: built }
+}
+
+contracts: "Versioned contracts\ndocs/contracts" { class: built }
+
+browser -> service: "HTTP + SSE"
+service -> offline: "reads evidence,\nread-only"
+service -> contracts: "conforms to" { style.stroke-dash: 4 }

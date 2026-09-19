@@ -1,0 +1,19 @@
+# Deployment: from a developer's machine to Azure, and what is drafted.
+...@_shared
+
+direction: down
+
+dev: "Developer\nmake check" { class: built }
+gh: "GitHub" { class: built }
+ci: "Actions\nweb build, API tests, notebook policy,\ncontainer build, dependency audit, CodeQL" { class: built }
+image: "API image\ndigest-pinned, non-root,\nno private SDK" { class: built }
+azure: "Azure, drafted not deployed" {
+  class: group
+  grid-columns: 2
+  swa: "Static Web Apps\nconsole" { class: planned }
+  aca: "Container Apps\nscale-to-zero API" { class: planned }
+}
+
+dev -> gh -> ci
+ci -> image
+image -> azure: "Bicep in infra/azure;\nSDK decision blocks the full demo" { style.stroke-dash: 4 }
