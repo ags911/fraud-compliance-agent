@@ -15,6 +15,31 @@ def test_health_reports_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
+requires_sdk = pytest.mark.skipif(not main.SCENARIOS, reason="the private SDK submodule is not initialised")
+
+
+@pytest.mark.parametrize(("method", "path"), [("get", "/scenarios"), ("post", "/run/preset/A"), ("post", "/run")])
+def test_pipeline_routes_report_unavailable_without_the_sdk(monkeypatch, method, path) -> None:
+    """Without the optional SDK pipeline, its routes say so instead of failing at startup."""
+    monkeypatch.setattr(main, "pipeline", None)
+    # `amount` is the only required field of a custom run request.
+    body = {"json": {"amount": 10.0}} if method == "post" else {}
+    response = getattr(TestClient(create_app()), method)(path, **body)
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "demo_pipeline_unavailable"}
+
+
+def test_health_and_benchmark_work_without_the_sdk(monkeypatch) -> None:
+    """The routes that never needed the SDK keep working when it is absent."""
+    monkeypatch.setattr(main, "pipeline", None)
+    client = TestClient(create_app())
+
+    assert client.get("/health").json() == {"status": "ok"}
+    assert client.get("/demo/model-summary").status_code == 200
+
+
+@requires_sdk
 def test_scenarios_are_listed_with_unique_ids() -> None:
     """The scenario list exposes only ids and labels, never the full fixtures."""
     response = TestClient(create_app()).get("/scenarios")
@@ -27,6 +52,7 @@ def test_scenarios_are_listed_with_unique_ids() -> None:
     assert len(ids) == len(set(ids))
 
 
+@requires_sdk
 def test_scenario_lookup_is_case_insensitive_and_bounded() -> None:
     """A known id resolves in either case; an unknown id resolves to nothing."""
     first = main.SCENARIOS[0]

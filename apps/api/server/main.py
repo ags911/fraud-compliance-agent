@@ -10,7 +10,10 @@ unauthenticated, single-operator demo tool, not that product.
 Run locally:
     uv run uvicorn server.main:app --reload --port 8010
 
-Requires vendor/arbiris-sdk (a git submodule) to be initialised:
+The live demo pipeline needs vendor/arbiris-sdk (a private git submodule) and
+`uv sync --extra sdk`. Without it the API still starts: /health and
+/demo/model-summary work, and /scenarios and the run routes return 503
+"demo_pipeline_unavailable".
     git submodule update --init --recursive
 """
 
@@ -32,8 +35,16 @@ _VENDOR_ROOT = Path(__file__).resolve().parent.parent / "vendor" / "arbiris-sdk"
 if str(_VENDOR_ROOT) not in sys.path:
     sys.path.insert(0, str(_VENDOR_ROOT))
 
-from examples.agents.fraud_compliance_agent_v2.pipeline import SCENARIOS, pipeline
-from examples.agents.fraud_compliance_agent_v2.state import FraudPipelineState
+try:
+    from examples.agents.fraud_compliance_agent_v2.pipeline import SCENARIOS, pipeline
+    from examples.agents.fraud_compliance_agent_v2.state import FraudPipelineState
+except ImportError:
+    # The private SDK submodule is not initialised (for example a fresh public
+    # clone). The API still starts; only the routes that need the demo pipeline
+    # are unavailable, and they say so instead of failing at import time.
+    SCENARIOS: list[dict] = []
+    pipeline = None
+    FraudPipelineState = dict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -144,6 +155,16 @@ def _find_scenario(scenario_id: str) -> dict | None:
         if _scenario_id(scenario) == scenario_id.upper():
             return scenario
     return None
+
+
+def _require_demo_pipeline() -> None:
+    """Fail a request with 503 when the optional SDK-backed pipeline is not installed.
+
+    Raises:
+        HTTPException: 503 with the stable detail `demo_pipeline_unavailable`.
+    """
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail="demo_pipeline_unavailable")
 
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -319,6 +340,7 @@ def create_app() -> FastAPI:
     @app.get("/scenarios")
     async def list_scenarios():
         """List deterministic demo scenario labels without exposing their full fixtures."""
+        _require_demo_pipeline()
         return [
             {"id": _scenario_id(scenario), "label": scenario["label"]}
             for scenario in SCENARIOS
@@ -332,6 +354,7 @@ def create_app() -> FastAPI:
     @app.post("/run")
     async def run(request: RunRequest):
         """Stream a simulated custom transaction run; no payment action is executed."""
+        _require_demo_pipeline()
         initial_state = _build_initial_state(
             request.customer_id,
             request.to_raw_transaction(),
@@ -349,6 +372,7 @@ def create_app() -> FastAPI:
         scenario_id: str, overrides: PresetRunRequest | None = None
     ):
         """Stream a named deterministic demo scenario with optional safe overrides."""
+        _require_demo_pipeline()
         scenario = _find_scenario(scenario_id)
         if scenario is None:
             raise HTTPException(status_code=404, detail=f"Unknown scenario_id: {scenario_id}")

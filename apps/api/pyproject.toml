@@ -5,13 +5,18 @@ description = "Streaming demo backend for arbiris-sdk's fraud_compliance_agent_v
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "arbiris[db]",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
     "langgraph>=0.2.0",
     "groq>=1.4.0",
     "python-dotenv>=1.0.0",
 ]
+
+# The live demo pipeline needs the private Arbiris SDK submodule. Everything else
+# runs without it, so a fresh public clone can `uv sync` and run the tests.
+# Maintainers with submodule access install it with `uv sync --extra sdk`.
+[project.optional-dependencies]
+sdk = ["arbiris[db]"]
 
 [tool.uv.sources]
 arbiris = { path = "vendor/arbiris-sdk", editable = true }
