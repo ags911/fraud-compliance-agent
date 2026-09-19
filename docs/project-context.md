@@ -41,6 +41,9 @@ not present synthetic demo data as live customer, Plaid, or model output.
 - The root monorepo is the active project home.
 - `apps/web` is a React/Vite operator-console prototype with approved visual
   reference material and deterministic demo scenarios.
+- `apps/web` also holds a standalone shadcn dashboard prototype
+  (`dashboard.html`) with its own theme, synthetic data only. It is a candidate
+  replacement for the Overview page, not yet routed into the app.
 - `apps/api` is a FastAPI Phase 0 demo. Its current public routes and scenario
   fixtures are not yet the approved target operational API.
 - The public showcase deployment target is Azure Static Web Apps for the React
@@ -95,6 +98,15 @@ frontend consumer check.
 - Deterministic controls precede any model-assisted assessment. Model
   thresholds, calibration, and promotion are explicit approved decisions, not
   defaults an agent may invent.
+- Never show invented trends, time series, accuracy, precision, or
+  false-positive figures. A chart or trend appears only when it comes from
+  recorded or approved data (for example the Sparkov benchmark, labelled as
+  such, or approved fixtures scored by the decision engine). Zero, empty, and
+  `Unavailable` states are correct until then.
+- Any assistant or "Explain" surface is labelled a preview, answers only from
+  figures already on screen or from an accepted contract, cites its source, and
+  refuses everything else. A free-text or model-backed assistant needs an entry
+  in the PRD's showcase technology and service register first.
 - Preserve `pending`, failure, and replay/idempotency states; do not report them
   as completed decisions.
 - Treat provider data, tokens, raw errors, personally identifying information,
@@ -141,6 +153,11 @@ the Rules Performance reference page. The frozen reference implementation and
 the shared Payments design-system documentation/tokens must not be changed as a
 side effect of feature work. New UI follows the documented tokens and reusable
 components; do not approximate approved values with the nearest utility class.
+
+The standalone dashboard prototype's theme (`src/dashboard.css`) is deliberately
+separate from the frozen Payments tokens and is loaded only by its own entry, so
+it cannot change the approved pages. Do not import it elsewhere or copy Payments
+tokens into it.
 
 For dashboard screen, chart, navigation, or shared UI-component work, use the
 `$payments-dashboard-consistency` skill. It records the project chart/tooltip
@@ -191,6 +208,11 @@ semantics. Propose the contract or ADR change instead.
   `make api-notebook-lint` for focused feedback while working.
 - Review the final diff for scope, contract, safety, and generated-file
   mistakes; report the verification actually run and any known limitation.
+- `make check` also enforces `ruff format` on API code, tests, and scripts
+  (notebooks excluded), Ruff's security rules (`S`) on the API, and a lint ban
+  on `any` in the web app. Fix findings; a new ignore needs a written reason.
+  Typed-schema, tests-first, and presentational-component rules live in
+  `apps/api/AGENTS.md` and `apps/web/AGENTS.md`.
 - Do not commit dependencies, local environments, caches, generated test
   output, or secrets.
 - Do not modify `apps/api/vendor` without an explicit SDK pin/upgrade task.
