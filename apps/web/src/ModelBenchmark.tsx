@@ -11,6 +11,7 @@ import {
   PaymentsTonePill,
   PaymentsTopBar,
 } from "@/components/payments-ui"
+import { Slider } from "@/components/ui/slider"
 import {
   ChartContainer,
   ChartLegend,
@@ -82,6 +83,7 @@ export function ModelBenchmarkPage() {
 
 function BenchmarkEvidence({ summary }: { summary: DemoModelSummary }) {
   const xgboost = summary.model_results.find((model) => model.model_id === "xgboost_candidate")
+  const [selectedThresholdIndex, setSelectedThresholdIndex] = useState(0)
   const comparisonData = summary.model_results.map((model) => ({
     model: model.label.replace(" candidate", "").replace(" baseline", ""),
     prAuc: Number((model.pr_auc * 100).toFixed(2)),
@@ -98,6 +100,7 @@ function BenchmarkEvidence({ summary }: { summary: DemoModelSummary }) {
       cohort: metric.value.replaceAll("_", " ").replace("up to", "≤").replace("over", ">"),
       prAuc: Number((metric.pr_auc * 100).toFixed(2)),
     }))
+  const selectedThreshold = xgboost?.threshold_sweep[selectedThresholdIndex] ?? null
 
   return (
     <div className="grid gap-4">
@@ -108,7 +111,7 @@ function BenchmarkEvidence({ summary }: { summary: DemoModelSummary }) {
             <strong className="payments-type-section-title">Research evidence only</strong>
           </div>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Checksum-pinned evaluation of simulated data. It cannot score a transaction, select a threshold, or authorise a payment.
+            Checksum-pinned evaluation of simulated data. It cannot score a transaction, select a runtime threshold, or authorise a payment.
           </p>
         </div>
         <span className="payments-type-support whitespace-nowrap text-muted-foreground">Read-only</span>
@@ -168,6 +171,29 @@ function BenchmarkEvidence({ summary }: { summary: DemoModelSummary }) {
           ) : <p className="payments-chart-compact flex items-center justify-center text-sm text-muted-foreground">Recorded threshold sweep unavailable for this report version.</p>}
         </PaymentsPanel>
       </div>
+      {selectedThreshold && xgboost ? (
+        <PaymentsPanel
+          title="Explore recorded operating points"
+          description="Read-only evaluation evidence. Moving this control changes the displayed recorded point only; it does not configure policy or a payment decision."
+        >
+          <div className="grid gap-5">
+            <Slider
+              aria-label="Recorded evaluation operating point"
+              min={0}
+              max={xgboost.threshold_sweep.length - 1}
+              step={1}
+              value={[selectedThresholdIndex]}
+              onValueChange={([index]) => setSelectedThresholdIndex(index ?? 0)}
+            />
+            <dl className="grid gap-3 sm:grid-cols-4 payments-data">
+              <MetricPoint label="Recorded score threshold" value={selectedThreshold.threshold.toFixed(2)} />
+              <MetricPoint label="Precision" value={percentage(selectedThreshold.precision)} />
+              <MetricPoint label="Recall" value={percentage(selectedThreshold.recall)} />
+              <MetricPoint label="Block rate" value={percentage(selectedThreshold.block_rate)} />
+            </dl>
+          </div>
+        </PaymentsPanel>
+      ) : null}
       <details className="group rounded-xl border border-border bg-card">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
           <span><strong className="payments-type-section-title">Explore cohort diagnostics</strong><span className="mt-1 block text-sm text-muted-foreground">Amount-band variation in the simulated held-out evaluation.</span></span>
@@ -207,6 +233,15 @@ function BenchmarkEvidence({ summary }: { summary: DemoModelSummary }) {
           </dl>
         </div>
       </details>
+    </div>
+  )
+}
+
+function MetricPoint({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted px-3 py-2.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-base font-semibold text-foreground">{value}</dd>
     </div>
   )
 }

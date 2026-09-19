@@ -30,7 +30,7 @@ export function PipelineTimeline({ run, runId }: { run: AgentRunState; runId: st
         <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
           Pipeline
         </div>
-        <div className="font-mono text-[11.5px] text-muted-foreground/70">run_id: {runId}</div>
+        <div className="font-mono text-[11.5px] text-muted-foreground">run_id: {runId}</div>
       </div>
       {/* A horizontally scrollable region must be reachable by keyboard. */}
       <div role="region" aria-label="Pipeline stages" tabIndex={0} className="flex items-start gap-2.5 overflow-x-auto pb-1.5">

@@ -74,6 +74,22 @@ test.describe("Live decision stream states", () => {
     await expect(page.getByText("Decision run failed (HTTP 503)")).toBeVisible()
   })
 
+  test("turns a stream processing code into a plain-language demo message", async ({ page }) => {
+    await openDecisionPage(page)
+    await page.route(`${API_BASE_URL}/run/preset/A`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+        body: 'data: {"node":"error","error":"processing_failed"}\n\n',
+      })
+    })
+
+    await page.getByRole("button", { name: "Run agent" }).click()
+
+    await expect(page.getByText("The simulated decision trace could not finish. Try the preset again or choose another demo path.")).toBeVisible()
+    await expect(page.getByText("processing_failed", { exact: true })).toHaveCount(0)
+  })
+
   test("cancels an in-flight request without reporting a completed outcome", async ({ page }) => {
     await openDecisionPage(page)
     await page.route(`${API_BASE_URL}/run/preset/A`, async (route) => {

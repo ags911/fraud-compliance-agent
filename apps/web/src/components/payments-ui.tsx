@@ -344,6 +344,7 @@ export function PaymentsPanel({
   className,
   contentClassName,
   labelledBy,
+  id,
 }: {
   title: string
   description: string
@@ -352,10 +353,12 @@ export function PaymentsPanel({
   className?: string
   contentClassName?: string
   labelledBy?: string
+  id?: string
 }) {
   return (
     <Card
       className={cn("payments-panel", className)}
+      id={id}
       aria-labelledby={labelledBy}
       data-payments-component="panel"
     >

@@ -54,6 +54,11 @@ test("benchmark charts use the shared compact contract with readable tooltips", 
     fullPage: true,
   })
 
+  await page.getByRole("slider", { name: "Recorded evaluation operating point" }).press("End")
+  await expect(page.getByText("Block rate")).toBeVisible()
+  await expect(page.getByText("2.000%", { exact: true })).toBeVisible()
+  await expect(page.getByText(/does not configure policy or a payment decision/)).toBeVisible()
+
   await page.locator(".recharts-bar-rectangle path").first().hover()
   const tooltip = page.locator(".recharts-tooltip-wrapper").filter({ hasText: "PR-AUC" }).first()
   await expect(tooltip).toBeVisible()

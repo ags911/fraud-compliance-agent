@@ -48,7 +48,7 @@ export function NodeCard({ name, status, event }: { name: NodeName; status: Node
     <div
       className={cn(
         'flex min-h-[268px] w-52 flex-none flex-col gap-2.5 rounded-xl border bg-card p-3.5 transition-colors',
-        (status === 'pending' || status === 'skipped') && 'border-dashed border-border/60 opacity-55',
+        (status === 'pending' || status === 'skipped') && 'border-dashed border-border/60 bg-muted/40',
         status === 'running' && 'border-primary/50 shadow-[0_0_0_3px_var(--color-primary)/12]',
         status === 'done' && isHoldish && 'border-hold/35',
         status === 'done' && !isHoldish && 'border-border',

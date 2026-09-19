@@ -106,5 +106,7 @@ export type RunFormState = {
   account_balance: number
   account_balance_pct_remaining: number
   inbound_credit_within_2h: boolean
+  /** Declared synthetic history used only to calculate the demo baseline. */
+  history: { amount: number }[]
   simulate_llm_outage: boolean
 }

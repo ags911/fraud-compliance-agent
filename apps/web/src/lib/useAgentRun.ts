@@ -3,6 +3,16 @@ import type { NodeName, RunFormState, StreamEvent } from '@/lib/types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8010'
 
+const DEMO_ERROR_MESSAGES: Record<string, string> = {
+  processing_failed: 'The simulated decision trace could not finish. Try the preset again or choose another demo path.',
+  processing_timeout: 'The simulated decision trace took too long and was stopped safely. No completed outcome is being reported.',
+  demo_pipeline_unavailable: 'The simulated decision pipeline is unavailable in this environment. The benchmark view remains read-only.',
+}
+
+function userFacingRunError(error: string | undefined): string {
+  return DEMO_ERROR_MESSAGES[error ?? ''] ?? 'The simulated decision trace could not finish. No completed outcome is being reported.'
+}
+
 /**
  * The run request needs a JSON body (the transaction form), so this uses
  * fetch() + a ReadableStream reader rather than the native EventSource
@@ -82,7 +92,7 @@ export function useAgentRun() {
       }
       const event = message.value
       if (event.node === 'error') {
-        throw new Error(event.error ?? 'Decision processing failed')
+        throw new Error(userFacingRunError(event.error))
       }
       setState((prev) => ({
         ...prev,

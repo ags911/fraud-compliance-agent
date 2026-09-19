@@ -18,6 +18,10 @@ const DEFAULT_FORM: RunFormState = {
   account_balance: 5000,
   account_balance_pct_remaining: 0.16,
   inbound_credit_within_2h: false,
+  // The vendor's fixed counterfactual formats a 30-day average for a HOLD.
+  // Keep that baseline explicit and synthetic instead of relying on an absent
+  // customer-history value.
+  history: Array.from({ length: 10 }, () => ({ amount: 210 })),
   simulate_llm_outage: false,
 }
 
@@ -103,7 +107,7 @@ export function TransactionForm({
 
       <div className="h-px bg-border" />
 
-      <fieldset disabled={activePreset != null} className="flex flex-col gap-3 disabled:opacity-40">
+      <fieldset disabled={activePreset != null} className="flex flex-col gap-3 disabled:opacity-100">
         <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
           Transaction
         </div>
@@ -163,6 +167,9 @@ export function TransactionForm({
         </div>
         <ToggleRow label="First-seen payee" checked={form.first_seen_payee} onChange={(v) => update('first_seen_payee', v)} />
         <ToggleRow label="Inbound credit <2h" checked={form.inbound_credit_within_2h} onChange={(v) => update('inbound_credit_within_2h', v)} />
+        <p className="rounded-md bg-muted px-2.5 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          Synthetic 30-day baseline: 10 prior demo transactions averaging £210. This is used only to explain this simulated trace.
+        </p>
       </fieldset>
 
       <div className="h-px bg-border" />

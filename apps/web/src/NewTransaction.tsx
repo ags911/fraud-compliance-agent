@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { CirclePlay, ShieldCheck } from "lucide-react"
+import { CircleHelp, CirclePlay, ShieldCheck } from "lucide-react"
 
 import { PipelineTimeline } from "@/components/console/PipelineTimeline"
 import { RecordPanel } from "@/components/console/RecordPanel"
@@ -12,6 +12,7 @@ import {
   PaymentsTopBar,
 } from "@/components/payments-ui"
 import { fetchScenarios, useAgentRun } from "@/lib/useAgentRun"
+import { useDecisionWorkspaceTour } from "@/lib/useDecisionWorkspaceTour"
 import type { RunFormState, Scenario } from "@/lib/types"
 
 /**
@@ -24,6 +25,7 @@ export function NewTransactionPage() {
   const [scenarioLoadFailed, setScenarioLoadFailed] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>("A")
   const run = useAgentRun()
+  const tour = useDecisionWorkspaceTour()
 
   useEffect(() => {
     let active = true
@@ -54,6 +56,7 @@ export function NewTransactionPage() {
         <PaymentsPageHeading
           title="Analyse a transaction"
           description="Select a simulated payment path, run the deterministic decision trace, then inspect its signed audit record."
+          actions={<button className="payments-button" type="button" onClick={tour.start}><CircleHelp aria-hidden="true" size={16} strokeWidth={1.6} />Tour this workspace</button>}
         />
         {scenarioLoadFailed ? (
           <PaymentsStatePanel
@@ -74,7 +77,7 @@ export function NewTransactionPage() {
               <span className="payments-type-support whitespace-nowrap text-muted-foreground">Demo data only</span>
             </section>
             <div className="grid items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)_300px]">
-              <aside aria-label="Scenario and transaction controls">
+              <aside id="decision-scenario-controls" aria-label="Scenario and transaction controls">
                 <TransactionForm
                   scenarios={scenarios}
                   activePreset={activePreset}
@@ -86,12 +89,13 @@ export function NewTransactionPage() {
                 />
               </aside>
               <PaymentsPanel
+                id="decision-trace"
                 title="Decision trace"
                 description="Controls run in order. Each stage remains inspectable after the simulated outcome is returned."
               >
                 <PipelineTimeline run={run} runId={activePreset ?? "custom"} />
               </PaymentsPanel>
-              <aside aria-label="Signed audit record">
+              <aside id="decision-record" aria-label="Signed audit record">
                 <RecordPanel run={run} />
               </aside>
             </div>
