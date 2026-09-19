@@ -36,16 +36,7 @@ for (const route of routes) {
 
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()
 
-    // Known issue, tracked in the implementation plan: a few text colours from the
-    // frozen Payments design tokens fall below 4.5:1 (for example the sidebar's muted
-    // status text). Changing a token is a design decision, not a side effect of
-    // feature work, so contrast is attached to the report but does not fail the test.
-    // Every other rule must pass.
-    const contrast = results.violations.filter((violation) => violation.id === "color-contrast")
-    const failures = results.violations.filter((violation) => violation.id !== "color-contrast")
-    await testInfo.attach("known-issue-color-contrast", { body: JSON.stringify(contrast, null, 2), contentType: "application/json" })
-
-    const summaryLines = failures.map(
+    const summaryLines = results.violations.map(
       (violation) => `${violation.id} (${violation.impact}): ${violation.help} — ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target.join(" ")}`,
     )
     expect(summaryLines, `${route.path} at the ${testInfo.project.name} width`).toEqual([])
