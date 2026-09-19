@@ -1,4 +1,4 @@
-.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
+.PHONY: check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-contract api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
 
 # Use the private Arbiris SDK when its submodule is initialised; otherwise run
 # without it. The SDK-backed demo pipeline tests skip when it is absent.
@@ -35,6 +35,11 @@ api-notebook-lint:
 
 api-docstring-lint:
 	cd apps/api && $(UV_RUN) ruff check --select D103 server modelling ../../notebooks ../../scripts
+
+# Regenerate only after deliberately changing the versioned showcase contract.
+# The contract test prevents route drift when this target has not been run.
+api-contract:
+	cd apps/api && $(UV_RUN) python ../../scripts/generate_demo_api_contract.py
 
 api-notebook-kernel:
 	cd apps/api && $(UV_RUN) python -m ipykernel install --user \

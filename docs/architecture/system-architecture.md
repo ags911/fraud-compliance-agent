@@ -322,16 +322,19 @@ flowchart TB
     dev["Developer<br/>make check"]:::built --> gh["GitHub"]:::built --> ci["Actions: web build, API tests,<br/>notebook policy, container build,<br/>dependency audit, CodeQL"]:::built
 
     ci --> image["API image<br/>digest-pinned, non-root,<br/>no private SDK"]:::built
-    ci --> swa["Azure Static Web Apps<br/>console"]:::planned
-    image --> aca["Azure Container Apps<br/>scale-to-zero API"]:::planned
+    ci --> swa["Azure Static Web Apps<br/>console: Bicep drafted"]:::planned
+    image --> aca["Azure Container Apps<br/>scale-to-zero API: Bicep drafted"]:::planned
     aca -. "cold start is a<br/>visible state" .-> swa
 ```
 
-The image exists and is built and smoke-tested in CI; the Azure resources are
-not configured yet, and nothing in this repository should be described as
-deployed until the Bicep, OIDC, budget alert, and runbook are reviewed. Free
-hosting is suitable only for a synthetic demo, never as a production
-reliability decision.
+The image exists and is built and smoke-tested in CI, and reviewable Bicep for
+the Static Web App, the scale-to-zero Container App, and a budget alert is in
+`infra/azure/`. Nothing is deployed, and one decision blocks the full demo: the
+image deliberately excludes the private Arbiris SDK, so `/scenarios` and both
+`/run` routes answer `503 demo_pipeline_unavailable` and only `/health` and the
+benchmark route work. Publishing the SDK in an image needs its own approval and
+a reviewed supply-chain design. Free hosting is suitable only for a synthetic
+demo, never as a production reliability decision.
 
 ## 7. Where each piece lives
 
@@ -340,7 +343,7 @@ reliability decision.
 | Browser UI, routing, accessibility, browser tests | `apps/web` |
 | Operational facts, routes, domain behaviour, API tests | `apps/api/server` |
 | Offline training and evaluation, never imported by the API | `apps/api/modelling` |
-| Versioned API and event contracts | `docs/contracts` |
+| Versioned API and event contracts (the showcase OpenAPI and SSE event schema are frozen at v1.0) | `docs/contracts` |
 | Reviewable, non-secret configuration | `config` |
 | Reproducible evidence and experiment records | `notebooks`, `docs/experiments` |
 | Deployment configuration and the container image | `apps/api/Dockerfile`, `infra` |
@@ -356,6 +359,9 @@ not mistake an absence for an oversight.
   ingestion can be built.
 - **No operational store.** Idempotency, durable history, review state, and
   replay all wait on that decision; the showcase is database-free today.
+- **The public image cannot run the decision demo.** Without the private SDK the
+  run routes are unavailable; the choices are approving the SDK in an image, or
+  replacing the demo pipeline with first-party code.
 - **No approved model target or threshold.** Any threshold, calibration method,
   or promotion rule is an explicit approved decision, not a default.
 - **Two console shells coexist.** The Overview is the shadcn surface; the other

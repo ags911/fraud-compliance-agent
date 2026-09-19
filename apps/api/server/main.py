@@ -50,12 +50,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from server.models import (
+    DemoError,
     DemoModelMetrics,
     DemoModelSummary,
     DemoSliceMetric,
     DemoThresholdPoint,
+    HealthResponse,
     PresetRunRequest,
     RunRequest,
+    ScenarioNotFoundError,
+    ScenarioSummary,
 )
 from server.records import read_record
 
@@ -364,8 +368,9 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Fraud Compliance Agent Console API",
         description=(
-            "Streams fraud_compliance_agent_v2's LangGraph pipeline live "
-            "for the agent-console demo frontend."
+            "Synthetic-only recruiter-showcase API. It streams the current "
+            "legacy demo pipeline and serves sanitised benchmark evidence; "
+            "it is not the target operational API and cannot execute a payment."
         ),
         version="0.1.0",
     )
@@ -376,27 +381,50 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    @app.get("/health")
-    async def health():
+    @app.get("/health", response_model=HealthResponse)
+    async def health() -> HealthResponse:
         """Return a minimal unauthenticated liveness response for the local demo."""
-        return {"status": "ok"}
+        return HealthResponse(status="ok")
 
-    @app.get("/scenarios")
-    async def list_scenarios():
+    @app.get(
+        "/scenarios",
+        response_model=list[ScenarioSummary],
+        responses={503: {"model": DemoError}},
+    )
+    async def list_scenarios() -> list[ScenarioSummary]:
         """List deterministic demo scenario labels without exposing their full fixtures."""
         _require_demo_pipeline()
         return [
-            {"id": _scenario_id(scenario), "label": scenario["label"]}
+            ScenarioSummary(id=_scenario_id(scenario), label=scenario["label"])
             for scenario in SCENARIOS
         ]
 
-    @app.get("/demo/model-summary", response_model=DemoModelSummary)
+    @app.get(
+        "/demo/model-summary",
+        response_model=DemoModelSummary,
+        responses={503: {"model": DemoError}},
+    )
     async def demo_model_summary() -> DemoModelSummary:
         """Return only the audit-safe synthetic benchmark summary for the portfolio UI."""
         return _demo_model_summary()
 
-    @app.post("/run")
-    async def run(request: RunRequest):
+    @app.post(
+        "/run",
+        response_class=StreamingResponse,
+        responses={
+            200: {
+                "description": "A bounded stream of versioned synthetic run events.",
+                "content": {
+                    "text/event-stream": {
+                        "schema": {"type": "string"},
+                        "x-event-schema": "demo-run-events.v1.schema.json",
+                    }
+                },
+            },
+            503: {"model": DemoError},
+        },
+    )
+    async def run(request: RunRequest) -> StreamingResponse:
         """Stream a simulated custom transaction run; no payment action is executed."""
         _require_demo_pipeline()
         initial_state = _build_initial_state(
@@ -411,8 +439,26 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
         )
 
-    @app.post("/run/preset/{scenario_id}")
-    async def run_preset(scenario_id: str, overrides: PresetRunRequest | None = None):
+    @app.post(
+        "/run/preset/{scenario_id}",
+        response_class=StreamingResponse,
+        responses={
+            200: {
+                "description": "A bounded stream of versioned synthetic run events.",
+                "content": {
+                    "text/event-stream": {
+                        "schema": {"type": "string"},
+                        "x-event-schema": "demo-run-events.v1.schema.json",
+                    }
+                },
+            },
+            404: {"model": ScenarioNotFoundError},
+            503: {"model": DemoError},
+        },
+    )
+    async def run_preset(
+        scenario_id: str, overrides: PresetRunRequest | None = None
+    ) -> StreamingResponse:
         """Stream a named deterministic demo scenario with optional safe overrides."""
         _require_demo_pipeline()
         scenario = _find_scenario(scenario_id)
@@ -432,6 +478,27 @@ def create_app() -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
         )
+
+    # These extensions make the generated document self-identifying as the
+    # narrow showcase contract. They do not approve future operational routes.
+    schema = app.openapi()
+    schema["info"].update(
+        {
+            "x-contract-version": "1.0",
+            "x-approval-status": "accepted",
+            "x-scope": (
+                "Current synthetic recruiter-showcase routes and their HTTP "
+                "envelopes only; not the target operational API."
+            ),
+            "x-prohibitions": [
+                "No route executes, releases, or approves a payment.",
+                "No response represents durable transaction history.",
+                "No benchmark response is a runtime fraud score or model release.",
+            ],
+            "x-sse-event-schema": "demo-run-events.v1.schema.json",
+        }
+    )
+    app.openapi_schema = schema
 
     return app
 

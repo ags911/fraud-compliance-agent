@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fraud-compliance-agent:contract:demo-run-events:v1",
+  "title": "Showcase demo run SSE event",
+  "description": "Accepted synthetic-showcase event contract. A run emits zero or more node events, optionally followed by one redacted error event, then exactly one terminal done event. The terminal wire event is `event: done` with JSON data `{}`; every other wire event uses the default message event with one JSON object below. The stream is transient, carries no durable run identity, and cannot approve, release, or execute a payment.",
+  "x-contract-version": "1.0",
+  "x-approval-status": "accepted",
+  "x-scope": "Current legacy A-F synthetic demo pipeline only; not the target operational event contract.",
+  "oneOf": [
+    { "$ref": "#/$defs/nodeEvent" },
+    { "$ref": "#/$defs/errorEvent" },
+    { "$ref": "#/$defs/doneEvent" }
+  ],
+  "$defs": {
+    "nodeEvent": {
+      "oneOf": [
+        { "$ref": "#/$defs/dataIngestEvent" },
+        { "$ref": "#/$defs/simAEvent" },
+        { "$ref": "#/$defs/simBEvent" },
+        { "$ref": "#/$defs/counterfactualEvent" },
+        { "$ref": "#/$defs/evidencePackEvent" }
+      ]
+    },
+    "errorEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "error"],
+      "properties": {
+        "node": { "const": "error" },
+        "error": {
+          "type": "string",
+          "enum": ["processing_timeout", "processing_failed"]
+        }
+      }
+    },
+    "doneEvent": {
+      "description": "JSON data for the named terminal `done` SSE event.",
+      "type": "object",
+      "maxProperties": 0
+    },
+    "dataIngestEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "result", "record"],
+      "properties": {
+        "node": { "const": "data_ingest" },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transaction"],
+          "properties": {
+            "transaction": { "$ref": "#/$defs/transactionFeatures" }
+          }
+        },
+        "record": { "type": "null" }
+      }
+    },
+    "simAEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "result", "record"],
+      "properties": {
+        "node": { "const": "sim_a" },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sim_a"],
+          "properties": {
+            "sim_a": { "$ref": "#/$defs/simAResult" }
+          }
+        },
+        "record": {
+          "oneOf": [
+            { "$ref": "#/$defs/signedRecordSummary" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "simBEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "result", "record"],
+      "properties": {
+        "node": { "const": "sim_b" },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sim_b"],
+          "properties": {
+            "sim_b": { "$ref": "#/$defs/simBResult" }
+          }
+        },
+        "record": {
+          "oneOf": [
+            { "$ref": "#/$defs/signedRecordSummary" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "counterfactualEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "result", "record"],
+      "properties": {
+        "node": { "const": "counterfactual" },
+        "result": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["counterfactual"],
+              "properties": {
+                "counterfactual": { "$ref": "#/$defs/counterfactualResult" }
+              }
+            },
+            { "type": "object", "maxProperties": 0 }
+          ]
+        },
+        "record": {
+          "oneOf": [
+            { "$ref": "#/$defs/signedRecordSummary" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "evidencePackEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "result", "record"],
+      "properties": {
+        "node": { "const": "evidence_pack" },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evidence_pack_path"],
+          "properties": {
+            "evidence_pack_path": {
+              "type": ["string", "null"]
+            }
+          }
+        },
+        "record": { "type": "null" }
+      }
+    },
+    "transactionFeatures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_id",
+        "account_id",
+        "amount",
+        "currency",
+        "payment_channel",
+        "country",
+        "personal_finance_category",
+        "avg_30d",
+        "cold_start",
+        "velocity_6h",
+        "first_seen_payee",
+        "account_balance",
+        "account_balance_pct_remaining",
+        "inbound_credit_within_2h"
+      ],
+      "properties": {
+        "transaction_id": { "type": "string" },
+        "account_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "payment_channel": {
+          "type": "string",
+          "enum": ["online", "in store", "other"]
+        },
+        "country": { "type": ["string", "null"] },
+        "personal_finance_category": { "type": "string" },
+        "avg_30d": { "type": ["number", "null"] },
+        "cold_start": { "type": "boolean" },
+        "velocity_6h": { "type": "integer" },
+        "first_seen_payee": { "type": "boolean" },
+        "account_balance": { "type": "number" },
+        "account_balance_pct_remaining": { "type": "number" },
+        "inbound_credit_within_2h": { "type": "boolean" }
+      }
+    },
+    "simAResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score",
+        "outcome",
+        "signal_breakdown",
+        "cold_start",
+        "policy_version",
+        "record_id"
+      ],
+      "properties": {
+        "score": { "type": "integer" },
+        "outcome": { "type": "string", "enum": ["HOLD", "PASS"] },
+        "signal_breakdown": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "cold_start": { "type": "boolean" },
+        "policy_version": { "type": "string" },
+        "record_id": { "type": "string" }
+      }
+    },
+    "simBResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "stage1_triggered",
+        "stage1_rule",
+        "typology_assessed",
+        "model_provider",
+        "model_version",
+        "llm_likelihood",
+        "llm_rationale",
+        "llm_error",
+        "cop_match_status",
+        "warning_shown",
+        "warning_acknowledged_ts",
+        "policy_version",
+        "counterfactual_summary",
+        "record_id"
+      ],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["HOLD", "CHALLENGE", "PASS"]
+        },
+        "stage1_triggered": { "type": "boolean" },
+        "stage1_rule": { "type": ["string", "null"] },
+        "typology_assessed": { "type": ["string", "null"] },
+        "model_provider": { "type": ["string", "null"] },
+        "model_version": { "type": ["string", "null"] },
+        "llm_likelihood": { "type": ["number", "null"] },
+        "llm_rationale": { "type": ["string", "null"] },
+        "llm_error": { "type": ["string", "null"] },
+        "cop_match_status": { "type": "string" },
+        "warning_shown": { "type": "boolean" },
+        "warning_acknowledged_ts": { "type": ["string", "null"] },
+        "policy_version": { "type": "string" },
+        "counterfactual_summary": { "type": "string" },
+        "record_id": { "type": "string" }
+      }
+    },
+    "counterfactualResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "original_outcome",
+        "counterfactual_outcome",
+        "explanation",
+        "gdpr_article_22_compliant",
+        "record_id"
+      ],
+      "properties": {
+        "original_outcome": { "type": "string" },
+        "counterfactual_outcome": { "type": "string" },
+        "explanation": { "type": "string" },
+        "gdpr_article_22_compliant": { "type": "boolean" },
+        "record_id": { "type": "string" }
+      }
+    },
+    "signedRecordSummary": {
+      "description": "Display-safe metadata only. Signature presence is not verification.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "schema_version",
+        "agent_id",
+        "action_type",
+        "policy_reference",
+        "human_oversight_status",
+        "record_hash",
+        "signature_present",
+        "verification_status"
+      ],
+      "properties": {
+        "record_id": { "type": ["string", "null"] },
+        "schema_version": { "type": ["string", "null"] },
+        "agent_id": { "type": ["string", "null"] },
+        "action_type": { "type": ["string", "null"] },
+        "policy_reference": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["policy_id", "version"],
+            "properties": {
+              "policy_id": { "type": "string" },
+              "version": { "type": "string" },
+              "section": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "human_oversight_status": { "type": ["string", "null"] },
+        "record_hash": { "type": ["string", "null"] },
+        "signature_present": { "type": "boolean" },
+        "verification_status": { "const": "not_performed" }
+      }
+    }
+  }
+}

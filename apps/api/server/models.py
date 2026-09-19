@@ -23,6 +23,31 @@ class StrictFiniteModel(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
 
+class DemoError(BaseModel):
+    """Stable unavailable-error envelope exposed by the showcase API."""
+
+    detail: Literal["demo_pipeline_unavailable", "demo_model_summary_unavailable"]
+
+
+class ScenarioNotFoundError(BaseModel):
+    """Error envelope returned when a preset scenario identifier is unknown."""
+
+    detail: str
+
+
+class HealthResponse(BaseModel):
+    """Minimal unauthenticated liveness response."""
+
+    status: Literal["ok"]
+
+
+class ScenarioSummary(BaseModel):
+    """Public identifier and display label for one synthetic legacy scenario."""
+
+    id: str
+    label: str
+
+
 class DemoModelMetrics(BaseModel):
     """Aggregate mechanics-only metrics for one benchmark model."""
 

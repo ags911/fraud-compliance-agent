@@ -1,0 +1,690 @@
+{
+  "components": {
+    "schemas": {
+      "DemoError": {
+        "description": "Stable unavailable-error envelope exposed by the showcase API.",
+        "properties": {
+          "detail": {
+            "enum": [
+              "demo_pipeline_unavailable",
+              "demo_model_summary_unavailable"
+            ],
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "DemoError",
+        "type": "object"
+      },
+      "DemoModelMetrics": {
+        "description": "Aggregate mechanics-only metrics for one benchmark model.",
+        "properties": {
+          "brier_score": {
+            "title": "Brier Score",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "pr_auc": {
+            "title": "Pr Auc",
+            "type": "number"
+          },
+          "roc_auc": {
+            "title": "Roc Auc",
+            "type": "number"
+          },
+          "slice_metrics": {
+            "items": {
+              "$ref": "#/components/schemas/DemoSliceMetric"
+            },
+            "title": "Slice Metrics",
+            "type": "array"
+          },
+          "threshold_sweep": {
+            "items": {
+              "$ref": "#/components/schemas/DemoThresholdPoint"
+            },
+            "title": "Threshold Sweep",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model_id",
+          "label",
+          "pr_auc",
+          "roc_auc",
+          "brier_score",
+          "threshold_sweep",
+          "slice_metrics"
+        ],
+        "title": "DemoModelMetrics",
+        "type": "object"
+      },
+      "DemoModelSummary": {
+        "description": "Safe portfolio summary of the local Sparkov benchmark evaluation.",
+        "properties": {
+          "artifact": {
+            "title": "Artifact",
+            "type": "string"
+          },
+          "data_source": {
+            "title": "Data Source",
+            "type": "string"
+          },
+          "dataset_sha256": {
+            "title": "Dataset Sha256",
+            "type": "string"
+          },
+          "feature_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Feature Columns",
+            "type": "array"
+          },
+          "model_results": {
+            "items": {
+              "$ref": "#/components/schemas/DemoModelMetrics"
+            },
+            "title": "Model Results",
+            "type": "array"
+          },
+          "partition_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Partition Counts",
+            "type": "object"
+          },
+          "release_boundary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Release Boundary",
+            "type": "array"
+          },
+          "report_sha256": {
+            "title": "Report Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "test_prevalence": {
+            "title": "Test Prevalence",
+            "type": "number"
+          },
+          "training_scope": {
+            "title": "Training Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact",
+          "status",
+          "data_source",
+          "training_scope",
+          "dataset_sha256",
+          "feature_columns",
+          "partition_counts",
+          "test_prevalence",
+          "model_results",
+          "release_boundary",
+          "report_sha256"
+        ],
+        "title": "DemoModelSummary",
+        "type": "object"
+      },
+      "DemoSliceMetric": {
+        "description": "A non-sensitive cohort metric retained in the sanitised report.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "pr_auc": {
+            "title": "Pr Auc",
+            "type": "number"
+          },
+          "prevalence": {
+            "title": "Prevalence",
+            "type": "number"
+          },
+          "roc_auc": {
+            "title": "Roc Auc",
+            "type": "number"
+          },
+          "slice": {
+            "title": "Slice",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slice",
+          "value",
+          "count",
+          "prevalence",
+          "pr_auc",
+          "roc_auc"
+        ],
+        "title": "DemoSliceMetric",
+        "type": "object"
+      },
+      "DemoThresholdPoint": {
+        "description": "One recorded, evaluation-only operating-point observation.",
+        "properties": {
+          "block_rate": {
+            "title": "Block Rate",
+            "type": "number"
+          },
+          "false_positive_rate": {
+            "title": "False Positive Rate",
+            "type": "number"
+          },
+          "precision": {
+            "title": "Precision",
+            "type": "number"
+          },
+          "recall": {
+            "title": "Recall",
+            "type": "number"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "threshold",
+          "precision",
+          "recall",
+          "false_positive_rate",
+          "block_rate"
+        ],
+        "title": "DemoThresholdPoint",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Minimal unauthenticated liveness response.",
+        "properties": {
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistoryPoint": {
+        "description": "One bounded, amount-only historical observation for the demo pipeline.",
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "HistoryPoint",
+        "type": "object"
+      },
+      "PresetRunRequest": {
+        "description": "Overrides applied on top of a named preset scenario (currently just the toggle).",
+        "properties": {
+          "simulate_llm_outage": {
+            "default": false,
+            "title": "Simulate Llm Outage",
+            "type": "boolean"
+          }
+        },
+        "title": "PresetRunRequest",
+        "type": "object"
+      },
+      "RunRequest": {
+        "description": "A custom transaction submitted from the console's form.",
+        "properties": {
+          "account_balance": {
+            "default": 0.0,
+            "title": "Account Balance",
+            "type": "number"
+          },
+          "account_balance_pct_remaining": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Account Balance Pct Remaining",
+            "type": "number"
+          },
+          "account_id": {
+            "default": "ACC-CONSOLE",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Account Id",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "number"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "customer_id": {
+            "default": "CUST-CONSOLE-001",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "first_seen_payee": {
+            "default": false,
+            "title": "First Seen Payee",
+            "type": "boolean"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryPoint"
+            },
+            "maxItems": 500,
+            "title": "History",
+            "type": "array"
+          },
+          "inbound_credit_within_2h": {
+            "default": false,
+            "title": "Inbound Credit Within 2H",
+            "type": "boolean"
+          },
+          "iso_currency_code": {
+            "default": "GBP",
+            "maxLength": 3,
+            "minLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "title": "Iso Currency Code",
+            "type": "string"
+          },
+          "payment_channel": {
+            "default": "online",
+            "enum": [
+              "online",
+              "in store",
+              "other"
+            ],
+            "title": "Payment Channel",
+            "type": "string"
+          },
+          "personal_finance_category": {
+            "default": "OTHER",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Personal Finance Category",
+            "type": "string"
+          },
+          "simulate_llm_outage": {
+            "default": false,
+            "title": "Simulate Llm Outage",
+            "type": "boolean"
+          },
+          "transaction_id": {
+            "default": "TXN-CONSOLE-001",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Transaction Id",
+            "type": "string"
+          },
+          "velocity_6h": {
+            "default": 0,
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Velocity 6H",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "RunRequest",
+        "type": "object"
+      },
+      "ScenarioNotFoundError": {
+        "description": "Error envelope returned when a preset scenario identifier is unknown.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ScenarioNotFoundError",
+        "type": "object"
+      },
+      "ScenarioSummary": {
+        "description": "Public identifier and display label for one synthetic legacy scenario.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "ScenarioSummary",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Synthetic-only recruiter-showcase API. It streams the current legacy demo pipeline and serves sanitised benchmark evidence; it is not the target operational API and cannot execute a payment.",
+    "title": "Fraud Compliance Agent Console API",
+    "version": "0.1.0",
+    "x-approval-status": "accepted",
+    "x-contract-version": "1.0",
+    "x-prohibitions": [
+      "No route executes, releases, or approves a payment.",
+      "No response represents durable transaction history.",
+      "No benchmark response is a runtime fraud score or model release."
+    ],
+    "x-scope": "Current synthetic recruiter-showcase routes and their HTTP envelopes only; not the target operational API.",
+    "x-sse-event-schema": "demo-run-events.v1.schema.json"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/demo/model-summary": {
+      "get": {
+        "description": "Return only the audit-safe synthetic benchmark summary for the portfolio UI.",
+        "operationId": "demo_model_summary_demo_model_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoModelSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Demo Model Summary"
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Return a minimal unauthenticated liveness response for the local demo.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/run": {
+      "post": {
+        "description": "Stream a simulated custom transaction run; no payment action is executed.",
+        "operationId": "run_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-event-schema": "demo-run-events.v1.schema.json"
+              }
+            },
+            "description": "A bounded stream of versioned synthetic run events."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Run"
+      }
+    },
+    "/run/preset/{scenario_id}": {
+      "post": {
+        "description": "Stream a named deterministic demo scenario with optional safe overrides.",
+        "operationId": "run_preset_run_preset__scenario_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PresetRunRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Overrides"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-event-schema": "demo-run-events.v1.schema.json"
+              }
+            },
+            "description": "A bounded stream of versioned synthetic run events."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioNotFoundError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Run Preset"
+      }
+    },
+    "/scenarios": {
+      "get": {
+        "description": "List deterministic demo scenario labels without exposing their full fixtures.",
+        "operationId": "list_scenarios_scenarios_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioSummary"
+                  },
+                  "title": "Response List Scenarios Scenarios Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Scenarios"
+      }
+    }
+  }
+}
