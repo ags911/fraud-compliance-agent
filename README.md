@@ -44,3 +44,21 @@ checks, the API smoke check, and API tests. It does not fetch dependencies or
 imply that the two current apps are already integrated. Install the web and API
 dependencies, including the Playwright Chrome browser, before running it in a
 new checkout.
+
+## The optional private SDK
+
+The live demo pipeline (`/scenarios` and the run routes) uses the private
+Arbiris SDK, which lives in a git submodule. Everything else, including the
+benchmark endpoint, the data checks, and the web console's static pages, runs
+without it. On a clone without submodule access:
+
+```bash
+cd apps/api
+uv sync --frozen            # --frozen skips validating the absent SDK
+uv run --frozen pytest tests
+```
+
+The routes that need the SDK then return `503 demo_pipeline_unavailable`, and
+their tests skip. With access, run `git submodule update --init` and
+`uv sync --extra sdk`; the `make` targets use the SDK automatically when the
+submodule is present.

@@ -58,10 +58,28 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync
-      - run: uv run ruff check server
-      - run: uv run ruff check ../../notebooks ../../scripts
-      - run: uv run ruff check --select D103 server ../../notebooks ../../scripts
-      - run: uv run python ../../scripts/validate_notebooks.py
-      - run: uv run python -c "from server.main import create_app; app = create_app(); assert app.title == 'Fraud Compliance Agent Console API'"
-      - run: if [ -d tests ]; then uv run pytest tests; else echo 'No API-owned tests yet; smoke check completed.'; fi
+      - run: uv sync --extra sdk
+      - run: uv run --extra sdk ruff check server
+      - run: uv run --extra sdk ruff check ../../notebooks ../../scripts
+      - run: uv run --extra sdk ruff check --select D103 server ../../notebooks ../../scripts
+      - run: uv run --extra sdk python ../../scripts/validate_notebooks.py
+      - run: uv run --extra sdk python -c "from server.main import create_app; app = create_app(); assert app.title == 'Fraud Compliance Agent Console API'"
+      - run: if [ -d tests ]; then uv run --extra sdk pytest tests; else echo 'No API-owned tests yet; smoke check completed.'; fi
+
+  # What a public visitor gets: a clone with no private SDK and no secrets. The
+  # API must still install, start, and pass every test that does not need the SDK.
+  api-public:
+    name: API checks (no private SDK)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      # --frozen skips lockfile validation, which would try to read the absent SDK.
+      - run: uv sync --frozen
+      - run: uv run --frozen ruff check server
+      - run: uv run --frozen pytest tests
