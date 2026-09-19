@@ -120,7 +120,10 @@ if (flow === "tour") {
   await click(page, page.locator("#payments-demo-run"))
   await page.locator(".driver-popover-title", { hasText: "Inspect the results" }).waitFor()
   await page.waitForTimeout(2400)
-  await click(page, page.locator(".driver-popover").getByRole("button", { name: "View results" }))
+  await click(page, page.locator(".driver-popover-next-btn"))
+  await page.locator(".driver-popover-title", { hasText: "Go deeper" }).waitFor()
+  await page.waitForTimeout(2400)
+  await click(page, page.locator(".driver-popover").getByRole("button", { name: "Finish" }))
   await page.locator(".driver-overlay").waitFor({ state: "detached" })
   await page.waitForTimeout(2400)
 } else {

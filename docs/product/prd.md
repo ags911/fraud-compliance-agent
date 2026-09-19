@@ -438,7 +438,7 @@ be met without it.
 | --- | --- | --- | --- |
 | Web | React 19, TypeScript, Vite | Browser console and static build | No backend imports or secrets in browser code. |
 | UI | Tailwind CSS v4, shadcn/ui, Radix UI, Lucide, Motion | Accessible dashboard components and motion | Follow the approved Payments design system. |
-| Guided tour | driver.js (MIT) | Opt-in spotlight tour of the Overview demo (choose a scenario, run it, inspect the results), offered from a first-visit welcome dialog and the help dialog | Browser only; it never starts by itself and no data leaves the page. Styled with the Payments tokens. Removal path: delete `apps/web/src/lib/useOverviewTour.ts` and its styles; the Getting started checklist still works without it. |
+| Guided tour | driver.js (MIT) | Opt-in spotlight tour of the Overview demo (choose a scenario, run it, inspect the results, go deeper to Analyse a transaction and Insights), offered from a first-visit welcome dialog and the help dialog | Browser only; it never starts by itself and no data leaves the page. Styled with the Payments tokens. Removal path: delete `apps/web/src/lib/useOverviewTour.ts` and its styles; the Getting started checklist still works without it. |
 | Charts | Recharts; Plotly in notebooks | Console charts and offline evaluation diagnostics | Label synthetic/mechanics-only data honestly. |
 | API | Python 3.13 (pinned in `apps/api/.python-version`; `>=3.11` supported), FastAPI, Uvicorn, Pydantic/FastAPI models | Typed demo routes, validation, SSE progress, and health | Current routes are demo routes, not the future operational contract. |
 | Agent workflow | LangGraph and Groq SDK | Bounded demonstration investigation | Optional per demo run; no LLM may make a payment decision. |

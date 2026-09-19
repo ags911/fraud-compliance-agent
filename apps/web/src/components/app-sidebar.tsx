@@ -8,7 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { AverlynxBrand } from "@/components/kepler-logo"
+import { AverlynxBrand } from "@/components/averlynx-logo"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,

@@ -17,6 +17,7 @@ export default defineConfig({
         main: path.resolve(import.meta.dirname, 'index.html'),
         defaults: path.resolve(import.meta.dirname, 'shadcn-defaults.html'),
         paymentsDesignSystem: path.resolve(import.meta.dirname, 'payments-design-system.html'),
+        dashboard: path.resolve(import.meta.dirname, 'dashboard.html'),
         overview: path.resolve(import.meta.dirname, 'overview.html'),
         rulesPerformance: path.resolve(import.meta.dirname, 'rules-performance.html'),
         rulesPerformanceReference: path.resolve(import.meta.dirname, 'rules-performance-reference.html'),

@@ -56,7 +56,7 @@ type DemoSessionContextValue = DemoSessionState & {
   dismissWelcome: () => void
 }
 
-const storageKey = "kepler-demo-session"
+const storageKey = "averlynx-demo-session"
 const DemoSessionContext = createContext<DemoSessionContextValue | null>(null)
 const emptySession: DemoSessionState = {
   selectedScenario: null,

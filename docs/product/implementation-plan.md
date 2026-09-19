@@ -232,6 +232,8 @@ pretending that it is a production transaction store.
 | Decision workspace | `/transactions/run/:runId` or an in-place run result | `run_id`, `trace_id`, node status, deterministic results, model/rule outputs exposed by the current stream, counterfactual result, signed-record state, and the outage/fail-safe path. No hidden chain-of-thought. |
 | Overview | `/overview` | Continues as the entry point. It may show the current demo scenario/run summary, but must not manufacture aggregate history from a transient run. |
 
+A separate short guided tour for the decision workspace ships with this MVP (one tour per page, not one long tour across routes).
+
 MVP 2 maps to F1–F2. It is successful when scenarios A–F and the LLM outage
 can be run end to end with honest connection, loading, empty, and error states.
 
@@ -248,6 +250,8 @@ durable financial-operation backend.
 | Delivery | GitHub Actions validates builds/tests, then deploys through Azure OIDC. Bicep and a deployment runbook make the release reproducible. |
 | Cost/safety | Doppler holds server-side secrets; no database, cache, VNet, real payment, or customer/provider data is deployed. A budget alert and free-grant review are documented. |
 | Screens | MVP 1–2 screens are hosted unchanged: Overview, Benchmark Insights, New transaction/decision workspace, Not Found, and the frozen reference route. |
+
+The guided tours gain a status step explaining API health and cold start.
 
 MVP 3 is complete when a recruiter can follow the guided journey from a public
 URL, inspect deployment/architecture documentation, and see the declared demo
@@ -322,7 +326,7 @@ can be claimed. Re-run the relevant check after a material change rather than
 relying on a historical tick.
 
 Progress on 2026-09-19: MVP 0 has 5 of 8 items checked, MVP 1 has 5 of 6, MVP 2 has
-2 of 5, and MVP 3 has 0 of 7. Several unchecked items have partial evidence, noted
+2 of 6, and MVP 3 has 0 of 9. Several unchecked items have partial evidence, noted
 in their rows.
 
 ### MVP 0 — Engineering foundation
@@ -347,7 +351,7 @@ in their rows.
 | ✓ | A branded Not Found recovery state exists. | `ProductApp.tsx`. |
 | ✓ | The approved Rules Performance reference remains a visual comparison, not live operational data. | Reference route and design-system rules. |
 | — | Perform and retain screenshot/accessibility checks for every MVP 1 route at desktop and narrow widths. | Automated axe WCAG 2 A/AA checks (`apps/web/tests/accessibility.spec.ts`) now run on Overview, Benchmark insights, Analyse a transaction, a planned page, and Not found at desktop and narrow widths. Fixed 2026-09-19: unnamed selects and switches, unlabelled inputs, a keyboard-inaccessible scroll region, and a dangling `aria-controls`. Every rule passes except colour contrast, an open design-token decision. Six pairs are below 4.5:1: `#79797d` on white (4.33, sidebar status); `#788796` on white (3.68) and `#a7b0bf` on white (2.18), the pending pipeline stages on Analyse a transaction (the Overview checklist that shared them was removed); `#ce4761` on `#fbeff1` (3.98, "Simulate LLM outage"); `#5f708a` on `#fbeff1` (4.48); `#8f9bad` on white (2.81, run id). Screenshot baselines exist for Overview, Benchmark insights, the record panel, and the design references, but not for Not found, planned pages, or the full Analyse a transaction page. The Overview baselines were re-recorded on 2026-09-19 after the checklist was removed; the previous ones still showed the earlier "Kepler" branding and disabled navigation, which the 0.2% screenshot tolerance had hidden. Manual keyboard and screen-reader review is still needed. |
-| ✓ | A first-visit welcome dialog offers a guided tour or skipping it, the answer is remembered for the browser session, and the tour is available afterwards from "How this demo works". | Decision 2026-09-19: the on-page "Getting started" checklist was removed because it took dashboard space, so the Overview opens straight into the KPIs. The welcome dialog states that the data is synthetic and that nothing can approve, release, or execute a payment; it is modal, answered by Skip, Take the tour, or Escape, and does not return on reload, navigation, or Reset (it does in a new session). The tour is an opt-in spotlight (driver.js) that follows the user's real actions, leaves the highlighted control and the open scenario menu clickable, and respects reduced motion. Covered by `apps/web/tests/welcome.spec.ts` (10 tests at each width) and `apps/web/tests/tour.spec.ts` (8 at each width). |
+| ✓ | A first-visit welcome dialog offers a guided tour or skipping it, the answer is remembered for the browser session, and the tour is available afterwards from "How this demo works". | Decision 2026-09-19: the on-page "Getting started" checklist was removed because it took dashboard space, so the Overview opens straight into the KPIs. The welcome dialog states that the data is synthetic and that nothing can approve, release, or execute a payment; it is modal, answered by Skip, Take the tour, or Escape, and does not return on reload, navigation, or Reset (it does in a new session). The tour is an opt-in four-step spotlight (driver.js: choose, run, inspect, go deeper) with Next and Back that also follows the user's real actions, leaves the highlighted control and the open scenario menu clickable, and respects reduced motion. Covered by `apps/web/tests/welcome.spec.ts` (10 tests at each width) and `apps/web/tests/tour.spec.ts` (11 at each width). |
 
 ### MVP 2 — Live decision demonstration
 
@@ -358,6 +362,7 @@ in their rows.
 | — | Connect the final dashboard scenario control to the API-backed run flow, or document the standalone-workspace boundary. | Decide which surface is hosted as the canonical run experience. |
 | — | Verify loading, cancellation, connection failure, malformed stream, API error, and outage states in the browser. | Partly covered by browser tests with a mocked API (`apps/web/tests/live-decision.spec.ts`): a run needs an explicit terminal event, an HTTP failure is not treated as a stream, and cancellation does not report a completed outcome. Verified live in the browser on 2026-09-19 against a real API: connection failure ("unavailable" messages), the LLM-outage fail-safe HOLD (preset A), and an API error (`processing_failed`, shown as a raw code). Loading is not yet captured. Run the remaining matrix, including presets B–F. |
 | — | Confirm every visible outcome is labelled simulated and no UI presents ephemeral data as durable history. | Review all MVP 2 states and copy. |
+| — | Add a short guided tour of the decision workspace on `/transactions/new`. | One tour per page, started from that page's own help entry and reusing the Overview tour's pattern (opt-in, Next/Back, never auto-starts). It is not one long tour across routes: a route change unmounts the highlighted elements, so a cross-route tour is fragile. The Overview tour's last step, "Go deeper", already points here. |
 
 ### MVP 3 — Azure public showcase
 
@@ -370,6 +375,8 @@ in their rows.
 | — | Create and verify a budget alert. | Record that alerts notify but do not cap Azure consumption. |
 | — | Deploy both applications and set explicit API allowed origins. | Verify health, cold-start, unavailable, retry, and local-demo fallback. `apps/web/public/staticwebapp.config.json` provides the single-page-app fallback and ships in the build, but it has not been tested on Azure. |
 | — | Publish Azure architecture, runbook, teardown steps, and a public-demo smoke-test result. | Link the reviewed infrastructure artifacts and deployed URL. |
+| — | Add an API status step to the guided tour for the health and cold-start state. | The first request to a scale-to-zero API can be slow, so explain the connection, cold-start, unavailable, and retry states where the UI shows them. It extends the per-page tours, not a new cross-route tour. |
+| — | Add a read-only "Explain this decision" panel to the decision workspace, with fixed questions such as "Why was this held?" and "What would change the outcome?". | Answers come deterministically from the run's own evidence (reason codes, rule results, model factors, trace, counterfactual), so it cannot invent facts. It is not a free-text chatbot: that would need a PRD showcase-register entry (use case, owner, synthetic-data boundary, removal path), rate limits, and a budget cap, and an LLM could only rephrase evidence, never decide. |
 
 ## Frontend architecture
 

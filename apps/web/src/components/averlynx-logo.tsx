@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils"
 
 /**
- * The Kepler mark: a tilted ring passing behind the planet on its back arc
+ * The Averlynx mark: a tilted ring passing behind the planet on its back arc
  * and in front on its front arc, extending past the sphere's edges on both
  * sides. Built on a 24x24 grid — see work/kepler-logo.html for the full
  * light/dark/scale reference sheet this was ported from.
  */
-export function KeplerMark({
+export function AverlynxMark({
   className,
   eraseClassName = "fill-sidebar",
 }: {

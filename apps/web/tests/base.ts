@@ -7,7 +7,7 @@ import { test as base, expect } from "@playwright/test"
 export const test = base.extend({
   page: async ({ page }, provide) => {
     await page.addInitScript(() => {
-      const key = "kepler-demo-session"
+      const key = "averlynx-demo-session"
       if (!window.sessionStorage.getItem(key)) {
         window.sessionStorage.setItem(key, JSON.stringify({ welcomeSeen: true }))
       }

@@ -7,7 +7,6 @@ import type { DemoScenarioId } from "@/components/demo-session"
 type TourProgress = {
   selectedScenario: DemoScenarioId | null
   activeScenario: DemoScenarioId | null
-  onViewResults: () => void
 }
 
 /**
@@ -18,7 +17,8 @@ type TourProgress = {
  *   activeScenario: The scenario that has actually been run, if any.
  *
  * Returns:
- *   0 to choose a scenario, 1 to run it, 2 to inspect the results.
+ *   0 to choose a scenario, 1 to run it, 2 to inspect the results. The final
+ *   "Go deeper" step is only reached with Next.
  */
 export function tourStepFor(selectedScenario: DemoScenarioId | null, activeScenario: DemoScenarioId | null) {
   if (activeScenario) return 2
@@ -36,20 +36,14 @@ export function tourStepFor(selectedScenario: DemoScenarioId | null, activeScena
  * Args:
  *   selectedScenario: The scenario chosen in the header, if any.
  *   activeScenario: The scenario that has actually been run, if any.
- *   onViewResults: Called when the user finishes the tour with "View results".
  *
  * Returns:
  *   start: Begin the tour at step 1.
  *   stop: End the tour.
  */
-export function useOverviewTour({ selectedScenario, activeScenario, onViewResults }: TourProgress) {
+export function useOverviewTour({ selectedScenario, activeScenario }: TourProgress) {
   const tourRef = useRef<Driver | null>(null)
-  const viewResultsRef = useRef(onViewResults)
   const targetStep = tourStepFor(selectedScenario, activeScenario)
-
-  useEffect(() => {
-    viewResultsRef.current = onViewResults
-  })
 
   // Keep the tour on the step that matches real progress, whichever way it moved
   // (choosing, running, or resetting the demo).
@@ -110,11 +104,16 @@ export function useOverviewTour({ selectedScenario, activeScenario, onViewResult
             description: "The outcomes and recent decisions for your scenario appear here.",
             side: "top",
             align: "start",
-            doneBtnText: "View results",
-            onNextClick: () => {
-              viewResultsRef.current()
-              tour.destroy()
-            },
+          },
+        },
+        {
+          element: "#overview-quick-actions",
+          popover: {
+            title: "Go deeper",
+            description: "After a run, Analyse a transaction opens a live decision. Insights in the sidebar shows the benchmark evidence.",
+            side: "top",
+            align: "start",
+            doneBtnText: "Finish",
           },
         },
       ],

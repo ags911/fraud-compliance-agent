@@ -40,7 +40,7 @@ test.describe("Overview tour", () => {
     await startTour(page)
 
     await expect(title(page)).toHaveText("Choose a scenario")
-    await expect(progress(page)).toHaveText("Step 1 of 3")
+    await expect(progress(page)).toHaveText("Step 1 of 4")
     await expect(page.locator(".driver-popover-next-btn")).toBeVisible()
     await expect(page.locator(".driver-popover-prev-btn")).toBeHidden()
     await expect(page.locator(".driver-popover-close-btn")).toBeVisible()
@@ -71,15 +71,17 @@ test.describe("Overview tour", () => {
     await startTour(page)
 
     await page.locator(".driver-popover-next-btn").click()
-    await expect(progress(page)).toHaveText("Step 2 of 3")
+    await expect(progress(page)).toHaveText("Step 2 of 4")
     await page.locator(".driver-popover-prev-btn").click()
-    await expect(progress(page)).toHaveText("Step 1 of 3")
+    await expect(progress(page)).toHaveText("Step 1 of 4")
     await page.locator(".driver-popover-next-btn").click()
     await page.locator(".driver-popover-next-btn").click()
-    await expect(progress(page)).toHaveText("Step 3 of 3")
+    await expect(progress(page)).toHaveText("Step 3 of 4")
+    await page.locator(".driver-popover-next-btn").click()
+    await expect(progress(page)).toHaveText("Step 4 of 4")
     await expect(page.locator(".driver-popover-prev-btn")).toBeVisible()
     await page.locator(".driver-popover-prev-btn").click()
-    await expect(progress(page)).toHaveText("Step 2 of 3")
+    await expect(progress(page)).toHaveText("Step 3 of 4")
   })
 
   test("follows the user's real actions and leaves the menu clickable", async ({ page }) => {
@@ -90,17 +92,37 @@ test.describe("Overview tour", () => {
     // The highlighted dropdown opens, and its options must still receive clicks.
     await chooseScenario(page, /Mixed 30-day portfolio/)
     await expect(title(page)).toHaveText("Run it")
-    await expect(progress(page)).toHaveText("Step 2 of 3")
+    await expect(progress(page)).toHaveText("Step 2 of 4")
     await expect(page.locator("#payments-demo-run")).toBeEnabled()
 
     await page.locator("#payments-demo-run").click()
     await expect(title(page)).toHaveText("Inspect the results")
-    await expect(progress(page)).toHaveText("Step 3 of 3")
+    await expect(progress(page)).toHaveText("Step 3 of 4")
     await expect(page.getByText("TXN-DEMO-", { exact: false }).first()).toBeVisible()
 
-    await page.locator(".driver-popover").getByRole("button", { name: "View results" }).click()
+    await page.locator(".driver-popover-next-btn").click()
+    await expect(title(page)).toHaveText("Go deeper")
+    await expect(progress(page)).toHaveText("Step 4 of 4")
+    await expect(page.locator("#overview-quick-actions")).toBeInViewport()
+
+    await page.locator(".driver-popover").getByRole("button", { name: "Finish" }).click()
     await expect(overlay(page)).toHaveCount(0)
-    await expect(page.locator("#overview-results")).toBeInViewport()
+  })
+
+  test("the Go deeper step points at Quick actions, and Analyse a transaction opens the live page", async ({ page }) => {
+    await open(page)
+    await chooseScenario(page, /Mixed 30-day portfolio/)
+    await page.locator("#payments-demo-run").click()
+    await startTour(page)
+    await page.locator(".driver-popover-next-btn").click()
+    await page.locator(".driver-popover-next-btn").click()
+    await page.locator(".driver-popover-next-btn").click()
+    await expect(title(page)).toHaveText("Go deeper")
+    await page.locator(".driver-popover").getByRole("button", { name: "Finish" }).click()
+
+    await page.locator("#overview-quick-actions").getByRole("button", { name: /Analyse a transaction/ }).click()
+    await expect(page).toHaveURL(/\/transactions\/new$/)
+    await expect(page.getByRole("heading", { name: "Analyse a transaction" })).toBeVisible()
   })
 
   test("Escape and the close button both end the tour", async ({ page }) => {
@@ -119,13 +141,13 @@ test.describe("Overview tour", () => {
     await chooseScenario(page, /New-device purchase/)
     await startTour(page)
     await expect(title(page)).toHaveText("Choose a scenario")
-    await expect(progress(page)).toHaveText("Step 1 of 3")
+    await expect(progress(page)).toHaveText("Step 1 of 4")
     await page.keyboard.press("Escape")
 
     await page.locator("#payments-demo-run").click()
     await expect(page.getByText("TXN-DEMO-", { exact: false }).first()).toBeVisible()
     await startTour(page)
-    await expect(progress(page)).toHaveText("Step 1 of 3")
+    await expect(progress(page)).toHaveText("Step 1 of 4")
   })
 
   test("masks the rest of the page, and clicking the mask ends the tour without clicking through", async ({ page }) => {
