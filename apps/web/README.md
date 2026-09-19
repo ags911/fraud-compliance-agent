@@ -29,11 +29,12 @@ cp .env.example .env   # point VITE_API_BASE_URL at your backend
 npm run dev
 ```
 
-Requires the [API backend](https://github.com/ags911/fraud-compliance-agent-api)
-running (locally or deployed) at that URL.
+Requires the [API](../api) running (locally or deployed) at that URL.
 
-## Deploying (Vercel, free tier)
+## Deploying
 
-Zero-config for a Vite app — connect the repo, Vercel auto-detects the
-build. Set `VITE_API_BASE_URL` as a project environment variable pointing
-at your deployed backend.
+The public showcase targets Azure Static Web Apps (see the hosting section of
+the [PRD](../../docs/product/prd.md)); it is not configured yet.
+`public/staticwebapp.config.json` provides the single-page-app fallback that the
+host needs. `VITE_API_BASE_URL` is a public, non-secret build-time setting: set
+it to the deployed API's origin.
