@@ -331,7 +331,7 @@ relying on a historical tick.
 | ✓ | The web client contains API/SSE consumers for scenario listing, custom runs, preset runs, and benchmark evidence. | `apps/web/src/lib/useAgentRun.ts` and `demo-model-summary.ts`. |
 | ✓ | Synthetic-data, Plaid Sandbox, Sparkov, notebook, and model-promotion boundaries are documented. | PRD, data governance, notebook plan, and project context. |
 | — | Freeze a versioned showcase API contract for current request, response, error, and SSE-event shapes. | Add an accepted contract under `docs/contracts/`. |
-| — | Run browser-to-local-API end-to-end checks for scenarios A–F and the LLM outage. | Record exact results and known mismatches. |
+| — | Run browser-to-local-API end-to-end checks for scenarios A–F and the LLM outage. | API level run 2026-09-19 (real pipeline, in process): A–F each returned HTTP 200 `text/event-stream`, five nodes in order (`data_ingest`, `sim_a`, `sim_b`, `counterfactual`, `evidence_pack`), one terminal `done`, and no error events. The outage flag changes nothing offline: external investigation is disabled by default, so every run is an outage run, and `sim_b` fails safe to HOLD for all six (A, D, F already HOLD at `sim_a`; B, C, E passed `sim_a` with scores 0, 63, 65). The non-outage path needs a live provider key. The browser-driven run is still to do. |
 | — | Verify API error redaction and cross-origin configuration against the public-showcase environment. | Test deployed configuration, not only local defaults. |
 
 ### MVP 1 — Guided product walkthrough
