@@ -61,6 +61,10 @@ test.describe("Dashboard", () => {
   test("Quick actions link to the live decision page and benchmark insights", async ({ page }) => {
     await expect(page.getByRole("link", { name: /Analyse a transaction/ }).last()).toHaveAttribute("href", "/transactions/new")
     await expect(page.getByRole("link", { name: /Benchmark insights/ }).last()).toHaveAttribute("href", "/insights")
+    await expect(page.getByRole("link", { name: /Showcase investigation/ }).last()).toHaveAttribute(
+      "href",
+      "/transactions/investigation",
+    )
   })
 
   test("says the data is synthetic in the page, not in the sidebar", async ({ page }) => {

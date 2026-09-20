@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, BarChart3, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, Sun } from "lucide-react"
+import { ArrowRight, BarChart3, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, ShieldCheck, Sun } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
 import { DashboardChat } from "@/components/dashboard-chat"
@@ -405,11 +405,12 @@ export default function Dashboard() {
             <Card id="overview-quick-actions">
               <CardHeader>
                 <CardTitle>Quick actions</CardTitle>
-                <CardDescription>Open a live decision, or the benchmark evidence behind the model.</CardDescription>
+                <CardDescription>Open a live decision, a bounded synthetic investigation, or the benchmark evidence behind the model.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3 sm:grid-cols-2">
                 {[
                   { title: "Analyse a transaction", text: "Submit transaction facts for a simulated risk decision.", href: "/transactions/new", icon: ScanSearch },
+                  { title: "Showcase investigation", text: "Run one bounded synthetic scenario and inspect its evidence.", href: "/transactions/investigation", icon: ShieldCheck },
                   { title: "Benchmark insights", text: "Read the mechanics-only model evaluation.", href: "/insights", icon: BarChart3 },
                 ].map((action) => (
                   <Link

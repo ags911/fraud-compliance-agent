@@ -14,6 +14,7 @@ const routes: { name: string; path: string; heading: RegExp }[] = [
   { name: "Overview", path: "/overview", heading: /./ },
   { name: "Benchmark insights", path: "/insights", heading: /Benchmark insights/ },
   { name: "Analyse a transaction", path: "/transactions/new", heading: /Analyse a transaction/ },
+  { name: "Showcase investigation", path: "/transactions/investigation", heading: /Showcase investigation/ },
   { name: "Planned page", path: "/reviews", heading: /Reviews/ },
   { name: "Not found", path: "/no-such-page", heading: /./ },
 ]

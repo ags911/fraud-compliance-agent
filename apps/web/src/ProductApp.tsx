@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useNavigate } 
 import Dashboard from "@/Dashboard"
 import { ModelBenchmarkPage } from "@/ModelBenchmark"
 import { NewTransactionPage } from "@/NewTransaction"
+import { ShowcaseInvestigationPage } from "@/ShowcaseInvestigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { DemoSessionProvider } from "@/components/demo-session"
 import {
@@ -125,6 +126,9 @@ function ProductRoutes() {
       <Route element={<PaymentsShellLayout />}>
         <Route path="/insights" element={<ModelBenchmarkPage />} />
         <Route path="/transactions/new" element={<NewTransactionPage />} />
+        {/* The SDK-free showcase investigation is its own surface. The legacy
+            A-F workspace above stays until an explicit cutover decision. */}
+        <Route path="/transactions/investigation" element={<ShowcaseInvestigationPage />} />
         {Object.entries(plannedRoutes).map(([path, route]) => (
           <Route key={path} path={path} element={<PlannedPage route={route} />} />
         ))}
