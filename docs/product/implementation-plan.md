@@ -244,6 +244,12 @@ checks public health and CORS only and does not deploy, inject secrets, or
 substitute for a manual public-demo journey. This keeps the currently local
 showcase local without disguising an unperformed deployment check.
 
+The screen and surface tables in the sections below carry the same `Status`
+column as the completion checklists: ✓ means the screen or surface exists in the
+repository today, and — means it is planned. A ✓ says the screen is built, not
+that every requirement in its row is met; the completion checklist holds the
+per-requirement evidence.
+
 ### MVP 0 — Local engineering foundation
 
 Goal: keep the current synthetic showcase safe to change and reproducible on a
@@ -257,12 +263,12 @@ payment authority.
 Goal: let a recruiter, employer, or internal stakeholder understand the fraud
 decision product without an account or a completed operational backend.
 
-| Screen | Route | State and data in this MVP |
-| --- | --- | --- |
-| Overview | `/overview` | Shared app shell, persistent scenario selector, first-run zero state, guided demo, mock outcome mix, KPI strip, operational-health state, quick actions, and recent decisions. Values remain zero until an explicit scenario run. All demo content is labelled as representative data. |
-| Benchmark Insights | `/insights` | Read-only API-backed Sparkov benchmark evidence: checksum-pinned dataset lineage, four deliberately narrow mechanics features, chronological partition counts, Logistic Regression/XGBoost metrics, and explicit non-deployable boundary. It may explore a recorded evaluation operating point, but cannot score a transaction, select a runtime threshold, configure policy, show drift, or make a production claim. |
-| Not Found | `*` | A branded recovery screen for any unavailable route, with a route back to Overview and no invented data or navigation state. |
-| Rules Performance reference | `/rules-performance-reference.html` | Frozen design reference only. It supports visual comparison and is not a product screen or a data source. |
+| Status | Screen | Route | State and data in this MVP |
+| --- | --- | --- | --- |
+| ✓ | Overview | `/overview` | Shared app shell, persistent scenario selector, first-run zero state, guided demo, mock outcome mix, KPI strip, operational-health state, quick actions, and recent decisions. Values remain zero until an explicit scenario run. All demo content is labelled as representative data. |
+| ✓ | Benchmark Insights | `/insights` | Read-only API-backed Sparkov benchmark evidence: checksum-pinned dataset lineage, four deliberately narrow mechanics features, chronological partition counts, Logistic Regression/XGBoost metrics, and explicit non-deployable boundary. It may explore a recorded evaluation operating point, but cannot score a transaction, select a runtime threshold, configure policy, show drift, or make a production claim. |
+| ✓ | Not Found | `*` | A branded recovery screen for any unavailable route, with a route back to Overview and no invented data or navigation state. |
+| ✓ | Rules Performance reference | `/rules-performance-reference.html` | Frozen design reference only. It supports visual comparison and is not a product screen or a data source. |
 
 MVP 1 deliberately does **not** claim a live queue, live model monitoring, or
 durable transaction history. Benchmark Insights is evaluation provenance—not
@@ -275,11 +281,11 @@ single-operator demo.
 Goal: make the operator's core run observable against the Phase 0 API without
 pretending that it is a production transaction store.
 
-| Screen | Route | Required API data and behavior |
-| --- | --- | --- |
-| New transaction / decision run | `/transactions/new` | `GET /health`, `GET /scenarios`, `POST /run`, and `POST /run/preset/{scenario_id}`. Select or enter a transaction, start a run, stream validated SSE events, support cancellation/error state, and mark every action as simulated. |
-| Decision workspace | `/transactions/run/:runId` or an in-place run result | `run_id`, `trace_id`, node status, deterministic results, model/rule outputs exposed by the current stream, counterfactual result, signed-record state, and the outage/fail-safe path. No hidden chain-of-thought. |
-| Overview | `/overview` | Continues as the entry point. It may show the current demo scenario/run summary, but must not manufacture aggregate history from a transient run. |
+| Status | Screen | Route | Required API data and behavior |
+| --- | --- | --- | --- |
+| ✓ | New transaction / decision run | `/transactions/new` | `GET /health`, `GET /scenarios`, `POST /run`, and `POST /run/preset/{scenario_id}`. Select or enter a transaction, start a run, stream validated SSE events, support cancellation/error state, and mark every action as simulated. |
+| ✓ | Decision workspace | `/transactions/run/:runId` or an in-place run result | `run_id`, `trace_id`, node status, deterministic results, model/rule outputs exposed by the current stream, counterfactual result, signed-record state, and the outage/fail-safe path. No hidden chain-of-thought. |
+| ✓ | Overview | `/overview` | Continues as the entry point. It may show the current demo scenario/run summary, but must not manufacture aggregate history from a transient run. |
 
 A separate short guided tour for the decision workspace ships with this MVP (one tour per page, not one long tour across routes).
 
@@ -292,13 +298,13 @@ Goal: deploy the completed guided walkthrough and live decision demonstration
 as one shareable Azure-based portfolio experience, without pretending it has a
 durable financial-operation backend.
 
-| Surface | Requirement in this MVP |
-| --- | --- |
-| Web console | Azure Static Web Apps hosts the synthetic React/Vite console. The API base URL is public configuration, never a secret. |
-| Demo API | Azure Container Apps Consumption hosts the FastAPI demo with minimum replicas of zero. The UI exposes health, connection, cold-start, unavailable, and retry states. |
-| Delivery | GitHub Actions validates builds/tests, then deploys through Azure OIDC. Bicep and a deployment runbook make the release reproducible. |
-| Cost/safety | Doppler holds server-side secrets; no database, cache, VNet, real payment, or customer/provider data is deployed. A budget alert and free-grant review are documented. |
-| Screens | MVP 1–2 screens are hosted unchanged: Overview, Benchmark Insights, New transaction/decision workspace, Not Found, and the frozen reference route. |
+| Status | Surface | Requirement in this MVP |
+| --- | --- | --- |
+| — | Web console | Azure Static Web Apps hosts the synthetic React/Vite console. The API base URL is public configuration, never a secret. |
+| — | Demo API | Azure Container Apps Consumption hosts the FastAPI demo with minimum replicas of zero. The UI exposes health, connection, cold-start, unavailable, and retry states. |
+| — | Delivery | GitHub Actions validates builds/tests, then deploys through Azure OIDC. Bicep and a deployment runbook make the release reproducible. |
+| — | Cost/safety | Doppler holds server-side secrets; no database, cache, VNet, real payment, or customer/provider data is deployed. A budget alert and free-grant review are documented. |
+| — | Screens | MVP 1–2 screens are hosted unchanged: Overview, Benchmark Insights, New transaction/decision workspace, Not Found, and the frozen reference route. |
 
 The guided tours gain a status step explaining API health and cold start.
 
@@ -311,12 +317,12 @@ limitations. It is not a production-readiness milestone.
 Goal: support real, durable operator work once the Phase 2 scoring and
 transaction contracts are available.
 
-| Screen | Route | Required API data and behavior |
-| --- | --- | --- |
-| Overview | `/overview` | Server-backed processed/held/challenged volume, review pressure, recent decisions, model version, drift state, and p95 latency. False-positive rate stays `Unavailable` until labelled outcomes exist. |
-| Transactions | `/transactions` | Durable transaction list with server search, filters, sorting, pagination, route/action distinction, evidence state, and links to detail. |
-| Transaction detail | `/transactions/:id` | Point-in-time source facts, feature snapshot, deterministic controls, model score/version, reason codes, authority, action outcome, evidence links, and lifecycle timeline. |
-| Rules performance | `/rules/performance` | Versioned rules, enabled state, match/outcome counts, and time series from the API. Preserve the approved visual contract and shared range state. |
+| Status | Screen | Route | Required API data and behavior |
+| --- | --- | --- | --- |
+| — | Overview | `/overview` | Server-backed processed/held/challenged volume, review pressure, recent decisions, model version, drift state, and p95 latency. False-positive rate stays `Unavailable` until labelled outcomes exist. |
+| — | Transactions | `/transactions` | Durable transaction list with server search, filters, sorting, pagination, route/action distinction, evidence state, and links to detail. |
+| — | Transaction detail | `/transactions/:id` | Point-in-time source facts, feature snapshot, deterministic controls, model score/version, reason codes, authority, action outcome, evidence links, and lifecycle timeline. |
+| — | Rules performance | `/rules/performance` | Versioned rules, enabled state, match/outcome counts, and time series from the API. Preserve the approved visual contract and shared range state. |
 
 This deferred extension maps primarily to F3 and F3a. It requires durable data:
 a retry must never read as a duplicate action, and `PASS` (recommendation) must
@@ -327,12 +333,12 @@ remain distinct from `RELEASE` (executed action).
 Goal: let fraud teams investigate ambiguous decisions and make accountable
 human-review decisions.
 
-| Screen | Route | Required API data and behavior |
-| --- | --- | --- |
-| Investigation view | `/transactions/:id/investigation` or a transaction-detail tab | Typed investigation status, tool calls/results, evidence factors, timeout/malformed-data states, counterfactual context, and fail-safe result. |
-| Reviews queue | `/reviews` | Server-filtered queue with `OPEN`, `CLAIMED`, `REQUESTED_INFO`, `DECIDED`, and `EXPIRED` states when the contract confirms them. |
-| Review detail | `/reviews/:id` | Claim state, server-derived reviewer identity, decision form, authority/oversight explanation, evidence, and versioned mutation outcome. |
-| Decision audit trail | `/transactions/:id` | Review decisions and override outcomes surfaced in the existing lifecycle view, with links back to the review record. |
+| Status | Screen | Route | Required API data and behavior |
+| --- | --- | --- | --- |
+| — | Investigation view | `/transactions/:id/investigation` or a transaction-detail tab | Typed investigation status, tool calls/results, evidence factors, timeout/malformed-data states, counterfactual context, and fail-safe result. |
+| — | Reviews queue | `/reviews` | Server-filtered queue with `OPEN`, `CLAIMED`, `REQUESTED_INFO`, `DECIDED`, and `EXPIRED` states when the contract confirms them. |
+| — | Review detail | `/reviews/:id` | Claim state, server-derived reviewer identity, decision form, authority/oversight explanation, evidence, and versioned mutation outcome. |
+| — | Decision audit trail | `/transactions/:id` | Review decisions and override outcomes surfaced in the existing lifecycle view, with links back to the review record. |
 
 This deferred extension maps to F4–F5 and requires authentication. It is complete only when
 optimistic-concurrency conflicts, forbidden actions, expiry, and evidence
@@ -343,14 +349,14 @@ pending states are visible and cannot be mistaken for success.
 Goal: give privileged users controlled configuration and give operators a
 truthful view of model health, drift, integrations, and replay.
 
-| Screen | Route | Required API data and behavior |
-| --- | --- | --- |
-| Models | `/insights/models`, `/insights/models/:id` | Production model/version, artifact lineage, calibration/recall/PR-AUC, threshold meanings, latency, and measurement context. |
-| Drift | `/insights/drift` | Prediction and feature drift, configured warning/critical thresholds, time windows, and missing-data state. |
-| Policy and rule settings | `/settings/policies`, `/settings/rules` | Versioned configuration, role-aware edit access, confirmation, audit result, and unavailable state until the API supports mutation. |
-| Model release status | `/settings/models/:id` | Read-only promoted-model and release provenance by default. A promotion mutation is out of scope unless the API's approved release-process contract expressly delegates it to this console. |
-| Integrations and environment | `/settings/integrations`, `/settings/environment` | Plaid/integration health, environment, action limits, connection state, and recovery guidance. |
-| Replay comparison | `/transactions/:id/replay` | Immutable comparison of an historical decision against a selected policy/model context; replay never executes a payment action. |
+| Status | Screen | Route | Required API data and behavior |
+| --- | --- | --- | --- |
+| — | Models | `/insights/models`, `/insights/models/:id` | Production model/version, artifact lineage, calibration/recall/PR-AUC, threshold meanings, latency, and measurement context. |
+| — | Drift | `/insights/drift` | Prediction and feature drift, configured warning/critical thresholds, time windows, and missing-data state. |
+| — | Policy and rule settings | `/settings/policies`, `/settings/rules` | Versioned configuration, role-aware edit access, confirmation, audit result, and unavailable state until the API supports mutation. |
+| — | Model release status | `/settings/models/:id` | Read-only promoted-model and release provenance by default. A promotion mutation is out of scope unless the API's approved release-process contract expressly delegates it to this console. |
+| — | Integrations and environment | `/settings/integrations`, `/settings/environment` | Plaid/integration health, environment, action limits, connection state, and recovery guidance. |
+| — | Replay comparison | `/transactions/:id/replay` | Immutable comparison of an historical decision against a selected policy/model context; replay never executes a payment action. |
 
 This deferred extension maps to F6. It is a production-shaped research milestone, not an excuse to
 move governance into the operator dashboard or display unverifiable metrics.
