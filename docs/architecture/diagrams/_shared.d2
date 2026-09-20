@@ -1,12 +1,28 @@
 # Shared look for every architecture diagram, imported with `...@_shared`.
-# One palette and one type scale keep the diagrams visually consistent; build
-# state is the only thing colour encodes: green built, amber planned, grey proposed.
 #
-# Scale rule: each diagram is kept under about 900 units wide, because GitHub
-# shows an image at its natural size up to that width. Wider diagrams are shrunk
-# and their text ends up smaller than the others. When a view is wider, stack it
-# vertically instead of shrinking it. `make architecture-diagrams` reports the
-# width of each diagram and fails if one is over the limit.
+# Palette: the console's Payments tokens (docs/design and apps/web/src), so the
+# diagrams look like the product. Ink #0a2540 is the foreground, #425466 the
+# secondary text and arrows, #e3e8ee the border, #f6f8fa the muted surface, and
+# #635bff the primary. Success #087f45 and warning #946000 are the contrast-safe
+# status colours from the theme, each on its soft tint.
+# Type: Inter, the Payments data font, embedded by the render script.
+# Dark mode: the render script adds a prefers-color-scheme rule; see
+# scripts/render_architecture_diagrams.py. Nothing here is a hard background.
+#
+# Colour encodes build state only, and a dashed border repeats it so the
+# meaning survives greyscale and colour-blindness:
+#   built     solid   green
+#   planned   dashed  amber
+#   proposed  dashed  grey
+#
+# SCALE RULES, which every diagram must keep:
+#   1. Under 900 units wide. GitHub shows an image at natural size up to about
+#      that width, so a wider diagram is shrunk and its text ends up smaller
+#      than the others.
+#   2. When a view is wider than that, stack it vertically. Never shrink it, and
+#      never lower the font size to make it fit.
+#   3. One type scale: 16 for boxes, 18 for group titles, 14 for edge labels.
+# The render script fails a diagram that breaks rule 1.
 
 vars: {
   d2-config: {
@@ -17,9 +33,15 @@ vars: {
 }
 
 classes: {
-  built: { style: { fill: "#e8f5ee"; stroke: "#0b7a45"; font-color: "#07331f"; border-radius: 8 } }
-  planned: { style: { fill: "#fdf5e3"; stroke: "#946000"; font-color: "#3d2a00"; border-radius: 8; stroke-dash: 3 } }
-  proposed: { style: { fill: "#f2f2f5"; stroke: "#6b7280"; font-color: "#30323a"; border-radius: 8; stroke-dash: 3 } }
-  group: { style: { fill: "#f7f8fb"; stroke: "#c9ced8"; font-color: "#1b1745"; font-size: 18; bold: true; border-radius: 12 } }
-  focus: { style: { fill: "#eef1ff"; stroke: "#4b41c9"; font-color: "#1b1745"; font-size: 18; bold: true; border-radius: 12 } }
+  built: { style: { fill: "#e5f7ec"; stroke: "#087f45"; font-color: "#0a2540"; border-radius: 8; font-size: 16 } }
+  planned: { style: { fill: "#fff2cc"; stroke: "#946000"; font-color: "#0a2540"; border-radius: 8; stroke-dash: 3; font-size: 16 } }
+  proposed: { style: { fill: "#f6f8fa"; stroke: "#425466"; font-color: "#0a2540"; border-radius: 8; stroke-dash: 3; font-size: 16 } }
+  group: { style: { fill: "#f6f8fa"; stroke: "#e3e8ee"; font-color: "#0a2540"; font-size: 18; bold: true; border-radius: 12 } }
+  focus: { style: { fill: "#f0ebff"; stroke: "#635bff"; font-color: "#5543cd"; font-size: 18; bold: true; border-radius: 12 } }
 }
+
+# One neutral colour for every connection, so arrows carry no meaning of their
+# own. Dashed edges are set per diagram where a path is conditional or absent.
+(** -> **)[*].style.stroke: "#425466"
+(** -> **)[*].style.font-color: "#425466"
+(** -> **)[*].style.font-size: 14

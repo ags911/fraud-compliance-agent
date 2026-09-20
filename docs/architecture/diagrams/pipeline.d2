@@ -5,21 +5,9 @@
 
 direction: down
 
-classes: {
-  stage: {
-    style: {
-      fill: "#f7f8fb"
-      stroke: "#c9ced8"
-      font-color: "#1b1745"
-      font-size: 18
-      bold: true
-      border-radius: 12
-    }
-  }
-}
-
 legend: "Legend" {
-  near: bottom-center
+  near: top-center
+  style.font-size: 16
   style.fill: transparent
   style.stroke: transparent
   b: "Built and tested" { class: built }
@@ -27,7 +15,7 @@ legend: "Legend" {
 }
 
 ingestion: "1  Ingestion" {
-  class: stage
+  class: group
   grid-rows: 1
   grid-gap: 24
   fixtures: "Scenario fixtures\nS01 to S08" { class: built }
@@ -37,7 +25,7 @@ ingestion: "1  Ingestion" {
 }
 
 intelligence: "2  Intelligence" {
-  class: stage
+  class: group
   # This stage branches, so it keeps the normal graph layout: grid layout
   # draws straight edges, which cross the boxes between their endpoints.
   controls: "Deterministic fraud\nand APP controls" { class: built }
@@ -52,7 +40,7 @@ intelligence: "2  Intelligence" {
 }
 
 orchestration: "3  Orchestration" {
-  class: stage
+  class: group
   grid-rows: 1
   grid-gap: 24
   authority: "Authority check" { class: planned }
@@ -62,7 +50,7 @@ orchestration: "3  Orchestration" {
 }
 
 action: "4  Action" {
-  class: stage
+  class: group
   grid-rows: 1
   grid-gap: 24
   simulated: "Simulated action\nidempotent" { class: planned }
@@ -72,7 +60,7 @@ action: "4  Action" {
 }
 
 monitoring: "5  Monitoring" {
-  class: stage
+  class: group
   grid-rows: 1
   grid-gap: 24
   health: "Run and health state" { class: built }

@@ -12,10 +12,27 @@ disagree with a picture here, they win and this file is wrong.
 ## How to read the diagrams
 
 Every diagram is a [D2](https://d2lang.com) source in [`diagrams/`](diagrams/)
-rendered to SVG, so it displays in any viewer, and all of them share one palette
-and type scale from [`_shared.d2`](diagrams/_shared.d2). They are kept under
-about 900 units wide and stack vertically rather than shrink, so text is the
-same size in every one. Regenerate them with `make architecture-diagrams`.
+rendered to SVG, so it displays in any viewer, and the source is committed beside
+each one. Regenerate them with `make architecture-diagrams` (needs `brew install
+d2`).
+
+They follow the console's design tokens, and a few rules keep them consistent.
+The rules live in [`_shared.d2`](diagrams/_shared.d2), and a test in CI checks the
+committed SVGs against them:
+
+- **One scale.** Every diagram is under 900 units wide, so GitHub shows it at
+  natural size and the text is the same size in all of them.
+- **Vertical, never smaller.** A view that is wider than that is stacked
+  vertically. It is not shrunk, and its font size is not reduced to make it fit.
+  A sequence diagram cannot stack, so it keeps to the limit with short labels.
+- **One look.** Colours are the console's Payments tokens and the type is Inter,
+  its data font, embedded in each SVG. Colour means build state only, and a dashed
+  border repeats it so it survives greyscale.
+- **Any page.** There is no hard background, and each SVG carries a
+  `prefers-color-scheme: dark` palette. The dark colours are derived for this
+  purpose, because the Payments system has no dark theme.
+- **Neutral arrows.** Every connection is one colour, so an arrow means direction
+  and nothing else.
 
 Every node carries its build state, because a diagram that mixes what runs with
 what is planned is how a demo becomes a false claim.
