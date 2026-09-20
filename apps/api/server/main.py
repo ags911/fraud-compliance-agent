@@ -45,9 +45,11 @@ except ImportError:
     SCENARIOS: list[dict] = []
     pipeline = None
     FraudPipelineState = dict
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from server.models import (
     DemoError,
@@ -62,6 +64,13 @@ from server.models import (
     ScenarioSummary,
 )
 from server.records import read_record
+from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
+from server.showcase_investigation.models import (
+    ShowcaseError,
+    ShowcaseErrorDetail,
+    ShowcaseInvestigationRequest,
+)
+from server.showcase_investigation.runtime import ShowcaseRuntime
 
 
 def _allowed_origins() -> list[str]:
@@ -364,6 +373,12 @@ def create_app() -> FastAPI:
     allow_external_investigation = _boolean_env(
         "DEMO_ALLOW_EXTERNAL_INVESTIGATION", False
     )
+    try:
+        showcase_runtime = ShowcaseRuntime.from_environment()
+    except ShowcaseRuntimeUnavailable:
+        # Health and legacy demo routes remain available if packaged showcase
+        # inputs are absent. The new endpoint returns its accepted redacted 503.
+        showcase_runtime = None
 
     app = FastAPI(
         title="Fraud Compliance Agent Console API",
@@ -380,6 +395,22 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(RequestValidationError)
+    async def redacted_showcase_validation_error(
+        request: Request, error: RequestValidationError
+    ) -> JSONResponse:
+        """Redact only the public-showcase route's request-validation details."""
+        if request.url.path == "/showcase/investigations":
+            detail = ShowcaseErrorDetail(
+                code="invalid_request",
+                message="Choose an available synthetic scenario and execution mode.",
+            )
+            return JSONResponse(
+                status_code=422,
+                content=ShowcaseError(detail=detail).model_dump(),
+            )
+        return await request_validation_exception_handler(request, error)
 
     @app.get("/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
@@ -407,6 +438,61 @@ def create_app() -> FastAPI:
     async def demo_model_summary() -> DemoModelSummary:
         """Return only the audit-safe synthetic benchmark summary for the portfolio UI."""
         return _demo_model_summary()
+
+    @app.post(
+        "/showcase/investigations",
+        include_in_schema=False,
+        response_class=StreamingResponse,
+        responses={
+            200: {
+                "description": (
+                    "Transient SSE stream governed by the accepted public-showcase "
+                    "event schema."
+                ),
+                "content": {
+                    "text/event-stream": {
+                        "schema": {"type": "string"},
+                        "x-event-schema": "public-showcase-events.v1.schema.json",
+                    }
+                },
+            },
+            422: {"model": ShowcaseError},
+            503: {"model": ShowcaseError},
+        },
+    )
+    async def stream_showcase_investigation(
+        body: ShowcaseInvestigationRequest, request: Request
+    ) -> StreamingResponse:
+        """Stream one bounded synthetic S01–S05 showcase investigation."""
+        if showcase_runtime is None:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "showcase_investigation_unavailable",
+                    "message": "The synthetic investigation is unavailable.",
+                },
+            )
+        try:
+            # Resolve deferred S06-S08 before response streaming begins so the
+            # client receives the accepted HTTP error rather than a broken SSE.
+            showcase_runtime.require_public_scenario(body.scenario_id)
+        except ShowcaseRuntimeUnavailable as error:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "showcase_investigation_unavailable",
+                    "message": "The synthetic investigation is unavailable.",
+                },
+            ) from error
+
+        # The socket peer is server-observed metadata. Arbitrary forwarding or
+        # caller-supplied identity headers are deliberately ignored.
+        client_key = request.client.host if request.client else "unknown"
+        return StreamingResponse(
+            showcase_runtime.stream(body, client_key),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+        )
 
     @app.post(
         "/run",

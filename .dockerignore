@@ -25,6 +25,11 @@
 !docs/contracts/model-training-contract.v1.json
 !docs/proposals/fast-path-model-release.candidate.json
 
+# Accepted, synthetic-only public investigation inputs. The API validates both
+# acceptance markers before using them; neither file contains provider data.
+!config/public-showcase-investigation.v1.json
+!fixtures/s01-s08/scenarios.v1.json
+
 # Never, under any pattern above.
 **/__pycache__
 **/*.py[cod]

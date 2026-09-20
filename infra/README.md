@@ -30,32 +30,36 @@ What the image is and is not:
   the committed lockfile with `uv sync --frozen --no-dev`.
 - It runs as the non-root `app` user (uid 10001) and exposes port 8000, which
   is the target port a Container Apps ingress must use.
-- The private Arbiris SDK is excluded, so `/scenarios` and the run routes answer
-  `503 demo_pipeline_unavailable`. `/health` and `/demo/model-summary` work.
+- The private Arbiris SDK is excluded, so `/scenarios` and the legacy run routes
+  answer `503 demo_pipeline_unavailable`. `/health`, `/demo/model-summary`, and
+  recorded S01–S05 `/showcase/investigations` work.
   The approved replacement direction is a repository-owned, SDK-free bounded
-  investigation; it is not implemented yet. The private SDK will remain out of
-  the public image.
+  investigation. Its local S01–S05 API runtime is implemented under ADR-017;
+  browser integration and deployment verification remain. The private SDK will
+  remain out of the public image.
 - The offline `modelling` library and its scikit-learn, XGBoost, pandas, and
   Plotly stack are excluded: the production wheel contains `server` only.
 - `ALLOWED_ORIGINS` defaults to a local development origin. A deployment must
   set its real origins; a wildcard is never acceptable here.
 - `FCA_EVIDENCE_ROOT` points at the two evidence files copied into the image.
   There is no repository inside a container, so the route reads them from there.
+- `FCA_SHOWCASE_ROOT` points at the accepted safeguard and S01–S08 fixture
+  files copied into the image; the loader rejects non-accepted metadata.
 
 The repository-root `.dockerignore` is an allowlist: everything is excluded and
-only the API's dependency metadata, `server/`, and the two evidence files are
-added back. Extend it deliberately; a denylist would eventually let the private
+only the API's dependency metadata, `server/`, accepted showcase inputs and
+benchmark evidence are added back. Extend it deliberately; a denylist would eventually let the private
 submodule, the local corpus, or a `.env` file into a published layer.
 
-CI builds the image on every change, starts it, and checks that it is healthy,
-serves the committed benchmark digest, runs as a non-root user, and carries no
-private or offline code.
+CI builds the image on every change, starts it, checks health and recorded S04,
+verifies the committed benchmark digest and non-root uid, and proves that the
+first-party showcase package ships without private or offline code.
 
-Before public release, the image must additionally include the accepted
-public-safe investigation implementation and its versioned synthetic fixtures,
-while retaining the negative check for the private SDK. Recorded demonstration
-playback is the default; optional live Groq execution requires the separately
-accepted admission, quota and kill-switch controls.
+The image includes the accepted public-safe investigation implementation and
+versioned synthetic fixtures while retaining the negative private-SDK check.
+Recorded demonstration playback is the default; optional live Groq execution
+requires the accepted admission and kill-switch controls plus explicit
+server-side model selection and allowlisting.
 
 Live Groq access is not an always-on anonymous feature. It defaults off and may
 be enabled only for a controlled demonstration window through server-side

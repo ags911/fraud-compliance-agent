@@ -2,13 +2,18 @@
 
 A production-shaped fintech risk showcase in development. It demonstrates deterministic fraud controls, supervised-tabular-ML evaluation mechanics, agentic investigation, delegated authority, human review, simulated payment actions, and independently signed Arbiris evidence without claiming to be a production payment or compliance service.
 
-The repository currently contains the original fraud-compliance demo API. It runs the `fraud_compliance_agent_v2` LangGraph example from the pinned [Arbiris SDK](https://github.com/ags911/arbiris-sdk) and streams node progress to the operator console. For MVP 3, the accepted contract defines a separate repository-owned, SDK-free bounded LangGraph investigation that can ship in the public image; the runtime is not implemented. The later operational capabilities described below are also not all implemented or approved.
+The repository contains the original fraud-compliance demo API and a separate
+repository-owned, SDK-free bounded LangGraph investigation for MVP 3. The
+legacy routes run `fraud_compliance_agent_v2` from the pinned
+[Arbiris SDK](https://github.com/ags911/arbiris-sdk); the new S01–S05 showcase
+route runs without that private dependency. The later operational capabilities
+described below are not all implemented or approved.
 
 ## Product status
 
 | Area | Available now | Approved target |
 |---|---|---|
-| API | Health, scenario listing, custom run, preset run | Pure scoring, durable processing, fraud reviews and operational monitoring |
+| API | Health, legacy scenario/custom/preset routes, benchmark summary, and SDK-free S01–S05 showcase stream | Pure scoring, durable processing, fraud reviews and operational monitoring |
 | Decisioning | Deterministic Sim A and APP-scam Sim B | Point-in-time features, deterministic controls, calibrated tabular ML and risk routing |
 | Investigation | Private-SDK Sim B uses an LLM for every transaction not stopped by its pre-filter | Public showcase: only S04 enters the normal bounded agent path and S05 exercises its failure path; operational F4 remains deferred |
 | Actions | Decision recommendations in a demo pipeline | Idempotent simulated actions behind separate authority and oversight gates |
@@ -109,7 +114,7 @@ The v1 deployment is a FastAPI modular monolith with PostgreSQL, a promoted-mode
 
 The current API still imports the SDK example by adding the submodule root to `sys.path`. Phase 0 first characterizes scenarios A–F; later implementation moves owned fraud behavior behind stable application interfaces while retaining the example as a compatibility reference.
 
-The public-showcase replacement will live under
+The public-showcase replacement lives under
 `server/showcase_investigation/` against the accepted
 `public-showcase-api.v1.openapi.json` and
 `public-showcase-events.v1.schema.json` contracts. It will not import or copy
@@ -123,9 +128,8 @@ The accepted initial agent allowlist is `get_payee_evidence`,
 `get_account_activity_evidence`, and `get_device_session_evidence`. They are
 read-only synthetic fixture tools. ADR-016 accepts the recorded S04 payee and
 device evidence; account-activity evidence remains unspecified and must fail
-with `tool_failed` if invoked. No runtime implementation exists yet. The
-accepted budget is three total calls and one call per tool; exhaustion remains incomplete with no
-action.
+with `tool_failed` if invoked. The accepted budget is three total calls and one
+call per tool; exhaustion remains incomplete with no action.
 
 Provider, tool, output-validation, timeout and budget failures all use the same
 public semantics: incomplete investigation, fail-safe HOLD recommendation,
@@ -136,7 +140,7 @@ off and may be enabled only for a controlled operator-run demonstration window.
 Always-on live access remains prohibited until reliable provider-side spending
 or durable distributed quota controls exist.
 
-Candidate controlled-window limits are one concurrent run, two per observed
+Accepted controlled-window limits are one concurrent run, two per observed
 client per 10 minutes, ten per process, 30 minutes maximum and a 45-second
 overall timeout. Client keys must come from trusted ingress metadata. These
 process-local counters reset on restart and are not a durable quota.
@@ -193,8 +197,9 @@ cp .env.example .env
 
 Without access to the private SDK, clone without `--recurse-submodules` and use
 `uv sync --frozen` instead (`--frozen` skips validating the absent SDK). The API
-still starts and `/health` and `/demo/model-summary` work, but `/scenarios` and
-the run routes return `503 demo_pipeline_unavailable`.
+still starts: `/health`, `/demo/model-summary`, and recorded
+`/showcase/investigations` work, while `/scenarios` and the legacy run routes
+return `503 demo_pipeline_unavailable`.
 
 The safe default sets `DEMO_ALLOW_EXTERNAL_INVESTIGATION=false`: Sim B follows
 its deterministic provider-unavailable path and makes no Groq request. For an
@@ -217,12 +222,26 @@ Current endpoints:
 | `GET` | `/scenarios` | List fixed scenarios A–F |
 | `POST` | `/run` | Run a custom transaction and stream node updates over SSE |
 | `POST` | `/run/preset/{scenario_id}` | Run a preset, optionally simulating an LLM outage |
+| `POST` | `/showcase/investigations` | Stream accepted recorded S01–S05 or an admitted live S04 investigation |
 
 ```bash
 curl -N -X POST http://localhost:8010/run/preset/A
+
+curl -N -X POST http://localhost:8010/showcase/investigations \
+  -H 'Content-Type: application/json' \
+  -d '{"scenario_id":"S04","execution_mode":"recorded"}'
 ```
 
-Each SSE message contains the completed node result and, when available, the signed record read from local output. The stream ends with a `done` event. Current broad error streaming is a known baseline behavior and is scheduled to be replaced by stable, redacted error categories.
+Recorded playback needs no credential. Optional live S04 additionally requires
+`SHOWCASE_LIVE_ENABLED=true`, `GROQ_API_KEY`, `SHOWCASE_GROQ_MODEL`, and the same
+model identifier in `SHOWCASE_GROQ_ALLOWED_MODELS`. There is intentionally no
+default model identifier. The 30-minute enablement window starts with the API
+process and all admission counters reset on restart.
+
+Legacy `/run` SSE messages contain completed SDK node results and, when
+available, signed-record metadata. The new showcase stream uses the accepted
+typed event vocabulary and stable failure reasons. Both streams end with a
+named `done` event.
 
 ## SDK pin
 
@@ -243,8 +262,8 @@ Do not rewrite historical AARF records during an SDK update. Existing signed pay
 
 ## Run it as a container
 
-The showcase image is built from the repository root, because it includes the
-two sanitised evidence files the read-only model-summary route serves:
+The showcase image is built from the repository root because it includes the
+sanitised model-summary evidence plus accepted showcase safeguards and fixtures:
 
 ```bash
 docker build -f apps/api/Dockerfile -t fraud-compliance-agent-api .

@@ -48,7 +48,8 @@ build.
 | `apps/api/Dockerfile` | Showcase API image: digest-pinned bases, non-root, no private SDK or offline ML code. |
 | `.dockerignore` | Allowlist build context for that image; everything is excluded until it is named. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
-| `docs/proposals/public-showcase-investigation.proposed.md` | Decision register and implementation plan for the repository-owned SDK-free MVP 3 investigation; ADR-015 owns its accepted cross-application boundary and ADR-016 owns its accepted synthetic fixtures. |
+| `apps/api/server/showcase_investigation/` | SDK-free S01–S05 playback, bounded LangGraph live path, provider adapter and process-local admission controls. |
+| `docs/proposals/public-showcase-investigation.proposed.md` | Decision register and remaining gates for the repository-owned SDK-free MVP 3 investigation; ADR-015 owns its contract, ADR-016 its fixtures, and ADR-017 its local API runtime. |
 | `apps/api/server/models.py` | API-side domain/data models. |
 | `apps/api/modelling/pipeline.py` | Run setup and the mode-dependent decision about what data an evaluation run may read. |
 | `config/fast-path-model-training.v1.json` | Accepted seed, hyperparameters, threshold grid, and synthetic-fixture shape for the mechanics-only benchmark. |

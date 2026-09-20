@@ -1,10 +1,10 @@
 {
-  "schema_version": "0.1",
-  "status": "candidate",
+  "schema_version": "1.0",
+  "status": "accepted",
   "owner": "showcase-api",
   "approval_scope": "MVP 3 controlled-window limits, live-provider policy, and gated legacy migration approved by the product owner on 2026-09-20.",
-  "effective_scope": "Review and tests only. Runtime consumption is forbidden until the public-showcase investigation contract and implementation are accepted.",
-  "runtime_consumption": "forbidden",
+  "effective_scope": "Runtime safeguards for the database-free public-showcase investigation only.",
+  "runtime_consumption": "allowed",
   "recorded_playback": {
     "continuously_public": true,
     "fallback_when_live_unavailable": true,
@@ -63,5 +63,5 @@
     "allowed": false,
     "required_before_enablement": "reliable_provider_spending_limit_or_durable_distributed_quota"
   },
-  "notes": "These are safety limits, not latency, capacity, availability, or zero-cost claims. Per-client admission must never trust an arbitrary client-supplied header."
+  "notes": "These are safety limits, not latency, capacity, availability, or zero-cost claims. Per-client admission uses the server-observed socket peer and never trusts an arbitrary client-supplied header. No Groq model is selected by this file; live mode also requires an operator-selected model present in an explicit server-side allowlist."
 }

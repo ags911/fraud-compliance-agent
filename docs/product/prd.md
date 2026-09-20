@@ -305,8 +305,8 @@ ADR-015 accepts the MVP 3 investigation HTTP and SSE contract at
 `docs/contracts/public-showcase-api.v1.openapi.json` and
 `docs/contracts/public-showcase-events.v1.schema.json`. ADR-016 separately
 accepts `fixtures/s01-s08/scenarios.v1.json` for the database-free showcase.
-S01–S05 are runtime-ready; S06–S08 operational behavior and the runtime itself
-remain unimplemented.
+S01–S05 now run through the local SDK-free API under ADR-017. S06–S08
+operational behavior, browser cutover and public deployment remain unimplemented.
 
 ## 9. Showcase MVP stages and deferred engineering increments
 

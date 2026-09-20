@@ -5,8 +5,8 @@
 # Build from the repository root so the sanitised benchmark evidence can be
 # copied in:
 #     docker build -f apps/api/Dockerfile -t fraud-compliance-agent-api .
-# The root .dockerignore is an allowlist: only this API's dependency metadata,
-# `server/`, and the two evidence files reach the build context.
+# The root .dockerignore is an allowlist: only API dependency metadata,
+# `server/`, accepted synthetic runtime inputs, and benchmark evidence enter.
 #
 # What this image is: the FastAPI demo backend and its runtime dependencies. It
 # is a synthetic, unauthenticated demonstration service, not a production
@@ -15,8 +15,8 @@
 # What it excludes: the private Arbiris SDK submodule, the offline `modelling`
 # evaluation library and its scikit-learn/XGBoost/Plotly stack, tests,
 # notebooks, datasets, and every secret. Without the SDK the live demo-pipeline
-# routes answer 503 `demo_pipeline_unavailable`; `/health` and
-# `/demo/model-summary` work.
+# routes answer 503 `demo_pipeline_unavailable`; `/health`,
+# `/demo/model-summary`, and `/showcase/investigations` work.
 
 # Base images are pinned by digest so a rebuild cannot silently change them.
 # The tags are recorded for readability, not for resolution:
@@ -75,6 +75,9 @@ ENV PATH=/opt/venv/bin:$PATH \
     # The public demo calls no external provider unless a deployment opts in
     # and supplies a key.
     DEMO_ALLOW_EXTERNAL_INVESTIGATION=false \
+    SHOWCASE_LIVE_ENABLED=false \
+    # Accepted showcase configuration and fixtures are copied below this root.
+    FCA_SHOWCASE_ROOT=/app/showcase \
     # There is no repository inside the image, so the read-only model-summary
     # route reads its evidence from here instead.
     FCA_EVIDENCE_ROOT=/app/evidence
@@ -82,6 +85,8 @@ ENV PATH=/opt/venv/bin:$PATH \
 COPY --from=builder /opt/venv /opt/venv
 COPY docs/contracts/model-training-contract.v1.json /app/evidence/docs/contracts/
 COPY docs/proposals/fast-path-model-release.candidate.json /app/evidence/docs/proposals/
+COPY config/public-showcase-investigation.v1.json /app/showcase/config/
+COPY fixtures/s01-s08/scenarios.v1.json /app/showcase/fixtures/s01-s08/
 
 WORKDIR /app
 USER app

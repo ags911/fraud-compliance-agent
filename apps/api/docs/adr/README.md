@@ -23,6 +23,7 @@ rewriting their history.
 | [014](0014-adopt-public-safe-showcase-investigation-boundary.md) | Public-safe showcase investigation boundary | Accepted for scoped preparation only |
 | [015](0015-freeze-public-showcase-investigation-contract.md) | Public-showcase investigation HTTP and SSE contract | Accepted |
 | [016](0016-accept-public-showcase-scenario-fixtures.md) | Public-showcase S01–S08 synthetic fixtures | Accepted |
+| [017](0017-implement-public-showcase-runtime.md) | SDK-free public-showcase runtime and safeguards | Accepted |
 
 The proposed ADRs deliberately retain unassigned specialist owners and pending
 acceptance records. ADR-013 authorises F3 preparation, ADR-014 authorises the
@@ -30,4 +31,8 @@ narrower public-investigation preparation, and ADR-015 accepts only its
 cross-application HTTP/SSE contract. ADR-016 accepts only the synthetic
 showcase fixture values and preserves the deferred S06–S08 operational
 boundary. None approves the detailed operational semantics in ADR-001–011 or
-claims the public runtime is implemented.
+the deferred operational runtime.
+
+ADR-017 implements the narrower database-free public runtime for S01–S05. It
+does not approve F3/F4 operations, browser cutover, Azure deployment, or a Groq
+model identifier.

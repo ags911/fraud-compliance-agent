@@ -121,14 +121,29 @@ jobs:
             echo "The image serves $served but the repository holds $committed."
             exit 1
           fi
+      - name: The image serves the SDK-free showcase runtime
+        run: |
+          stream=$(curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"scenario_id":"S04","execution_mode":"recorded"}' \
+            http://localhost:8000/showcase/investigations)
+          if ! echo "$stream" | grep -q '"event":"investigation_result"'; then
+            echo "The public image did not produce the recorded S04 investigation."
+            exit 1
+          fi
+          if ! echo "$stream" | grep -q 'event: done'; then
+            echo "The public image did not terminate its showcase stream."
+            exit 1
+          fi
       - name: The image runs as a non-root user
         run: |
           uid=$(docker exec api id -u)
           if [ "$uid" != "10001" ]; then echo "Container runs as uid $uid."; exit 1; fi
-      # The private SDK, the offline evaluation library, and its ML stack must
-      # never reach a published image.
+      # The repository-owned showcase package must ship, while the private SDK,
+      # offline evaluation library, and ML stack never reach the public image.
       - name: The image carries no private or offline code
         run: |
+          docker exec api python -c 'import server.showcase_investigation'
           installed=$(docker exec api ls /opt/venv/lib/python3.13/site-packages)
           for package in modelling arbiris sklearn pandas xgboost plotly; do
             if echo "$installed" | grep -qx "$package"; then

@@ -185,11 +185,11 @@ The image exists and is built and smoke-tested in CI, and reviewable Bicep for
 the Static Web App, the scale-to-zero Container App, and a budget alert is in
 `infra/azure/`. Nothing is deployed. The current image deliberately excludes
 the private Arbiris SDK, so `/scenarios` and both `/run` routes answer
-`503 demo_pipeline_unavailable` and only `/health` and the benchmark route
-work. The selected replacement is a repository-owned, SDK-free investigation,
-not publication of the SDK. Its HTTP/SSE contract and synthetic S01–S08
-fixtures are accepted, while implementation, evaluation and public abuse
-controls still block the full demo. Free hosting is suitable only
+`503 demo_pipeline_unavailable`. `/health`, the benchmark route, and the
+repository-owned `/showcase/investigations` S01–S05 runtime work without it.
+The replacement uses accepted HTTP/SSE contracts, synthetic fixtures and
+process-local abuse controls; browser integration and public deployment still
+block the full demo. Free hosting is suitable only
 for a synthetic demo, never as a production reliability decision.
 
 ## 7. Where each piece lives
@@ -198,7 +198,7 @@ for a synthetic demo, never as a production reliability decision.
 | --- | --- |
 | Browser UI, routing, accessibility, browser tests | `apps/web` |
 | Operational facts, routes, domain behaviour, API tests | `apps/api/server` |
-| Contracted public bounded investigation | Accepted HTTP/SSE boundary in `docs/contracts`; planned implementation in `apps/api/server/showcase_investigation`; design record in `docs/proposals/public-showcase-investigation.proposed.md` |
+| Contracted public bounded investigation | Implemented in `apps/api/server/showcase_investigation` against `docs/contracts/public-showcase-*`; design and remaining gates in `docs/proposals/public-showcase-investigation.proposed.md` |
 | Offline training and evaluation, never imported by the API | `apps/api/modelling` |
 | Versioned API and event contracts (the showcase OpenAPI and SSE event schema are frozen at v1.0) | `docs/contracts` |
 | Reviewable, non-secret configuration | `config` |
@@ -216,10 +216,10 @@ not mistake an absence for an oversight.
   ingestion can be built.
 - **No operational store.** Idempotency, durable history, review state, and
   replay all wait on that decision; the showcase is database-free today.
-- **The public-safe investigation is not built.** The product direction is now
-  first-party SDK-free code, recorded playback by default, and optional live
-  Groq execution. Its route truth table, contracts, evaluation and abuse/cost
-  controls remain open; the current image's run routes are still unavailable.
+- **The public-safe API is built but not connected or deployed.** Recorded
+  S01–S05 and optional bounded live S04 now exist locally. Browser consumption,
+  trusted Azure ingress verification, public smoke tests and explicit legacy
+  cutover remain open.
 - **No approved model target or threshold.** MVP 3 therefore has no numeric
   runtime score or threshold. Any later target, calibration method, threshold
   or promotion rule is an explicit F3a decision, not a default.

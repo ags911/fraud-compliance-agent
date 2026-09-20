@@ -20,15 +20,15 @@ and not unapproved production policy.
 starter artifacts that establish the format while Phase 0 resolves their
 semantics.
 
-`public-showcase-investigation.candidate.json` records the approved-for-
-preparation MVP 3 controlled-window limits: live mode defaults off, one live
+`public-showcase-investigation.v1.json` records the accepted MVP 3 runtime
+controlled-window limits: live mode defaults off, one live
 investigation at a time, two per observed client per 10 minutes, ten per
 process enablement window, a 30-minute window, and a 45-second overall timeout.
 It explicitly records that process-local counters reset on restart and are not
-durable quota enforcement. Runtime consumption remains forbidden until the
-investigation contract and implementation are accepted.
+durable quota enforcement. ADR-017 permits runtime consumption for this narrow
+showcase boundary.
 
-The same candidate file records the D9 provider boundary: Groq is the sole live
+The same accepted file records the D9 provider boundary: Groq is the sole live
 provider; credentials and allowlisted model selection stay server-side; every
 live run records its provider and model identifier; only validated structured
 contract fields enter ephemeral run state; and unavailable live execution

@@ -7,7 +7,10 @@ safety boundaries executable before and after runtime implementation.
 import copy
 import json
 
+from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
+
+from server.main import create_app
 
 OPENAPI_PATH = "docs/contracts/public-showcase-api.v1.openapi.json"
 EVENTS_PATH = "docs/contracts/public-showcase-events.v1.schema.json"
@@ -212,3 +215,78 @@ def test_contract_contains_no_runtime_score_threshold_or_action(
     assert '"model_score"' not in contract_text
     assert '"threshold"' not in contract_text
     assert '"simulated_action": {"const": "none"}' in contract_text
+
+
+def test_the_application_accepts_every_contract_request_value(repository_root) -> None:
+    """Bind the accepted request enums to what the served route really accepts.
+
+    The route is deliberately absent from the served OpenAPI document, so no
+    schema-equality check covers it. This drives the real application with each
+    contract-declared value instead: an accepted value never yields the
+    ``invalid_request`` error, and a value outside the contract always does.
+    """
+    openapi = _load_json(repository_root, OPENAPI_PATH)
+    request_schema = openapi["components"]["schemas"]["ShowcaseInvestigationRequest"]
+    client = TestClient(create_app())
+
+    for scenario_id in request_schema["properties"]["scenario_id"]["enum"]:
+        for execution_mode in request_schema["properties"]["execution_mode"]["enum"]:
+            response = client.post(
+                "/showcase/investigations",
+                json={"scenario_id": scenario_id, "execution_mode": execution_mode},
+            )
+            # Deferred S06-S08 answer with the contract's other declared status,
+            # never by rejecting a value the accepted contract permits.
+            assert response.status_code in {200, 503}, (
+                f"{scenario_id}/{execution_mode} is in the accepted contract but "
+                "the application refused it"
+            )
+
+    outside_contract = client.post(
+        "/showcase/investigations",
+        json={"scenario_id": "S04", "execution_mode": "streaming"},
+    )
+    assert outside_contract.status_code == 422
+
+
+def test_the_application_errors_match_the_accepted_error_contract(
+    repository_root,
+) -> None:
+    """Validate both served error bodies against the accepted error schema.
+
+    Without this, the redacted envelope in the application and the one in the
+    accepted contract could drift apart while both sides' own tests still pass.
+    """
+    openapi = _load_json(repository_root, OPENAPI_PATH)
+    operation = openapi["paths"]["/showcase/investigations"]["post"]
+    error_validator = Draft202012Validator(
+        _openapi_component_schema(openapi, "ShowcaseError")
+    )
+    client = TestClient(create_app())
+
+    served = {
+        "422": client.post("/showcase/investigations", json={"scenario_id": "S04"}),
+        "503": client.post(
+            "/showcase/investigations",
+            json={"scenario_id": "S06", "execution_mode": "recorded"},
+        ),
+    }
+
+    for status_code, response in served.items():
+        assert response.status_code == int(status_code)
+        error_validator.validate(response.json())
+        documented = operation["responses"][status_code]["content"]["application/json"][
+            "example"
+        ]
+        assert response.json() == documented
+
+
+def test_the_showcase_route_stays_out_of_the_frozen_demo_contract() -> None:
+    """Pin the decision to keep the streaming route out of the served schema.
+
+    ``docs/contracts/demo-api.v1.openapi.json`` is asserted as an exact match of
+    the generated document, so publishing this route there would silently widen
+    that frozen legacy contract. The route is described by its own accepted
+    OpenAPI file and verified by the two conformance tests above instead.
+    """
+    assert "/showcase/investigations" not in create_app().openapi()["paths"]

@@ -1,21 +1,21 @@
-"""Guard the candidate public-showcase live-access limits against drift.
+"""Guard the accepted public-showcase live-access limits against drift.
 
-The candidate remains non-runtime configuration. These checks preserve the
-product owner's bounded demonstration-window decision without claiming durable
-quota enforcement or deployment readiness.
+These checks preserve the product owner's bounded demonstration-window
+decision without claiming durable quota enforcement or deployment readiness.
 """
 
 import json
 
-CONFIG_PATH = "config/public-showcase-investigation.candidate.json"
+CONFIG_PATH = "config/public-showcase-investigation.v1.json"
 
 
-def test_candidate_live_mode_defaults_off_and_falls_back(repository_root) -> None:
-    """Keep recorded playback public while candidate live access defaults off."""
+def test_live_mode_defaults_off_and_falls_back(repository_root) -> None:
+    """Keep recorded playback public while live access defaults off."""
     config = json.loads((repository_root / CONFIG_PATH).read_text(encoding="utf-8"))
 
-    assert config["status"] == "candidate"
-    assert config["runtime_consumption"] == "forbidden"
+    assert config["schema_version"] == "1.0"
+    assert config["status"] == "accepted"
+    assert config["runtime_consumption"] == "allowed"
     assert config["recorded_playback"] == {
         "continuously_public": True,
         "fallback_when_live_unavailable": True,
@@ -26,7 +26,7 @@ def test_candidate_live_mode_defaults_off_and_falls_back(repository_root) -> Non
     assert config["live_mode"]["limit_outcome"] == "labelled_recorded_playback"
 
 
-def test_candidate_controlled_window_uses_the_approved_limits(repository_root) -> None:
+def test_controlled_window_uses_the_approved_limits(repository_root) -> None:
     """Fix the initial concurrency, client, window, ceiling and timeout values."""
     config = json.loads((repository_root / CONFIG_PATH).read_text(encoding="utf-8"))
     live = config["live_mode"]
@@ -45,7 +45,7 @@ def test_candidate_controlled_window_uses_the_approved_limits(repository_root) -
     assert live["overall_investigation_timeout_seconds"] == 45
 
 
-def test_candidate_rejects_always_on_anonymous_live_mode(repository_root) -> None:
+def test_rejects_always_on_anonymous_live_mode(repository_root) -> None:
     """Require durable or provider-side cost control before always-on live access."""
     config = json.loads((repository_root / CONFIG_PATH).read_text(encoding="utf-8"))
 
@@ -57,7 +57,7 @@ def test_candidate_rejects_always_on_anonymous_live_mode(repository_root) -> Non
     }
 
 
-def test_candidate_provider_policy_is_server_side_and_traceable(
+def test_provider_policy_is_server_side_and_traceable(
     repository_root,
 ) -> None:
     """Require one configured provider and traceable model identity per live run."""
@@ -72,7 +72,7 @@ def test_candidate_provider_policy_is_server_side_and_traceable(
     assert provider["output_boundary"] == "validated_structured_output_only"
 
 
-def test_candidate_provider_policy_has_no_second_llm_or_raw_logging(
+def test_provider_policy_has_no_second_llm_or_raw_logging(
     repository_root,
 ) -> None:
     """Keep failures redacted and route unavailable live runs to playback."""
@@ -88,7 +88,7 @@ def test_candidate_provider_policy_has_no_second_llm_or_raw_logging(
     assert provider["record_boundary"] == "validated_contract_fields_only_ephemeral"
 
 
-def test_candidate_migration_keeps_legacy_local_until_all_gates_pass(
+def test_migration_keeps_legacy_local_until_all_gates_pass(
     repository_root,
 ) -> None:
     """Require contract, runtime, browser and image evidence before cutover."""
@@ -108,7 +108,7 @@ def test_candidate_migration_keeps_legacy_local_until_all_gates_pass(
     assert migration["cutover_requires_explicit_decision"] is True
 
 
-def test_candidate_retirement_removes_active_dependency_but_preserves_evidence(
+def test_retirement_removes_active_dependency_but_preserves_evidence(
     repository_root,
 ) -> None:
     """Retire active legacy code without deleting its reviewable history."""
