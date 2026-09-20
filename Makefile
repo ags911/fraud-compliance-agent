@@ -1,4 +1,4 @@
-.PHONY: architecture-diagrams check web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-contract api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
+.PHONY: architecture-diagrams check acceptance-mvp0 acceptance-mvp1 acceptance-mvp2 acceptance-mvp3-predeploy acceptance-mvp3-public web-build web-lint web-design-check web-test api-test api-smoke api-lint api-format-check api-notebook-lint api-docstring-lint api-contract api-notebook-kernel notebook-policy-check notebook-policy-fix notebook-status notebook-synthetic corpus-sparkov-inspect corpus-sparkov-temporal-inspect corpus-sparkov-build-mechanics repository-inventory repository-inventory-check data-check
 
 # Use the private Arbiris SDK when its submodule is initialised; otherwise run
 # without it. The SDK-backed demo pipeline tests skip when it is absent.
@@ -6,6 +6,21 @@ SDK_EXTRA := $(if $(wildcard apps/api/vendor/arbiris-sdk/pyproject.toml),--extra
 UV_RUN := uv run $(SDK_EXTRA)
 
 check: web-lint web-design-check web-build web-test api-lint api-format-check api-notebook-lint api-docstring-lint notebook-policy-check api-test
+
+# Release gates are deliberately small compositions of the checks that prove a
+# particular MVP boundary.  MVP 3 has separate pre-deploy and public-runtime
+# gates because the latter cannot be truthfully run without Azure credentials.
+acceptance-mvp0: check
+
+acceptance-mvp1: web-lint web-design-check web-build web-test
+
+acceptance-mvp2: api-test web-test
+	bash ./scripts/run_mvp2_local_acceptance.sh
+
+acceptance-mvp3-predeploy: check
+
+acceptance-mvp3-public:
+	bash ./scripts/verify_public_showcase.sh
 
 web-build:
 	npm --prefix apps/web run build

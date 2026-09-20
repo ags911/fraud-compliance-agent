@@ -8,7 +8,7 @@ This plan consolidates the former console plan, dual-tier build plan, and ML
 visualisation notes. Product requirements, decision flow, S01–S08, and I1–I5
 scope remain in the PRD; model-specific evidence remains in the fast-path
 technical record. This document owns delivery order, UI integration, and the
-showcase completion checklist without duplicating those sources.
+MVP acceptance and verification matrix without duplicating those sources.
 
 ## Source material
 
@@ -196,12 +196,61 @@ and useful results appear before explanatory material.
 - Model promotion is a privileged, attributable mutation with confirmation and
   resulting evidence. It does not belong in the general Insights read view.
 
-## MVP release plan and screen inventory
+## MVP roadmap
 
-The F0–F6 sequence below describes technical dependency order. The MVPs are
-the user-facing release slices built from that sequence. A screen is not
-considered delivered merely because the sidebar contains its label: it needs a
-truthful state and the data contract stated below.
+This is the canonical user-facing release roadmap. Each MVP defines its purpose,
+scope, and release boundary; its completion and verification matrix follows
+below. A screen is not considered delivered merely because the sidebar contains
+its label: it needs a truthful state, a stated data contract, and recorded
+verification.
+
+### Release governance
+
+The roadmap and the acceptance matrix are the two authoritative planning views:
+the roadmap defines what may be released, and the matrix records evidence that
+it is ready. A checkmark is evidence of a completed item, not a release
+authorisation. Before any public release, name a single accountable person for
+each role below; until then, the project owner is the decision-maker and no
+unassigned role may silently approve its own work.
+
+| Decision area | Accountable role | Required decision record | Release evidence |
+| --- | --- | --- | --- |
+| Scope, audience, and truthful product claims | Product owner | PRD or accepted plan change | MVP acceptance review against the roadmap |
+| Public API shapes and compatibility | API owner | Versioned contract and ADR where cross-cutting | Contract tests and `make api-contract` review |
+| Data source, mapping, enrichment, features, and model use | Data/model owner | Data-governance approval and versioned mapping/feature contract | Reproducible fixture and boundary tests |
+| Public cloud, identity, secrets, cost, and release | Platform/release owner | Reviewed infrastructure change and deployment runbook | Pre-deploy gate plus deployed public smoke-test record |
+
+No role or approval is invented by this table. Record named owners, the commit
+or change request, date, and any accepted exception when the project gains a
+team or public deployment surface.
+
+### Acceptance commands and release criteria
+
+Run the listed command from the repository root after a material change. Store
+the command, commit SHA, date, environment, result, and any exception with the
+release decision; passing automated tests alone never overrides the safety and
+scope boundaries in the roadmap.
+
+| Boundary | Reproducible command | Release criteria beyond the command |
+| --- | --- | --- |
+| MVP 0 — local engineering foundation | `make acceptance-mvp0` | Contracts are current, local error/CORS safeguards pass, and no public-host claim is made. |
+| MVP 1 — guided walkthrough | `make acceptance-mvp1` | A human completes keyboard and screen-reader assistive-technology review before public sharing. |
+| MVP 2 — live decision demonstration | `make acceptance-mvp2` | The command owns a local FastAPI process and runs A–F, the disclosed custom baseline, and the explicit LLM-outage path in the browser; all outcomes remain visibly simulated. |
+| MVP 3 — pre-deploy | `make acceptance-mvp3-predeploy` | Review Bicep parameters, OIDC federation, secret references, budget recipient, approved public-runtime boundary, and exact web origin. |
+| MVP 3 — deployed public showcase | `SHOWCASE_WEB_URL=… SHOWCASE_API_URL=… make acceptance-mvp3-public` | Record the public URL, health/cold-start/unavailable/retry journey, explicit CORS grant and foreign-origin rejection, deployment architecture/runbook, budget-alert delivery, and teardown owner. |
+
+The MVP 3 public command deliberately cannot pass until Azure is configured; it
+checks public health and CORS only and does not deploy, inject secrets, or
+substitute for a manual public-demo journey. This keeps the currently local
+showcase local without disguising an unperformed deployment check.
+
+### MVP 0 — Local engineering foundation
+
+Goal: keep the current synthetic showcase safe to change and reproducible on a
+developer machine. It freezes the Phase 0 contract, local CORS/error boundary,
+deterministic benchmark evidence, and the test gate. It does **not** establish a
+public runtime, Azure identity, Plaid ingestion, production model serving, or
+payment authority.
 
 ### MVP 1 — Guided product walkthrough
 
@@ -269,9 +318,9 @@ transaction contracts are available.
 | Transaction detail | `/transactions/:id` | Point-in-time source facts, feature snapshot, deterministic controls, model score/version, reason codes, authority, action outcome, evidence links, and lifecycle timeline. |
 | Rules performance | `/rules/performance` | Versioned rules, enabled state, match/outcome counts, and time series from the API. Preserve the approved visual contract and shared range state. |
 
-This deferred extension maps primarily to F3. It requires durable data: a retry must never read
-as a duplicate action, and `PASS` (recommendation) must remain distinct from
-`RELEASE` (executed action).
+This deferred extension maps primarily to F3 and F3a. It requires durable data:
+a retry must never read as a duplicate action, and `PASS` (recommendation) must
+remain distinct from `RELEASE` (executed action).
 
 ### Deferred extension 2 — Investigation and human review
 
@@ -306,26 +355,32 @@ truthful view of model health, drift, integrations, and replay.
 This deferred extension maps to F6. It is a production-shaped research milestone, not an excuse to
 move governance into the operator dashboard or display unverifiable metrics.
 
-### MVP progression at a glance
+### Dependencies, risks, and release blockers
 
-| MVP | Primary user | Core question answered | Screens added or made live |
+This register records material dependencies that repository tests cannot close.
+Review it at each release decision; an unresolved blocker prevents the affected
+scope from being called complete, rather than being converted into an optimistic
+checkmark.
+
+| Dependency or risk | Affected boundary | Owner to name | Required resolution or evidence |
 | --- | --- | --- | --- |
-| MVP 1 | Recruiter, employer, stakeholder | “What does this product do?” | Overview, Not Found, frozen reference for comparison |
-| MVP 2 | Demonstrator, fraud operator | “How does one decision run?” | New transaction, streamed decision workspace |
-| MVP 3 | Recruiter, employer, stakeholder | “Can I inspect a deployed cloud implementation?” | Azure-hosted MVP 1–2 screens, deployment/runbook evidence, health/cold-start state |
-| Deferred 1 | Fraud operator | “What has happened and why?” | Live Overview, Transactions, Transaction detail, Rules performance |
-| Deferred 2 | Fraud reviewer | “Can I investigate and decide this safely?” | Investigation, Reviews queue, Review detail, audit trail |
-| Deferred 3 | Administrator, model approver, operator | “Is the system healthy, controlled, and auditable?” | Models, Drift, Settings, Integrations, Replay |
+| Azure subscription, Entra OIDC federation, and a monitored budget-alert recipient are absent. | MVP 3 public release | Platform/release owner | Provision through the reviewed runbook; run and record the public acceptance command. |
+| The private Arbiris SDK cannot be placed in the public container image. | MVP 3 live-run surface | API and product owners | Approve a public-safe runtime or restrict the public site to the walkthrough/explicit unavailable state. |
+| The current contract is an accepted legacy synthetic Phase 0 boundary only. | Any Phase 2+ operational work | API owner | Publish a new accepted operational contract; do not extend the demo contract by implication. |
+| Plaid supplies source facts, not fraud labels or final outcomes. | F3a and later trends | Data/model owner | Approve canonical mapping, sanitisation, fixture provenance, feature snapshot, score/route semantics, and source-to-score tests. |
+| Sparkov is mechanics-only evaluation evidence, not a runtime scoring source. | Benchmark and model claims | Data/model owner | Preserve its non-deployable label and use an approved served-model decision before runtime scoring. |
+| Automated accessibility passes do not replace assistive-technology review. | MVP 1 and MVP 3 | Product owner | Retain keyboard and screen-reader findings, fixes, and accepted residual issues. |
 
-## Showcase MVP completion checklist
+## MVP acceptance and verification matrix
 
-This is the operational source of truth for the recruiter-showcase delivery
-state. A checked item has repository evidence as of 2026-09-19; an unchecked
-item is planned, requires fresh verification, or needs a decision before it
-can be claimed. Re-run the relevant check after a material change rather than
-relying on a historical tick.
+This is the operational companion to the roadmap above, not a second release
+plan. It records the acceptance criteria, engineering discipline, verification
+type, and evidence for every MVP completion claim. A checked item has repository
+evidence as of 2026-09-20; an unchecked item is planned, needs fresh
+verification, or requires an external decision. Re-run the relevant check after
+a material change rather than relying on a historical tick.
 
-Progress on 2026-09-19: MVP 0 has 9 of 9 items checked locally, MVP 1 has 6 of 6 automated
+Progress on 2026-09-20: MVP 0 has 9 of 9 items checked locally, MVP 1 has 6 of 6 automated
 items checked (manual assistive-technology review remains), MVP 2 has 6 of 6, and MVP 3
 has 3 of 12 completed/configuration-reviewed items plus 1 partial configuration item. Several
 unchecked items have partial evidence, noted
@@ -438,79 +493,24 @@ revalidation-failed, accepted/pending, and committed-with-evidence-pending where
 the backend contract permits those states. Raw backend exception strings are
 never rendered directly.
 
-## Delivery sequence
+## Technical delivery sequence
 
-### F0 — Preserve the design and define contracts
+“F” means **Foundation stage**: an internal technical capability stage, not a
+user-facing MVP or release. F3a is an explicit substage between F3 and F4,
+added so the source-to-score chain cannot be hidden inside Plaid integration or
+dashboard work. Together these stages explain what must be available before a
+later roadmap release can truthfully ship.
 
-Status: reference clone created; visual regression coverage exists.
-
-- Keep the reference route immutable.
-- Add a frontend API capability map tied to the Phase 0 contract artifacts.
-- Define generated/shared TypeScript schemas only after the backend contracts
-  are approved.
-- Gate: the reference route and current Rules Performance route render
-  identically on desktop and mobile.
-
-### F1 — Build the real application shell
-
-- Introduce the product router and `AppShell`.
-- Convert sidebar items to real links with route-derived active state.
-- Add global error handling, route loading states, connection status, and URL
-  search/filter conventions.
-- Keep the existing demo console available during migration.
-- Gate: keyboard, mobile-sheet, responsive, accessibility, and visual shell
-  tests pass.
-
-### F2 — Integrate what the API supports today
-
-- Rehouse scenario selection and custom run submission in the approved shell.
-- Present streamed nodes as a transaction decision workspace.
-- Show real Sim A, Sim B, counterfactual, signed-record, outage, and
-  evidence-path data; label all payment actions as simulated.
-- Do not manufacture aggregate dashboard history from one transient run.
-- Gate: scenarios A–F and the LLM outage can be demonstrated end to end.
-
-### F3 — Fast-path operations
-
-Dependency: backend Phase 2 contracts and endpoints, including authentication
-before any exposed mutable operational request.
-
-- Add score/process workflows, transaction list/detail, recent decisions, and
-  overview metrics backed by PostgreSQL state.
-- Surface model, policy, feature, run, and evidence lineage.
-- Gate: retries do not imply duplicate actions, `PASS` and `RELEASE` remain
-  distinct, and fast-path UI has no LLM dependency.
-
-### F4 — Investigation workspace
-
-Dependency: backend Phase 3.
-
-- Add typed investigation status, tool calls/results, evidence factors, and
-  fail-safe outcomes to transaction detail.
-- Gate: ambiguous-only slow path, timeout/malformed-data states, and the
-  Phase-0-approved scenario mapping are represented without hidden
-  chain-of-thought. G/H/L/N remain proposed coverage IDs until then; Scenario
-  L must not bypass a hard HOLD through investigation.
-
-### F5 — Human review and authority
-
-Dependency: backend Phase 4 plus authentication.
-
-- Add review queue/detail, claiming, versioned decisions, role gates,
-  authority/oversight explanations, and override outcomes.
-- Gate: stale review conflicts and unauthorized actions cannot appear
-  successful; scenarios J/K are demonstrable.
-
-### F6 — Monitoring, Plaid, replay, and hardening
-
-Dependency: backend Phases 5–6.
-
-- Connect overview/model-health/drift data and Plaid operational states.
-- Add immutable replay comparison without action execution.
-- Complete security, observability, performance, browser, accessibility, and
-  cross-route visual regression coverage.
-- Gate: scenarios A–N and the seven portfolio demo flows are coherent across
-  the console.
+| Status | Foundation stage | Capability and deliverable | Inputs / dependencies | Verification gate | Maps to release |
+| --- | --- | --- | --- | --- | --- |
+| ✓ | F0 — Design and contract foundation | Preserve the immutable reference route; maintain the Phase 0 capability map and accepted contract artifacts. | Existing reference and accepted Phase 0 API contract. | Reference and Rules Performance routes match at desktop and mobile; contract tests pass. | MVP 0 |
+| ✓ | F1 — Application-shell foundation | Product router, `AppShell`, route-derived navigation, global loading/error/connection states, and URL search/filter conventions. | F0 design and contract boundary. | Keyboard, responsive/mobile-sheet, accessibility, and visual shell tests pass. | MVP 1 |
+| ✓ | F2 — Current API integration foundation | Scenario/custom-run submission and streamed decision workspace in the approved shell; Sim A/B, counterfactual, signed record, outage, and evidence path remain visibly simulated. | Current Phase 0 API only. No aggregate history is manufactured from a transient run. | A–F and the LLM outage complete end to end with truthful loading, error, and terminal states. | MVP 2 |
+| — | F3 — Fast-path operations foundation | Durable score/process workflows, transaction list/detail, recent decisions, overview metrics, and model/policy/feature/run/evidence lineage. | Accepted Phase 2 operational contract, PostgreSQL state, and authentication before any exposed mutation. | Retries cannot look like duplicate actions; `PASS` (recommendation) remains distinct from `RELEASE` (executed action); no LLM dependency. | Deferred extension 1 |
+| — | F3a — Approved source-to-score foundation | Plaid Sandbox source facts flow through canonical mapping, sanitised reproducible fixtures, approved enrichment, immutable feature snapshots, an approved served model, then deterministic routing. Sparkov remains mechanics-only evaluation evidence. | F3 operational transaction contract plus explicit data-governance and model approvals. Raw provider/customer data never enters public assets, test snapshots, or the browser bundle. | Fixture-to-route tests prove mapping validation, sanitisation, lineage/version capture, idempotency, recommendation/action separation, and fail-safe handling for unavailable enrichment or model service. | Deferred extension 1 |
+| — | F4 — Investigation foundation | Typed investigation status, tool-call/result evidence, factors, and fail-safe outcomes in transaction detail. | Backend Phase 3. | The slow path is ambiguous-only; timeout/malformed-data states and approved scenario mapping are visible without chain-of-thought. Proposed G/H/L/N remain unclaimed; L cannot bypass a hard HOLD. | Deferred extension 2 |
+| — | F5 — Human-review foundation | Review queue/detail, claiming, versioned decisions, role gates, authority/oversight explanation, and override outcomes. | Backend Phase 4 and authentication. | Stale conflicts and unauthorised actions never appear successful; scenarios J/K are demonstrable. | Deferred extension 2 |
+| — | F6 — Monitoring, integration-health, replay, and hardening foundation | Model health/drift, operational state for the F3a source integration, immutable replay, and security/observability/performance/browser/accessibility/visual hardening. | Backend Phases 5–6 and the approved F3a source-to-score path. It does not create a second Plaid ingestion or scoring path. | A–N and the seven portfolio demo flows are coherent across the console; replay never executes a payment action. | Deferred extension 3 |
 
 ## First implementation slice
 

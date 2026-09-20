@@ -246,7 +246,7 @@ MVP 3 is complete when the public synthetic demo can be run reliably enough for
 a portfolio review, costs are guarded, deployment limitations are visible, and
 the project can be reproduced locally. It is not a production-readiness claim.
 The current checked/unchecked implementation evidence is maintained in the
-[showcase MVP completion checklist](implementation-plan.md#showcase-mvp-completion-checklist).
+[MVP acceptance and verification matrix](implementation-plan.md#mvp-acceptance-and-verification-matrix).
 
 ### 9.1 Deferred engineering increments
 
