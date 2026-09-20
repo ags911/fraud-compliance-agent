@@ -37,6 +37,13 @@ test.describe("Live decision stream states", () => {
     await expect(page.getByText("Raw JSON")).toHaveCount(0)
     if (testInfo.project.name === "mobile") {
       await page.getByText("Signature present").scrollIntoViewIfNeeded()
+    } else {
+      // Clicking Run agent leaves focus on the button, so the browser scrolls the
+      // shadcn inset container to keep it in view once the result re-renders. That
+      // inner scroll hides the top bar from the full-page capture, so reset it.
+      await page.evaluate(() => {
+        document.querySelector("[data-slot='sidebar-inset']")?.scrollTo(0, 0)
+      })
     }
     await expect(page).toHaveScreenshot(`live-decision-record-${testInfo.project.name}.png`, {
       fullPage: true,
