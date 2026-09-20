@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { CirclePlay, ShieldCheck } from 'lucide-react'
+import { CircleHelp, CirclePlay, ShieldCheck } from 'lucide-react'
 
+import { ExplainDecision } from '@/components/console/ExplainDecision'
+import { Badge } from '@/components/ui/badge'
 import {
   ShowcaseEvidenceTrace,
   ShowcaseModeLabel,
@@ -16,6 +18,7 @@ import {
 } from '@/components/payments-ui'
 import type { ShowcaseExecutionMode, ShowcaseScenarioId } from '@/lib/showcase-types'
 import { useShowcaseInvestigation } from '@/lib/useShowcaseInvestigation'
+import { useShowcaseInvestigationTour } from '@/lib/useShowcaseInvestigationTour'
 
 /**
  * The scenarios the database-free showcase can run. S06-S08 are deliberately
@@ -42,6 +45,7 @@ export function ShowcaseInvestigationPage() {
   const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>('S04')
   const [executionMode, setExecutionMode] = useState<ShowcaseExecutionMode>('recorded')
   const investigation = useShowcaseInvestigation()
+  const tour = useShowcaseInvestigationTour()
   const running = investigation.status === 'running'
 
   return (
@@ -51,6 +55,12 @@ export function ShowcaseInvestigationPage() {
         <PaymentsPageHeading
           title="Showcase investigation"
           description="Run one bounded synthetic scenario and inspect how evidence, recommendation and oversight stay separate."
+          actions={
+            <button className="payments-button" type="button" onClick={tour.start}>
+              <CircleHelp aria-hidden="true" size={16} strokeWidth={1.6} />
+              Tour this workspace
+            </button>
+          }
         />
 
         <section
@@ -72,6 +82,7 @@ export function ShowcaseInvestigationPage() {
 
         <div className="grid items-start gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
           <PaymentsPanel
+            id="showcase-scenario-controls"
             title="Scenario"
             description="Pick a synthetic path, then run it."
             labelledBy="showcase-scenario-heading"
@@ -148,6 +159,7 @@ export function ShowcaseInvestigationPage() {
           </PaymentsPanel>
 
           <PaymentsPanel
+            id="showcase-trace"
             title="Investigation trace"
             description="Execution mode, evidence and recommendation for the selected scenario."
             labelledBy="showcase-trace-heading"
@@ -196,6 +208,15 @@ export function ShowcaseInvestigationPage() {
             </div>
           </PaymentsPanel>
         </div>
+
+        <PaymentsPanel
+          title="Explain this decision"
+          description="A preview that answers only from this run's own events, and names the source of each answer."
+          labelledBy="showcase-explain-heading"
+          action={<Badge variant="outline">Preview</Badge>}
+        >
+          <ExplainDecision run={investigation} />
+        </PaymentsPanel>
       </PaymentsPageMain>
     </>
   )

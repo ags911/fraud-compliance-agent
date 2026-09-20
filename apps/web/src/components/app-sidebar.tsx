@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
+import { API_HEALTH_LABELS, useApiHealth } from "@/lib/useApiHealth"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -40,6 +41,37 @@ const navItems: NavItem[] = [
 
 const focusRing =
   "focus-visible:ring-0 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(99,91,255,0.32)]"
+
+const HEALTH_DOT_COLOURS = {
+  checking: "bg-sidebar-foreground/40",
+  waking: "bg-[#a16207]",
+  ready: "bg-[#087f45]",
+  unavailable: "bg-[#b42318]",
+} as const
+
+/**
+ * Report the demo API's observed status, never an assumed one.
+ *
+ * The demo API runs on scale-to-zero compute, so a wake-up is shown as a
+ * wake-up rather than as an outage or as health nobody has checked.
+ */
+function ApiHealthFooter() {
+  const health = useApiHealth()
+  return (
+    <p
+      className="flex items-center gap-[7px] text-sidebar-foreground/70 group-data-[collapsible=icon]:gap-0"
+      data-testid="api-health"
+      data-status={health.status}
+    >
+      <span
+        className={cn("size-[7px] shrink-0 rounded-full", HEALTH_DOT_COLOURS[health.status])}
+        aria-hidden="true"
+      />
+      {/* The status is text as well as colour, so it survives without colour. */}
+      <span className="group-data-[collapsible=icon]:hidden">{API_HEALTH_LABELS[health.status]}</span>
+    </p>
+  )
+}
 
 export function AppSidebar({
   activeItem = "Rules",
@@ -132,10 +164,7 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter className={cn("gap-[5px] border-t border-sidebar-border p-2 payments-type-metadata group-data-[collapsible=icon]:items-center")}>
         <p className="font-medium group-data-[collapsible=icon]:hidden">Policy set v12</p>
-        <p className="flex items-center gap-[7px] text-sidebar-foreground/70 group-data-[collapsible=icon]:gap-0">
-          <span className="size-[7px] shrink-0 rounded-full bg-[#087f45]" aria-hidden="true" />
-          <span className="group-data-[collapsible=icon]:hidden">All systems operational</span>
-        </p>
+        <ApiHealthFooter />
       </SidebarFooter>
     </Sidebar>
   )
