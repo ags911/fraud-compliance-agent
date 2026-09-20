@@ -12,7 +12,8 @@ service: "Application service" {
   class: group
   grid-columns: 2
   api: "Demo API\nFastAPI, Python 3.13\nhealth, scenarios,\nSSE runs, model summary" { class: built }
-  pipeline: "Decision pipeline\nLangGraph, in process" { class: built }
+  pipeline: "Legacy local pipeline\nprivate SDK, LangGraph\nin process" { class: built }
+  public_agent: "Public investigation\nSDK-free bounded tool loop\nS04 normal, S05 failure" { class: proposed }
   store: "Operational store\nPostgreSQL, none today" { class: planned; shape: cylinder }
 }
 

@@ -1,0 +1,71 @@
+{
+  "SourceEvent": {
+    "schema_version": "0.1-proposed",
+    "source_event_id": "source-event-001",
+    "source_system": "synthetic",
+    "source_revision": "revision-001",
+    "event_type": "source_observed",
+    "observed_at": "2026-01-15T10:30:00Z",
+    "available_at": "2026-01-15T10:31:00Z",
+    "event_time": "2026-01-15T10:29:00Z",
+    "event_time_precision": "second",
+    "correction_of_source_event_id": null,
+    "payload_reference": "sanitised-fixture://source-event-001"
+  },
+  "CanonicalTransaction": {
+    "schema_version": "0.1-proposed",
+    "transaction_id": "transaction-001",
+    "source_event_id": "source-event-001",
+    "source_revision": "revision-001",
+    "correction_of_transaction_id": null,
+    "customer_reference": "synthetic-customer-001",
+    "account_reference": "synthetic-account-001",
+    "payee_reference": null,
+    "event_time": "2026-01-15T10:29:00Z",
+    "event_time_precision": "second",
+    "available_at": "2026-01-15T10:31:00Z",
+    "money": {"amount_minor": 4200, "currency": "GBP"},
+    "direction": "outbound",
+    "payment_channel": "online",
+    "field_availability": {"payee_reference": "unavailable", "payment_channel": "simulated"}
+  },
+  "FeatureSnapshot": {
+    "schema_version": "0.1-proposed",
+    "snapshot_id": "snapshot-001",
+    "transaction_id": "transaction-001",
+    "feature_schema_version": "0.1-proposed",
+    "as_of": "2026-01-15T10:31:00Z",
+    "source_event_ids": ["source-event-001"],
+    "features": [{"name": "amount_minor", "data_type": "integer", "availability": "observed", "value": 4200}],
+    "snapshot_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "Prediction": {
+    "schema_version": "0.1-proposed",
+    "prediction_id": "prediction-001",
+    "snapshot_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "scoring_implementation": "deterministic-test-double",
+    "model_version": null,
+    "policy_version": "test-policy-001",
+    "score": null,
+    "recommendation": "HOLD",
+    "reason_codes": ["TEST_FIXED_HOLD"]
+  },
+  "RunContext": {
+    "schema_version": "0.1-proposed",
+    "run_id": "run-001",
+    "correlation_id": "correlation-001",
+    "idempotency_key": "synthetic-key-001",
+    "request_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "replay_mode": "none"
+  },
+  "OutcomeLabel": {
+    "schema_version": "0.1-proposed",
+    "label_id": "label-001",
+    "transaction_id": "transaction-001",
+    "label_type": "unknown",
+    "label_value": "unknown",
+    "observed_at": "2026-02-15T10:31:00Z",
+    "available_at": "2026-02-15T10:32:00Z",
+    "provenance": "synthetic-contract-test-only"
+  }
+}

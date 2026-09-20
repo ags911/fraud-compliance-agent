@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fraud-compliance-agent.invalid/proposals/canonical-domain.v0.proposed.schema.json",
+  "title": "Proposed canonical domain entities",
+  "description": "Contract-review schemas only. They are not accepted runtime contracts and application code must not consume them.",
+  "x-approval-status": "proposed",
+  "x-runtime-consumption": "forbidden",
+  "$defs": {
+    "SourceEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "source_event_id", "source_system", "source_revision", "event_type", "observed_at", "available_at", "event_time", "event_time_precision"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "source_system": {"enum": ["synthetic", "plaid_sandbox", "other-approved-source"]},
+        "source_revision": {"type": "string", "minLength": 1},
+        "event_type": {"enum": ["source_observed", "source_modified", "source_removed"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "available_at": {"type": "string", "format": "date-time"},
+        "event_time": {"type": "string", "format": "date-time"},
+        "event_time_precision": {"enum": ["date", "minute", "second"]},
+        "correction_of_source_event_id": {"type": ["string", "null"]},
+        "payload_reference": {"type": ["string", "null"]}
+      }
+    },
+    "CanonicalTransaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "transaction_id", "source_event_id", "source_revision", "customer_reference", "account_reference", "event_time", "event_time_precision", "available_at", "money", "direction", "field_availability"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "transaction_id": {"type": "string", "minLength": 1},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1},
+        "correction_of_transaction_id": {"type": ["string", "null"]},
+        "customer_reference": {"type": "string", "minLength": 1},
+        "account_reference": {"type": "string", "minLength": 1},
+        "payee_reference": {"type": ["string", "null"]},
+        "event_time": {"type": "string", "format": "date-time"},
+        "event_time_precision": {"enum": ["date", "minute", "second"]},
+        "available_at": {"type": "string", "format": "date-time"},
+        "money": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount_minor", "currency"],
+          "properties": {
+            "amount_minor": {"type": "integer", "minimum": 0},
+            "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+          }
+        },
+        "direction": {"enum": ["inbound", "outbound"]},
+        "payment_channel": {"type": ["string", "null"]},
+        "field_availability": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"enum": ["observed", "derivable", "unavailable", "simulated"]}
+        }
+      }
+    },
+    "FeatureSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "snapshot_id", "transaction_id", "feature_schema_version", "as_of", "source_event_ids", "features", "snapshot_sha256"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "transaction_id": {"type": "string", "minLength": 1},
+        "feature_schema_version": {"type": "string", "minLength": 1},
+        "as_of": {"type": "string", "format": "date-time"},
+        "source_event_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "data_type", "availability", "value"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "data_type": {"enum": ["integer", "number", "boolean", "string"]},
+              "availability": {"enum": ["observed", "derived", "unavailable", "simulated"]},
+              "value": {"type": ["integer", "number", "boolean", "string", "null"]}
+            }
+          }
+        },
+        "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "Prediction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "prediction_id", "snapshot_sha256", "scoring_implementation", "model_version", "policy_version", "score", "recommendation", "reason_codes"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "prediction_id": {"type": "string", "minLength": 1},
+        "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scoring_implementation": {"enum": ["deterministic-test-double", "approved-served-model"]},
+        "model_version": {"type": ["string", "null"]},
+        "policy_version": {"type": "string", "minLength": 1},
+        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "recommendation": {"enum": ["PASS", "CHALLENGE", "HOLD"]},
+        "reason_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "RunContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "run_id", "correlation_id", "idempotency_key", "request_fingerprint", "replay_mode"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "run_id": {"type": "string", "minLength": 1},
+        "correlation_id": {"type": "string", "minLength": 1},
+        "idempotency_key": {"type": "string", "minLength": 8},
+        "request_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "replay_mode": {"enum": ["none", "comparison-only"]}
+      }
+    },
+    "OutcomeLabel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "label_id", "transaction_id", "label_type", "label_value", "observed_at", "available_at", "provenance"],
+      "properties": {
+        "schema_version": {"const": "0.1-proposed"},
+        "label_id": {"type": "string", "minLength": 1},
+        "transaction_id": {"type": "string", "minLength": 1},
+        "label_type": {"enum": ["unauthorised-fraud", "app-scam", "reviewer-disposition", "unknown"]},
+        "label_value": {"enum": ["positive", "negative", "unknown"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "available_at": {"type": "string", "format": "date-time"},
+        "provenance": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

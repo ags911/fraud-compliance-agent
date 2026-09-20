@@ -39,9 +39,9 @@ input facts, not an endorsement of the draft canonical money representation.
 | S01 | Trusted pass | Partial candidates: B, possibly E | Define eligibility and deterministic expected result |
 | S02 | High-risk hold | Partial candidate: A | Freeze controls/reason-code and recommendation semantics |
 | S03 | APP-drain hold | Partial candidates: D and F | Preserve distinct drain/mule variants and define target policy |
-| S04 | Ambiguous challenge/investigation | None | New deterministic fixture with fixed tool/provider responses |
-| S05 | Provider/model outage hold | Demo toggle exists (`simulate_llm_outage`), no target fixture | Create an explicit fixture and redacted stable error/route expectations |
-| S06 | Reviewer conflict/concurrency | None | New stateful fixture after review contract is specified |
+| S04 | Ambiguous challenge/investigation | None | New deterministic fixture that requires at least two distinct read-only evidence-tool calls and fixed provider responses |
+| S05 | Provider/model outage hold | Demo toggle exists (`simulate_llm_outage`), no target fixture | Create an explicit deterministic no-provider-call failure fixture and redacted stable error/route expectations |
+| S06 | Reviewer conflict/concurrency | None | New stateful fixture after the review contract is specified; it may reference an immutable recorded S04 recommendation snapshot without invoking the agent live |
 | S07 | Idempotency/retry | None | New processing fixture after HTTP/idempotency contract is specified |
 | S08 | Pending correction/replay | None | New source-event correction/replay fixture after canonical contract is specified |
 
@@ -69,6 +69,11 @@ P0-01 should add isolated, no-network tests that capture for every A–F:
 
 Tests must distinguish observed legacy behavior from the approved target. A
 passing legacy test never approves a risk rule or target scenario mapping.
+
+The candidate relationship table is the required mapping record at this stage:
+it explicitly includes partial overlaps and “no direct equivalent.” It must not
+be promoted to an accepted A–F/S01–S08 equivalence table by filling every row
+with a convenient match.
 
 ## Promotion path
 

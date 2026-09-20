@@ -2,7 +2,7 @@
 
 A production-shaped fintech risk showcase in development. It demonstrates deterministic fraud controls, supervised-tabular-ML evaluation mechanics, agentic investigation, delegated authority, human review, simulated payment actions, and independently signed Arbiris evidence without claiming to be a production payment or compliance service.
 
-The repository currently contains the original fraud-compliance demo API. It runs the `fraud_compliance_agent_v2` LangGraph example from the pinned [Arbiris SDK](https://github.com/ags911/arbiris-sdk) and streams node progress to the [Fraud Compliance Agent Frontend](https://github.com/ags911/fraud-compliance-agent-frontend). The later capabilities described below are a proposed production-shaped showcase direction and are not all implemented or approved.
+The repository currently contains the original fraud-compliance demo API. It runs the `fraud_compliance_agent_v2` LangGraph example from the pinned [Arbiris SDK](https://github.com/ags911/arbiris-sdk) and streams node progress to the operator console. For MVP 3, the accepted contract defines a separate repository-owned, SDK-free bounded LangGraph investigation that can ship in the public image; the runtime is not implemented. The later operational capabilities described below are also not all implemented or approved.
 
 ## Product status
 
@@ -10,7 +10,7 @@ The repository currently contains the original fraud-compliance demo API. It run
 |---|---|---|
 | API | Health, scenario listing, custom run, preset run | Pure scoring, durable processing, fraud reviews and operational monitoring |
 | Decisioning | Deterministic Sim A and APP-scam Sim B | Point-in-time features, deterministic controls, calibrated tabular ML and risk routing |
-| Investigation | Sim B uses an LLM for every transaction not stopped by its pre-filter | Only cases requiring contextual investigation enter the LLM slow path |
+| Investigation | Private-SDK Sim B uses an LLM for every transaction not stopped by its pre-filter | Public showcase: only S04 enters the normal bounded agent path and S05 exercises its failure path; operational F4 remains deferred |
 | Actions | Decision recommendations in a demo pipeline | Idempotent simulated actions behind separate authority and oversight gates |
 | Human review | State placeholder only | Authenticated, versioned review queue and linked decisions |
 | Persistence | Local JSON evidence output | PostgreSQL for fraud-platform operational state; governance records are sent to Arbiris |
@@ -108,6 +108,53 @@ The v1 deployment is a FastAPI modular monolith with PostgreSQL, a promoted-mode
 - The production runtime will consume the packaged `arbiris` SDK. It will not depend on `arbiris-sdk/examples/...`.
 
 The current API still imports the SDK example by adding the submodule root to `sys.path`. Phase 0 first characterizes scenarios A–F; later implementation moves owned fraud behavior behind stable application interfaces while retaining the example as a compatibility reference.
+
+The public-showcase replacement will live under
+`server/showcase_investigation/` against the accepted
+`public-showcase-api.v1.openapi.json` and
+`public-showcase-events.v1.schema.json` contracts. It will not import or copy
+the private SDK. Recorded demonstration playback is the
+default public experience; a clearly labelled live Groq path is optional and
+must remain behind the accepted admission, quota and kill-switch controls. MVP
+3 will use deterministic fixture eligibility and expose no numeric runtime
+fraud-model score or decision threshold; those remain F3a work.
+
+The accepted initial agent allowlist is `get_payee_evidence`,
+`get_account_activity_evidence`, and `get_device_session_evidence`. They are
+read-only synthetic fixture tools. ADR-016 accepts the recorded S04 payee and
+device evidence; account-activity evidence remains unspecified and must fail
+with `tool_failed` if invoked. No runtime implementation exists yet. The
+accepted budget is three total calls and one call per tool; exhaustion remains incomplete with no
+action.
+
+Provider, tool, output-validation, timeout and budget failures all use the same
+public semantics: incomplete investigation, fail-safe HOLD recommendation,
+authority not evaluated, no action, and a stable redacted reason code.
+
+Recorded playback is continuously public. Anonymous live Groq mode defaults
+off and may be enabled only for a controlled operator-run demonstration window.
+Always-on live access remains prohibited until reliable provider-side spending
+or durable distributed quota controls exist.
+
+Candidate controlled-window limits are one concurrent run, two per observed
+client per 10 minutes, ten per process, 30 minutes maximum and a 45-second
+overall timeout. Client keys must come from trusted ingress metadata. These
+process-local counters reset on restart and are not a durable quota.
+
+Groq is the sole optional live provider. Its credential and allowlisted model
+selection stay server-side; each live run records its provider and model
+identifier. The adapter may emit only schema-validated structured output into
+ephemeral contract state. Raw prompts, raw provider output, hidden reasoning
+and provider exceptions are not logged or exposed. There is no second-LLM
+fallback: unavailable live execution returns to labelled recorded playback.
+
+During migration, the private-SDK A–F workflow remains a local-only
+compatibility reference and never enters the public runtime. Keep it until the
+S01–S08 contracts and fixtures and the replacement's runtime-evaluation, browser-acceptance
+and public-container checks pass. Cutover then requires an explicit decision.
+Retirement removes the legacy workflow from the active application and
+dependency path while preserving its characterization documents and Git
+history.
 
 ## Delivery gate
 
@@ -210,6 +257,11 @@ so `/scenarios` and the run routes answer `503 demo_pipeline_unavailable` while
 excluded as well. It runs as a non-root user on port 8000, and a deployment must
 set `ALLOWED_ORIGINS` and may set `FCA_EVIDENCE_ROOT` if the evidence files are
 mounted elsewhere. See [`infra/README.md`](../../infra/README.md).
+
+This is the current image behaviour, not the desired public end state. The MVP
+3 plan replaces the unavailable run path with the SDK-free bounded
+investigation and recorded playback while preserving the image's negative
+private-SDK check.
 
 ## Current demo deployment
 

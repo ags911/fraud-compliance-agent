@@ -1,0 +1,274 @@
+{
+  "artifact": "public-showcase-s01-s08-scenario-fixtures",
+  "version": "1.0",
+  "status": "accepted",
+  "contract_status": "accepted-showcase-fixtures",
+  "source_class": "synthetic",
+  "runtime_consumption": "allowed-by-showcase-runtime-only",
+  "contains_provider_data": false,
+  "contains_customer_data": false,
+  "mvp3_runtime_model_policy": "deferred-to-f3a-no-score-or-threshold",
+  "mvp3_agent_tool_allowlist": [
+    "get_payee_evidence",
+    "get_account_activity_evidence",
+    "get_device_session_evidence"
+  ],
+  "mvp3_agent_tool_budget": {
+    "maximum_total_calls": 3,
+    "maximum_calls_per_tool": 1,
+    "limit_exhaustion_state": "incomplete-investigation-no-action"
+  },
+  "mvp3_agent_failure_contract": {
+    "investigation_status": "incomplete",
+    "recommendation": "HOLD",
+    "recommendation_basis": "fail_safe",
+    "authority_status": "not_evaluated",
+    "simulated_action": "none",
+    "stable_reason_codes": [
+      "provider_unavailable",
+      "tool_failed",
+      "invalid_output",
+      "timeout",
+      "tool_budget_exhausted"
+    ]
+  },
+  "mvp3_runtime_scope": {
+    "scenario_value_status": "accepted-synthetic",
+    "public_investigation_ready": ["S01", "S02", "S03", "S04", "S05"],
+    "deferred_operational_behavior": ["S06", "S07", "S08"],
+    "deferred_reason": "Accepted facts and agent-bypass boundaries do not implement review conflict, durable idempotency, or replay without F3-F6 contracts."
+  },
+  "created_on": "2026-09-20",
+  "purpose": "Accepted synthetic showcase inputs and safety invariants. These values may drive the database-free public-showcase runtime only and do not establish provider, model, review, idempotency, replay, or payment truth.",
+  "contract_references": [
+    "docs/contracts/public-showcase-api.v1.openapi.json",
+    "docs/contracts/public-showcase-events.v1.schema.json"
+  ],
+  "approval_reference": "apps/api/docs/adr/0016-accept-public-showcase-scenario-fixtures.md",
+  "legacy_characterisation_reference": "docs/proposals/legacy-scenario-characterisation.md",
+  "legacy_candidate_relationships": [
+    {"legacy_id": "A", "target_ids": ["S02"], "status": "candidate-overlap-not-approved"},
+    {"legacy_id": "B", "target_ids": ["S01"], "status": "candidate-overlap-not-approved"},
+    {"legacy_id": "C", "target_ids": [], "status": "no-direct-target-equivalent"},
+    {"legacy_id": "D", "target_ids": ["S03"], "status": "candidate-overlap-not-approved"},
+    {"legacy_id": "E", "target_ids": ["S01"], "status": "possible-overlap-not-approved"},
+    {"legacy_id": "F", "target_ids": ["S03"], "status": "candidate-overlap-not-approved-distinct-variant"}
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "S01",
+      "title": "Trusted recurring payment",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s01-r1",
+        "amount_minor": 4200,
+        "currency": "GBP",
+        "direction": "outbound",
+        "payee_history": "established",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "PASS-recommendation",
+        "investigation_eligibility": "skipped",
+        "investigation_skip_reason": "deterministic-clear-route",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "pass-is-a-recommendation-not-a-release"
+      }
+    },
+    {
+      "scenario_id": "S02",
+      "title": "High-value and high-velocity risk",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s02-r1",
+        "amount_minor": 420000,
+        "currency": "GBP",
+        "direction": "outbound",
+        "velocity_state": "synthetic-high",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "HOLD-recommendation",
+        "investigation_eligibility": "skipped",
+        "investigation_skip_reason": "hard-deterministic-control",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "hard-control-cannot-be-bypassed-by-a-model"
+      }
+    },
+    {
+      "scenario_id": "S03",
+      "title": "Account drain and new payee",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s03-r1",
+        "amount_minor": 180000,
+        "currency": "GBP",
+        "direction": "outbound",
+        "payee_history": "new",
+        "balance_state": "synthetic-account-drain",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "HOLD-recommendation",
+        "investigation_eligibility": "skipped",
+        "investigation_skip_reason": "hard-app-control",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "app-control-runs-before-fast-release"
+      }
+    },
+    {
+      "scenario_id": "S04",
+      "title": "Ambiguous contextual case",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s04-r1",
+        "amount_minor": 26500,
+        "currency": "GBP",
+        "direction": "outbound",
+        "context_state": "ambiguous",
+        "field_availability": "partial-declared"
+      },
+      "investigation_fixture": {
+        "recorded_tool_sequence": [
+          "get_payee_evidence",
+          "get_device_session_evidence"
+        ],
+        "tool_evidence": {
+          "get_payee_evidence": [
+            {
+              "evidence_id": "ev_payee_relationship",
+              "category": "payee_relationship",
+              "display_value": "Synthetic payee relationship is recent and has one prior payment.",
+              "source_class": "synthetic_fixture",
+              "fixture_version": "s04-r1"
+            }
+          ],
+          "get_device_session_evidence": [
+            {
+              "evidence_id": "ev_device_familiarity",
+              "category": "device_familiarity",
+              "display_value": "Synthetic session uses a recognised device with a changed network context.",
+              "source_class": "synthetic_fixture",
+              "fixture_version": "s04-r1"
+            }
+          ]
+        }
+      },
+      "expected_boundary": {
+        "required_route": "CHALLENGE-or-bounded-investigation",
+        "investigation_eligibility": "eligible",
+        "minimum_distinct_read_only_tool_calls": 2,
+        "allowed_agent_tools": [
+          "get_payee_evidence",
+          "get_account_activity_evidence",
+          "get_device_session_evidence"
+        ],
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "investigation-is-typed-bounded-and-non-authoritative"
+      }
+    },
+    {
+      "scenario_id": "S05",
+      "title": "Model or investigation outage",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s05-r1",
+        "amount_minor": 72500,
+        "currency": "GBP",
+        "direction": "outbound",
+        "dependency_state": "unavailable",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "fail-safe-HOLD-recommendation",
+        "investigation_eligibility": "eligible-failure-test",
+        "failure_injection": "deterministic-provider-unavailable",
+        "failure_reason": "provider_unavailable",
+        "external_provider_call": "forbidden-for-this-fixture",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "outage-is-visible-and-cannot-be-reported-as-success"
+      }
+    },
+    {
+      "scenario_id": "S06",
+      "title": "Reviewer conflict",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s06-r1",
+        "review_version_submitted": 1,
+        "review_version_current": 2,
+        "upstream_recommendation_snapshot": {
+          "source_scenario_id": "S04",
+          "execution_mode": "recorded",
+          "snapshot_status": "required-not-yet-specified",
+          "immutable": true
+        },
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "conflict-error",
+        "investigation_eligibility": "skipped-existing-recorded-recommendation",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "stale-review-version-is-rejected"
+      }
+    },
+    {
+      "scenario_id": "S07",
+      "title": "Duplicate process request",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s07-r1",
+        "idempotency_key": "synthetic-s07-key",
+        "request_fingerprint_relation": "identical",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "return-or-resume-original-run",
+        "investigation_eligibility": "skipped-non-investigation-scenario",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "same-idempotency-key-never-creates-a-second-run-or-action"
+      }
+    },
+    {
+      "scenario_id": "S08",
+      "title": "Provider correction and replay",
+      "legacy_scenario_mapping": null,
+      "facts": {
+        "source_system": "synthetic",
+        "source_revision": "s08-r2",
+        "correction_of_source_revision": "s08-r1",
+        "replay_mode": "comparison-only",
+        "field_availability": "all-declared"
+      },
+      "expected_boundary": {
+        "required_route": "new-revision-and-read-only-replay",
+        "investigation_eligibility": "skipped-non-investigation-scenario",
+        "model_score": null,
+        "payment_action": "none",
+        "simulated_only": true,
+        "invariant": "correction-creates-a-new-revision-and-replay-never-executes-an-action"
+      }
+    }
+  ]
+}

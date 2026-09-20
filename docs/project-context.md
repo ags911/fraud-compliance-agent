@@ -51,7 +51,13 @@ not present synthetic demo data as live customer, Plaid, or model output.
 - The public showcase deployment target is Azure Static Web Apps for the React
   console and Azure Container Apps Consumption with scale-to-zero for the
   FastAPI demo API. Neither is configured yet; the deployment remains
-  synthetic-only, database-free, and subject to free-grant/budget review.
+  synthetic-only, database-free, and subject to free-grant/budget review. The
+  approved planning direction is a repository-owned, SDK-free bounded
+  investigation for the public image, with recorded demonstration playback as
+  the default and an explicitly labelled live Groq run only when its safety
+  controls are enabled. ADR-014 records the preparation boundary, ADR-015
+  accepts its HTTP/SSE contract, and ADR-016 accepts its versioned synthetic
+  fixtures for the database-free showcase; the runtime is not implemented yet.
 - The project has an accepted **mechanics-only** Sparkov benchmark contract and
   a read-only portfolio summary endpoint. They demonstrate reproducibility and
   evaluation only; neither is a model-serving, payment-decision, or production
@@ -98,7 +104,9 @@ route in the app, so a removed screen cannot stay ticked.
 - `apps/api` owns operational facts, domain behavior, persistence, risk routing,
   authority, oversight, integrations, and backend tests.
 - `docs/contracts` owns versioned API and event contracts shared between apps.
-- `fixtures` will own canonical deterministic scenario fixtures once specified.
+- `fixtures` owns versioned deterministic scenarios and contract examples.
+  Only explicitly accepted sets may be consumed at runtime; the accepted
+  public-showcase S01–S08 set is not an operational/provider-data contract.
 - `notebooks` contains reproducible, sanitised feasibility work only. Once an
   approach is accepted, its reusable logic moves into tested modules under
   `apps/api` and its parameters into a versioned file under `config`, leaving
@@ -156,6 +164,72 @@ hold, ambiguous challenge/investigation, outage hold, review conflict,
 idempotency/retry, and pending-correction/replay. Legacy A–F demo scenarios are
 not automatically equivalent to that target set; document any mapping before
 reusing them.
+
+For the bounded public-showcase investigation, S04 is the only normal agent
+path and S05 is its explicit incomplete/failure path. S01–S03 and S06–S08
+bypass the agent. ADR-016 accepts the versioned synthetic S01–S08 fixture
+values for the database-free showcase only. It does not accept thresholds,
+operational authority semantics, S06–S08 stateful behavior, or any A–F mapping.
+
+Make every bypass visible as an explicit investigation-skipped trace. S04 must
+exercise at least two distinct read-only evidence-tool calls, while S05 injects
+its outage deterministically without an external provider call. Future S06
+review-conflict evidence may reference an immutable recorded S04 recommendation
+snapshot; it must not call the agent live to manufacture prerequisite state.
+
+MVP 3 has no numeric runtime fraud-model score or decision threshold. Its
+scenario eligibility is deterministic and fixture-based. Runtime scoring,
+calibration and threshold policy remain deferred to F3a and require their own
+accepted evidence; Sparkov cannot supply them.
+
+The public agent's initial allowlist is `get_payee_evidence`,
+`get_account_activity_evidence`, and `get_device_session_evidence`. They read
+accepted synthetic fixture sections only. Transaction facts are initial graph
+input; policy, scoring, authority, mutation, external-provider and recalled
+case-memory capabilities are not agent tools.
+
+The public agent may make at most three tool calls and may call each tool at
+most once; S04 requires at least two distinct calls. Budget exhaustion remains
+an incomplete investigation with no action. Do not expose a framework
+recursion counter as if it were a product decision or evaluation metric.
+
+Provider unavailable, tool failure, invalid output, timeout and tool-budget
+exhaustion all produce `investigation_status=incomplete`, a fail-safe HOLD
+recommendation, `authority_status=not_evaluated`, no simulated action, and a
+stable redacted reason code. Never render that failure as a completed HOLD.
+
+Bind each tool server-side to the current scenario. Every visible agent claim
+must cite a stable evidence ID returned by an allowlisted tool during that same
+run and retain synthetic fixture provenance. Missing or unknown citations are
+`invalid_output`. Do not request, store or expose hidden chain-of-thought.
+
+Recorded playback is continuously public. Anonymous live Groq mode defaults
+off and is enabled only for a controlled demonstration window through a
+server-side operator kill switch. Disablement or admission-limit exhaustion
+falls back to clearly labelled playback. Do not enable always-on anonymous live
+mode without a reliable provider spending limit or durable distributed quota.
+
+The initial controlled window allows one concurrent live investigation, two
+per observed client per 10 minutes, ten per process enablement window, a maximum
+30-minute window, and a 45-second overall investigation timeout. Derive a
+client key only from trusted ingress metadata. These process-local controls
+reset on restart and are safety limits, not performance or durable-quota claims.
+
+Groq is the sole optional live provider for this showcase boundary. Keep its
+credential and allowlisted model selection server-side, and record the provider
+and model identifier with each live run. Accept only schema-validated structured
+output. Do not log raw prompts, raw provider responses, hidden reasoning or
+provider exceptions; only validated contract fields may enter ephemeral run
+state. Never fail over to a second LLM. Provider unavailability returns to
+clearly labelled recorded playback through the stable redacted failure path.
+
+Keep the private-SDK A–F workflow as a local-only compatibility reference until
+the S01–S08 contracts and fixtures are accepted and the repository-owned public runtime's
+evaluation, browser-acceptance and public-container boundary checks pass. It
+must never become a public-runtime dependency. Cutover requires a separate
+explicit decision even after the gates pass. Retirement removes the legacy
+workflow from the active application and dependency path while preserving its
+characterization documents and Git history.
 
 Plaid sandbox data may be used only through an approved mapping and a sanitised,
 reproducible notebook/fixture workflow. It must never silently replace a chosen

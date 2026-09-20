@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fraud-compliance-agent:contract:public-showcase-events:v1",
+  "title": "Public-showcase investigation SSE event",
+  "description": "Accepted synthetic-showcase contract. A stream emits run_started, one route_resolved, eligible investigation or explicit skip events, one run_result, then exactly one named done event with JSON data {}. Sequence values increase within one ephemeral run.",
+  "x-contract-version": "1.0",
+  "x-approval-status": "accepted",
+  "x-runtime-consumption": "allowed",
+  "x-wire-format": "All payloads except done use default SSE message events with one JSON data object. The terminal event is `event: done` with `data: {}`.",
+  "oneOf": [
+    {"$ref": "#/$defs/runStartedEvent"},
+    {"$ref": "#/$defs/routeResolvedEvent"},
+    {"$ref": "#/$defs/investigationSkippedEvent"},
+    {"$ref": "#/$defs/toolCallEvent"},
+    {"$ref": "#/$defs/toolResultEvent"},
+    {"$ref": "#/$defs/investigationResultEvent"},
+    {"$ref": "#/$defs/runResultEvent"},
+    {"$ref": "#/$defs/doneEvent"}
+  ],
+  "$defs": {
+    "scenarioId": {
+      "enum": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08"]
+    },
+    "toolName": {
+      "enum": [
+        "get_payee_evidence",
+        "get_account_activity_evidence",
+        "get_device_session_evidence"
+      ]
+    },
+    "failureReason": {
+      "enum": [
+        "provider_unavailable",
+        "tool_failed",
+        "invalid_output",
+        "timeout",
+        "tool_budget_exhausted"
+      ]
+    },
+    "eventIdentity": {
+      "type": "object",
+      "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+        "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+        "scenario_id": {"$ref": "#/$defs/scenarioId"},
+        "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+        "event": {"type": "string"}
+      }
+    },
+    "runStartedEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "requested_mode", "execution_mode", "fallback_reason", "provider", "model_id", "data_label"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"$ref": "#/$defs/scenarioId"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "run_started"},
+            "requested_mode": {"enum": ["recorded", "live"]},
+            "execution_mode": {"enum": ["recorded", "live"]},
+            "fallback_reason": {
+              "type": ["string", "null"],
+              "enum": [null, "live_disabled", "admission_limited", "provider_unavailable"]
+            },
+            "provider": {"type": ["string", "null"], "enum": [null, "groq"]},
+            "model_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 120},
+            "data_label": {"const": "synthetic"}
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"execution_mode": {"const": "live"}}, "required": ["execution_mode"]},
+              "then": {
+                "properties": {
+                  "provider": {"const": "groq"},
+                  "model_id": {"type": "string", "minLength": 1, "maxLength": 120},
+                  "fallback_reason": {"const": null}
+                }
+              }
+            },
+            {
+              "if": {"properties": {"execution_mode": {"const": "recorded"}}, "required": ["execution_mode"]},
+              "then": {
+                "properties": {
+                  "provider": {"const": null},
+                  "model_id": {"const": null}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "routeResolvedEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "deterministic_route", "investigation_eligibility"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"$ref": "#/$defs/scenarioId"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "route_resolved"},
+            "deterministic_route": {"enum": ["PASS", "HOLD", "INVESTIGATE"]},
+            "investigation_eligibility": {"enum": ["skipped", "eligible", "eligible_failure_test"]}
+          }
+        }
+      ]
+    },
+    "investigationSkippedEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "reason"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"$ref": "#/$defs/scenarioId"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "investigation_skipped"},
+            "reason": {"enum": ["deterministic_clear_route", "hard_deterministic_control", "hard_app_control", "existing_recorded_recommendation", "non_investigation_scenario"]}
+          }
+        }
+      ]
+    },
+    "evidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "category", "display_value", "source_class", "fixture_version"],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^ev_[a-z0-9_]{3,48}$"},
+        "category": {"enum": ["payee_relationship", "payee_name_match", "account_balance_impact", "payment_velocity", "recent_credit_context", "device_familiarity", "session_change", "location_channel_context"]},
+        "display_value": {"type": "string", "minLength": 1, "maxLength": 160},
+        "source_class": {"const": "synthetic_fixture"},
+        "fixture_version": {"type": "string", "minLength": 1, "maxLength": 64}
+      }
+    },
+    "toolCallEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "call_index", "tool_name"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"const": "S04"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "tool_call"},
+            "call_index": {"type": "integer", "minimum": 1, "maximum": 3},
+            "tool_name": {"$ref": "#/$defs/toolName"}
+          }
+        }
+      ]
+    },
+    "toolResultEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "call_index", "tool_name", "evidence"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"const": "S04"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "tool_result"},
+            "call_index": {"type": "integer", "minimum": 1, "maximum": 3},
+            "tool_name": {"$ref": "#/$defs/toolName"},
+            "evidence": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"$ref": "#/$defs/evidenceItem"}}
+          }
+        }
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "text", "evidence_ids"],
+      "properties": {
+        "claim_id": {"type": "string", "pattern": "^claim_[a-z0-9_]{3,48}$"},
+        "text": {"type": "string", "minLength": 1, "maxLength": 200},
+        "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": {"type": "string", "pattern": "^ev_[a-z0-9_]{3,48}$"}}
+      }
+    },
+    "investigationResultEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "investigation_status", "recommendation", "recommendation_basis", "summary", "claims", "uncertainties", "authority_status", "simulated_action", "failure_reason"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"enum": ["S04", "S05"]},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "investigation_result"},
+            "investigation_status": {"enum": ["complete", "incomplete"]},
+            "recommendation": {"enum": ["PASS", "CHALLENGE", "HOLD"]},
+            "recommendation_basis": {"enum": ["evidence_grounded", "fail_safe"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 280},
+            "claims": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/claim"}},
+            "uncertainties": {"type": "array", "maxItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 160}},
+            "authority_status": {"const": "not_evaluated"},
+            "simulated_action": {"const": "none"},
+            "failure_reason": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/failureReason"}]}
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"investigation_status": {"const": "complete"}}, "required": ["investigation_status"]},
+              "then": {"properties": {"recommendation_basis": {"const": "evidence_grounded"}, "claims": {"minItems": 1}, "failure_reason": {"const": null}}}
+            },
+            {
+              "if": {"properties": {"investigation_status": {"const": "incomplete"}}, "required": ["investigation_status"]},
+              "then": {"properties": {"recommendation": {"const": "HOLD"}, "recommendation_basis": {"const": "fail_safe"}, "claims": {"maxItems": 0}, "failure_reason": {"$ref": "#/$defs/failureReason"}}}
+            }
+          ]
+        }
+      ]
+    },
+    "runResultEvent": {
+      "allOf": [
+        {"$ref": "#/$defs/eventIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "event_id", "run_id", "scenario_id", "sequence", "event", "investigation_status", "recommendation", "recommendation_basis", "authority_status", "simulated_action", "execution_mode", "data_label"],
+          "properties": {
+            "schema_version": {"const": "1.0"},
+            "event_id": {"type": "string", "pattern": "^evt_[a-z0-9_]{3,64}$"},
+            "run_id": {"type": "string", "pattern": "^run_[a-z0-9_]{3,64}$"},
+            "scenario_id": {"$ref": "#/$defs/scenarioId"},
+            "sequence": {"type": "integer", "minimum": 1, "maximum": 32},
+            "event": {"const": "run_result"},
+            "investigation_status": {"enum": ["skipped", "complete", "incomplete"]},
+            "recommendation": {"enum": ["PASS", "CHALLENGE", "HOLD"]},
+            "recommendation_basis": {"enum": ["deterministic", "evidence_grounded", "fail_safe"]},
+            "authority_status": {"const": "not_evaluated"},
+            "simulated_action": {"const": "none"},
+            "execution_mode": {"enum": ["recorded", "live"]},
+            "data_label": {"const": "synthetic"}
+          }
+        }
+      ]
+    },
+    "doneEvent": {
+      "description": "JSON data for the one named terminal done SSE event.",
+      "type": "object",
+      "maxProperties": 0
+    }
+  }
+}

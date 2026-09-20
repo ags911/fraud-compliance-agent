@@ -230,6 +230,84 @@ technical specification.
 Legacy API scenarios A–F are characterised separately and mapped to this
 catalogue only through an approved routing/scenario decision.
 
+For the bounded public-showcase investigation, S04 is the sole normal
+tool-using path and S05 is the explicit incomplete/failure path. S01–S03 and
+S06–S08 bypass the agent. ADR-016 accepts the versioned synthetic fixture
+values for showcase use only. It does not approve thresholds, an operational
+authority table, S06–S08 stateful behavior, or an A–F mapping.
+
+Every bypass is visible in the trace as an explicit investigation-skipped event
+with a stable reason. S04 must need at least two distinct read-only evidence
+tools; S05 injects its outage deterministically and makes no external provider
+call. A future S06 fixture may reference an immutable recorded S04
+recommendation snapshot, but does not invoke the agent live.
+
+MVP 3 has no numeric runtime fraud-model score or decision threshold. Scenario
+eligibility is deterministic and fixture-based. Model target, corpus, features,
+calibration, threshold policy, release criteria and rollback remain deferred to
+F3a; Sparkov benchmark figures cannot fill that gap.
+
+The initial S04 agent allowlist is `get_payee_evidence`,
+`get_account_activity_evidence`, and `get_device_session_evidence`. Each reads
+only its accepted synthetic fixture section and returns typed cited evidence.
+Basic transaction facts are initial graph input. Policy, scoring, authority,
+mutation, external-provider and recalled-case-memory tools are excluded.
+
+Each investigation may make at most three tool calls and may call each tool at
+most once. S04 requires at least two distinct calls. Exhausting the budget
+without a valid evidence-grounded recommendation leaves the investigation
+incomplete and executes nothing. Framework recursion limits are not presented
+as a user-facing step count.
+
+Provider unavailable, tool failure, invalid output, timeout and tool-budget
+exhaustion all produce an `incomplete` investigation, a fail-safe HOLD
+recommendation, `authority_status=not_evaluated`, no simulated action, and a
+stable redacted reason code. The console must not style or describe this as a
+successfully completed HOLD investigation.
+
+Tools are bound server-side to the current scenario and return typed evidence
+with stable IDs and synthetic fixture provenance. Every visible recommendation
+claim must cite evidence returned during that same run. An unknown or missing
+citation is `invalid_output`; hidden chain-of-thought is neither requested nor
+stored.
+
+Recorded playback is continuously public. Anonymous live Groq mode defaults
+off and is enabled only for a controlled demonstration window through a
+server-side operator kill switch. Disablement or admission-limit exhaustion
+returns to clearly labelled playback. Always-on live mode requires a reliable
+provider spending limit or durable distributed quota mechanism first; MVP 3
+does not add authentication or persistence merely to imitate that capability.
+
+The initial live window permits one concurrent investigation, two per observed
+client per 10 minutes, and ten total per process; it expires after 30 minutes
+and applies a 45-second overall investigation timeout. Per-client admission
+uses trusted ingress metadata only. These are safety settings, not performance,
+availability, cost or capacity claims, and the process-local totals reset on
+restart.
+
+Groq is the sole optional live provider. Its credential and allowlisted model
+selection stay server-side, and every live run records the provider and model
+identifier. The adapter accepts only schema-validated structured output. Raw
+prompts, raw provider responses, hidden reasoning and provider exceptions are
+not logged or exposed; only validated contract fields enter ephemeral run
+state. There is no second-LLM fallback. Provider unavailability returns to
+clearly labelled recorded playback through the stable redacted failure path.
+
+The private-SDK A–F workflow remains a local-only compatibility reference until
+the S01–S08 contracts and fixtures are accepted and the repository-owned runtime's
+evaluation, browser-acceptance and public-container boundary checks pass. It is
+never a dependency of the public runtime. Cutover requires an explicit product
+decision after those gates pass. Retirement removes the legacy workflow from
+the active application and dependency path while preserving its
+characterization documents and Git history.
+
+ADR-015 accepts the MVP 3 investigation HTTP and SSE contract at
+`docs/contracts/public-showcase-api.v1.openapi.json` and
+`docs/contracts/public-showcase-events.v1.schema.json`. ADR-016 separately
+accepts `fixtures/s01-s08/scenarios.v1.json` for the database-free showcase.
+S01–S05 are runtime-ready; S06–S08 operational behavior and the runtime itself
+remain unimplemented.
+
 ## 9. Showcase MVP stages and deferred engineering increments
 
 The recruiter showcase is deliberately completed in three MVP stages. Each is
@@ -240,7 +318,7 @@ valuable architecture evidence, but are not required for the public showcase.
 | --- | --- | --- | --- |
 | MVP 1 — Guided walkthrough | Explain the product with no setup or account | Overview zero state, guided onboarding, deterministic scenario selection, benchmark provenance, Rules Performance reference, and Not Found | Live transaction history, persistent queues, real model claims, or provider data |
 | MVP 2 — Live decision demonstration | Show one transparent simulated decision end-to-end | FastAPI scenario run, SSE trace, loading/error/outage state, typed factors, simulated outcome, and no hidden reasoning | Durable run history, review mutations, real payment execution, or model serving |
-| MVP 3 — Azure public showcase | Give recruiters a shareable cloud deployment and inspectable engineering story | Azure Static Web Apps console, Azure Container Apps scale-to-zero API, GitHub Actions/OIDC deployment, Doppler secrets, health/cold-start state, architecture/runbook | Database, queue/cache, production auth, VNet, real customer/provider data, or production SLA |
+| MVP 3 — Azure public showcase | Give recruiters a shareable cloud deployment and inspectable engineering story | Azure Static Web Apps console, Azure Container Apps scale-to-zero API, repository-owned SDK-free bounded investigation, recorded demonstration playback by default, optional clearly labelled live Groq run, GitHub Actions/OIDC deployment, Doppler secrets, health/cold-start state, architecture/runbook | Database, queue/cache, production auth, VNet, private SDK in the image, real customer/provider data, or production SLA |
 
 MVP 3 is complete when the public synthetic demo can be run reliably enough for
 a portfolio review, costs are guarded, deployment limitations are visible, and
@@ -360,8 +438,9 @@ without a separate security, privacy, procurement, and reliability decision.
 Azure Static Web Apps (React console)
   → Azure Container Apps Consumption (FastAPI demo API, scale-to-zero)
       → deterministic synthetic scenario fixtures
-      → in-process validation and current bounded demo workflow
-      → optional Groq-backed demonstration investigation when configured
+      → repository-owned, SDK-free bounded investigation
+      → recorded demonstration playback by default
+      → optional, explicitly labelled Groq-backed live run when enabled
       → ephemeral run state only; no deployed database or provider adapter
 ```
 
@@ -377,7 +456,7 @@ an LLM response, a cache hit, or a background audit write being successful.
 | Static console | Azure Static Web Apps Free | Public synthetic React/Vite console | Free plan is appropriate for this personal showcase; it has no SLA and is not a production financial-service hosting decision. |
 | FastAPI demo API | Azure Container Apps Consumption | Public synthetic FastAPI API with scale-to-zero | Monthly free grants reduce cost but do not guarantee $0. Use minimum replicas of zero, no VNet/database/cache, a budget alert, and visible cold-start state. |
 | Secrets | Doppler | Local and showcase environment variables | Keep service tokens and provider keys out of Git, browser code, logs, and Bicep parameters. |
-| Investigation provider | Groq API, optional | Existing bounded demonstration investigation | Never required for hard controls; display an honest unavailable/outage state when unconfigured. |
+| Investigation provider | Groq API, optional | Operator-enabled live mode for the proposed repository-owned bounded investigation during a controlled demonstration window | Sole live provider; server-side credential and allowlisted model selection; provider/model ID recorded per run; validated structured output only; no raw prompt/output/reasoning logs or second-LLM fallback. Recorded playback is continuously public and the default. |
 | Operational store | None in MVP 1–3 | Deterministic fixtures and ephemeral single-run state | Container-local disk is not durable storage and must not be presented as transaction history. |
 
 Do not use automated “keep warm” pings to circumvent scale-to-zero or free-tier
@@ -441,7 +520,7 @@ be met without it.
 | Guided tour | driver.js (MIT) | Opt-in spotlight tour of the Overview demo (choose a scenario, run it, inspect the results, go deeper to Analyse a transaction and Insights), offered from a first-visit welcome dialog and the help dialog | Browser only; it never starts by itself and no data leaves the page. Styled with the Payments tokens. Removal path: delete `apps/web/src/lib/useOverviewTour.ts` and its styles; the Getting started checklist still works without it. |
 | Charts | Recharts; Plotly in notebooks | Console charts and offline evaluation diagnostics | Label synthetic/mechanics-only data honestly. |
 | API | Python 3.13 (pinned in `apps/api/.python-version`; `>=3.11` supported), FastAPI, Uvicorn, Pydantic/FastAPI models | Typed demo routes, validation, SSE progress, and health | Current routes are demo routes, not the future operational contract. |
-| Agent workflow | LangGraph and Groq SDK | Bounded demonstration investigation | Optional per demo run; no LLM may make a payment decision. |
+| Agent workflow | LangGraph and Groq SDK | Current private fixed-graph local demonstration; proposed repository-owned bounded tool loop for the public showcase | The public module must not import or copy the private SDK. S04 is its normal agent path and S05 its failure path; no LLM may make a payment decision. |
 | Governance SDK | Pinned Arbiris SDK | Existing signed-record demonstration | Do not edit `apps/api/vendor` outside an explicit SDK upgrade. |
 | Quality | GitHub Actions, Ruff, Pytest, TypeScript build, Playwright, axe-core (`@axe-core/playwright`) | Build, lint, test, design, and automated accessibility evidence | CI does not make product or safety decisions. axe-core is a dev-only test library with no runtime dependency; it supplements, and does not replace, manual accessibility review. |
 | Data science | Jupyter, Pandas, scikit-learn, XGBoost, Plotly | Feasibility and mechanics-only evaluation | Notebooks never promote a runtime model. |
@@ -459,7 +538,7 @@ be met without it.
 
 | Product / API | Status | Showcase use | Explicitly not used for |
 | --- | --- | --- | --- |
-| Groq API | Current; optional per run | Existing LangGraph slow-path demonstration when configured | Autonomous action, hidden reasoning display, or hard-control dependency. |
+| Groq API | Current locally; selected as the sole optional provider in the proposed public live mode | Existing private-SDK slow path locally and, after its own contract and safety gates, the repository-owned S04 investigation | Browser-held credentials, request-selected models, a second-LLM fallback, raw prompt/output/reasoning logs, default public playback, deterministic controls, autonomous action, or hard-control dependency. |
 | Plaid Sandbox `/transactions/sync` | Current; notebooks only | Local, zero-retention schema/lifecycle observation and feasibility evidence | Runtime connector, customer data, canonical approval, model training, or demo dependency. |
 | Sparkov simulated corpus | Current; offline mechanics only | Checksum-verified Notebook 08 evaluation mechanics | Production performance, thresholds, model serving, or payment action. |
 | Stripe / Radar | Not selected | None unless separately approved | Training labels, fraud truth, payment processing, or hidden dependency. |

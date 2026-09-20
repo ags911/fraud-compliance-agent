@@ -99,6 +99,13 @@ The private-SDK packaging decision for the public Azure runtime remains open.
 It does not change these external shapes, but it blocks a deployed live run
 until the SDK is approved for deployment or replaced behind this contract.
 
+## Subsequent decision
+
+ADR-014, accepted for scoped preparation on 2026-09-20, selected replacement
+with a repository-owned SDK-free public investigation; it did not alter or
+supersede this legacy v1 contract. A separate contract revision is still
+required before the replacement becomes runtime behaviour.
+
 ## Acceptance record
 
 Decision revision: Demo HTTP and SSE contracts v1.0

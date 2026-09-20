@@ -302,9 +302,10 @@ durable financial-operation backend.
 | --- | --- | --- | --- |
 | — | Web console | Azure Static Web Apps hosts the synthetic React/Vite console. The API base URL is public configuration, never a secret. | `make acceptance-mvp3-predeploy`, then `make acceptance-mvp3-public` against the deployed URL. |
 | — | Demo API | Azure Container Apps Consumption hosts the FastAPI demo with minimum replicas of zero. The UI exposes health, connection, cold-start, unavailable, and retry states. | `make acceptance-mvp3-public`: health, cold start, unavailable, and retry states. |
+| — | Public-safe investigation | Replace the public image's unavailable private-SDK run path with a repository-owned, scenario-only, bounded LangGraph investigation or its clearly labelled recorded demonstration playback. S01–S03 visibly emit an investigation-skipped event; S04 uses the accepted payee/device evidence tools; the budget is three total calls and one per tool; S05 injects a no-cost deterministic outage. Every provider/tool/output/timeout/budget failure remains `incomplete`, recommends fail-safe HOLD, leaves authority unevaluated and executes nothing. MVP 3 has no numeric runtime fraud-model score or threshold. | ADR-014 accepts the boundary and controls, ADR-015 accepts HTTP/SSE, and ADR-016 accepts `scenarios.v1.json`. Next: implement a validating loader, deterministic S01–S05 routing, recorded playback, bounded tools/graph, optional Groq adapter, controls and browser consumer. Contract/fixture tests already freeze sequence, citations, outage and prohibited fields; runtime, evaluation, browser and image-boundary tests remain. |
 | — | Delivery | GitHub Actions validates builds/tests, then deploys through Azure OIDC. Bicep and a deployment runbook make the release reproducible. | `make acceptance-mvp3-predeploy`: Bicep, OIDC federation, and secret references reviewed. |
-| — | Cost/safety | Doppler holds server-side secrets; no database, cache, VNet, real payment, or customer/provider data is deployed. A budget alert and free-grant review are documented. | Budget-alert delivery recorded, and `make acceptance-mvp3-predeploy`. |
-| — | Screens | MVP 1–2 screens are hosted unchanged: Overview, Benchmark Insights, New transaction/decision workspace, Not Found, and the frozen reference route. | The MVP 1 and MVP 2 checks, repeated against the public URL. |
+| — | Cost/safety | Doppler holds server-side secrets; no database, cache, VNet, real payment, or customer/provider data is deployed. Recorded playback is continuously public; anonymous live Groq defaults off. A controlled window permits one concurrent run, two per observed client per 10 minutes, ten per process, 30 minutes maximum and a 45-second overall timeout. A budget alert and free-grant review are documented. | Candidate config and guard tests record the limits; runtime kill-switch, trusted-ingress client key, admission/fallback tests and budget-alert delivery remain required; `make acceptance-mvp3-predeploy`. |
+| — | Screens | MVP 1–2 screens remain available; the decision workspace adds explicit recorded/live labelling and the bounded S04/S05 evidence trace without adding review mutations. Not Found and the frozen reference route remain unchanged. | The MVP 1 and MVP 2 checks repeated against the public URL, plus planned recorded/live labelling, trace, failure and accessibility browser tests. |
 
 The guided tours gain a status step explaining API health and cold start.
 
@@ -371,7 +372,7 @@ checkmark.
 | Dependency or risk | Affected boundary | Owner to name | Required resolution or evidence |
 | --- | --- | --- | --- |
 | Azure subscription, Entra OIDC federation, and a monitored budget-alert recipient are absent. | MVP 3 public release | Platform/release owner | Provision through the reviewed runbook; run and record the public acceptance command. |
-| The private Arbiris SDK cannot be placed in the public container image. | MVP 3 live-run surface | API and product owners | Approve a public-safe runtime or restrict the public site to the walkthrough/explicit unavailable state. |
+| The private Arbiris SDK cannot be placed in the public container image; the approved replacement direction is not built yet. | MVP 3 live-run surface | API and product owners | Implement and contract-test the repository-owned SDK-free investigation, recorded-playback default, optional live-mode controls, and image-content boundary in `docs/proposals/public-showcase-investigation.proposed.md`. |
 | The current contract is an accepted legacy synthetic Phase 0 boundary only. | Any Phase 2+ operational work | API owner | Publish a new accepted operational contract; do not extend the demo contract by implication. |
 | Plaid supplies source facts, not fraud labels or final outcomes. | F3a and later trends | Data/model owner | Approve canonical mapping, sanitisation, fixture provenance, feature snapshot, score/route semantics, and source-to-score tests. |
 | Sparkov is mechanics-only evaluation evidence, not a runtime scoring source. | Benchmark and model claims | Data/model owner | Preserve its non-deployable label and use an approved served-model decision before runtime scoring. |
@@ -388,7 +389,7 @@ a material change rather than relying on a historical tick.
 
 Progress on 2026-09-20: MVP 0 has 9 of 9 items checked locally, MVP 1 has 6 of 6 automated
 items checked (manual assistive-technology review remains), MVP 2 has 6 of 6, and MVP 3
-has 3 of 12 completed/configuration-reviewed items plus 1 partial configuration item. Several
+has 3 of 13 completed/configuration-reviewed items plus 1 partial configuration item. Several
 unchecked items have partial evidence, noted
 in their rows.
 
@@ -434,7 +435,8 @@ in their rows.
 | --- | --- | --- | --- | --- |
 | ✓ | Containerise the API with a reviewed Dockerfile and a `.dockerignore`, and build it in CI. | Containers and software supply chain | Automated container CI | Done 2026-09-19. `apps/api/Dockerfile` is a two-stage build on digest-pinned `python:3.13-slim` and `ghcr.io/astral-sh/uv:0.11.8`, installing from the lockfile with `uv sync --frozen --no-dev` and running as non-root uid 10001 on port 8000. The private SDK is excluded, so the run routes answer 503 and `/health` and `/demo/model-summary` work; the offline `modelling` library is excluded too, because the wheel target now contains `server` only. The root `.dockerignore` is an allowlist, so nothing private can enter the context by being added later. The build context is the repository root so the two sanitised evidence files can be copied in, and the model-summary route reads them through the new `FCA_EVIDENCE_ROOT` setting (without it the packaged API served 503 for its own benchmark evidence). The `container` CI job builds the image, starts it, and checks health, the served benchmark digest against the committed report, the non-root uid, and the absence of private or offline packages. Verified locally on linux/amd64: 302 MB, `/health` and `/demo/model-summary` both 200, digest `38dec6a0…` matching the repository. **Defect found and fixed during this work:** with the uv cache mounted, the project wheel was reused from cache and the image shipped stale application code; the project install step now runs without that cache and forces a reinstall, and the CI digest check would catch a regression. |
 | ✓ | Add reviewed Bicep under `infra/azure/` for only Azure Static Web Apps and Azure Container Apps Consumption. | Infrastructure as code and Azure | Configuration review only | `infra/azure/` contains parameterised subscription (resource group and budget) and resource-group (SWA, Container Apps Consumption, scale-to-zero) templates plus non-secret examples. No resource has been provisioned. |
-| — | Add GitHub Actions deployment through Azure OIDC. | Cloud IAM and CI/CD | Not started — Azure credentials required | The OIDC and token-handling runbook is prepared in `infra/azure/README.md`; a deploy workflow remains blocked until an Azure subscription, Entra federation, and an approved public runtime for the private SDK exist. Never commit Azure credentials or service-principal secrets. |
+| — | Build the public-safe investigation runtime. | Agent orchestration and safety engineering | Contract and fixtures accepted — D1/D2, D3 precedence/no-score boundary and D4–D10 resolved; ADR-015 accepts HTTP/SSE and ADR-016 accepts the canonical synthetic values for S01–S05 showcase execution. Later operational D3 rows and S06–S08 behavior do not block this slice. | Implement the validating loader, `POST /showcase/investigations`, deterministic routing, recorded playback, bounded tools/graph, optional Groq adapter, controls and browser consumer. Contract and fixture tests already enforce sequence/terminal semantics, exact S04 evidence, tool budget, citations, incomplete outage and prohibited fields. |
+| — | Add GitHub Actions deployment through Azure OIDC. | Cloud IAM and CI/CD | Not started — Azure credentials required | The OIDC and token-handling runbook is prepared in `infra/azure/README.md`; deployment remains blocked by the absent Azure subscription and Entra federation and by the unimplemented public-safe investigation runtime. Never commit Azure credentials or service-principal secrets. |
 | — | Configure Doppler `showcase` values and host-side secret injection. | Secrets management | Not started — deployment credentials required | Verify no provider secret reaches Vite/browser output. |
 | ✓ | Define Container Apps scale-to-zero and no-extra-services configuration. | Serverless operations and cost control | Configuration review only | The reviewed Bicep encodes 0–1 replicas, 0.25 vCPU/0.5 GiB, HTTPS ingress, explicit SWA origin, and no logs workspace; it is not yet deployed. |
 | ◐ | Prepare a budget-alert configuration. | FinOps and cloud governance | Configuration review only; deployment verification blocked | The subscription Bicep prepares 80% and 100% monthly-email alerts. It records that alerts notify but do not cap Azure consumption; verification awaits a subscription and monitored mailbox. |
@@ -507,33 +509,45 @@ added so the source-to-score chain cannot be hidden inside Plaid integration or
 dashboard work. Together these stages explain what must be available before a
 later roadmap release can truthfully ship.
 
+Status uses the same evidence rule as the MVP matrix: ✓ is complete, ◐ has
+repository-backed preparation but has not passed its gate, and — is not
+started. A proposal alone can justify ◐ only when its boundary and next gate are
+explicit; it can never justify ✓.
+
 | Status | Foundation stage | Capability and deliverable | Inputs / dependencies | Verification gate | Maps to release |
 | --- | --- | --- | --- | --- | --- |
 | ✓ | F0 — Design and contract foundation | Preserve the immutable reference route; maintain the Phase 0 capability map and accepted contract artifacts. | Existing reference and accepted Phase 0 API contract. | Reference and Rules Performance routes match at desktop and mobile; contract tests pass. | MVP 0 |
 | ✓ | F1 — Application-shell foundation | Product router, `AppShell`, route-derived navigation, global loading/error/connection states, and URL search/filter conventions. | F0 design and contract boundary. | Keyboard, responsive/mobile-sheet, accessibility, and visual shell tests pass. | MVP 1 |
 | ✓ | F2 — Current API integration foundation | Scenario/custom-run submission and streamed decision workspace in the approved shell; Sim A/B, counterfactual, signed record, outage, and evidence path remain visibly simulated. | Current Phase 0 API only. No aggregate history is manufactured from a transient run. | A–F and the LLM outage complete end to end with truthful loading, error, and terminal states. | MVP 2 |
-| — | F3 — Fast-path operations foundation | Durable score/process workflows, transaction list/detail, recent decisions, overview metrics, and model/policy/feature/run/evidence lineage. | Accepted Phase 2 operational contract, PostgreSQL state, and authentication before any exposed mutation. | Retries cannot look like duplicate actions; `PASS` (recommendation) remains distinct from `RELEASE` (executed action); no LLM dependency. | Deferred extension 1 |
-| — | F3a — Approved source-to-score foundation | Plaid Sandbox source facts flow through canonical mapping, sanitised reproducible fixtures, approved enrichment, immutable feature snapshots, an approved served model, then deterministic routing. Sparkov remains mechanics-only evaluation evidence. | F3 operational transaction contract plus explicit data-governance and model approvals. Raw provider/customer data never enters public assets, test snapshots, or the browser bundle. | Fixture-to-route tests prove mapping validation, sanitisation, lineage/version capture, idempotency, recommendation/action separation, and fail-safe handling for unavailable enrichment or model service. | Deferred extension 1 |
-| — | F4 — Investigation foundation | Typed investigation status, tool-call/result evidence, factors, and fail-safe outcomes in transaction detail. | Backend Phase 3. | The slow path is ambiguous-only; timeout/malformed-data states and approved scenario mapping are visible without chain-of-thought. Proposed G/H/L/N remain unclaimed; L cannot bypass a hard HOLD. | Deferred extension 2 |
+| ◐ | F3 — Fast-path operations foundation | Durable score/process workflows, transaction list/detail, recent decisions, overview metrics, and model/policy/feature/run/evidence lineage. Preparation started under ADR-013: operational API, PostgreSQL and provider-neutral identity outlines are reviewable. ADR-016 accepts S01–S08 synthetic facts for MVP 3 only; it does not implement or approve F3 stateful behavior. | Accepted Phase 2 operational contract, PostgreSQL state, and authentication before any exposed mutation. These remain unresolved dependencies. | Retries cannot look like duplicate actions; `PASS` (recommendation) remains distinct from `RELEASE` (executed action); no LLM dependency. | Deferred extension 1 |
+| ◐ | F3a — Approved source-to-score foundation | Plaid Sandbox source facts flow through canonical mapping, sanitised reproducible fixtures, approved enrichment, immutable feature snapshots, an approved served model, then deterministic routing. Preparation includes proposed ADR-003–005, six draft domain schemas, valid/invalid contract fixtures, the separately accepted synthetic showcase packet and a proposed acceptance matrix; no runtime connector, feature pipeline or model service exists. Sparkov remains mechanics-only evaluation evidence. | F3 operational transaction contract plus explicit data-governance and model approvals. Raw provider/customer data never enters public assets, test snapshots, or the browser bundle. These dependencies remain unresolved. | Fixture-to-route tests prove mapping validation, sanitisation, lineage/version capture, idempotency, recommendation/action separation, and fail-safe handling for unavailable enrichment or model service. | Deferred extension 1 |
+| — | F4 — Investigation foundation | Typed investigation status, tool-call/result evidence, factors, and fail-safe outcomes in transaction detail. The bounded SDK-free MVP 3 investigation may provide reusable interfaces, but does not by itself complete F4. | Backend Phase 3. | The slow path is ambiguous-only; timeout/malformed-data states and approved scenario mapping are visible without chain-of-thought. Proposed G/H/L/N remain unclaimed; L cannot bypass a hard HOLD. | Deferred extension 2 |
 | — | F5 — Human-review foundation | Review queue/detail, claiming, versioned decisions, role gates, authority/oversight explanation, and override outcomes. | Backend Phase 4 and authentication. | Stale conflicts and unauthorised actions never appear successful; scenarios J/K are demonstrable. | Deferred extension 2 |
 | — | F6 — Monitoring, integration-health, replay, and hardening foundation | Model health/drift, operational state for the F3a source integration, immutable replay, and security/observability/performance/browser/accessibility/visual hardening. | Backend Phases 5–6 and the approved F3a source-to-score path. It does not create a second Plaid ingestion or scoring path. | A–N and the seven portfolio demo flows are coherent across the console; replay never executes a payment action. | Deferred extension 3 |
 
-## First implementation slice
+## Next safe F3 preparation slice
 
-The next safe build should be F1 plus the smallest part of F2:
+ADR-013 records the product owner's local-first boundary. The next work remains
+contract preparation—not operational endpoint implementation:
 
-1. Create the routed `AppShell` from the approved reference.
-2. Make Overview, Transactions, Reviews, Rules, Insights, and Settings real
-   routes, with unavailable states where APIs do not exist.
-3. Move the existing scenario runner into `/transactions/new` or an equivalent
-   operator route without changing its backend behavior. This is bounded to the
-   pre-existing unauthenticated demo endpoints; it does not authorize target
-   API implementation beyond Phase 0.
-4. Add typed health/scenario/run services and visible connection/error states.
-5. Keep `/rules-performance-reference.html` unchanged for side-by-side review.
+1. Review the proposed operational API, PostgreSQL and identity outlines and
+   resolve their open questions through the reserved ADR-002/009/010 path.
+2. Reconcile the accepted showcase-only S01–S08 facts with the future canonical
+   transaction and operational contracts without silently promoting them to
+   provider, model or stateful-operation truth; do not map A–F by similarity.
+3. Specify valid/invalid schemas, idempotency and concurrency transitions,
+   protected operations and stable error/event categories.
+4. Freeze accepted artifacts only through P0-09 with contract tests and a web
+   consumer check.
+5. Keep the accepted legacy demo contract unchanged. Implement the separately
+   accepted public-showcase contracts and fixtures behind their own route and
+   tests before changing the public image or MVP 3 user path.
 
-This produces a truthful working application immediately while preserving the
-backend Phase 0 gate and avoiding speculative data or unsupported workflows.
+F3 remains ◐ until its operational contract, persistence and identity decisions
+are accepted and its runtime verification gate passes. F3a is also ◐ because
+its decision/schema/fixture packet now exists, but no Plaid runtime connector,
+eligible feature pipeline, approved corpus/model or fraud-model service has been
+approved.
 
 ## Definition of frontend done
 

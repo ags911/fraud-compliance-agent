@@ -27,7 +27,7 @@ build.
 | `docs/experiments` | Sanitised notebook experiment records | Evidence, never runtime authority. |
 | `docs/architecture` | Structural description of the system, from ingestion to monitoring | Describes structure and build state; approves nothing. |
 | `notebooks` | Reproducible, sanitised feasibility and evaluation evidence | Follow the notebook plan, data governance, and approved gates. |
-| `fixtures` | Future deterministic canonical scenarios | No provider/raw data; only accepted fixtures become runtime candidates. |
+| `fixtures` | Versioned deterministic scenarios and contract examples | No provider/raw data; only explicitly accepted fixtures may become scoped runtime inputs. |
 | `config` | Non-secret configuration examples and model configuration | Never add credentials or local environment values. |
 | `data` | Local/managed data staging locations | Ignored by Git; raw, processed, and model data never belong in commits. |
 | `infra` | Local orchestration and deployment configuration | No application-domain logic. |
@@ -48,6 +48,7 @@ build.
 | `apps/api/Dockerfile` | Showcase API image: digest-pinned bases, non-root, no private SDK or offline ML code. |
 | `.dockerignore` | Allowlist build context for that image; everything is excluded until it is named. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |
+| `docs/proposals/public-showcase-investigation.proposed.md` | Decision register and implementation plan for the repository-owned SDK-free MVP 3 investigation; ADR-015 owns its accepted cross-application boundary and ADR-016 owns its accepted synthetic fixtures. |
 | `apps/api/server/models.py` | API-side domain/data models. |
 | `apps/api/modelling/pipeline.py` | Run setup and the mode-dependent decision about what data an evaluation run may read. |
 | `config/fast-path-model-training.v1.json` | Accepted seed, hyperparameters, threshold grid, and synthetic-fixture shape for the mechanics-only benchmark. |

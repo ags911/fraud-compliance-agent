@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.1",
+  "status": "candidate",
+  "owner": "showcase-api",
+  "approval_scope": "MVP 3 controlled-window limits, live-provider policy, and gated legacy migration approved by the product owner on 2026-09-20.",
+  "effective_scope": "Review and tests only. Runtime consumption is forbidden until the public-showcase investigation contract and implementation are accepted.",
+  "runtime_consumption": "forbidden",
+  "recorded_playback": {
+    "continuously_public": true,
+    "fallback_when_live_unavailable": true,
+    "label": "recorded"
+  },
+  "live_mode": {
+    "enabled_by_default": false,
+    "enablement": "server_side_operator_kill_switch",
+    "maximum_concurrent_investigations": 1,
+    "per_observed_client": {
+      "maximum_investigations": 2,
+      "window_seconds": 600,
+      "client_key_boundary": "trusted_ingress_metadata_only"
+    },
+    "per_process_enablement_window": {
+      "maximum_investigations": 10,
+      "maximum_duration_seconds": 1800,
+      "durability": "process_local_resets_on_restart"
+    },
+    "overall_investigation_timeout_seconds": 45,
+    "limit_outcome": "labelled_recorded_playback"
+  },
+  "provider_policy": {
+    "live_provider": "groq",
+    "credential_boundary": "server_side_secret_only",
+    "model_selection": "server_side_allowlisted_configuration",
+    "model_identifier_required": true,
+    "record_provider_and_model_with_run": true,
+    "output_boundary": "validated_structured_output_only",
+    "alternate_llm_fallback": "forbidden",
+    "unavailable_outcome": "labelled_recorded_playback",
+    "public_error_boundary": "stable_redacted_reason_code_only",
+    "raw_prompt_logging": false,
+    "raw_provider_output_logging": false,
+    "hidden_reasoning_logging": false,
+    "record_boundary": "validated_contract_fields_only_ephemeral"
+  },
+  "migration_policy": {
+    "legacy_private_sdk_pipeline": "local_only_compatibility_reference",
+    "public_runtime_dependency": "forbidden",
+    "coexistence_until": [
+      "accepted_s01_s08_contracts",
+      "public_runtime_evaluations_pass",
+      "browser_acceptance_pass",
+      "public_container_boundary_pass"
+    ],
+    "cutover_requires_explicit_decision": true,
+    "retirement": {
+      "remove_from_active_application": true,
+      "remove_from_active_dependency_path": true,
+      "preserve_characterisation_documents": true,
+      "preserve_git_history": true
+    }
+  },
+  "always_on_anonymous_live_mode": {
+    "allowed": false,
+    "required_before_enablement": "reliable_provider_spending_limit_or_durable_distributed_quota"
+  },
+  "notes": "These are safety limits, not latency, capacity, availability, or zero-cost claims. Per-client admission must never trust an arbitrary client-supplied header."
+}

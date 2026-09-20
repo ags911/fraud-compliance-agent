@@ -32,7 +32,9 @@ What the image is and is not:
   is the target port a Container Apps ingress must use.
 - The private Arbiris SDK is excluded, so `/scenarios` and the run routes answer
   `503 demo_pipeline_unavailable`. `/health` and `/demo/model-summary` work.
-  Publishing the SDK inside an image needs an explicit deployment approval.
+  The approved replacement direction is a repository-owned, SDK-free bounded
+  investigation; it is not implemented yet. The private SDK will remain out of
+  the public image.
 - The offline `modelling` library and its scikit-learn, XGBoost, pandas, and
   Plotly stack are excluded: the production wheel contains `server` only.
 - `ALLOWED_ORIGINS` defaults to a local development origin. A deployment must
@@ -48,6 +50,37 @@ submodule, the local corpus, or a `.env` file into a published layer.
 CI builds the image on every change, starts it, and checks that it is healthy,
 serves the committed benchmark digest, runs as a non-root user, and carries no
 private or offline code.
+
+Before public release, the image must additionally include the accepted
+public-safe investigation implementation and its versioned synthetic fixtures,
+while retaining the negative check for the private SDK. Recorded demonstration
+playback is the default; optional live Groq execution requires the separately
+accepted admission, quota and kill-switch controls.
+
+Live Groq access is not an always-on anonymous feature. It defaults off and may
+be enabled only for a controlled demonstration window through server-side
+configuration. Disablement or exhaustion returns to labelled recorded
+playback. A continuously available live mode requires a reliable provider
+spending limit or durable distributed quota mechanism not present in MVP 3.
+
+The candidate controlled-window values are one concurrent run, two per observed
+client per 10 minutes, ten per process, a 30-minute maximum window and a
+45-second overall timeout. Only trusted ingress metadata may identify an
+observed client. The per-process ceiling resets on restart and must not be
+described as a durable or daily quota.
+
+Groq is the sole optional live provider. Keep its credential and allowlisted
+model setting in server-side secret/configuration injection, record the
+provider and selected model identifier with each live run, and accept only
+validated structured output. Do not log raw prompts, raw provider responses,
+hidden reasoning or provider exceptions. There is no alternate-LLM failover;
+provider unavailability returns to labelled recorded playback.
+
+The private-SDK A–F workflow remains local-only during migration and is never a
+public-image dependency. Public cutover requires accepted S01–S08 contracts,
+passing runtime evaluations, browser acceptance, the image boundary check, and
+an explicit decision. Retirement removes the legacy active dependency while
+preserving its characterization documents and Git history.
 
 Infrastructure code beyond the image is not configured yet. Do not represent
 Azure resources as deployed until the Bicep, GitHub Actions OIDC configuration,

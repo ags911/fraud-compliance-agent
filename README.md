@@ -11,7 +11,8 @@ Monorepo for the payment-risk engine and its operator console.
 - `docs/contracts` — cross-application, versioned contract artifacts.
 - `docs` — shared product, contract, governance, experiment, and proposal
   documentation; see `docs/README.md` for authority and lifecycle.
-- `fixtures` — future canonical deterministic scenario fixtures.
+- `fixtures` — versioned deterministic scenario and contract fixtures; only
+  explicitly accepted sets may be consumed at runtime.
 - `notebooks` — reproducible, sanitised feasibility work only.
 - `infra` — local orchestration and deployment configuration.
 
@@ -65,3 +66,20 @@ The routes that need the SDK then return `503 demo_pipeline_unavailable`, and
 their tests skip. With access, run `git submodule update --init` and
 `uv sync --extra sdk`; the `make` targets use the SDK automatically when the
 submodule is present.
+
+The approved public-showcase direction is not to publish that private SDK.
+Instead, MVP 3 plans a repository-owned, SDK-free bounded LangGraph
+investigation: recorded synthetic playback is the default, S04 is the only
+normal agent scenario, S05 is its failure path, and an explicitly labelled live
+Groq run is optional behind safety controls. ADR-015 accepts the HTTP/SSE
+contract and ADR-016 accepts the synthetic S01–S08 values for showcase use;
+the runtime remains unimplemented. See
+[`docs/proposals/public-showcase-investigation.proposed.md`](docs/proposals/public-showcase-investigation.proposed.md).
+Groq is the sole selected live provider for that boundary; credentials and
+allowlisted model selection remain server-side, provider/model identity is
+recorded per run, only validated structured output is retained, and unavailable
+live execution falls back to labelled playback rather than another LLM.
+The current private-SDK A–F workflow remains local-only until the replacement's
+contracts, runtime evaluations, browser acceptance and public-container checks
+pass. An explicit cutover decision is still required; retirement preserves the
+legacy characterization documents and Git history.

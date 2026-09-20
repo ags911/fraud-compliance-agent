@@ -4,9 +4,35 @@ This directory is a reviewable deployment scaffold for a synthetic recruiter sho
 
 ## Current hard stop
 
-Do **not** deploy the current API image as the full decision demo. The image deliberately excludes the private Arbiris SDK, so `/scenarios` and both `/run` routes return `503 demo_pipeline_unavailable`; only `/health` and the read-only benchmark route work. Publishing the SDK in an image requires separate explicit approval and a reviewed supply-chain design.
+Do **not** deploy the current API image as the full decision demo. The image deliberately excludes the private Arbiris SDK, so `/scenarios` and both `/run` routes return `503 demo_pipeline_unavailable`; only `/health` and the read-only benchmark route work. The selected replacement direction is a repository-owned, SDK-free bounded investigation with recorded demonstration playback by default and optional live Groq execution behind accepted safety controls. That replacement is not implemented yet; the private SDK remains excluded.
 
-The Bicep is therefore ready for review and validation, but the GitHub deployment workflow remains guarded until that decision and Azure credentials exist.
+The Bicep is therefore ready for review and validation, but the GitHub deployment workflow remains guarded until the public-safe investigation passes its contract, evaluation, abuse-control and container-boundary gates and Azure credentials exist.
+
+Recorded playback will remain continuously public. Live Groq mode must default
+off and be enabled only for a controlled demonstration window through a
+server-side kill switch. Do not deploy always-on anonymous live access until a
+reliable provider spending limit or durable distributed quota mechanism has
+been approved and tested.
+
+The candidate controlled window is limited to one concurrent live
+investigation, two per observed client per 10 minutes, ten per process, a
+30-minute maximum enablement window and a 45-second overall timeout. Resolve
+the observed-client key only from verified Container Apps ingress metadata;
+never trust an arbitrary caller-supplied forwarding header. Process restart
+resets these counters, so they are not a daily spending cap.
+
+Groq is the sole optional live provider. Inject its credential and allowlisted
+model setting server-side, record the provider and selected model identifier
+with the run, and admit only schema-validated structured output. Raw prompts,
+raw responses, hidden reasoning and provider exceptions must not enter logs or
+public events. Do not configure another LLM as failover; use labelled recorded
+playback when Groq is unavailable.
+
+Do not treat a passing image build as automatic migration approval. The legacy
+private-SDK A–F workflow stays local-only until accepted S01–S08 contracts,
+runtime evaluations, browser acceptance and the public-container boundary all
+pass and an explicit cutover decision is recorded. It remains excluded from
+the public image throughout.
 
 ## Prerequisites when deployment is approved
 

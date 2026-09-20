@@ -1,0 +1,110 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Fraud Compliance Agent public-showcase investigation API",
+    "version": "1.0",
+    "x-contract-version": "1.0",
+    "x-approval-status": "accepted",
+    "x-runtime-consumption": "allowed",
+    "x-scope": "Synthetic S01-S08 public-showcase investigation only; database-free and non-authoritative.",
+    "x-prohibitions": [
+      "No real payment approval, release or execution",
+      "No provider or customer data",
+      "No numeric fraud-model score or threshold",
+      "No browser-supplied prompt, tool, model or authority selection"
+    ]
+  },
+  "paths": {
+    "/showcase/investigations": {
+      "post": {
+        "operationId": "streamShowcaseInvestigation",
+        "summary": "Stream one bounded synthetic showcase investigation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ShowcaseInvestigationRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transient SSE stream governed by the separate accepted event schema.",
+            "content": {
+              "text/event-stream": {
+                "schema": {"type": "string"}
+              }
+            }
+          },
+          "422": {
+            "description": "The request does not match the scenario-only contract.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ShowcaseError"},
+                "example": {
+                  "detail": {
+                    "code": "invalid_request",
+                    "message": "Choose an available synthetic scenario and execution mode."
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The accepted public-showcase runtime or fixtures are unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ShowcaseError"},
+                "example": {
+                  "detail": {
+                    "code": "showcase_investigation_unavailable",
+                    "message": "The synthetic investigation is unavailable."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ShowcaseInvestigationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario_id", "execution_mode"],
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "enum": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08"]
+          },
+          "execution_mode": {
+            "type": "string",
+            "enum": ["recorded", "live"]
+          }
+        }
+      },
+      "ShowcaseErrorDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["invalid_request", "showcase_investigation_unavailable"]
+          },
+          "message": {"type": "string", "minLength": 1, "maxLength": 160}
+        }
+      },
+      "ShowcaseError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["detail"],
+        "properties": {
+          "detail": {"$ref": "#/components/schemas/ShowcaseErrorDetail"}
+        }
+      }
+    }
+  }
+}

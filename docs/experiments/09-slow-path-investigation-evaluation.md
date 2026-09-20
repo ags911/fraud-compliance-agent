@@ -2,7 +2,8 @@
 
 Status: **Draft — not run**  
 Notebook: [09-slow-path-investigation-evaluation.ipynb](../../notebooks/09-slow-path-investigation-evaluation.ipynb)
-Decision supported: Post-Phase-0 — candidate investigation release review
+Decision supported: Bounded public-showcase investigation release review and,
+later, F4 investigation evidence
 
 ## Run context
 
@@ -15,6 +16,11 @@ Decision supported: Post-Phase-0 — candidate investigation release review
 
 - `docs/contracts/README.md`
 - `docs/proposals/legacy-scenario-characterisation.md`
+- `docs/proposals/public-showcase-investigation.proposed.md`
+
+The product owner has selected S04 as the normal agent path and S05 as its
+explicit incomplete/failure path. The fixture values, tool set, truth table and
+evaluation protocol remain unaccepted, so this experiment remains blocked.
 
 This experiment remains blocked until its required evidence and approvals exist. Do not replace them with fabricated data, labels, observations, or acceptance criteria.
 

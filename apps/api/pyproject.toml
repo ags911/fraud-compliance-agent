@@ -37,6 +37,7 @@ extend-select = ["I", "S"]
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.0",
+    "jsonschema>=4.26.0",
     "nbclient>=0.10.0",
     "nbformat>=5.10.0",
     "numpy>=2.0.0",

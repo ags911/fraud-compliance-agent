@@ -73,6 +73,18 @@ The API is a modular monolith on purpose. The PRD keeps the deterministic tier
 and the investigation tier in one process until profiling shows a real need to
 split them, so a safety decision never waits on a network hop.
 
+The built investigation shown here is the legacy private-SDK local pipeline.
+The contracted public replacement is a repository-owned, SDK-free bounded tool
+loop in the same API process. Recorded demonstration playback is its default;
+S04 is its normal agent path and S05 its explicit failure path. ADR-015 accepts
+its HTTP/SSE boundary, but it is not built and does not complete F4.
+
+Recorded playback is the continuously public mode. Anonymous live Groq access
+defaults off and is enabled only for an operator-controlled demonstration
+window. Always-on live access waits for a reliable provider spending limit or
+durable distributed quota; MVP 3 does not pretend a process-local counter is a
+durable control.
+
 There is no database. Run state is ephemeral, which is why the console must not
 present anything as durable history, and why idempotency and replay remain
 planned rather than claimed.
@@ -100,6 +112,11 @@ Stage by stage, with the constraint that defines it:
 | **Orchestration** | Separates recommending from deciding: authority, then oversight, then review where required. | A recommendation is not an action. The browser never supplies authority; the server derives actor and tenant context. |
 | **Action** | Produces a simulated outcome, durable history, replay, and a linked evidence record. | Every payment action is simulated. Duplicate processing never creates a second action, and replay repeats lineage, not effects. |
 | **Monitoring** | Shows truthful run, health, and evaluation state; later, drift and champion/challenger. | No invented trend, accuracy, or false-positive figure. Zero, empty, and `Unavailable` are correct answers until recorded data exists. |
+
+The table describes the eventual operational pipeline. The bounded MVP 3
+public investigation deliberately omits the model-score step: fixture-based
+deterministic eligibility sends only S04 to the normal agent path and S05 to its
+failure path. Numeric runtime scores, calibration and thresholds wait for F3a.
 
 ### What actually runs today
 
@@ -151,7 +168,9 @@ appears.
   server-derived, and authentication is a prerequisite for the first mutable
   non-local endpoint rather than a later hardening step.
 - The language model is treated as an untrusted, optional contributor: bounded
-  tools, a timeout, and a fail-safe HOLD if it is unavailable.
+  tools, a timeout, and a fail-safe HOLD recommendation if it is unavailable.
+  The investigation remains visibly incomplete, authority is not evaluated,
+  and no action occurs.
 - Provider data, tokens, raw errors, personal data, and model reasoning are
   sensitive. The stream emits stable error categories (`processing_timeout`,
   `processing_failed`), never a provider's message.
@@ -164,12 +183,14 @@ appears.
 
 The image exists and is built and smoke-tested in CI, and reviewable Bicep for
 the Static Web App, the scale-to-zero Container App, and a budget alert is in
-`infra/azure/`. Nothing is deployed, and one decision blocks the full demo: the
-image deliberately excludes the private Arbiris SDK, so `/scenarios` and both
-`/run` routes answer `503 demo_pipeline_unavailable` and only `/health` and the
-benchmark route work. Publishing the SDK in an image needs its own approval and
-a reviewed supply-chain design. Free hosting is suitable only for a synthetic
-demo, never as a production reliability decision.
+`infra/azure/`. Nothing is deployed. The current image deliberately excludes
+the private Arbiris SDK, so `/scenarios` and both `/run` routes answer
+`503 demo_pipeline_unavailable` and only `/health` and the benchmark route
+work. The selected replacement is a repository-owned, SDK-free investigation,
+not publication of the SDK. Its HTTP/SSE contract and synthetic S01–S08
+fixtures are accepted, while implementation, evaluation and public abuse
+controls still block the full demo. Free hosting is suitable only
+for a synthetic demo, never as a production reliability decision.
 
 ## 7. Where each piece lives
 
@@ -177,12 +198,13 @@ demo, never as a production reliability decision.
 | --- | --- |
 | Browser UI, routing, accessibility, browser tests | `apps/web` |
 | Operational facts, routes, domain behaviour, API tests | `apps/api/server` |
+| Contracted public bounded investigation | Accepted HTTP/SSE boundary in `docs/contracts`; planned implementation in `apps/api/server/showcase_investigation`; design record in `docs/proposals/public-showcase-investigation.proposed.md` |
 | Offline training and evaluation, never imported by the API | `apps/api/modelling` |
 | Versioned API and event contracts (the showcase OpenAPI and SSE event schema are frozen at v1.0) | `docs/contracts` |
 | Reviewable, non-secret configuration | `config` |
 | Reproducible evidence and experiment records | `notebooks`, `docs/experiments` |
 | Deployment configuration and the container image | `apps/api/Dockerfile`, `infra` |
-| Deterministic scenario fixtures | `fixtures` (specified, not yet populated) |
+| Deterministic scenario fixtures | `fixtures`; ADR-016 accepts `s01-s08/scenarios.v1.json` for the database-free showcase only |
 
 ## 8. Open decisions
 
@@ -194,11 +216,13 @@ not mistake an absence for an oversight.
   ingestion can be built.
 - **No operational store.** Idempotency, durable history, review state, and
   replay all wait on that decision; the showcase is database-free today.
-- **The public image cannot run the decision demo.** Without the private SDK the
-  run routes are unavailable; the choices are approving the SDK in an image, or
-  replacing the demo pipeline with first-party code.
-- **No approved model target or threshold.** Any threshold, calibration method,
-  or promotion rule is an explicit approved decision, not a default.
+- **The public-safe investigation is not built.** The product direction is now
+  first-party SDK-free code, recorded playback by default, and optional live
+  Groq execution. Its route truth table, contracts, evaluation and abuse/cost
+  controls remain open; the current image's run routes are still unavailable.
+- **No approved model target or threshold.** MVP 3 therefore has no numeric
+  runtime score or threshold. Any later target, calibration method, threshold
+  or promotion rule is an explicit F3a decision, not a default.
 - **Two console shells coexist.** The Overview is the shadcn surface; the other
   pages keep the approved Payments shell until a migration is approved.
 - **Authentication is absent.** It gates the first mutable non-local endpoint.
