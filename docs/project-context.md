@@ -66,9 +66,31 @@ These documents are candidate/proposed until explicitly approved. Do not
 silently turn proposed endpoints, thresholds, models, scenarios, hosting, or
 delivery stages into implemented product facts.
 
-Current delivery status belongs in the issue tracker/backlog when one is
-adopted. Until then, record material decisions and approval state in the PRD or
-an ADR rather than in this file.
+### Keeping delivery status current
+
+Delivery status lives in the [implementation plan](product/implementation-plan.md),
+not in this file: its completion checklists and its screen and surface tables are
+the operational record, and an issue tracker replaces them only once one is
+adopted. Record material decisions and approval state in the PRD or an ADR.
+
+- **Update status in the same change that alters it.** A change that builds,
+  removes, or breaks a screen, route, checklist item, or acceptance target updates
+  the plan's `Status` and `Verification` cells and its progress line in that
+  change, not afterwards.
+- **A tick needs evidence in the repository.** In a checklist it means the item
+  is done and its evidence is named. In a screen or surface table it means the
+  screen exists, not that every requirement in its row is met. Never tick
+  something that only exists in a branch, a plan, or a draft.
+- **Say what is missing.** When a tick has a gap, such as a screen with an
+  accessibility check but no behaviour test, write the gap in `Verification`
+  rather than leaving the tick to imply more.
+- **Do not turn planned into built.** Deployment, approved thresholds, models, and
+  hosting stay unticked until they are configured and verified.
+- **This file records rules, not progress.** Keep dates, counts, and per-item
+  state out of it, so it does not become a second, staler copy of the plan.
+
+`apps/api/tests/test_plan_status.py` fails when a screen ticked as built has no
+route in the app, so a removed screen cannot stay ticked.
 
 ## Architecture boundaries
 
