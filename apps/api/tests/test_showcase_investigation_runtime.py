@@ -1,7 +1,6 @@
 """Exercise the SDK-free public-showcase runtime and its safety boundaries."""
 
 import asyncio
-import copy
 import json
 from types import SimpleNamespace
 
