@@ -3,7 +3,7 @@
 # Use the private Arbiris SDK when its submodule is initialised; otherwise run
 # without it. The SDK-backed demo pipeline tests skip when it is absent.
 SDK_EXTRA := $(if $(wildcard apps/api/vendor/arbiris-sdk/pyproject.toml),--extra sdk,)
-UV_RUN := uv run $(SDK_EXTRA)
+UV_RUN := uv run --frozen $(SDK_EXTRA)
 
 check: web-lint web-design-check web-build web-test api-lint api-format-check api-notebook-lint api-docstring-lint notebook-policy-check api-test
 

@@ -29,6 +29,7 @@ def main() -> None:
     subscription_bicep = _read("infra/azure/subscription.bicep")
     dockerignore = _read(".dockerignore")
     dockerfile = _read("apps/api/Dockerfile")
+    makefile = _read("Makefile")
 
     for fragment in (
         "workflow_dispatch:",
@@ -89,6 +90,10 @@ def main() -> None:
         "SHOWCASE_LIVE_ENABLED=false",
     ):
         _require(dockerfile, fragment, "apps/api/Dockerfile")
+
+    # A public checkout has no private SDK source tree, so every acceptance
+    # command must reuse the frozen environment instead of resolving it again.
+    _require(makefile, "UV_RUN := uv run --frozen", "Makefile")
 
     swa_config = json.loads(_read("apps/web/public/staticwebapp.config.json"))
     if swa_config.get("navigationFallback", {}).get("rewrite") != "/index.html":
