@@ -44,4 +44,4 @@ for attempt in $(seq 1 30); do
 done
 
 VITE_API_BASE_URL="$api_origin" PLAYWRIGHT_PORT="$web_port" RUN_LOCAL_API_MATRIX=1 \
-  npm --prefix apps/web exec playwright test tests/real-preset-matrix.spec.ts
+  npm --prefix apps/web run test:payments -- tests/real-preset-matrix.spec.ts

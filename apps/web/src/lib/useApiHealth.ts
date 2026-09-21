@@ -66,9 +66,12 @@ export function useApiHealth(): ApiHealthState & { recheck: () => void } {
   }, [])
 
   useEffect(() => {
-    probe()
+    // Start after the effect has subscribed. The state is already `checking`,
+    // so a synchronous effect update would add a redundant render.
+    const frame = window.requestAnimationFrame(probe)
     // A probe in flight when the component unmounts must not set state after it.
     return () => {
+      window.cancelAnimationFrame(frame)
       probeIdRef.current += 1
     }
   }, [probe])

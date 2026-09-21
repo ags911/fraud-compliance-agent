@@ -58,7 +58,9 @@ not present synthetic demo data as live customer, Plaid, or model output.
   controls are enabled. ADR-014 records the preparation boundary, ADR-015
   accepts its HTTP/SSE contract, ADR-016 accepts its versioned synthetic
   fixtures, and ADR-017 implements the local SDK-free S01–S05 API runtime.
-  Browser integration and Azure deployment remain pending.
+  The browser consumes the accepted route locally with contract-state and
+  browser-to-local-API coverage. Azure deployment and public-environment
+  verification remain pending.
 - The project has an accepted **mechanics-only** Sparkov benchmark contract and
   a read-only portfolio summary endpoint. They demonstrate reproducibility and
   evaluation only; neither is a model-serving, payment-decision, or production

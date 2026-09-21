@@ -18,6 +18,7 @@ acceptance-mvp2: api-test web-test
 	bash ./scripts/run_mvp2_local_acceptance.sh
 
 acceptance-mvp3-predeploy: check
+	bash ./scripts/run_mvp3_local_acceptance.sh
 
 acceptance-mvp3-public:
 	bash ./scripts/verify_public_showcase.sh

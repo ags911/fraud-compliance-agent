@@ -35,7 +35,7 @@ What the image is and is not:
   recorded S01–S05 `/showcase/investigations` work.
   The approved replacement direction is a repository-owned, SDK-free bounded
   investigation. Its local S01–S05 API runtime is implemented under ADR-017;
-  browser integration and deployment verification remain. The private SDK will
+  local browser integration is complete and deployment verification remains. The private SDK will
   remain out of the public image.
 - The offline `modelling` library and its scikit-learn, XGBoost, pandas, and
   Plotly stack are excluded: the production wheel contains `server` only.

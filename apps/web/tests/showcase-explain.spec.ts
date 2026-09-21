@@ -135,6 +135,25 @@ test.describe("Demo API status", () => {
     await expect(page.getByTestId("api-health")).toContainText("Waking the demo API")
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "ready", { timeout: 5000 })
   })
+
+  test("lets a reader retry an unavailable health check", async ({ page }, testInfo) => {
+    let attempts = 0
+    await page.route(HEALTH_URL, async (route) => {
+      attempts += 1
+      if (attempts === 1) {
+        await route.abort()
+      } else {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok" }) })
+      }
+    })
+    await openShowcase(page)
+    await revealStatus(page, testInfo.project.name)
+    await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "unavailable")
+
+    await page.getByRole("button", { name: "Retry" }).click()
+
+    await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "ready")
+  })
 })
 
 test.describe("Explain this decision", () => {
@@ -206,6 +225,19 @@ test.describe("Explain this decision", () => {
     await openShowcase(page)
 
     await expect(page.getByTestId("explain-decision")).toContainText("No language model is connected")
+  })
+
+  test("starts a fresh explanation when a new run begins", async ({ page }) => {
+    await openShowcase(page)
+    await runS04(page)
+    const explain = page.getByTestId("explain-decision")
+    await explain.getByRole("button", { name: /What evidence was used/ }).click()
+    await expect(explain.getByText(/ev_payee_relationship/)).toBeVisible()
+
+    await page.getByRole("button", { name: "Run investigation" }).click()
+
+    await expect(explain.getByText(/ev_payee_relationship/)).toHaveCount(0)
+    await expect(explain.getByText(/I explain this run using only/)).toBeVisible()
   })
 
   test("has no automatically detectable WCAG A/AA violations after answering", async ({ page }) => {

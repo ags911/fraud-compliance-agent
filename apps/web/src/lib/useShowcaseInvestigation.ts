@@ -12,6 +12,7 @@ import type {
   ShowcaseToolCallEvent,
   ShowcaseToolResultEvent,
 } from '@/lib/showcase-types'
+import { parseShowcaseEvent } from '@/lib/showcase-event-validation'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8010'
 
@@ -33,16 +34,6 @@ function userFacingError(code: string | undefined): string {
   )
 }
 
-const SHOWCASE_EVENT_NAMES = new Set([
-  'run_started',
-  'route_resolved',
-  'investigation_skipped',
-  'tool_call',
-  'tool_result',
-  'investigation_result',
-  'run_result',
-])
-
 type ParsedMessage = { kind: 'event'; value: ShowcaseEvent } | { kind: 'done' }
 
 /**
@@ -58,23 +49,33 @@ async function* parseShowcaseSSE(response: Response): AsyncGenerator<ParsedMessa
   const decoder = new TextDecoder()
   let buffer = ''
 
+  let doneSeen = false
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
-    buffer += decoder.decode(value, { stream: true }).replaceAll('\r\n', '\n')
+    // Normalise only after adjoining chunks so a CRLF split across two reads
+    // cannot leave an unparseable frame boundary behind.
+    buffer = (buffer + decoder.decode(value, { stream: true })).replaceAll('\r\n', '\n')
 
     const chunks = buffer.split('\n\n')
     buffer = chunks.pop() ?? ''
     for (const chunk of chunks) {
       const lines = chunk.split('\n')
       const eventLine = lines.find((line) => line.startsWith('event:'))
+      const dataLines = lines.filter((line) => line.startsWith('data:'))
       if (eventLine?.slice('event:'.length).trim() === 'done') {
+        if (doneSeen || dataLines.length !== 1 || dataLines[0].slice('data:'.length).trim() !== '{}') {
+          throw new Error('The synthetic investigation stream contained an invalid terminal event.')
+        }
+        doneSeen = true
         yield { kind: 'done' }
         continue
       }
-      const dataLine = lines.find((line) => line.startsWith('data: '))
-      if (!dataLine) continue
-      const json = dataLine.slice('data: '.length)
+      if (doneSeen) throw new Error('The synthetic investigation stream continued after completion.')
+      if (eventLine || dataLines.length !== 1) {
+        throw new Error('The synthetic investigation stream contained an invalid event frame.')
+      }
+      const json = dataLines[0].slice('data:'.length).trimStart()
       if (!json.trim() || json.trim() === '{}') continue
 
       let parsed: unknown
@@ -83,16 +84,7 @@ async function* parseShowcaseSSE(response: Response): AsyncGenerator<ParsedMessa
       } catch {
         throw new Error('The synthetic investigation stream contained malformed JSON.')
       }
-      // Only contract event names are accepted. An unknown name is treated as a
-      // broken stream rather than rendered as if it were a product outcome.
-      if (
-        !parsed ||
-        typeof parsed !== 'object' ||
-        !SHOWCASE_EVENT_NAMES.has((parsed as { event?: unknown }).event as string)
-      ) {
-        throw new Error('The synthetic investigation stream contained an invalid event.')
-      }
-      yield { kind: 'event', value: parsed as ShowcaseEvent }
+      yield { kind: 'event', value: parseShowcaseEvent(parsed) }
     }
   }
 
@@ -179,13 +171,47 @@ export function useShowcaseInvestigation() {
     }
 
     let terminalEventReceived = false
+    let resultEventReceived = false
+    let streamRunId: string | null = null
+    let streamScenarioId: ShowcaseScenarioId | null = null
+    let expectedSequence = 1
+    let eventCount = 0
     for await (const message of parseShowcaseSSE(response)) {
       if (runIdRef.current !== runId) return
       if (message.kind === 'done') {
+        if (!resultEventReceived) {
+          throw new Error('The synthetic investigation ended without a terminal result.')
+        }
         terminalEventReceived = true
-        break
+        continue
       }
-      setState((prev) => reduceEvent(prev, message.value))
+      if (terminalEventReceived) throw new Error('The synthetic investigation continued after completion.')
+      const event = message.value
+      eventCount += 1
+      if (event.sequence !== expectedSequence) {
+        throw new Error('The synthetic investigation stream contained an invalid event sequence.')
+      }
+      if (eventCount === 1 && event.event !== 'run_started') {
+        throw new Error('The synthetic investigation stream did not start correctly.')
+      }
+      if (eventCount === 2 && event.event !== 'route_resolved') {
+        throw new Error('The synthetic investigation stream did not resolve a route.')
+      }
+      if (event.event === 'run_started') {
+        if (streamRunId !== null) throw new Error('The synthetic investigation started more than once.')
+        streamRunId = event.run_id
+        streamScenarioId = event.scenario_id
+      } else if (event.run_id !== streamRunId || event.scenario_id !== streamScenarioId) {
+        throw new Error('The synthetic investigation stream mixed unrelated run events.')
+      }
+      if (event.event === 'run_result') {
+        if (resultEventReceived) throw new Error('The synthetic investigation returned more than one result.')
+        resultEventReceived = true
+      } else if (resultEventReceived) {
+        throw new Error('The synthetic investigation continued after its terminal result.')
+      }
+      expectedSequence += 1
+      setState((prev) => reduceEvent(prev, event))
     }
 
     if (!terminalEventReceived) {

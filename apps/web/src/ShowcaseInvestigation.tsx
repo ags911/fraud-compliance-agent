@@ -215,7 +215,10 @@ export function ShowcaseInvestigationPage() {
           labelledBy="showcase-explain-heading"
           action={<Badge variant="outline">Preview</Badge>}
         >
-          <ExplainDecision run={investigation} />
+          <ExplainDecision
+            key={investigation.runStarted?.run_id ?? `showcase-${investigation.status}`}
+            run={investigation}
+          />
         </PaymentsPanel>
       </PaymentsPageMain>
     </>

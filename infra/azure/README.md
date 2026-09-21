@@ -4,7 +4,7 @@ This directory is a reviewable deployment scaffold for a synthetic recruiter sho
 
 ## Current hard stop
 
-Do **not** deploy the current API image as the completed decision demo yet. The image deliberately excludes the private Arbiris SDK, so `/scenarios` and both legacy `/run` routes return `503 demo_pipeline_unavailable`. `/health`, the read-only benchmark route, and the repository-owned recorded S01–S05 `/showcase/investigations` runtime work without it. Browser integration and deployed acceptance remain pending; the private SDK remains excluded.
+Do **not** describe the current image as a completed public deployment yet. The image deliberately excludes the private Arbiris SDK, so `/scenarios` and both legacy `/run` routes return `503 demo_pipeline_unavailable`. `/health`, the read-only benchmark route, and the repository-owned recorded S01–S05 `/showcase/investigations` runtime work without it. Local browser integration is complete; deployed acceptance remains pending, and the private SDK remains excluded.
 
 The Bicep is therefore ready for review and validation, but the GitHub deployment workflow remains guarded until the public-safe investigation passes its contract, evaluation, abuse-control and container-boundary gates and Azure credentials exist.
 

@@ -286,6 +286,34 @@ test.describe("Showcase investigation", () => {
     await expect(page.getByText("ended before completion")).toBeVisible()
   })
 
+  test("requires a run result before the terminal event", async ({ page }) => {
+    await openShowcase(page)
+    const withoutRunResult =
+      S04_RECORDED.split("\n\n")
+        .filter((frame) => !frame.includes('"event":"run_result"'))
+        .join("\n\n") + "\n\n"
+    await stubShowcase(page, withoutRunResult)
+
+    await page.getByRole("button", { name: "Run investigation" }).click()
+
+    await expect(page.getByText("The investigation could not run")).toBeVisible()
+    await expect(page.getByText("ended without a terminal result")).toBeVisible()
+    await expect(page.getByTestId("explain-decision").getByRole("textbox")).toBeDisabled()
+  })
+
+  test("rejects an event whose payload does not match the accepted contract", async ({ page }) => {
+    await openShowcase(page)
+    await stubShowcase(
+      page,
+      'data: {"event":"run_started","schema_version":"1.0"}\n\nevent: done\ndata: {}\n\n',
+    )
+
+    await page.getByRole("button", { name: "Run investigation" }).click()
+
+    await expect(page.getByText("The investigation could not run")).toBeVisible()
+    await expect(page.getByText("contained an invalid event")).toBeVisible()
+  })
+
   // accessibility.spec.ts sweeps this route's initial state. This covers the
   // state that only exists after a run, using the same WCAG A/AA scope.
   test("has no automatically detectable WCAG A/AA violations with a trace on screen", async ({ page }) => {

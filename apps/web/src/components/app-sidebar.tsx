@@ -58,18 +58,29 @@ const HEALTH_DOT_COLOURS = {
 function ApiHealthFooter() {
   const health = useApiHealth()
   return (
-    <p
-      className="flex items-center gap-[7px] text-sidebar-foreground/70 group-data-[collapsible=icon]:gap-0"
-      data-testid="api-health"
-      data-status={health.status}
-    >
-      <span
-        className={cn("size-[7px] shrink-0 rounded-full", HEALTH_DOT_COLOURS[health.status])}
-        aria-hidden="true"
-      />
-      {/* The status is text as well as colour, so it survives without colour. */}
-      <span className="group-data-[collapsible=icon]:hidden">{API_HEALTH_LABELS[health.status]}</span>
-    </p>
+    <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+      <p
+        className="flex items-center gap-[7px] text-sidebar-foreground/70 group-data-[collapsible=icon]:gap-0"
+        data-testid="api-health"
+        data-status={health.status}
+      >
+        <span
+          className={cn("size-[7px] shrink-0 rounded-full", HEALTH_DOT_COLOURS[health.status])}
+          aria-hidden="true"
+        />
+        {/* The status is text as well as colour, so it survives without colour. */}
+        <span className="group-data-[collapsible=icon]:hidden">{API_HEALTH_LABELS[health.status]}</span>
+      </p>
+      {health.status === "unavailable" ? (
+        <button
+          type="button"
+          className={cn("text-sidebar-foreground underline underline-offset-2 group-data-[collapsible=icon]:hidden", focusRing)}
+          onClick={health.recheck}
+        >
+          Retry
+        </button>
+      ) : null}
+    </div>
   )
 }
 
