@@ -1,6 +1,6 @@
 # Public-safe showcase investigation — decision record and implementation plan
 
-Status: **Local runtime, browser, container, and deployment preparation complete; Azure verification pending**
+Status: **Recorded-only public runtime verified on Azure; live-provider evaluation and legacy cutover remain**
 Target: MVP 3 public showcase, with interfaces that may inform F4  
 Replaces publicly: the unavailable private-SDK live-run path  
 Does not replace locally: the legacy private-SDK A–F pipeline during migration
@@ -92,9 +92,9 @@ Resolve these in order because later answers depend on earlier boundaries.
 | D5 | Execution budget | Maximum three tool calls per investigation and one call per tool. S04 requires at least two distinct tools. Budget exhaustion leaves the investigation incomplete with no action. LangGraph recursion remains a defensive implementation guard, not a product metric. | Resolved by product owner, 2026-09-20 |
 | D6 | Failure fallback | Provider unavailable, tool failure, invalid output, timeout and tool-budget exhaustion all produce `investigation_status=incomplete`, fail-safe HOLD recommendation, `authority_status=not_evaluated`, no simulated action, and a stable redacted reason code. | Resolved by product owner, 2026-09-20 |
 | D7 | Evidence and rationale schema | Tools are server-bound to the current scenario and return typed evidence with stable IDs and synthetic provenance. Every visible claim cites evidence returned in the same run; unknown/missing citations trigger `invalid_output`. No chain-of-thought is requested or stored. | Resolved by product owner, 2026-09-20; accepted in ADR-015 event contract |
-| D8 | Public admission and cost controls | Recorded demonstration playback is continuously public. Anonymous live Groq defaults off and is enabled through a server-side kill switch for at most 30 minutes. Limits: one concurrent investigation, two per observed client per 10 minutes, ten per process enablement window, and a 45-second overall timeout. Limits fall back to labelled playback. Always-on live mode requires reliable provider spending or durable distributed quota first. | Implemented locally under ADR-017; Azure ingress verification pending |
+| D8 | Public admission and cost controls | Recorded demonstration playback is continuously public. Anonymous live Groq defaults off and is enabled through a server-side kill switch for at most 30 minutes. Limits: one concurrent investigation, two per observed client per 10 minutes, ten per process enablement window, and a 45-second overall timeout. Limits fall back to labelled playback. Always-on live mode requires reliable provider spending or durable distributed quota first. | Recorded-only Azure boundary verified 2026-09-21; live mode remains disabled and unclaimed |
 | D9 | Provider policy | Groq is the only live provider and uses a server-side credential. Select the model from an allowlisted server-side configuration and record the provider and model identifier with each run. Accept only schema-validated structured output; expose only stable redacted errors; never log raw prompts, raw provider output or hidden reasoning. Do not fail over to a second LLM—use labelled recorded playback when live execution is unavailable. | Adapter implemented under ADR-017; no model identifier selected and live defaults off |
-| D10 | Migration and retirement | Keep the private-SDK A–F workflow as a local-only compatibility reference until accepted S01–S08 contracts, public-runtime evaluations, browser acceptance and public-container boundary checks all pass. Cutover requires an explicit decision. Retirement removes the legacy workflow from the active application and dependency path while preserving its characterization documents and Git history. | Runtime, local browser and container gates pass; public-environment verification and explicit cutover remain |
+| D10 | Migration and retirement | Keep the private-SDK A–F workflow as a local-only compatibility reference until accepted S01–S08 contracts, public-runtime evaluations, browser acceptance and public-container boundary checks all pass. Cutover requires an explicit decision. Retirement removes the legacy workflow from the active application and dependency path while preserving its characterization documents and Git history. | Runtime, local/public browser and container gates pass; explicit cutover remains |
 
 ### Accepted initial tool allowlist
 
@@ -182,9 +182,10 @@ incomplete, and ends with one non-authoritative `run_result`. It contains no
 numeric model score, decision threshold, payment action, free-text prompt or
 request-selected model. Accepted contract examples cover S01, S04 and S05.
 ADR-017 implements these artifacts in the API using the separately accepted
-ADR-016 scenario values. Local browser consumption now validates the accepted
-event shapes and terminal ordering and has an owned browser-to-FastAPI matrix;
-public-environment verification remains the next checkpoint.
+ADR-016 scenario values. Local browser consumption validates the accepted event
+shapes and terminal ordering and has an owned browser-to-FastAPI matrix. The
+recorded-only public environment passed API and Chrome verification on
+2026-09-21; optional live-provider evaluation remains separate.
 
 ## Tests-first implementation slices
 

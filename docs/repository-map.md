@@ -47,6 +47,7 @@ build.
 | `.github/workflows/deploy-showcase.yml` | Manual, protected MVP 3 deployment: SDK-free GHCR image, Azure OIDC, Bicep, Static Web Apps publish, and public acceptance. |
 | `.github/workflows/security.yml` | Dependency audit and CodeQL, on every change and weekly. |
 | `infra/azure/README.md` | One-time Azure/OIDC bootstrap, Doppler boundary, deploy verification, rollback, and teardown runbook. |
+| `docs/audits/2026-09-21-mvp3-azure-release.md` | Dated Azure deployment, public acceptance, IAM, cost-control, and residual-risk evidence for MVP 3. |
 | `apps/api/Dockerfile` | Showcase API image: digest-pinned bases, non-root, no private SDK or offline ML code. |
 | `.dockerignore` | Allowlist build context for that image; everything is excluded until it is named. |
 | `apps/api/server/main.py` | FastAPI application factory and current Phase 0 public route registration. |

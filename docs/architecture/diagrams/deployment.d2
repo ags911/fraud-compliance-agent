@@ -1,4 +1,4 @@
-# Deployment: from a developer's machine to Azure, and what is drafted.
+# Deployment: from a developer's machine to the verified Azure showcase.
 ...@_shared
 
 direction: down
@@ -7,13 +7,13 @@ dev: "Developer\nmake check" { class: built }
 gh: "GitHub" { class: built }
 ci: "Actions\nweb build, API tests, notebook policy,\ncontainer build, dependency audit, CodeQL" { class: built }
 image: "API image\ndigest-pinned, non-root,\nno private SDK" { class: built }
-azure: "Azure, drafted not deployed" {
+azure: "Azure public showcase" {
   class: group
   grid-columns: 2
-  swa: "Static Web Apps\nconsole" { class: planned }
-  aca: "Container Apps\nscale-to-zero API" { class: planned }
+  swa: "Static Web Apps\nFree console" { class: built }
+  aca: "Container Apps\nscale-to-zero API" { class: built }
 }
 
 dev -> gh -> ci
 ci -> image
-image -> azure: "Bicep in infra/azure;\npublic agent implementation\nand Azure access still block release" { style.stroke-dash: 4 }
+image -> azure: "protected OIDC workflow;\nBicep what-if, deploy,\nand public acceptance"

@@ -68,15 +68,17 @@ their tests skip. With access, run `git submodule update --init` and
 submodule is present.
 
 The approved public-showcase direction is not to publish that private SDK.
-Instead, MVP 3 plans a repository-owned, SDK-free bounded LangGraph
+Instead, MVP 3 uses a repository-owned, SDK-free bounded LangGraph
 investigation: recorded synthetic playback is the default, S04 is the only
 normal agent scenario, S05 is its failure path, and an explicitly labelled live
 Groq run is optional behind safety controls. ADR-015 accepts the HTTP/SSE
 contract and ADR-016 accepts the synthetic S01–S08 values for showcase use;
-ADR-017 implements the local SDK-free S01–S05 API runtime. Local browser and
-public-container checks pass, and the credential-free deployment workflow is
-prepared; Azure provisioning and public verification remain pending. See
-[`docs/proposals/public-showcase-investigation.proposed.md`](docs/proposals/public-showcase-investigation.proposed.md).
+ADR-017 implements the SDK-free S01–S05 API runtime. Local browser,
+public-container, Azure, CORS, redaction, and public Chrome checks pass. The
+recorded-only showcase is available at
+<https://thankful-grass-0e239cb1e.4.azurestaticapps.net>; see the
+[`public investigation record`](docs/proposals/public-showcase-investigation.proposed.md)
+and [`2026-09-21 release evidence`](docs/audits/2026-09-21-mvp3-azure-release.md).
 Groq is the sole selected live provider for that boundary; credentials and
 allowlisted model selection remain server-side, provider/model identity is
 recorded per run, only validated structured output is retained, and unavailable

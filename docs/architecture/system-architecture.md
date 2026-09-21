@@ -177,19 +177,20 @@ appears.
 
 ## 6. Deployment
 
-![Deployment from a developer machine through CI and the API image to the drafted Azure resources](diagrams/deployment.svg)
+![Deployment from a developer machine through CI and the API image to the Azure resources](diagrams/deployment.svg)
 
 <sub>Source: [`diagrams/deployment.d2`](diagrams/deployment.d2).</sub>
 
-The image exists and is built and smoke-tested in CI, and reviewable Bicep for
-the Static Web App, the scale-to-zero Container App, and a budget alert is in
-`infra/azure/`. Nothing is deployed. The current image deliberately excludes
+The image is built and smoke-tested in CI, and the reviewable Bicep in
+`infra/azure/` deployed the Static Web App, scale-to-zero Container App, and
+monthly budget alert on 2026-09-21. The current image deliberately excludes
 the private Arbiris SDK, so `/scenarios` and both `/run` routes answer
 `503 demo_pipeline_unavailable`. `/health`, the benchmark route, and the
 repository-owned `/showcase/investigations` S01–S05 runtime work without it.
 The replacement uses accepted HTTP/SSE contracts, synthetic fixtures and
-process-local abuse controls; browser integration and public deployment still
-block the full demo. Free hosting is suitable only
+process-local abuse controls. Public health, CORS, redaction, S04/S05 API
+traces, and the corresponding Chrome journey are recorded in the dated release
+evidence. Free hosting is suitable only
 for a synthetic demo, never as a production reliability decision.
 
 ## 7. Where each piece lives
@@ -216,10 +217,10 @@ not mistake an absence for an oversight.
   ingestion can be built.
 - **No operational store.** Idempotency, durable history, review state, and
   replay all wait on that decision; the showcase is database-free today.
-- **The public-safe API is built but not connected or deployed.** Recorded
-  S01–S05 and optional bounded live S04 now exist locally. Browser consumption,
-  trusted Azure ingress verification, public smoke tests and explicit legacy
-  cutover remain open.
+- **The public-safe API is deployed in recorded-only mode.** Recorded S01–S05
+  and optional bounded live S04 exist, but live mode has no approved model or
+  provider secret and remains disabled. The explicit legacy cutover remains
+  open; public verification does not silently retire the local A–F workflow.
 - **No approved model target or threshold.** MVP 3 therefore has no numeric
   runtime score or threshold. Any later target, calibration method, threshold
   or promotion rule is an explicit F3a decision, not a default.

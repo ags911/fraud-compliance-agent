@@ -50,20 +50,24 @@ not present synthetic demo data as live customer, Plaid, or model output.
   fixtures are not yet the approved target operational API.
 - The public showcase deployment target is Azure Static Web Apps for the React
   console and Azure Container Apps Consumption with scale-to-zero for the
-  FastAPI demo API. Credential-free Bicep, guarded GitHub Actions OIDC,
-  Doppler injection, pre-deploy checks, and the runbook are prepared; no Azure
-  resource, federation, secret value, budget delivery, or public URL has been
-  configured or verified. The deployment remains synthetic-only,
-  database-free, and subject to free-grant/budget review. The
+  FastAPI demo API. The recorded-only public deployment was verified on
+  2026-09-21 through credential-free Bicep and guarded GitHub Actions OIDC;
+  its release evidence and public URLs are recorded in
+  [`docs/audits/2026-09-21-mvp3-azure-release.md`](audits/2026-09-21-mvp3-azure-release.md).
+  The deployment remains synthetic-only, database-free, live-provider-disabled,
+  and subject to free-grant/budget review. Doppler injection is prepared but no
+  provider secret or model has been configured because none is required for
+  recorded playback and no live model has been approved. The
   approved planning direction is a repository-owned, SDK-free bounded
   investigation for the public image, with recorded demonstration playback as
   the default and an explicitly labelled live Groq run only when its safety
   controls are enabled. ADR-014 records the preparation boundary, ADR-015
   accepts its HTTP/SSE contract, ADR-016 accepts its versioned synthetic
   fixtures, and ADR-017 implements the local SDK-free S01–S05 API runtime.
-  The browser consumes the accepted route locally with contract-state and
-  browser-to-local-API coverage. Azure deployment and public-environment
-  verification remain pending.
+  The browser consumes the accepted route with contract-state,
+  browser-to-local-API, and public-environment coverage. Manual assistive-
+  technology review and the optional controlled live-provider evaluation
+  remain unclaimed.
 - The project has an accepted **mechanics-only** Sparkov benchmark contract and
   a read-only portfolio summary endpoint. They demonstrate reproducibility and
   evaluation only; neither is a model-serving, payment-decision, or production

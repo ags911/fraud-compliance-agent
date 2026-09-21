@@ -1,19 +1,24 @@
-# Azure showcase deployment runbook (prepared, not deployed)
+# Azure showcase deployment runbook
 
 This directory is the reviewable deployment path for the synthetic recruiter
 showcase. It creates only a Static Web App and a scale-to-zero Container App,
 plus a subscription budget alert during the one-time bootstrap. It does not
 create a database, queue, VNet, identity provider, or customer-data store.
 
-## Current hard stop
+## Current deployment
 
-Do **not** describe the current image as a completed public deployment yet. The image deliberately excludes the private Arbiris SDK, so `/scenarios` and both legacy `/run` routes return `503 demo_pipeline_unavailable`. `/health`, the read-only benchmark route, and the repository-owned recorded S01–S05 `/showcase/investigations` runtime work without it. Local browser integration is complete; deployed acceptance remains pending, and the private SDK remains excluded.
+The recorded-only public showcase was deployed and verified on 2026-09-21.
+The release record is
+[`docs/audits/2026-09-21-mvp3-azure-release.md`](../../docs/audits/2026-09-21-mvp3-azure-release.md).
+The image deliberately excludes the private Arbiris SDK, so `/scenarios` and
+both legacy `/run` routes return `503 demo_pipeline_unavailable`. `/health`,
+the read-only benchmark route, and the repository-owned recorded S01–S05
+`/showcase/investigations` runtime work without it.
 
-The public-safe investigation now passes its local contract, evaluation,
-browser, abuse-control, and container-boundary gates. The manual GitHub
-workflow remains guarded by the `showcase` environment, an explicit confirmation
-input, a `main`-branch check, and Azure OIDC. No cloud resources currently
-exist, so the deployed checks remain unperformed.
+The public-safe investigation passes its contract, evaluation, local browser,
+container-boundary, public API, CORS, redaction, and Chrome journey gates. The
+manual GitHub workflow remains guarded by the `showcase` environment, an
+explicit confirmation input, a `main`-branch check, and Azure OIDC.
 
 Recorded playback will remain continuously public. Live Groq mode must default
 off and be enabled only for a controlled demonstration window through a
@@ -41,7 +46,7 @@ runtime evaluations, browser acceptance and the public-container boundary all
 pass and an explicit cutover decision is recorded. It remains excluded from
 the public image throughout.
 
-## What is locally complete
+## What is implemented
 
 - `subscription.bicep` defines the dedicated resource group and 80%/100%
   monthly budget notifications.
@@ -151,8 +156,9 @@ recorded-only.
    until the workflow's public health/CORS check and the manual browser checks
    pass.
 5. Confirm the alert emails are configured at 80% and 100% and that the
-   monitored mailbox receives Azure budget notifications. Delivery cannot be
-   proven locally.
+   monitored mailbox receives Azure budget notifications. The configuration is
+   verified; delivery is not claimed until Azure crosses a threshold and sends
+   an alert.
 
 The workflow obtains the Static Web Apps deployment token through its Azure
 OIDC session, masks it, uses it in the same job, and never stores it as a

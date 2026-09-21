@@ -531,8 +531,8 @@ be met without it.
 | --- | --- | --- | --- | --- |
 | GitHub + GitHub Actions | Selected; CI configured | Public code, reviewable history, and automated quality checks | Synthetic-only repository; never put tokens in logs or committed files | Local `make check` before a demo. |
 | Doppler | Selected; local usage exists | Keeps provider/API credentials and deployment values out of Git | Use named `dev` and `showcase` configs; browser code never receives service tokens | Ignored local `.env` from `.env.example`. |
-| Azure Static Web Apps | Deployment configuration prepared; not provisioned | Static Vite deployment, TLS, preview environments, and a shareable Azure URL | Static synthetic console; API base URL is a public, non-secret build setting; the deployment token is obtained through Azure OIDC only at workflow runtime | Local Vite preview. |
-| Azure Container Apps Consumption | Deployment configuration prepared; not provisioned | FastAPI container with scale-to-zero and an inspectable cloud-runtime story | Minimum replicas zero; no database, VNet, cache, or production claim. Deployment requires an anonymously pullable, digest-pinned public API image; free grants can be exceeded, so budget alerts and cost review are mandatory | Local FastAPI run for an in-person demo. |
+| Azure Static Web Apps | Deployed and verified 2026-09-21 | Static Vite deployment, TLS, preview environments, and a shareable Azure URL | Static synthetic console; API base URL is a public, non-secret build setting; the deployment token is obtained through Azure OIDC only at workflow runtime | Local Vite preview. |
+| Azure Container Apps Consumption | Deployed and verified 2026-09-21 | FastAPI container with scale-to-zero and an inspectable cloud-runtime story | Minimum replicas zero; no database, VNet, cache, or production claim. The public API uses an anonymously pullable, digest-pinned image; free grants can be exceeded, so budget alerts and cost review remain mandatory | Local FastAPI run for an in-person demo. |
 
 ### 14.3 External APIs and data sources
 
