@@ -73,8 +73,9 @@ investigation: recorded synthetic playback is the default, S04 is the only
 normal agent scenario, S05 is its failure path, and an explicitly labelled live
 Groq run is optional behind safety controls. ADR-015 accepts the HTTP/SSE
 contract and ADR-016 accepts the synthetic S01–S08 values for showcase use;
-ADR-017 implements the local SDK-free S01–S05 API runtime. Browser integration
-and deployment remain pending. See
+ADR-017 implements the local SDK-free S01–S05 API runtime. Local browser and
+public-container checks pass, and the credential-free deployment workflow is
+prepared; Azure provisioning and public verification remain pending. See
 [`docs/proposals/public-showcase-investigation.proposed.md`](docs/proposals/public-showcase-investigation.proposed.md).
 Groq is the sole selected live provider for that boundary; credentials and
 allowlisted model selection remain server-side, provider/model identity is

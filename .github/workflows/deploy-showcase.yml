@@ -1,0 +1,245 @@
+name: Deploy public showcase
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: Deploy the synthetic showcase after the pre-deploy gate passes
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: public-showcase
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Pre-deploy acceptance
+    # Screenshot baselines use the same macOS Chrome profile as Verify.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+      - run: npm --prefix apps/web ci
+      - run: cd apps/api && uv sync --frozen
+      - run: make acceptance-mvp3-predeploy
+
+  infrastructure:
+    name: Compile deployment templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Compile Bicep with the pinned compiler
+        run: |
+          az bicep install --version v0.47.16
+          az bicep build --file infra/azure/subscription.bicep --stdout >/dev/null
+          az bicep build --file infra/azure/main.bicep --stdout >/dev/null
+      - run: python3 scripts/verify_mvp3_deployment_config.py
+
+  deploy:
+    name: Deploy synthetic showcase
+    needs: [preflight, infrastructure]
+    if: inputs.confirm_deploy
+    runs-on: ubuntu-latest
+    environment: showcase
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_STATIC_WEB_APP_LOCATION: ${{ vars.AZURE_STATIC_WEB_APP_LOCATION }}
+      AZURE_STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
+      AZURE_CONTAINER_ENVIRONMENT_NAME: ${{ vars.AZURE_CONTAINER_ENVIRONMENT_NAME }}
+      AZURE_CONTAINER_APP_NAME: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Require the protected main-branch deployment configuration
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Public deployment is restricted to main." >&2
+            exit 1
+          fi
+          for name in \
+            AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID \
+            AZURE_RESOURCE_GROUP AZURE_LOCATION AZURE_STATIC_WEB_APP_LOCATION \
+            AZURE_STATIC_WEB_APP_NAME \
+            AZURE_CONTAINER_ENVIRONMENT_NAME AZURE_CONTAINER_APP_NAME; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing showcase environment variable: $name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build and publish the SDK-free API image
+        id: image
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/fraud-compliance-agent-api"
+          echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker build \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --tag "$image:$GITHUB_SHA" \
+            --file apps/api/Dockerfile .
+          docker push "$image:$GITHUB_SHA"
+          digest="$(docker buildx imagetools inspect "$image:$GITHUB_SHA" --format '{{.Manifest.Digest}}')"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Registry did not return an immutable sha256 digest." >&2
+            exit 1
+          fi
+          echo "reference=$image@$digest" >> "$GITHUB_OUTPUT"
+          docker logout ghcr.io
+          docker manifest inspect "$image@$digest" >/dev/null || {
+            echo "The GHCR package is not anonymously pullable. Make the package public, then rerun." >&2
+            exit 1
+          }
+
+      - name: Detect optional Doppler configuration
+        id: doppler-config
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          if [ -n "$DOPPLER_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch optional provider settings from the Doppler showcase config
+        id: doppler
+        if: steps.doppler-config.outputs.configured == 'true'
+        uses: dopplerhq/secrets-fetch-action@451892f16195f9ac360e1a5bcbf0b5fd0e957534 # v2.0.0
+        with:
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Authenticate to Azure with GitHub OIDC
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Review the resource-group deployment
+        env:
+          GROQ_API_KEY: ${{ steps.doppler.outputs.GROQ_API_KEY }}
+          SHOWCASE_GROQ_MODEL: ${{ steps.doppler.outputs.SHOWCASE_GROQ_MODEL }}
+          SHOWCASE_GROQ_ALLOWED_MODELS: ${{ steps.doppler.outputs.SHOWCASE_GROQ_ALLOWED_MODELS }}
+        run: |
+          az deployment group what-if \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/azure/main.bicep \
+            --parameters \
+              location="$AZURE_LOCATION" \
+              staticWebAppLocation="$AZURE_STATIC_WEB_APP_LOCATION" \
+              staticWebAppName="$AZURE_STATIC_WEB_APP_NAME" \
+              containerEnvironmentName="$AZURE_CONTAINER_ENVIRONMENT_NAME" \
+              apiContainerAppName="$AZURE_CONTAINER_APP_NAME" \
+              apiImage="${{ steps.image.outputs.reference }}" \
+              groqApiKey="$GROQ_API_KEY" \
+              showcaseGroqModel="$SHOWCASE_GROQ_MODEL" \
+              showcaseGroqAllowedModels="$SHOWCASE_GROQ_ALLOWED_MODELS"
+
+      - name: Deploy the API and static site resources
+        id: azure
+        env:
+          GROQ_API_KEY: ${{ steps.doppler.outputs.GROQ_API_KEY }}
+          SHOWCASE_GROQ_MODEL: ${{ steps.doppler.outputs.SHOWCASE_GROQ_MODEL }}
+          SHOWCASE_GROQ_ALLOWED_MODELS: ${{ steps.doppler.outputs.SHOWCASE_GROQ_ALLOWED_MODELS }}
+        run: |
+          deployment="showcase-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          az deployment group create \
+            --name "$deployment" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/azure/main.bicep \
+            --parameters \
+              location="$AZURE_LOCATION" \
+              staticWebAppLocation="$AZURE_STATIC_WEB_APP_LOCATION" \
+              staticWebAppName="$AZURE_STATIC_WEB_APP_NAME" \
+              containerEnvironmentName="$AZURE_CONTAINER_ENVIRONMENT_NAME" \
+              apiContainerAppName="$AZURE_CONTAINER_APP_NAME" \
+              apiImage="${{ steps.image.outputs.reference }}" \
+              groqApiKey="$GROQ_API_KEY" \
+              showcaseGroqModel="$SHOWCASE_GROQ_MODEL" \
+              showcaseGroqAllowedModels="$SHOWCASE_GROQ_ALLOWED_MODELS" \
+            --only-show-errors \
+            --output none
+          api_fqdn="$(az deployment group show \
+            --name "$deployment" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.outputs.apiFqdn.value \
+            --output tsv)"
+          web_hostname="$(az deployment group show \
+            --name "$deployment" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.outputs.staticWebAppDefaultHostname.value \
+            --output tsv)"
+          echo "api_url=https://$api_fqdn" >> "$GITHUB_OUTPUT"
+          echo "web_url=https://$web_hostname" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Build the console for the deployed API origin
+        env:
+          VITE_API_BASE_URL: ${{ steps.azure.outputs.api_url }}
+        run: |
+          npm --prefix apps/web ci
+          npm --prefix apps/web run build
+
+      - name: Retrieve the Static Web Apps deployment token at runtime
+        run: |
+          az extension add --name staticwebapp --version 1.0.1 --yes
+          token="$(az staticwebapp secrets list \
+            --name "$AZURE_STATIC_WEB_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.apiKey \
+            --output tsv)"
+          echo "::add-mask::$token"
+          echo "SWA_DEPLOYMENT_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Publish the pre-built console
+        uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.SWA_DEPLOYMENT_TOKEN }}
+          action: upload
+          app_location: apps/web/dist
+          output_location: ""
+          skip_app_build: true
+          skip_api_build: true
+
+      - name: Verify the deployed public boundary
+        env:
+          SHOWCASE_WEB_URL: ${{ steps.azure.outputs.web_url }}
+          SHOWCASE_API_URL: ${{ steps.azure.outputs.api_url }}
+        run: make acceptance-mvp3-public
+
+      - name: Record the deployment summary
+        run: |
+          {
+            echo "## Public showcase deployment"
+            echo
+            echo "- Web: ${{ steps.azure.outputs.web_url }}"
+            echo "- API: ${{ steps.azure.outputs.api_url }}"
+            echo "- API image: \`${{ steps.image.outputs.reference }}\`"
+            echo "- Live provider: disabled; recorded playback remains the default"
+          } >> "$GITHUB_STEP_SUMMARY"

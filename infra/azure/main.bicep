@@ -3,6 +3,9 @@ targetScope = 'resourceGroup'
 @description('Azure region for the synthetic showcase resources.')
 param location string
 
+@description('Supported Azure Static Web Apps region; kept separate from the Container Apps region.')
+param staticWebAppLocation string = 'westeurope'
+
 @description('Globally unique Azure Static Web Apps resource name.')
 param staticWebAppName string
 
@@ -15,12 +18,26 @@ param apiContainerAppName string
 @description('Immutable public image reference. Do not use a mutable tag.')
 param apiImage string
 
+@secure()
+@description('Optional Groq credential from Doppler. Leave empty for recorded-only deployment.')
+param groqApiKey string = ''
+
+@description('Optional operator-selected Groq model. There is deliberately no repository default.')
+param showcaseGroqModel string = ''
+
+@description('Comma-separated server-side allowlist for the optional Groq model.')
+param showcaseGroqAllowedModels string = ''
+
 @description('Optional resource tags for ownership and cost tracing.')
-param tags object = {}
+param tags object = {
+  application: 'fraud-compliance-agent'
+  environment: 'showcase'
+  dataClassification: 'synthetic-only'
+}
 
 resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
   name: staticWebAppName
-  location: location
+  location: staticWebAppLocation
   sku: {
     name: 'Free'
     tier: 'Free'
@@ -54,6 +71,12 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
     managedEnvironmentId: containerEnvironment.id
     configuration: {
       activeRevisionsMode: 'Single'
+      secrets: empty(groqApiKey) ? [] : [
+        {
+          name: 'groq-api-key'
+          value: groqApiKey
+        }
+      ]
       ingress: {
         external: true
         targetPort: 8000
@@ -73,15 +96,34 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'showcase-api'
           image: apiImage
           resources: {
-            cpu: 0.25
+            cpu: json('0.25')
             memory: '0.5Gi'
           }
-          env: [
-            {
-              name: 'ALLOWED_ORIGINS'
-              value: 'https://${staticWebApp.properties.defaultHostname}'
-            }
-          ]
+          env: concat([
+              {
+                name: 'ALLOWED_ORIGINS'
+                value: 'https://${staticWebApp.properties.defaultHostname}'
+              }
+              {
+                // Deployment never enables anonymous live access. A separate,
+                // time-bounded operator procedure is required for that window.
+                name: 'SHOWCASE_LIVE_ENABLED'
+                value: 'false'
+              }
+              {
+                name: 'SHOWCASE_GROQ_MODEL'
+                value: showcaseGroqModel
+              }
+              {
+                name: 'SHOWCASE_GROQ_ALLOWED_MODELS'
+                value: showcaseGroqAllowedModels
+              }
+            ], empty(groqApiKey) ? [] : [
+              {
+                name: 'GROQ_API_KEY'
+                secretRef: 'groq-api-key'
+              }
+            ])
         }
       ]
       scale: {

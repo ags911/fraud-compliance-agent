@@ -19,6 +19,7 @@ acceptance-mvp2: api-test web-test
 
 acceptance-mvp3-predeploy: check
 	bash ./scripts/run_mvp3_local_acceptance.sh
+	cd apps/api && $(UV_RUN) python ../../scripts/verify_mvp3_deployment_config.py
 
 acceptance-mvp3-public:
 	bash ./scripts/verify_public_showcase.sh

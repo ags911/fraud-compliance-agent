@@ -15,8 +15,8 @@ visible showcase requirement justifies it.
 
 ## The API container image
 
-`apps/api/Dockerfile` is the first deployment artifact and the only one that
-exists today. Build it from the repository root, because the image includes the
+`apps/api/Dockerfile` is the deployable API artifact. Build it from the
+repository root, because the image includes the
 sanitised benchmark evidence the read-only model-summary route serves:
 
 ```bash
@@ -86,6 +86,9 @@ passing runtime evaluations, browser acceptance, the image boundary check, and
 an explicit decision. Retirement removes the legacy active dependency while
 preserving its characterization documents and Git history.
 
-Infrastructure code beyond the image is not configured yet. Do not represent
-Azure resources as deployed until the Bicep, GitHub Actions OIDC configuration,
-budget alert, and deployment runbook have been reviewed and tested.
+The credential-free deployment path is now prepared: reviewed Bicep, a guarded
+GitHub Actions OIDC workflow, Doppler-to-Container-Apps secret references, a
+pre-deploy gate, and the rollback/teardown runbook live under `infra/azure/`.
+No Azure resource, federation, Doppler service token, budget-alert delivery, or
+public URL has been configured or verified yet. Do not represent the showcase
+as deployed until the public acceptance evidence exists.

@@ -50,8 +50,11 @@ not present synthetic demo data as live customer, Plaid, or model output.
   fixtures are not yet the approved target operational API.
 - The public showcase deployment target is Azure Static Web Apps for the React
   console and Azure Container Apps Consumption with scale-to-zero for the
-  FastAPI demo API. Neither is configured yet; the deployment remains
-  synthetic-only, database-free, and subject to free-grant/budget review. The
+  FastAPI demo API. Credential-free Bicep, guarded GitHub Actions OIDC,
+  Doppler injection, pre-deploy checks, and the runbook are prepared; no Azure
+  resource, federation, secret value, budget delivery, or public URL has been
+  configured or verified. The deployment remains synthetic-only,
+  database-free, and subject to free-grant/budget review. The
   approved planning direction is a repository-owned, SDK-free bounded
   investigation for the public image, with recorded demonstration playback as
   the default and an explicitly labelled live Groq run only when its safety

@@ -1,6 +1,6 @@
 # Public-safe showcase investigation — decision record and implementation plan
 
-Status: **Local SDK-free API runtime implemented; browser and deployment pending**  
+Status: **Local runtime, browser, container, and deployment preparation complete; Azure verification pending**
 Target: MVP 3 public showcase, with interfaces that may inform F4  
 Replaces publicly: the unavailable private-SDK live-run path  
 Does not replace locally: the legacy private-SDK A–F pipeline during migration
