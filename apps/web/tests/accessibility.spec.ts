@@ -19,6 +19,8 @@ const routes: { name: string; path: string; heading: RegExp }[] = [
   { name: "Not found", path: "/no-such-page", heading: /./ },
 ]
 
+const paymentsRoutes = routes.filter((route) => route.path !== "/overview")
+
 async function mockApi(page: Page) {
   await page.route(`${API_BASE_URL}/demo/model-summary`, (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(modelSummary) }),
@@ -39,6 +41,23 @@ for (const route of routes) {
 
     const summaryLines = results.violations.map(
       (violation) => `${violation.id} (${violation.impact}): ${violation.help} — ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target.join(" ")}`,
+    )
+    expect(summaryLines, `${route.path} at the ${testInfo.project.name} width`).toEqual([])
+  })
+}
+
+for (const route of paymentsRoutes) {
+  test(`${route.name} has one main landmark and keeps content inside landmarks`, async ({ page }, testInfo) => {
+    await mockApi(page)
+    await page.goto(route.path)
+    await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible()
+
+    const results = await new AxeBuilder({ page })
+      .withRules(["landmark-no-duplicate-main", "region"])
+      .analyze()
+
+    const summaryLines = results.violations.map(
+      (violation) => `${violation.id}: ${violation.help} — ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target.join(" ")}`,
     )
     expect(summaryLines, `${route.path} at the ${testInfo.project.name} width`).toEqual([])
   })

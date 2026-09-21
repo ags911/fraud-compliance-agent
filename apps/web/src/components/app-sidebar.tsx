@@ -103,6 +103,8 @@ export function AppSidebar({
 
   return (
     <Sidebar
+      role="navigation"
+      aria-label="Primary"
       collapsible="icon"
       widthPx={240}
       iconWidthPx={48}

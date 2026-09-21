@@ -64,9 +64,9 @@ export function PaymentsPageMain({
   density?: "comfortable" | "compact"
 }) {
   return (
-    <main className="payments-page-main" data-density={density}>
+    <div className="payments-page-main" data-density={density}>
       {children}
-    </main>
+    </div>
   )
 }
 
