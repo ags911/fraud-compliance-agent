@@ -64,10 +64,11 @@ def main() -> None:
     for fragment in (
         "sku:",
         "name: 'Free'",
-        "param staticWebAppLocation string = 'westeurope'",
+        "param staticWebAppLocation string = 'westus2'",
         "minReplicas: 0",
         "maxReplicas: 1",
         "allowInsecure: false",
+        "destination: null",
         "'https://${staticWebApp.properties.defaultHostname}'",
         "name: 'SHOWCASE_LIVE_ENABLED'",
         "value: 'false'",

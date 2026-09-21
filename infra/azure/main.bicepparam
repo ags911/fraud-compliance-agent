@@ -3,7 +3,7 @@ using './main.bicep'
 // Replace these placeholders in a private parameter file or GitHub workflow.
 // Do not commit subscription IDs, deployment tokens, or other credentials here.
 param location = 'uksouth'
-param staticWebAppLocation = 'westeurope'
+param staticWebAppLocation = 'westus2'
 param staticWebAppName = 'replace-with-unique-name'
 param containerEnvironmentName = 'fraud-compliance-showcase-env'
 param apiContainerAppName = 'fraud-compliance-showcase-api'

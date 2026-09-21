@@ -94,8 +94,10 @@ group and budget.
 
 3. Create an Entra application/service principal and grant it `Contributor`
    only on the dedicated resource group. Add one GitHub federated credential
-   whose subject is `repo:ags911/fraud-compliance-agent:environment:showcase`.
-   Do not create a client secret.
+   whose subject matches the repository's immutable GitHub OIDC claim:
+   `repo:ags911@23552511/fraud-compliance-agent@1376491338:environment:showcase`.
+   Verify the current claim with GitHub's OIDC customization endpoint rather
+   than assuming the older mutable-name format. Do not create a client secret.
 4. Create a protected GitHub environment named `showcase`: restrict it to
    `main`, require a reviewer, and add these non-secret environment variables:
 
@@ -104,8 +106,9 @@ group and budget.
    - `AZURE_SUBSCRIPTION_ID`
    - `AZURE_RESOURCE_GROUP`
    - `AZURE_LOCATION`
-   - `AZURE_STATIC_WEB_APP_LOCATION` (use `westeurope`; Static Web Apps has a
-     narrower location list than Container Apps)
+   - `AZURE_STATIC_WEB_APP_LOCATION` (use `westus2`; the 2026-09-21 Azure
+     preflight rejected new Static Web Apps customers in `westeurope` for this
+     subscription, while `westus2` passed `what-if`)
    - `AZURE_STATIC_WEB_APP_NAME`
    - `AZURE_CONTAINER_ENVIRONMENT_NAME`
    - `AZURE_CONTAINER_APP_NAME`

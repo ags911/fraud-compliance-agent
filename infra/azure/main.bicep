@@ -4,7 +4,7 @@ targetScope = 'resourceGroup'
 param location string
 
 @description('Supported Azure Static Web Apps region; kept separate from the Container Apps region.')
-param staticWebAppLocation string = 'westeurope'
+param staticWebAppLocation string = 'westus2'
 
 @description('Globally unique Azure Static Web Apps resource name.')
 param staticWebAppName string
@@ -58,7 +58,7 @@ resource containerEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   tags: tags
   properties: {
     appLogsConfiguration: {
-      destination: 'none'
+      destination: null
     }
   }
 }
