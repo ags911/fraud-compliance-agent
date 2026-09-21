@@ -31,6 +31,8 @@ jobs:
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
+      - name: Install the XGBoost OpenMP runtime
+        run: brew install libomp
       - run: npm --prefix apps/web ci
       - run: cd apps/api && uv sync --frozen
       - run: make acceptance-mvp3-predeploy

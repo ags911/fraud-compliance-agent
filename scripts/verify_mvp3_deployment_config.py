@@ -38,6 +38,7 @@ def main() -> None:
         "id-token: write",
         "packages: write",
         'if [ "$GITHUB_REF" != "refs/heads/main" ]',
+        "brew install libomp",
         "docker manifest inspect",
         "az extension add --name staticwebapp --version 1.0.1 --yes",
         "az deployment group what-if",
