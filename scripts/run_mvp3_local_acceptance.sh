@@ -20,7 +20,7 @@ trap cleanup EXIT
 
 (
   cd apps/api
-  ALLOWED_ORIGINS="$web_origin" uv run uvicorn server.main:app \
+  ALLOWED_ORIGINS="$web_origin" uv run --frozen uvicorn server.main:app \
     --host 127.0.0.1 --port "$api_port"
 ) >"$api_log" 2>&1 &
 api_pid=$!
