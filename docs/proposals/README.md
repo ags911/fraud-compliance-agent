@@ -13,6 +13,17 @@ Current data-corpus preparation is documented in
 [`sparkov-corpus-intake.proposed.md`](sparkov-corpus-intake.proposed.md). It is
 research/demo evidence only, not an approved training corpus or runtime input.
 
+Two alternative corpora were checked and are recorded as **not pursued**
+(2026-09-22 decision: continue with Sparkov):
+[`paysim-corpus-intake.proposed.md`](paysim-corpus-intake.proposed.md)
+(CC BY-SA 4.0, confirmed directly on Kaggle; had real transfer semantics
+Sparkov lacks, but the balance-drain columns that looked like its main
+advantage are flagged unusable by the source's own leakage warning) and
+[`ieee-cis-corpus-intake.proposed.md`](ieee-cis-corpus-intake.proposed.md) (real
+fraud labels, but a Kaggle competition licence that was never confirmed to
+permit this project's public-repository use). Both are kept as a record of
+the comparison, not as active proposals.
+
 ## F3 preparation packet
 
 ADR-013 accepts the local-first preparation boundary, not the detailed
