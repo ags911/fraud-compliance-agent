@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { CircleHelp, CirclePlay, ShieldCheck } from 'lucide-react'
 
 import { ExplainDecision } from '@/components/console/ExplainDecision'
@@ -16,22 +17,10 @@ import {
   PaymentsStatePanel,
   PaymentsTopBar,
 } from '@/components/payments-ui'
+import { showcaseScenarios, toRunnableShowcaseScenario } from '@/lib/showcase-scenarios'
 import type { ShowcaseExecutionMode, ShowcaseScenarioId } from '@/lib/showcase-types'
 import { useShowcaseInvestigation } from '@/lib/useShowcaseInvestigation'
 import { useShowcaseInvestigationTour } from '@/lib/useShowcaseInvestigationTour'
-
-/**
- * The scenarios the database-free showcase can run. S06-S08 are deliberately
- * absent: their review, idempotency and replay behaviour is deferred, and the
- * API answers them with a redacted 503 rather than inventing semantics.
- */
-const SCENARIOS: { id: ShowcaseScenarioId; label: string; description: string }[] = [
-  { id: 'S01', label: 'S01 · Trusted pass', description: 'Deterministic clear route, no agent.' },
-  { id: 'S02', label: 'S02 · High-risk hold', description: 'Hard deterministic control, no agent.' },
-  { id: 'S03', label: 'S03 · APP-drain hold', description: 'Hard authorised-push-payment control, no agent.' },
-  { id: 'S04', label: 'S04 · Ambiguous challenge', description: 'The one bounded investigation path.' },
-  { id: 'S05', label: 'S05 · Outage hold', description: 'Deterministic failure, fail-safe hold.' },
-]
 
 /**
  * A bounded, synthetic-only demonstration of the public showcase investigation.
@@ -42,9 +31,28 @@ const SCENARIOS: { id: ShowcaseScenarioId; label: string; description: string }[
  * it is a separate surface from the legacy demo workspace.
  */
 export function ShowcaseInvestigationPage() {
-  const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>('S04')
+  const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  // A `?scenario=` link, such as the Overview header's, selects that scenario.
+  const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>(
+    () => toRunnableShowcaseScenario(searchParams.get('scenario')) ?? 'S04',
+  )
   const [executionMode, setExecutionMode] = useState<ShowcaseExecutionMode>('recorded')
   const investigation = useShowcaseInvestigation()
+
+  // The Overview's Run hands off here with `autoRun` in navigation state. It
+  // always runs as recorded playback, and the state is cleared at once so a
+  // reload or Back does not start another run. A repeat before the clear lands
+  // (React's development double-mount) aborts and replaces the first run, so
+  // only one result is ever shown.
+  const { start } = investigation
+  useEffect(() => {
+    const autoRun = (location.state as { autoRun?: unknown } | null)?.autoRun === true
+    if (!autoRun) return
+    void start(scenarioId, 'recorded')
+    navigate({ search: location.search }, { replace: true, state: null })
+  }, [location.search, location.state, navigate, scenarioId, start])
   const tour = useShowcaseInvestigationTour()
   const running = investigation.status === 'running'
 
@@ -89,7 +97,7 @@ export function ShowcaseInvestigationPage() {
           >
             <fieldset className="grid gap-2 border-0 p-0">
               <legend className="payments-type-support mb-1 text-muted-foreground">Synthetic scenario</legend>
-              {SCENARIOS.map((scenario) => (
+              {showcaseScenarios.map((scenario) => (
                 <label
                   key={scenario.id}
                   className="flex cursor-pointer gap-3 rounded-xl border border-border px-4 py-3 has-[:checked]:border-primary"

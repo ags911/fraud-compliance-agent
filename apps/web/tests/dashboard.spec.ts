@@ -12,15 +12,13 @@ test.describe("Dashboard", () => {
     await expect(page.getByRole("heading", { name: "Fraud risk", level: 1 })).toBeVisible()
   })
 
-  test("starts at zero, then shows the same synthetic figures as Overview after a run", async ({ page }) => {
+  test("starts at zero, then shows the representative portfolio once it is loaded", async ({ page }) => {
     const summary = page.getByRole("region", { name: "Dashboard summary" })
     await expect(summary).toContainText("£0.00")
-    await expect(page.getByText("Run a scenario to see decisions.")).toBeVisible()
+    await expect(page.getByText("Load the portfolio to see decisions.")).toBeVisible()
     await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled()
 
-    await page.getByRole("combobox", { name: "Demo scenario" }).click()
-    await page.getByRole("option", { name: /Mixed 30-day portfolio/ }).click()
-    await page.getByRole("button", { name: "Run", exact: true }).click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
 
     await expect(summary).toContainText("£1.24m")
     await expect(summary).toContainText("12,842")
@@ -35,27 +33,65 @@ test.describe("Dashboard", () => {
     await expect(summary).toContainText("£0.00")
   })
 
-  test("one click on the empty state runs the mixed portfolio, and the KPIs carry route-share and queue context", async ({ page }) => {
-    await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+  test("one click on the empty state loads the mixed portfolio, and the KPIs carry route-share and queue context", async ({ page }) => {
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
 
     const summary = page.getByRole("region", { name: "Dashboard summary" })
     await expect(summary).toContainText("7.0% of transactions")
     await expect(summary).toContainText("Oldest review 46 min")
-    await expect(page.getByText("Nothing has run yet")).toHaveCount(0)
+    await expect(page.getByText("No portfolio loaded")).toHaveCount(0)
   })
 
   test("draws no trend lines or time-series charts, because there is no recorded history to show", async ({ page }) => {
-    for (const scenario of [/Mixed 30-day portfolio/, /New-device purchase/]) {
-      await page.getByRole("combobox", { name: "Demo scenario" }).click()
-      await page.getByRole("option", { name: scenario }).click()
-      await page.getByRole("button", { name: "Run", exact: true }).click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
 
-      await expect(page.getByText("fraud-risk-v4.2")).toBeVisible()
-      await expect(page.getByRole("figure")).toHaveCount(0)
-      await expect(page.locator(".recharts-wrapper")).toHaveCount(0)
-      await expect(page.getByText(/vs prior 7 days/)).toHaveCount(0)
-      await expect(page.getByText(/Synthetic 30-day series/)).toHaveCount(0)
-    }
+    await expect(page.getByText("fraud-risk-v4.2")).toBeVisible()
+    await expect(page.getByRole("figure")).toHaveCount(0)
+    await expect(page.locator(".recharts-wrapper")).toHaveCount(0)
+    await expect(page.getByText(/vs prior 7 days/)).toHaveCount(0)
+    await expect(page.getByText(/Synthetic 30-day series/)).toHaveCount(0)
+  })
+
+  test("the header offers the same S01-S05 scenarios as Showcase investigation, and Run hands off to it", async ({ page }) => {
+    // The API is stubbed: this checks the hand-off and the request, not the stream,
+    // which showcase-investigation.spec covers.
+    const requests: unknown[] = []
+    await page.route("**/showcase/investigations", async (route) => {
+      requests.push(route.request().postDataJSON())
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: { code: "showcase_investigation_unavailable", message: "Unavailable." } }),
+      })
+    })
+
+    await page.getByRole("combobox", { name: "Demo scenario" }).click()
+    await expect(page.getByRole("option")).toHaveText([
+      "S01 · Trusted pass",
+      "S02 · High-risk hold",
+      "S03 · APP-drain hold",
+      "S04 · Ambiguous challenge",
+      "S05 · Outage hold",
+    ])
+    await page.getByRole("option", { name: "S02 · High-risk hold" }).click()
+    await page.getByRole("button", { name: "Run", exact: true }).click()
+
+    await expect(page).toHaveURL(/\/transactions\/investigation\?scenario=S02$/)
+    await expect(page.getByRole("radio", { name: /^S02/ })).toBeChecked()
+    // The dev server's StrictMode double-mount may send one aborted request first,
+    // so the assertion is on the request that stands.
+    await expect.poll(() => requests.at(-1)).toEqual({ scenario_id: "S02", execution_mode: "recorded" })
+    const sent = requests.length
+    // The dashboard figures are not filled by a header run.
+    await page.goBack()
+    await expect(page.getByRole("region", { name: "Dashboard summary" })).toContainText("£0.00")
+
+    // Coming back to the investigation link, or reloading it, selects the scenario without running it again.
+    await page.goForward()
+    await page.reload()
+    await expect(page.getByRole("radio", { name: /^S02/ })).toBeChecked()
+    await page.waitForTimeout(500)
+    expect(requests).toHaveLength(sent)
   })
 
   test("Quick actions link to the live decision page and benchmark insights", async ({ page }) => {
@@ -115,7 +151,7 @@ test.describe("Dashboard", () => {
   })
 
   test("the Explain panel answers from the run, cites its source, and refuses anything else", async ({ page }) => {
-    await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
     await page.getByRole("button", { name: "Toggle explain panel" }).click()
     const panel = page.getByRole("region", { name: "Explain" })
     const log = panel.getByRole("log", { name: "Conversation" })
@@ -140,7 +176,7 @@ test.describe("Dashboard", () => {
 
   test("a new run starts a fresh conversation", async ({ page }) => {
     const narrow = (page.viewportSize()?.width ?? 1440) < 768
-    await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
     await page.getByRole("button", { name: "Toggle explain panel" }).click()
     const panel = page.getByRole("region", { name: "Explain" })
     await panel.getByRole("button", { name: "What is in the review queue?" }).click()
@@ -161,7 +197,7 @@ test.describe("Dashboard", () => {
   })
 
   test("has no automatically detectable accessibility violations with the Explain panel used and a section menu open", async ({ page }) => {
-    await page.getByRole("button", { name: "Run the mixed 30-day portfolio" }).click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
     await page.getByRole("button", { name: "Toggle explain panel" }).click()
     await page.getByRole("region", { name: "Explain" }).getByRole("button", { name: "Which decision has the highest risk?" }).click()
     await page.waitForTimeout(800)

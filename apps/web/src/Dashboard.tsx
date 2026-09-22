@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ArrowRight, BarChart3, ChevronDown, Moon, PanelRight, Play, RotateCcw, ScanSearch, Search, ShieldCheck, Sun } from "lucide-react"
 
 import { AverlynxBrand } from "@/components/averlynx-logo"
 import { DashboardChat } from "@/components/dashboard-chat"
 import { DemoHelpDialog, DemoWelcomeDialog } from "@/components/demo-guide"
-import { demoScenarios, useDemoSession, type DemoScenarioId } from "@/components/demo-session"
+import { useDemoSession } from "@/components/demo-session"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,13 +17,20 @@ import { Sidebar, SidebarContent, SidebarInset, SidebarProvider, SidebarTrigger,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { scenarioResults, zeroKpis, zeroOutcomes, type Route } from "@/lib/overview-data"
-import { useOverviewTour } from "@/lib/useOverviewTour"
+import {
+  showcaseInvestigationHref,
+  showcaseScenarios,
+  toRunnableShowcaseScenario,
+  type RunnableShowcaseScenarioId,
+} from "@/lib/showcase-scenarios"
+import { useOverviewTour, type OverviewTourCopy } from "@/lib/useOverviewTour"
 
 type ScenarioResult = (typeof scenarioResults)[keyof typeof scenarioResults]
 
 // The content follows the Overview page contract in the implementation plan: KPI strip,
 // decision outcomes, operational health, and recent decisions. The figures come from the
-// same synthetic scenario data as the Overview page, and stay at zero until a scenario runs.
+// representative synthetic portfolio, and stay at zero until it is loaded. The header's
+// S01-S05 scenarios do not fill them: a single investigation has no volumes to report.
 // There are deliberately no trend lines or time-series charts: there is no recorded run
 // history, and inventing one would misrepresent the demo. They return when the dashboard is
 // rebuilt from approved, Plaid-derived fixtures scored by the decision engine.
@@ -34,6 +41,14 @@ const toneColor = { success: "var(--outcome-pass)", warning: "var(--outcome-chal
 const routeColor: Record<Route, string> = { PASS: toneColor.success, CHALLENGE: toneColor.warning, HOLD: toneColor.danger }
 
 const themeKey = "averlynx-dashboard-theme"
+
+// The header's Run opens an investigation rather than filling this page, so the tour says so.
+const tourCopy: OverviewTourCopy = {
+  choose: "Open this menu and pick one of the synthetic S01–S05 payment paths.",
+  run: "Press Run to open Showcase investigation and play back that scenario's recorded trace from the demo API.",
+  inspectTitle: "Inspect the dashboard",
+  inspect: "Load the representative portfolio here to see its outcomes, health signals, and recent decisions.",
+}
 
 /**
  * Make a table's scroll container keyboard-reachable, but only while it actually scrolls.
@@ -169,7 +184,6 @@ function ExplainSidebar({ result }: { result: ScenarioResult | null }) {
 
 export default function Dashboard() {
   const {
-    selectedScenario: selected,
     activeScenario: active,
     selectScenario,
     runScenario,
@@ -177,8 +191,14 @@ export default function Dashboard() {
     welcomeSeen,
     dismissWelcome,
   } = useDemoSession()
+  const navigate = useNavigate()
   const [search, setSearch] = useState("")
-  const { start: startTour } = useOverviewTour({ selectedScenario: selected, activeScenario: active })
+  // The header runs one of the same S01-S05 scenarios as the Showcase
+  // investigation, and Run hands off to that page, which calls the API. The
+  // dashboard figures below are separate: they come only from the representative
+  // portfolio, loaded from the empty-state card.
+  const [headerScenario, setHeaderScenario] = useState<RunnableShowcaseScenarioId | null>(null)
+  const { start: startTour } = useOverviewTour({ selectedScenario: headerScenario, activeScenario: active, copy: tourCopy })
 
   // The dashboard theme is scoped to this attribute, so the tokens apply while
   // this route is mounted and the Payments pages keep their own on every other
@@ -233,7 +253,7 @@ export default function Dashboard() {
               <Input
                 aria-label="Search decisions"
                 className="bg-card pl-8"
-                placeholder={result ? "Search transaction, customer, or review ID" : "Search decisions after running a scenario"}
+                placeholder={result ? "Search transaction, customer, or review ID" : "Search decisions after loading the portfolio"}
                 value={search}
                 disabled={!result}
                 onChange={(event) => setSearch(event.target.value)}
@@ -249,22 +269,28 @@ export default function Dashboard() {
               >
                 {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
               </Button>
-              <Select value={selected ?? undefined} onValueChange={(value) => selectScenario(value as DemoScenarioId)}>
+              <Select value={headerScenario ?? ""} onValueChange={(value) => setHeaderScenario(toRunnableShowcaseScenario(value))}>
                 <SelectTrigger aria-label="Demo scenario" className="w-52 bg-card" id="payments-demo-scenario-trigger">
                   <SelectValue placeholder="Select demo scenario" />
                 </SelectTrigger>
                 <SelectContent align="end">
-                  {demoScenarios.map((scenario) => (
+                  {showcaseScenarios.map((scenario) => (
                     <SelectItem key={scenario.id} value={scenario.id}>{scenario.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button id="payments-demo-run" disabled={!selected} onClick={() => { runScenario(); setSearch("") }}>
+              <Button
+                id="payments-demo-run"
+                disabled={!headerScenario}
+                onClick={() => {
+                  if (headerScenario) navigate(showcaseInvestigationHref(headerScenario), { state: { autoRun: true } })
+                }}
+              >
                 <Play aria-hidden="true" fill="currentColor" />
                 Run
               </Button>
               {active ? (
-                <Button variant="outline" onClick={() => { resetScenario(); setSearch("") }} aria-label="Reset demo and return all values to zero">
+                <Button variant="outline" onClick={() => { resetScenario(); setHeaderScenario(null); setSearch("") }} aria-label="Reset demo and return all values to zero">
                   <RotateCcw aria-hidden="true" />
                   <span className="hidden md:inline">Reset</span>
                 </Button>
@@ -286,7 +312,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Choose a scenario in the header, run it, then inspect decisions, review pressure, and model health. All data is synthetic, and nothing here can approve, release, or execute a real payment.
+                  Choose a scenario in the header and run it to open its investigation trace, or load the representative portfolio to inspect decisions, review pressure, and model health. All data is synthetic, and nothing here can approve, release, or execute a real payment.
                 </p>
               </div>
               <Button asChild>
@@ -300,13 +326,13 @@ export default function Dashboard() {
             {result ? null : (
               <Card className="border-primary/20 bg-accent/60">
                 <CardHeader>
-                  <CardTitle>Nothing has run yet</CardTitle>
-                  <CardDescription>Every figure below is zero until you run a demo scenario. The data is synthetic.</CardDescription>
+                  <CardTitle>No portfolio loaded</CardTitle>
+                  <CardDescription>Every figure below is zero until you load the representative portfolio. The data is synthetic.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button onClick={() => { selectScenario("portfolio"); runScenario() }}>
                     <Play aria-hidden="true" fill="currentColor" />
-                    Run the mixed 30-day portfolio
+                    Load the mixed 30-day portfolio
                   </Button>
                 </CardContent>
               </Card>
@@ -396,7 +422,7 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground">
                     {result
                       ? "Labelled outcomes are required before false-positive rate can be calculated."
-                      : "Run a demo scenario to evaluate operational health."}
+                      : "Load the portfolio to evaluate operational health."}
                   </p>
                 </CardContent>
               </Card>
@@ -453,7 +479,7 @@ export default function Dashboard() {
                     {decisions.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                          {result ? "No decisions match your search." : "Run a scenario to see decisions."}
+                          {result ? "No decisions match your search." : "Load the portfolio to see decisions."}
                         </TableCell>
                       </TableRow>
                     ) : decisions.map((decision) => (

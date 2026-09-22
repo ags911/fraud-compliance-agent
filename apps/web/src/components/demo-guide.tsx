@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button"
 const demoSteps = [
   {
     title: "Choose a scenario",
-    description: "Pick a realistic payment path from the scenario control in the header.",
+    description: "Pick one of the synthetic S01–S05 payment paths from the scenario control in the header.",
   },
   {
     title: "Run the scenario",
-    description: "Generate representative decisions, outcome mix, and operational health signals.",
+    description: "Run opens Showcase investigation and plays back that scenario's recorded trace from the demo API.",
   },
   {
     title: "Inspect the results",
-    description: "Use the outcomes and recent decisions below to trace the effect of the selected path.",
+    description: "Read the route, evidence, and recommendation there. The Overview's figures come from a separate representative portfolio.",
   },
 ]
 

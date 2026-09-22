@@ -58,7 +58,7 @@ test.describe("Overview tour", () => {
     expect(first.x + first.width).toBeGreaterThan(trigger.x)
 
     // While the menu is open the tooltip steps aside, then returns for step 2 beside Run.
-    await chooseScenario(page, /Mixed 30-day portfolio/)
+    await chooseScenario(page, /^S04/)
     await expect(title(page)).toHaveText("Run it")
     await expect(page.locator(".driver-popover")).toBeVisible()
     const run = (await page.locator("#payments-demo-run").boundingBox())!
@@ -90,29 +90,31 @@ test.describe("Overview tour", () => {
     await expect(page.locator("#payments-demo-run")).toBeDisabled()
 
     // The highlighted dropdown opens, and its options must still receive clicks.
-    await chooseScenario(page, /Mixed 30-day portfolio/)
+    await chooseScenario(page, /^S04/)
     await expect(title(page)).toHaveText("Run it")
     await expect(progress(page)).toHaveText("Step 2 of 4")
     await expect(page.locator("#payments-demo-run")).toBeEnabled()
 
-    await page.locator("#payments-demo-run").click()
-    await expect(title(page)).toHaveText("Inspect the results")
+    await page.locator(".driver-popover-next-btn").click()
+    await expect(title(page)).toHaveText("Inspect the dashboard")
     await expect(progress(page)).toHaveText("Step 3 of 4")
-    await expect(page.getByText("TXN-DEMO-", { exact: false }).first()).toBeVisible()
-
     await page.locator(".driver-popover-next-btn").click()
     await expect(title(page)).toHaveText("Go deeper")
-    await expect(progress(page)).toHaveText("Step 4 of 4")
     await expect(page.locator("#overview-quick-actions")).toBeInViewport()
+    await page.locator(".driver-popover-prev-btn").click()
+    await page.locator(".driver-popover-prev-btn").click()
+    await expect(title(page)).toHaveText("Run it")
 
-    await page.locator(".driver-popover").getByRole("button", { name: "Finish" }).click()
+    // Run leaves the Overview for the investigation, which ends the tour.
+    await page.route("**/showcase/investigations", (route) => route.abort())
+    await page.locator("#payments-demo-run").click()
+    await expect(page).toHaveURL(/\/transactions\/investigation\?scenario=S04$/)
     await expect(overlay(page)).toHaveCount(0)
   })
 
   test("the Go deeper step points at Quick actions, and Analyse a transaction opens the live page", async ({ page }) => {
     await open(page)
-    await chooseScenario(page, /Mixed 30-day portfolio/)
-    await page.locator("#payments-demo-run").click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
     await startTour(page)
     await page.locator(".driver-popover-next-btn").click()
     await page.locator(".driver-popover-next-btn").click()
@@ -138,13 +140,13 @@ test.describe("Overview tour", () => {
 
   test("always starts at step 1, then follows existing progress", async ({ page }) => {
     await open(page)
-    await chooseScenario(page, /New-device purchase/)
+    await chooseScenario(page, /^S05/)
     await startTour(page)
     await expect(title(page)).toHaveText("Choose a scenario")
     await expect(progress(page)).toHaveText("Step 1 of 4")
     await page.keyboard.press("Escape")
 
-    await page.locator("#payments-demo-run").click()
+    await page.getByRole("button", { name: "Load the mixed 30-day portfolio" }).click()
     await expect(page.getByText("TXN-DEMO-", { exact: false }).first()).toBeVisible()
     await startTour(page)
     await expect(progress(page)).toHaveText("Step 1 of 4")

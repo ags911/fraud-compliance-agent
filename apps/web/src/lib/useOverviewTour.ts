@@ -2,11 +2,28 @@ import { useCallback, useEffect, useRef } from "react"
 import { driver, type Driver } from "driver.js"
 import "driver.js/dist/driver.css"
 
-import type { DemoScenarioId } from "@/components/demo-session"
-
 type TourProgress = {
-  selectedScenario: DemoScenarioId | null
-  activeScenario: DemoScenarioId | null
+  selectedScenario: string | null
+  activeScenario: string | null
+  copy?: OverviewTourCopy
+}
+
+/** The wording of the three steps that describe the page's own scenario flow. */
+export type OverviewTourCopy = {
+  choose: string
+  run: string
+  inspectTitle: string
+  inspect: string
+}
+
+// The frozen Overview reference page keeps this original wording. The live
+// dashboard passes its own, because its Run opens an investigation instead of
+// filling the page.
+const defaultCopy: OverviewTourCopy = {
+  choose: "Open this menu and pick a payment path. Each one fills the dashboard with different demo decisions.",
+  run: "Press Run to generate the decisions, the outcome mix, and the health signals for that scenario.",
+  inspectTitle: "Inspect the results",
+  inspect: "The outcomes and recent decisions for your scenario appear here.",
 }
 
 /**
@@ -14,13 +31,13 @@ type TourProgress = {
  *
  * Args:
  *   selectedScenario: The scenario chosen in the header, if any.
- *   activeScenario: The scenario that has actually been run, if any.
+ *   activeScenario: The dashboard data that has been loaded, if any.
  *
  * Returns:
- *   0 to choose a scenario, 1 to run it, 2 to inspect the results. The final
+ *   0 to choose a scenario, 1 to run it, 2 to inspect the dashboard. The final
  *   "Go deeper" step is only reached with Next.
  */
-export function tourStepFor(selectedScenario: DemoScenarioId | null, activeScenario: DemoScenarioId | null) {
+export function tourStepFor(selectedScenario: string | null, activeScenario: string | null) {
   if (activeScenario) return 2
   return selectedScenario ? 1 : 0
 }
@@ -30,18 +47,20 @@ export function tourStepFor(selectedScenario: DemoScenarioId | null, activeScena
  *
  * The tour never starts by itself. Next and Back move between steps, and it also
  * follows what the user actually does: choosing a scenario moves it to "Run", and
- * running moves it to the results. The highlighted control stays
+ * loading the portfolio moves it to the dashboard. Pressing Run leaves the page
+ * for the investigation, which ends the tour. The highlighted control stays
  * clickable, and the rest of the page is masked.
  *
  * Args:
  *   selectedScenario: The scenario chosen in the header, if any.
- *   activeScenario: The scenario that has actually been run, if any.
+ *   activeScenario: The dashboard data that has been loaded, if any.
+ *   copy: The step wording, when it differs from the reference page's.
  *
  * Returns:
  *   start: Begin the tour at step 1.
  *   stop: End the tour.
  */
-export function useOverviewTour({ selectedScenario, activeScenario }: TourProgress) {
+export function useOverviewTour({ selectedScenario, activeScenario, copy = defaultCopy }: TourProgress) {
   const tourRef = useRef<Driver | null>(null)
   const targetStep = tourStepFor(selectedScenario, activeScenario)
 
@@ -83,7 +102,7 @@ export function useOverviewTour({ selectedScenario, activeScenario }: TourProgre
           element: "#payments-demo-scenario-trigger",
           popover: {
             title: "Choose a scenario",
-            description: "Open this menu and pick a payment path. Each one fills the dashboard with different demo decisions.",
+            description: copy.choose,
             side: "bottom",
             align: "end",
           },
@@ -92,7 +111,7 @@ export function useOverviewTour({ selectedScenario, activeScenario }: TourProgre
           element: "#payments-demo-run",
           popover: {
             title: "Run it",
-            description: "Press Run to generate the decisions, the outcome mix, and the health signals for that scenario.",
+            description: copy.run,
             side: "left",
             align: "center",
           },
@@ -100,8 +119,8 @@ export function useOverviewTour({ selectedScenario, activeScenario }: TourProgre
         {
           element: () => document.getElementById("overview-results") ?? document.body,
           popover: {
-            title: "Inspect the results",
-            description: "The outcomes and recent decisions for your scenario appear here.",
+            title: copy.inspectTitle,
+            description: copy.inspect,
             side: "top",
             align: "start",
           },
@@ -124,7 +143,7 @@ export function useOverviewTour({ selectedScenario, activeScenario }: TourProgre
     tourRef.current = tour
     // Always begin at step 1; later steps follow the user's actions.
     tour.drive()
-  }, [stop])
+  }, [copy, stop])
 
   return { start, stop }
 }

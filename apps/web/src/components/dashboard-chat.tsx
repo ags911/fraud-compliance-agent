@@ -92,7 +92,7 @@ export function DashboardChat({ result }: { result: ScenarioResult | null }) {
 
     let reply: Omit<Message, "id" | "role">
     if (!result) {
-      reply = { text: "Run a scenario first. I only answer from the figures the page is showing." }
+      reply = { text: "Load the portfolio first. I only answer from the figures the page is showing." }
     } else if (match) {
       reply = match.answer(result)
     } else {
@@ -175,7 +175,7 @@ export function DashboardChat({ result }: { result: ScenarioResult | null }) {
                 setDraft("")
               }
             }}
-            placeholder={result ? "Ask about this page" : "Run a scenario to ask"}
+            placeholder={result ? "Ask about this page" : "Load the portfolio to ask"}
             disabled={!result}
             className="max-h-32 min-h-9 flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           />
