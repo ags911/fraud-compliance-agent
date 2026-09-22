@@ -144,7 +144,7 @@
         "evidence_id": {"type": "string", "pattern": "^ev_[a-z0-9_]{3,48}$"},
         "category": {"enum": ["payee_relationship", "payee_name_match", "account_balance_impact", "payment_velocity", "recent_credit_context", "device_familiarity", "session_change", "location_channel_context"]},
         "display_value": {"type": "string", "minLength": 1, "maxLength": 160},
-        "source_class": {"const": "synthetic_fixture"},
+        "source_class": {"enum": ["synthetic_fixture", "plaid_sandbox_derived"]},
         "fixture_version": {"type": "string", "minLength": 1, "maxLength": 64}
       }
     },

@@ -14,6 +14,12 @@ from server.showcase_investigation.models import EvidenceItem, ScenarioId, ToolN
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 _FIXTURE_PATH = Path("fixtures/s01-s08/scenarios.v1.json")
 _EXPECTED_SCENARIOS = tuple(f"S0{number}" for number in range(1, 9))
+# ADR-016 accepted "1.0". ADR-018/019 accept "1.1", which adds one
+# Plaid-Sandbox-derived evidence item (S04's account-activity tool) for live
+# selection only; the recorded playback script is unchanged. A version this
+# loader does not recognise is rejected rather than guessed at.
+_ACCEPTED_VERSIONS = ("1.0", "1.1")
+_SANDBOX_ENVIRONMENT_LABEL = "plaid_sandbox_test_only"
 
 
 @dataclass(frozen=True)
@@ -69,15 +75,29 @@ def load_fixture_packet(root: Path | None = None) -> FixturePacket:
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
         if (
-            document["version"] != "1.0"
+            document["version"] not in _ACCEPTED_VERSIONS
             or document["status"] != "accepted"
             or document["contract_status"] != "accepted-showcase-fixtures"
             or document["runtime_consumption"] != "allowed-by-showcase-runtime-only"
             or document["source_class"] != "synthetic"
-            or document["contains_provider_data"] is not False
             or document["contains_customer_data"] is not False
         ):
             raise ValueError("fixture acceptance metadata does not match ADR-016")
+
+        # A packet that touched a provider (ADR-018/019) must say so and name
+        # exactly the sandbox boundary; one that has not must claim neither.
+        contains_provider_data = document["contains_provider_data"]
+        provider_data_environment = document.get("provider_data_environment")
+        if contains_provider_data is True:
+            if provider_data_environment != _SANDBOX_ENVIRONMENT_LABEL:
+                raise ValueError("provider data must be labelled as sandbox-only")
+        elif contains_provider_data is False:
+            if provider_data_environment is not None:
+                raise ValueError(
+                    "no provider data was declared, but an environment was"
+                )
+        else:
+            raise ValueError("contains_provider_data must be a boolean")
 
         raw_scenarios = document["scenarios"]
         if [item["scenario_id"] for item in raw_scenarios] != list(_EXPECTED_SCENARIOS):

@@ -32,7 +32,7 @@ extend-select = ["I", "S"]
 # fixed HTTPS Plaid Sandbox endpoint, so partial executable paths and URL opening are accepted here.
 # The API's own code under server/ has no exceptions.
 "../../notebooks/*.ipynb" = ["S310", "S603", "S607"]
-"../../scripts/*.py" = ["S603", "S607"]
+"../../scripts/*.py" = ["S310", "S603", "S607"]
 
 [dependency-groups]
 dev = [

@@ -109,6 +109,12 @@ function EvidenceRow({ item }: { item: ShowcaseEvidenceItem }) {
         {EVIDENCE_CATEGORY_LABELS[item.category]}
       </span>
       <span className="text-sm">{item.display_value}</span>
+      {/* Plaid-derived evidence is scripted Sandbox test data, never a live
+          call, but its origin differs from a hand-written synthetic fact and
+          is named here rather than left implicit. */}
+      {item.source_class === 'plaid_sandbox_derived' ? (
+        <PaymentsTonePill tone="neutral">Plaid Sandbox test data</PaymentsTonePill>
+      ) : null}
       {/* The evidence ID is what claims cite, so it stays visible and checkable. */}
       <code className="payments-type-support text-muted-foreground">{item.evidence_id}</code>
     </li>

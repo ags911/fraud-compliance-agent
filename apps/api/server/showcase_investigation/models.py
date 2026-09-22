@@ -61,7 +61,10 @@ class EvidenceItem(StrictShowcaseModel):
         "location_channel_context",
     ]
     display_value: str = Field(min_length=1, max_length=160)
-    source_class: Literal["synthetic_fixture"]
+    # Both values are accepted, non-live fixture provenance. Neither is a
+    # live external call: Plaid-derived values are pulled offline and
+    # committed, exactly like a hand-written synthetic one.
+    source_class: Literal["synthetic_fixture", "plaid_sandbox_derived"]
     fixture_version: str = Field(min_length=1, max_length=64)
 
 

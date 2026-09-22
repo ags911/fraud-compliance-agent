@@ -95,6 +95,77 @@ const S04_RECORDED = sse([
   },
 ])
 
+const S04_LIVE_WITH_ACCOUNT_ACTIVITY = sse([
+  {
+    ...identity("S04", 1, "run_started"),
+    requested_mode: "live",
+    execution_mode: "live",
+    fallback_reason: null,
+    provider: "groq",
+    model_id: "openai/gpt-oss-120b",
+    data_label: "synthetic",
+  },
+  { ...identity("S04", 2, "route_resolved"), deterministic_route: "INVESTIGATE", investigation_eligibility: "eligible" },
+  { ...identity("S04", 3, "tool_call"), call_index: 1, tool_name: "get_payee_evidence" },
+  {
+    ...identity("S04", 4, "tool_result"),
+    call_index: 1,
+    tool_name: "get_payee_evidence",
+    evidence: [
+      {
+        evidence_id: "ev_payee_relationship",
+        category: "payee_relationship",
+        display_value: "First payment to this synthetic payee",
+        source_class: "synthetic_fixture",
+        fixture_version: "1.0",
+      },
+    ],
+  },
+  { ...identity("S04", 5, "tool_call"), call_index: 2, tool_name: "get_account_activity_evidence" },
+  {
+    ...identity("S04", 6, "tool_result"),
+    call_index: 2,
+    tool_name: "get_account_activity_evidence",
+    evidence: [
+      {
+        evidence_id: "ev_recent_activity_pattern",
+        category: "payment_velocity",
+        display_value: "Plaid Sandbox test data shows 4 payments in the last 30 days to 2 payees, including a repeat payee.",
+        source_class: "plaid_sandbox_derived",
+        fixture_version: "s04-plaid-r1",
+      },
+    ],
+  },
+  {
+    ...identity("S04", 7, "investigation_result"),
+    investigation_status: "complete",
+    recommendation: "CHALLENGE",
+    recommendation_basis: "evidence_grounded",
+    summary: "Evidence remains mixed, so the bounded agent recommends a challenge.",
+    claims: [
+      {
+        claim_id: "claim_recent_activity",
+        text: "Recent account activity includes a repeat payee.",
+        evidence_ids: ["ev_recent_activity_pattern"],
+      },
+    ],
+    uncertainties: [],
+    authority_status: "not_evaluated",
+    simulated_action: "none",
+    failure_reason: null,
+  },
+  {
+    ...identity("S04", 8, "run_result"),
+    investigation_status: "complete",
+    recommendation: "CHALLENGE",
+    recommendation_basis: "evidence_grounded",
+    authority_status: "not_evaluated",
+    simulated_action: "none",
+    execution_mode: "live",
+    data_label: "synthetic",
+  },
+])
+
 const S01_SKIPPED = sse([
   {
     ...identity("S01", 1, "run_started"),
@@ -190,6 +261,10 @@ test.describe("Showcase investigation", () => {
     await expect(evidence.getByText("Payee evidence")).toBeVisible()
     await expect(evidence.getByText("Device session evidence")).toBeVisible()
     await expect(evidence.getByText("ev_payee_relationship")).toBeVisible()
+    // ADR-016's recorded script is exactly these two tools; the third,
+    // Plaid-derived tool is available live only (see the test below).
+    await expect(evidence.getByText("Account activity evidence")).toHaveCount(0)
+    await expect(evidence.getByText("Plaid Sandbox test data")).toHaveCount(0)
 
     const outcome = page.getByTestId("showcase-outcome")
     await expect(outcome.getByText("CHALLENGE").first()).toBeVisible()
@@ -197,6 +272,27 @@ test.describe("Showcase investigation", () => {
     // The claim must name the evidence it cites, so the reader can check it.
     await expect(outcome.getByText("Cites ev_payee_relationship")).toBeVisible()
     await expect(outcome.getByText("Not evaluated")).toBeVisible()
+  })
+
+  test("labels a live-only, Plaid Sandbox-derived evidence item without implying a live call", async ({ page }) => {
+    await openShowcase(page)
+    await stubShowcase(page, S04_LIVE_WITH_ACCOUNT_ACTIVITY)
+
+    await page.getByRole("radio", { name: "Request live run" }).check()
+    await page.getByRole("button", { name: "Run investigation" }).click()
+
+    const evidence = page.getByTestId("showcase-evidence")
+    await expect(evidence.getByText("Account activity evidence")).toBeVisible()
+    await expect(evidence.getByText(/4 payments in the last 30 days/)).toBeVisible()
+    // "Plaid Sandbox test data" is exact-matched: it is also a substring of
+    // the display_value text above, which would otherwise match both.
+    await expect(evidence.getByText("Plaid Sandbox test data", { exact: true })).toBeVisible()
+    await expect(evidence.getByText("ev_recent_activity_pattern")).toBeVisible()
+    // The other evidence item is not relabelled by the new value being present.
+    await expect(evidence.getByText("Payee evidence")).toBeVisible()
+
+    const outcome = page.getByTestId("showcase-outcome")
+    await expect(outcome.getByText("Cites ev_recent_activity_pattern")).toBeVisible()
   })
 
   test("makes a deterministic bypass visible as a skipped investigation", async ({ page }) => {

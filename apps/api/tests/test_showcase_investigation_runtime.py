@@ -6,14 +6,16 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from jsonschema import Draft202012Validator
 
 from server.main import create_app
 from server.showcase_investigation.admission import LiveAdmissionController
 from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
-from server.showcase_investigation.fixtures import load_fixture_packet
+from server.showcase_investigation.fixtures import ScenarioFixture, load_fixture_packet
 from server.showcase_investigation.graph import run_live_graph
 from server.showcase_investigation.models import (
+    EvidenceItem,
     ProviderAssessment,
     RecommendationClaim,
     ToolPlan,
@@ -103,12 +105,46 @@ def test_fixture_loader_accepts_only_the_approved_packet(repository_root) -> Non
     """Load all eight accepted scenarios while keeping runtime scope explicit."""
     packet = load_fixture_packet(repository_root)
 
-    assert packet.version == "1.0"
+    assert packet.version == "1.1"
     assert list(packet.scenarios) == [f"S0{number}" for number in range(1, 9)]
+    # ADR-016 fixed the recorded playback script; ADR-018/ADR-019 add a third
+    # tool's evidence for live selection only, so the recorded script itself
+    # must stay exactly the two originally accepted tools.
     assert packet.scenarios["S04"].recorded_tool_sequence == (
         "get_payee_evidence",
         "get_device_session_evidence",
     )
+
+
+def test_fixture_loader_rejects_a_version_it_does_not_recognise(
+    repository_root, tmp_path
+) -> None:
+    """An unrecognised version cannot silently become runtime input."""
+    source = repository_root / "fixtures/s01-s08/scenarios.v1.json"
+    document = json.loads(source.read_text(encoding="utf-8"))
+    document["version"] = "9.9"
+    target = tmp_path / "fixtures/s01-s08"
+    target.mkdir(parents=True)
+    (target / "scenarios.v1.json").write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(ShowcaseRuntimeUnavailable):
+        load_fixture_packet(tmp_path)
+
+
+def test_fixture_loader_requires_the_sandbox_environment_label_when_provider_data_is_present(
+    repository_root, tmp_path
+) -> None:
+    """A true provider-data flag must carry its required environment label."""
+    source = repository_root / "fixtures/s01-s08/scenarios.v1.json"
+    document = json.loads(source.read_text(encoding="utf-8"))
+    assert document["contains_provider_data"] is True
+    document["provider_data_environment"] = "plaid_production"
+    target = tmp_path / "fixtures/s01-s08"
+    target.mkdir(parents=True)
+    (target / "scenarios.v1.json").write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(ShowcaseRuntimeUnavailable):
+        load_fixture_packet(tmp_path)
 
 
 def test_fixture_loader_rejects_unaccepted_metadata(repository_root, tmp_path) -> None:
@@ -272,23 +308,45 @@ def test_live_request_defaults_to_labelled_recorded_playback() -> None:
     assert started["model_id"] is None
 
 
-def test_live_graph_accepts_grounded_output_and_rejects_missing_evidence(
+def test_live_graph_accepts_grounded_output_and_cites_only_returned_evidence(
     repository_root,
 ) -> None:
     """The graph completes only with accepted tools and same-run citations."""
     scenario = load_fixture_packet(repository_root).scenarios["S04"]
 
     valid = asyncio.run(run_live_graph(scenario, _ValidProvider()))
-    missing = asyncio.run(run_live_graph(scenario, _MissingEvidenceProvider()))
     unknown = asyncio.run(run_live_graph(scenario, _UnknownCitationProvider()))
 
     assert valid.failure_reason is None
     assert valid.assessment is not None
     assert len(valid.called_tools) == 2
-    assert missing.failure_reason == "tool_failed"
-    assert missing.assessment is None
     assert unknown.failure_reason == "invalid_output"
     assert unknown.assessment is None
+
+
+def test_live_graph_fails_closed_when_a_chosen_tool_has_no_evidence(
+    repository_root,
+) -> None:
+    """A tool the scenario has no payload for still fails closed, not silently.
+
+    All three allowlisted S04 tools now have accepted evidence (ADR-018/019),
+    so this builds a scenario missing one on purpose, independent of the real
+    fixture's current content.
+    """
+    real_s04 = load_fixture_packet(repository_root).scenarios["S04"]
+    incomplete = ScenarioFixture(
+        scenario_id="S04",
+        facts=real_s04.facts,
+        expected_boundary=real_s04.expected_boundary,
+        tool_evidence={
+            "get_payee_evidence": real_s04.tool_evidence["get_payee_evidence"],
+        },
+    )
+
+    missing = asyncio.run(run_live_graph(incomplete, _MissingEvidenceProvider()))
+
+    assert missing.failure_reason == "tool_failed"
+    assert missing.assessment is None
 
 
 def test_live_admission_limits_concurrency_client_total_and_window() -> None:
@@ -370,7 +428,41 @@ def test_groq_adapter_validates_json_without_retaining_raw_output() -> None:
 def test_live_graph_offers_only_tools_with_accepted_scenario_evidence(
     repository_root,
 ) -> None:
-    """The provider is never offered a tool that has no accepted S04 payload."""
+    """The provider is never offered a tool that has no accepted payload.
+
+    The real S04 fixture now has evidence for all three allowlisted tools
+    (ADR-018/019 added the third), so this checks the general rule against a
+    scenario missing one on purpose, rather than against a fixture that could
+    later gain full coverage and stop testing anything.
+    """
+    real_s04 = load_fixture_packet(repository_root).scenarios["S04"]
+    incomplete = ScenarioFixture(
+        scenario_id="S04",
+        facts=real_s04.facts,
+        expected_boundary=real_s04.expected_boundary,
+        tool_evidence={
+            "get_payee_evidence": real_s04.tool_evidence["get_payee_evidence"],
+            "get_device_session_evidence": real_s04.tool_evidence[
+                "get_device_session_evidence"
+            ],
+        },
+    )
+    offered: list[tuple[str, ...]] = []
+
+    class _RecordingProvider(_ValidProvider):
+        async def select_tools(self, facts, allowed_tools) -> ToolPlan:
+            offered.append(tuple(allowed_tools))
+            return await super().select_tools(facts, allowed_tools)
+
+    asyncio.run(run_live_graph(incomplete, _RecordingProvider()))
+
+    assert offered == [("get_payee_evidence", "get_device_session_evidence")]
+
+
+def test_live_graph_offers_all_three_tools_once_each_has_accepted_evidence(
+    repository_root,
+) -> None:
+    """The real S04 fixture now offers its third tool to a live model."""
     scenario = load_fixture_packet(repository_root).scenarios["S04"]
     offered: list[tuple[str, ...]] = []
 
@@ -381,7 +473,13 @@ def test_live_graph_offers_only_tools_with_accepted_scenario_evidence(
 
     asyncio.run(run_live_graph(scenario, _RecordingProvider()))
 
-    assert offered == [("get_payee_evidence", "get_device_session_evidence")]
+    assert offered == [
+        (
+            "get_payee_evidence",
+            "get_account_activity_evidence",
+            "get_device_session_evidence",
+        )
+    ]
 
 
 def test_groq_assessment_prompt_states_the_exact_output_schema(
@@ -427,3 +525,52 @@ def test_groq_assessment_prompt_states_the_exact_output_schema(
     for allowed in ("PASS", "CHALLENGE", "HOLD"):
         assert allowed in system_prompt
     assert "claim_" in system_prompt
+
+
+def test_s04_now_offers_a_plaid_derived_account_activity_tool_live(
+    repository_root,
+) -> None:
+    """A live model may now choose the third tool and get a grounded result."""
+    scenario = load_fixture_packet(repository_root).scenarios["S04"]
+
+    assert "get_account_activity_evidence" in scenario.tool_evidence
+    account_activity = scenario.tool_evidence["get_account_activity_evidence"]
+    assert all(
+        item.source_class == "plaid_sandbox_derived" for item in account_activity
+    )
+
+    class _AccountActivityProvider(_ValidProvider):
+        async def select_tools(self, _facts, _allowed_tools) -> ToolPlan:
+            return ToolPlan(
+                tools=["get_payee_evidence", "get_account_activity_evidence"]
+            )
+
+    result = asyncio.run(run_live_graph(scenario, _AccountActivityProvider()))
+
+    assert result.failure_reason is None
+    assert result.assessment is not None
+    assert set(result.called_tools) == {
+        "get_payee_evidence",
+        "get_account_activity_evidence",
+    }
+
+
+def test_evidence_item_accepts_the_plaid_sandbox_derived_source_class() -> None:
+    """The widened contract accepts both accepted evidence source classes."""
+    for source_class in ("synthetic_fixture", "plaid_sandbox_derived"):
+        EvidenceItem(
+            evidence_id="ev_example",
+            category="payment_velocity",
+            display_value="Example.",
+            source_class=source_class,
+            fixture_version="v1",
+        )
+
+    with pytest.raises(ValidationError):
+        EvidenceItem(
+            evidence_id="ev_example",
+            category="payment_velocity",
+            display_value="Example.",
+            source_class="live_provider_observed",
+            fixture_version="v1",
+        )

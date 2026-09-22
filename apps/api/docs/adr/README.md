@@ -24,6 +24,8 @@ rewriting their history.
 | [015](0015-freeze-public-showcase-investigation-contract.md) | Public-showcase investigation HTTP and SSE contract | Accepted |
 | [016](0016-accept-public-showcase-scenario-fixtures.md) | Public-showcase S01–S08 synthetic fixtures | Accepted |
 | [017](0017-implement-public-showcase-runtime.md) | SDK-free public-showcase runtime and safeguards | Accepted |
+| [018](0018-accept-plaid-sandbox-showcase-fixture-enrichment.md) | Plaid Sandbox-derived showcase fixture enrichment rules | Accepted; superseded in part by 019 |
+| [019](0019-accept-plaid-sandbox-derived-account-activity-evidence.md) | Plaid Sandbox-derived S04 account-activity evidence (contract widening) | Accepted |
 
 The proposed ADRs deliberately retain unassigned specialist owners and pending
 acceptance records. ADR-013 authorises F3 preparation, ADR-014 authorises the

@@ -1,11 +1,12 @@
 {
   "artifact": "public-showcase-s01-s08-scenario-fixtures",
-  "version": "1.0",
+  "version": "1.1",
   "status": "accepted",
   "contract_status": "accepted-showcase-fixtures",
   "source_class": "synthetic",
   "runtime_consumption": "allowed-by-showcase-runtime-only",
-  "contains_provider_data": false,
+  "contains_provider_data": true,
+  "provider_data_environment": "plaid_sandbox_test_only",
   "contains_customer_data": false,
   "mvp3_runtime_model_policy": "deferred-to-f3a-no-score-or-threshold",
   "mvp3_agent_tool_allowlist": [
@@ -160,6 +161,15 @@
               "display_value": "Synthetic session uses a recognised device with a changed network context.",
               "source_class": "synthetic_fixture",
               "fixture_version": "s04-r1"
+            }
+          ],
+          "get_account_activity_evidence": [
+            {
+              "evidence_id": "ev_recent_activity_pattern",
+              "category": "payment_velocity",
+              "display_value": "Plaid Sandbox test data shows 4 payments in the last 30 days to 2 payees, including a repeat payee.",
+              "source_class": "plaid_sandbox_derived",
+              "fixture_version": "s04-plaid-r1"
             }
           ]
         }

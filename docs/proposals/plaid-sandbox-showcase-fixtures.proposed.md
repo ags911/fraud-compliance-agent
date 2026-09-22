@@ -1,6 +1,6 @@
 # Plaid Sandbox-derived showcase fixtures — proposal
 
-Status: **Proposed — not approved. No connector, fixture, contract or runtime change is made by this document.**
+Status: **S04's account-activity evidence built and accepted by [ADR-019](../../apps/api/docs/adr/0019-accept-plaid-sandbox-derived-account-activity-evidence.md) (2026-09-22): one Plaid-Sandbox-derived evidence item, live-selectable only, verified against the real API and a live Groq run. S01/S02's facts-derivation rules from [ADR-018](../../apps/api/docs/adr/0018-accept-plaid-sandbox-showcase-fixture-enrichment.md) were found, while building this, to change values the runtime never reads for those two scenarios (their route comes from a hardcoded scenario lookup, not from `facts`) and were not pursued. This document's "What each S01–S05 signal could come from" table and options below are kept as a record of that comparison.**
 Decision supported: whether, and how, the S01–S05 showcase may use Plaid Sandbox-derived facts instead of hand-written synthetic ones.
 
 ## Question
@@ -65,15 +65,54 @@ per-transaction revision.
 
 ## Decisions needed before any build
 
-1. Approve Option A, or choose B or C.
-2. Money normalisation rule (Plaid decimal amount to minor units, and currency).
-3. Direction policy (sign of `amount` to inbound or outbound).
-4. Payee-history proxy rule, and whether merchant names may appear in fixtures
-   at all after sanitisation.
-5. Event time is date-only. Confirm the scenarios use day-level facts.
-6. Whether to extend the accepted scope to a balance endpoint (needed for S03).
-7. Which scenarios move: a suggested first set is S01, S02 and the S04
-   account-activity section, leaving S03 until the balance decision.
+Proposed defaults are given for each; none is approved until the project
+owner confirms or overrides it. Defaults are chosen to be the smallest honest
+rule available, reusing wording already sitting in the accepted mapping
+proposal rather than inventing new policy.
+
+1. **Approve Option A, or choose B or C.**
+   Decided by the choice to pursue Plaid alongside Sparkov (2026-09-22):
+   **Option A.**
+2. **Money normalisation rule** — Plaid's `amount` is a decimal in the
+   account's major currency unit (e.g. `42.00`).
+   **Default:** `amount_minor = round(amount * 100)`. This assumes a
+   2-decimal currency, which covers every currency Sandbox test accounts use;
+   it would not hold for a zero-decimal currency like JPY, and that limitation
+   is recorded rather than handled.
+   **Currency:** use Plaid's `iso_currency_code` as returned, unconverted.
+   **Do not force it to GBP.** Sandbox's default test accounts commonly return
+   `USD`; if so, the derived fixture's `currency` field says `USD`, honestly,
+   rather than silently relabelling Sandbox data as the scenario's original
+   currency. If a GBP-labelled fixture is wanted, that means choosing a
+   Sandbox custom user configured with GBP accounts, not converting the
+   currency code after the fact.
+3. **Direction policy** — the accepted mapping proposal already documents
+   Plaid's own convention and stops short of adopting it. **Default:** adopt
+   it as written: a positive `amount` is money leaving the account
+   (`direction: outbound`), negative is money arriving (`inbound`). All five
+   scenario facts today are `"direction": "outbound"`, so this only needs to
+   hold for outbound test transactions to be usable, though it is stated in
+   full for completeness.
+4. **Payee-history proxy rule** — the mapping proposal already says not to
+   persist merchant or counterparty names. **Default:** never store
+   `merchant_name` or `counterparties[].entity_id` in a fixture. Derive only
+   the same enum the fixtures already use (`payee_history: "established"` or
+   `"new"`) from whether a pseudonymised counterparty identifier repeats more
+   than once in the pulled window. No name-shaped value ever reaches a
+   committed file.
+5. **Day-level timing** — **Default: accepted as sufficient.** No S01–S05
+   fact today expresses a time of day (only a `source_revision` string), so
+   Plaid's date-only `date` field loses nothing the current fixtures use.
+6. **Balance endpoint scope extension (needed for S03)** — **Default: defer,
+   do not extend scope now.** Extending the accepted analysis-only boundary to
+   a second Plaid product is a bigger step than deriving facts from data
+   already in scope, for the benefit of one field on one scenario. S03's
+   `balance_state` stays synthetic (`"synthetic-account-drain"`) until this is
+   revisited on its own.
+7. **Which scenarios move first** — **Default: S01, S02, and the S04
+   account-activity evidence section** (the one tool with no accepted payload
+   today). S03 stays synthetic per (6). S05 is never Plaid-derived: it is an
+   injected outage, independent of any real data source, by design.
 
 ## Sequence once approved
 
