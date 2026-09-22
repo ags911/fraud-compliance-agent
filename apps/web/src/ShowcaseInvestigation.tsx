@@ -17,6 +17,7 @@ import {
   PaymentsStatePanel,
   PaymentsTopBar,
 } from '@/components/payments-ui'
+import { SectionTabs } from '@/components/section-tabs'
 import { showcaseScenarios, toRunnableShowcaseScenario } from '@/lib/showcase-scenarios'
 import type { ShowcaseExecutionMode, ShowcaseScenarioId } from '@/lib/showcase-types'
 import { useShowcaseInvestigation } from '@/lib/useShowcaseInvestigation'
@@ -58,7 +59,7 @@ export function ShowcaseInvestigationPage() {
 
   return (
     <>
-      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable while running a demo scenario" />
+      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable while running a demo scenario" showSidebarTrigger={false} />
       <PaymentsPageMain>
         <PaymentsPageHeading
           title="Showcase investigation"
@@ -70,9 +71,10 @@ export function ShowcaseInvestigationPage() {
             </button>
           }
         />
+        <SectionTabs />
 
         <section
-          className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4"
+          className="mt-6 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4"
           aria-label="Synthetic investigation boundary"
         >
           <div className="flex gap-3">

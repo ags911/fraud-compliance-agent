@@ -9,6 +9,8 @@ import { format } from "date-fns"
 import { CalendarDays, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
+import { ApiHealthStatus } from "@/components/api-health-status"
+import { AverlynxBrand } from "@/components/averlynx-logo"
 import { Card } from "@/components/ui/card"
 import { CountUpValue } from "@/components/count-up-value"
 import {
@@ -36,7 +38,7 @@ export function PaymentsAppShell({
   children,
   className,
 }: {
-  sidebar: ReactNode
+  sidebar?: ReactNode
   children: ReactNode
   className?: string
 }) {
@@ -80,6 +82,7 @@ export function PaymentsTopBar({
   onDemoRun,
   onDemoSelectionChange,
   onDemoReset,
+  showSidebarTrigger = true,
 }: {
   searchValue?: string
   onSearchChange?: (value: string) => void
@@ -90,9 +93,13 @@ export function PaymentsTopBar({
   onDemoRun?: (scenario: DemoScenarioId) => void
   onDemoSelectionChange?: () => void
   onDemoReset?: () => void
+  /** False for pages with no sidebar to toggle: the Averlynx brand takes this slot instead. */
+  showSidebarTrigger?: boolean
 }) {
-  const actions = demoSession || rightContent ? (
+  // The sidebar footer used to carry this; pages with no sidebar show it here instead.
+  const actions = demoSession || rightContent || !showSidebarTrigger ? (
     <>
+      {!showSidebarTrigger ? <ApiHealthStatus /> : null}
       {rightContent}
       {demoSession ? (
         <DemoSessionControl
@@ -113,12 +120,25 @@ export function PaymentsTopBar({
       <div className="payments-topbar__inner">
         <div className="payments-topbar__leading">
           <div className="payments-topbar__navigation">
-            <SidebarTrigger className="-ml-1.5 shrink-0 cursor-pointer text-muted-foreground transition-colors aria-expanded:bg-transparent! aria-expanded:hover:bg-muted! hover:bg-muted! hover:text-foreground" />
-            <span
-              className="payments-topbar__divider"
-              data-payments-slot="topbar-divider"
-              aria-hidden="true"
-            />
+            {showSidebarTrigger ? (
+              <>
+                <SidebarTrigger className="-ml-1.5 shrink-0 cursor-pointer text-muted-foreground transition-colors aria-expanded:bg-transparent! aria-expanded:hover:bg-muted! hover:bg-muted! hover:text-foreground" />
+                <span
+                  className="payments-topbar__divider"
+                  data-payments-slot="topbar-divider"
+                  aria-hidden="true"
+                />
+              </>
+            ) : (
+              <>
+                <AverlynxBrand className="h-6 text-foreground" />
+                <span
+                  className="payments-topbar__divider"
+                  data-payments-slot="topbar-divider"
+                  aria-hidden="true"
+                />
+              </>
+            )}
           </div>
           <label
             className="payments-topbar__search"

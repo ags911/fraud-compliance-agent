@@ -73,13 +73,22 @@ focus-visible, active, disabled, tooltip states; (4) visible copy and
 accessibility labels; (5) shared state between duplicate controls (e.g. the
 reporting-period pill and the chart range toggle).
 
-**Sidebar toggle contract** (frozen exact geometry): shadcn-style **28×28px**
-ghost button, Lucide `PanelLeft` icon, centred **1×20px** divider; icon edge
-and search-field border sit exactly **12px** from the divider; trigger's
-**16px** glyph aligns to the page-content edge with a **28px** hit area
-extending **6px** left; `aria-expanded` exposed, **⌘/Ctrl+B** shortcut;
+**Sidebar toggle contract** (frozen exact geometry, `AppSidebar` — no longer
+routed live; see [One App-Wide System](#one-app-wide-system)): shadcn-style
+**28×28px** ghost button, Lucide `PanelLeft` icon, centred **1×20px** divider;
+icon edge and search-field border sit exactly **12px** from the divider;
+trigger's **16px** glyph aligns to the page-content edge with a **28px** hit
+area extending **6px** left; `aria-expanded` exposed, **⌘/Ctrl+B** shortcut;
 desktop folds to a **48px** icon rail via a **240ms** Motion `easeInOut`
 tween (instant under reduced motion); mobile opens a **240px** Radix Sheet.
+This geometry now governs only the frozen `Overview.tsx` and
+`RulesPerformanceReference.tsx` reference pages. Every live Payments page
+uses the Overview dashboard's own navigation instead: a top bar (brand +
+search, via `PaymentsTopBar` with `showSidebarTrigger={false}`) plus the
+shared `SectionTabs` component underneath the page heading — no left
+sidebar. The demo API health status + Retry control that used to live in the
+sidebar footer now renders in that top bar
+(`src/components/api-health-status.tsx`).
 
 **Automated gates**: `npm run check:payments-design` (token/coupling/raw-
 colour checks), `npm run test:payments` (computed typography/spacing/

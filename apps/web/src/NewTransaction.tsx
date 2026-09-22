@@ -11,6 +11,7 @@ import {
   PaymentsStatePanel,
   PaymentsTopBar,
 } from "@/components/payments-ui"
+import { SectionTabs } from "@/components/section-tabs"
 import { fetchScenarios, useAgentRun } from "@/lib/useAgentRun"
 import { useDecisionWorkspaceTour } from "@/lib/useDecisionWorkspaceTour"
 import type { RunFormState, Scenario } from "@/lib/types"
@@ -51,22 +52,24 @@ export function NewTransactionPage() {
 
   return (
     <>
-      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable while running a demo scenario" />
+      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable while running a demo scenario" showSidebarTrigger={false} />
       <PaymentsPageMain>
         <PaymentsPageHeading
           title="Analyse a transaction"
           description="Select a simulated payment path, run the deterministic decision trace, then inspect its signed audit record."
           actions={<button className="payments-button" type="button" onClick={tour.start}><CircleHelp aria-hidden="true" size={16} strokeWidth={1.6} />Tour this workspace</button>}
         />
+        <SectionTabs />
         {scenarioLoadFailed ? (
           <PaymentsStatePanel
             title="Demo scenarios unavailable"
             description="Start the local demo API to load presets and run a decision trace."
             tone="danger"
+            className="mt-6"
           />
         ) : (
           <>
-            <section className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4" aria-label="Demo decision boundary">
+            <section className="mt-6 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4" aria-label="Demo decision boundary">
               <div className="flex gap-3">
                 <ShieldCheck className="mt-0.5 shrink-0 text-primary" aria-hidden="true" size={18} strokeWidth={1.6} />
                 <div>

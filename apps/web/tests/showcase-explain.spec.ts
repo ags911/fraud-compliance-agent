@@ -89,54 +89,40 @@ async function openShowcase(page: Page) {
   await expect(page.getByRole("heading", { name: "Showcase investigation" })).toBeVisible()
 }
 
-/**
- * The status lives in the sidebar, which is a drawer at the mobile width, so
- * open it there before asserting. The status itself is identical either way.
- */
-async function revealStatus(page: Page, projectName: string) {
-  if (projectName === "mobile") {
-    await page.getByRole("button", { name: "Toggle navigation menu" }).click()
-    await expect(page.locator('[data-sidebar="sidebar"][data-mobile="true"]')).toBeVisible()
-  }
-}
-
 test.describe("Demo API status", () => {
-  test("reports the status a liveness check actually found", async ({ page }, testInfo) => {
+  test("reports the status a liveness check actually found", async ({ page }) => {
     await page.route(HEALTH_URL, (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok" }) }),
     )
     await openShowcase(page)
-    await revealStatus(page, testInfo.project.name)
 
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "ready")
     await expect(page.getByTestId("api-health")).toContainText("Demo API ready")
   })
 
-  test("reports an unreachable API as unavailable, never as operational", async ({ page }, testInfo) => {
+  test("reports an unreachable API as unavailable, never as operational", async ({ page }) => {
     await page.route(HEALTH_URL, (route) => route.abort())
     await openShowcase(page)
-    await revealStatus(page, testInfo.project.name)
 
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "unavailable")
     await expect(page.getByTestId("api-health")).toContainText("Demo API unavailable")
     await expect(page.getByText("All systems operational")).toHaveCount(0)
   })
 
-  test("shows a slow cold start as waking rather than as a fault", async ({ page }, testInfo) => {
+  test("shows a slow cold start as waking rather than as a fault", async ({ page }) => {
     // Scale-to-zero compute answers the first request only after it starts up.
     await page.route(HEALTH_URL, async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 2500))
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok" }) })
     })
     await openShowcase(page)
-    await revealStatus(page, testInfo.project.name)
 
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "waking")
     await expect(page.getByTestId("api-health")).toContainText("Waking the demo API")
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "ready", { timeout: 5000 })
   })
 
-  test("lets a reader retry an unavailable health check", async ({ page }, testInfo) => {
+  test("lets a reader retry an unavailable health check", async ({ page }) => {
     let attempts = 0
     await page.route(HEALTH_URL, async (route) => {
       attempts += 1
@@ -147,7 +133,6 @@ test.describe("Demo API status", () => {
       }
     })
     await openShowcase(page)
-    await revealStatus(page, testInfo.project.name)
     await expect(page.getByTestId("api-health")).toHaveAttribute("data-status", "unavailable")
 
     await page.getByRole("button", { name: "Retry" }).click()

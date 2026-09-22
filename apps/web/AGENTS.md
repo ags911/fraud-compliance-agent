@@ -39,6 +39,16 @@ specific to `apps/web`.
   toggle; `.dark` is only ever added by its own switch, so in practice dark
   mode stays a Dashboard-only affordance even though the theme itself is now
   global.
+- Navigation is unified too: every Payments page uses the same top bar +
+  section tabs as Overview (`src/components/section-tabs.tsx`), not a left
+  sidebar. `PaymentsTopBar`'s `showSidebarTrigger={false}` swaps its sidebar
+  toggle for the Averlynx brand, and `<SectionTabs />` renders under
+  `PaymentsPageHeading`. `AppSidebar` (`src/components/app-sidebar.tsx`)
+  still exists and is still used, but only by the frozen reference pages
+  (`Overview.tsx`, `RulesPerformanceReference.tsx`) — do not wire it back
+  into a live route. The demo API health status + Retry control that used to
+  live in the sidebar footer moved to `src/components/api-health-status.tsx`,
+  rendered in the top bar's actions area.
 - No API internals, database models, or secrets in browser code; consume only
   accepted contracts.
 - Chart, graph, and table components are presentational: they receive data only

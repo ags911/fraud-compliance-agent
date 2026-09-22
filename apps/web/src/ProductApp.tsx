@@ -1,10 +1,9 @@
-import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom"
+import { BrowserRouter, Link, Outlet, Route, Routes } from "react-router-dom"
 
 import Dashboard from "@/Dashboard"
 import { ModelBenchmarkPage } from "@/ModelBenchmark"
 import { NewTransactionPage } from "@/NewTransaction"
 import { ShowcaseInvestigationPage } from "@/ShowcaseInvestigation"
-import { AppSidebar } from "@/components/app-sidebar"
 import { DemoSessionProvider } from "@/components/demo-session"
 import {
   PaymentsAppShell,
@@ -12,6 +11,7 @@ import {
   PaymentsPageMain,
   PaymentsTopBar,
 } from "@/components/payments-ui"
+import { SectionTabs } from "@/components/section-tabs"
 
 type ProductRoute = {
   title: string
@@ -43,22 +43,14 @@ const plannedRoutes: Record<string, ProductRoute> = {
   },
 }
 
-function activeItemFor(pathname: string) {
-  if (pathname.startsWith("/transactions")) return "Transactions"
-  if (pathname.startsWith("/reviews")) return "Reviews"
-  if (pathname.startsWith("/rules")) return "Rules"
-  if (pathname.startsWith("/insights")) return "Insights"
-  if (pathname.startsWith("/settings")) return "Settings"
-  return "Overview"
-}
-
 function PlannedPage({ route }: { route: ProductRoute }) {
   return (
     <>
-      <PaymentsTopBar demoSession={false} />
+      <PaymentsTopBar demoSession={false} showSidebarTrigger={false} />
       <PaymentsPageMain>
         <PaymentsPageHeading title={route.title} description={route.description} />
-        <section className="rounded-xl border border-border bg-card px-6 py-8 text-center">
+        <SectionTabs />
+        <section className="mt-6 rounded-xl border border-border bg-card px-6 py-8 text-center">
           <p className="payments-type-section-title">Planned operational surface</p>
           <p className="mx-auto mt-2 max-w-prose payments-type-body text-muted-foreground">
             This page intentionally has no representative metrics, queue counts, or actions until its backend contract is implemented.
@@ -77,10 +69,11 @@ function PlannedPage({ route }: { route: ProductRoute }) {
 function MissingPage() {
   return (
     <>
-      <PaymentsTopBar demoSession={false} />
+      <PaymentsTopBar demoSession={false} showSidebarTrigger={false} />
       <PaymentsPageMain>
         <PaymentsPageHeading title="Page not found" description="The page you requested is not part of this dashboard." />
-        <section className="rounded-xl border border-border bg-card px-6 py-8 text-center">
+        <SectionTabs />
+        <section className="mt-6 rounded-xl border border-border bg-card px-6 py-8 text-center">
           <Link className="payments-button inline-flex" data-emphasis="primary" to="/overview">
             Return to Overview
           </Link>
@@ -93,24 +86,14 @@ function MissingPage() {
 /**
  * The Payments shell, for every page that is not the Overview dashboard.
  *
- * The Overview carries its own header, section tabs, and Explain drawer, so it is
- * routed outside this layout. The rest of the console keeps the approved Payments
- * sidebar and top bar until a shell migration is approved.
+ * It used to carry its own left sidebar (AppSidebar); the console has since
+ * standardised on the Overview dashboard's navigation — a top bar with the
+ * Averlynx brand plus the same section tabs, no left rail — so every page
+ * under this shell renders that instead.
  */
 function PaymentsShellLayout() {
-  const location = useLocation()
-  const navigate = useNavigate()
-
   return (
-    <PaymentsAppShell
-      sidebar={
-        <AppSidebar
-          activeItem={activeItemFor(location.pathname)}
-          onNavigate={(href) => navigate(href)}
-          showStaticBadges={false}
-        />
-      }
-    >
+    <PaymentsAppShell>
       <Outlet />
     </PaymentsAppShell>
   )

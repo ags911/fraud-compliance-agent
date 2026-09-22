@@ -11,6 +11,7 @@ import {
   PaymentsTonePill,
   PaymentsTopBar,
 } from "@/components/payments-ui"
+import { SectionTabs } from "@/components/section-tabs"
 import { Slider } from "@/components/ui/slider"
 import {
   ChartContainer,
@@ -67,15 +68,16 @@ export function ModelBenchmarkPage() {
 
   return (
     <>
-      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable on this read-only benchmark view" />
+      <PaymentsTopBar demoSession={false} searchPlaceholder="Search is unavailable on this read-only benchmark view" showSidebarTrigger={false} />
       <PaymentsPageMain>
         <PaymentsPageHeading
           title="Benchmark insights"
           description="A reproducible Sparkov demonstration of the data, feature, evaluation, and audit workflow—not a live fraud model."
         />
-        {error ? <PaymentsStatePanel title="Benchmark evidence unavailable" description={error} tone="danger" /> : null}
-        {!summary && !error ? <PaymentsStatePanel title="Loading benchmark evidence" description="Reading the sanitised local evaluation report." /> : null}
-        {summary ? <BenchmarkEvidence summary={summary} /> : null}
+        <SectionTabs />
+        {error ? <PaymentsStatePanel title="Benchmark evidence unavailable" description={error} tone="danger" className="mt-6" /> : null}
+        {!summary && !error ? <PaymentsStatePanel title="Loading benchmark evidence" description="Reading the sanitised local evaluation report." className="mt-6" /> : null}
+        {summary ? <div className="mt-6"><BenchmarkEvidence summary={summary} /></div> : null}
       </PaymentsPageMain>
     </>
   )

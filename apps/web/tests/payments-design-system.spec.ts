@@ -401,23 +401,19 @@ test.describe("Overview behavior contracts", () => {
 })
 
 test.describe("Product router", () => {
-  test("keeps the Payments shell while product navigation changes the main route", async ({ page }, testInfo) => {
+  test("keeps the Payments shell while product navigation changes the main route", async ({ page }) => {
     await page.goto("/insights")
     await expect(page.getByRole("heading", { name: "Benchmark insights" })).toBeVisible()
 
     const shell = page.locator('[data-payments-component="app-shell"]')
     await expect(shell).toBeVisible()
 
-    if (testInfo.project.name === "mobile") {
-      await page.getByRole("button", { name: "Toggle navigation menu" }).click()
-    }
-    await page.getByRole("link", { name: "Transactions", exact: true }).click()
-    await expect(page).toHaveURL(/\/transactions$/)
-    await expect(page.getByRole("heading", { name: "Transactions" })).toBeVisible()
+    // The section tabs are the nav now — always visible, no sidebar drawer to open first.
+    await page.getByRole("link", { name: "Analyse a transaction", exact: true }).click()
+    await expect(page).toHaveURL(/\/transactions\/new$/)
+    await expect(page.getByRole("heading", { name: "Analyse a transaction" })).toBeVisible()
     await expect(shell).toBeVisible()
-    if (testInfo.project.name !== "mobile") {
-      await expect(page.getByRole("link", { name: "Transactions", exact: true })).toHaveAttribute("data-active", "true")
-    }
+    await expect(page.getByRole("link", { name: "Analyse a transaction", exact: true })).toHaveAttribute("aria-current", "page")
   })
 
   test("the Overview route is the dashboard, outside the Payments shell", async ({ page }) => {
