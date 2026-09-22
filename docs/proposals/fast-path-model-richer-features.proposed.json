@@ -1,0 +1,573 @@
+{
+  "artifact": "fast-path-model-richer-features",
+  "config_sha256": "f9f0e5debbbbc6aff940404944da7fbc914dfbd9c03284d47e3af316cfc28723",
+  "config_version": "fast-path-richer-features-v2-candidate",
+  "data_source": "Sparkov simulated credit-card transactions",
+  "decision_recommendation": "proposed \u2014 review the fit checks and feature availability before any decision",
+  "features": {
+    "count": 33,
+    "groups": {
+      "amount_vs_card_history": [
+        "card_prior_count",
+        "card_prior_mean_amount",
+        "amount_to_card_prior_mean",
+        "amount_zscore_vs_card_prior"
+      ],
+      "base": [
+        "amount",
+        "log_amount",
+        "event_hour_utc",
+        "event_day_of_week_utc",
+        "is_weekend"
+      ],
+      "card_velocity_and_timing": [
+        "card_seconds_since_prior",
+        "card_count_last_3600s",
+        "card_amount_sum_last_3600s",
+        "card_count_last_86400s",
+        "card_amount_sum_last_86400s",
+        "card_count_last_604800s",
+        "card_amount_sum_last_604800s"
+      ],
+      "category": [
+        "category_entertainment",
+        "category_food_dining",
+        "category_gas_transport",
+        "category_grocery_net",
+        "category_grocery_pos",
+        "category_health_fitness",
+        "category_home",
+        "category_kids_pets",
+        "category_misc_net",
+        "category_misc_pos",
+        "category_personal_care",
+        "category_shopping_net",
+        "category_shopping_pos",
+        "category_travel"
+      ],
+      "familiarity": [
+        "card_merchant_prior_count",
+        "card_category_prior_count",
+        "merchant_prior_count"
+      ]
+    }
+  },
+  "fit_checks": {
+    "ablation": {
+      "cumulative": {
+        "cumulative_through_amount_vs_card_history": {
+          "features": 23,
+          "test_pr_auc": 0.8396073912922487,
+          "test_roc_auc": 0.9960488774858669,
+          "trees_kept": 209
+        },
+        "cumulative_through_base": {
+          "features": 5,
+          "test_pr_auc": 0.44963774002693113,
+          "test_roc_auc": 0.9801795925427093,
+          "trees_kept": 36
+        },
+        "cumulative_through_card_velocity_and_timing": {
+          "features": 30,
+          "test_pr_auc": 0.9631092032067753,
+          "test_roc_auc": 0.9990655281846704,
+          "trees_kept": 472
+        },
+        "cumulative_through_category": {
+          "features": 19,
+          "test_pr_auc": 0.7845477570509092,
+          "test_roc_auc": 0.9962511418594977,
+          "trees_kept": 199
+        },
+        "cumulative_through_familiarity": {
+          "features": 33,
+          "test_pr_auc": 0.9609964052696992,
+          "test_roc_auc": 0.9991732962080198,
+          "trees_kept": 349
+        },
+        "mechanics_v1_four_features": {
+          "features": 4,
+          "test_pr_auc": 0.43709606144953095,
+          "test_roc_auc": 0.9761550888520363,
+          "trees_kept": 16
+        }
+      },
+      "leave_one_group_out": {
+        "amount_vs_card_history": {
+          "features": 29,
+          "test_pr_auc": 0.9548956541285508,
+          "test_roc_auc": 0.999099910399574,
+          "trees_kept": 340
+        },
+        "base": {
+          "features": 28,
+          "test_pr_auc": 0.9294751932114017,
+          "test_roc_auc": 0.9985463791412048,
+          "trees_kept": 433
+        },
+        "card_velocity_and_timing": {
+          "features": 26,
+          "test_pr_auc": 0.8389716774750837,
+          "test_roc_auc": 0.996462759313977,
+          "trees_kept": 220
+        },
+        "category": {
+          "features": 19,
+          "test_pr_auc": 0.8687252598272883,
+          "test_roc_auc": 0.9960697648540646,
+          "trees_kept": 419
+        },
+        "familiarity": {
+          "features": 30,
+          "test_pr_auc": 0.9631092032067753,
+          "test_roc_auc": 0.9990655281846704,
+          "trees_kept": 472
+        }
+      }
+    },
+    "calibration": {
+      "bins_after": [
+        {
+          "mean_predicted": 5.991194598209404e-07,
+          "observed_rate": 4.1182090732382306e-06,
+          "rows": 485648,
+          "score_quantile_from": 0.5,
+          "score_quantile_to": 0.9
+        },
+        {
+          "mean_predicted": 0.00015283552056644112,
+          "observed_rate": 0.0001520527116066903,
+          "rows": 39460,
+          "score_quantile_from": 0.9,
+          "score_quantile_to": 0.95
+        },
+        {
+          "mean_predicted": 0.0011397444177418947,
+          "observed_rate": 0.0010380070265091025,
+          "rows": 25048,
+          "score_quantile_from": 0.95,
+          "score_quantile_to": 0.99
+        },
+        {
+          "mean_predicted": 0.01460333727300167,
+          "observed_rate": 0.01977848101265823,
+          "rows": 2528,
+          "score_quantile_from": 0.99,
+          "score_quantile_to": 0.995
+        },
+        {
+          "mean_predicted": 0.705232560634613,
+          "observed_rate": 0.6790774299835255,
+          "rows": 3035,
+          "score_quantile_from": 0.995,
+          "score_quantile_to": 1.0
+        }
+      ],
+      "bins_before": [
+        {
+          "mean_predicted": 3.115975459877518e-07,
+          "observed_rate": 0.0,
+          "rows": 277859,
+          "score_quantile_from": 0.0,
+          "score_quantile_to": 0.5
+        },
+        {
+          "mean_predicted": 6.271066013141535e-06,
+          "observed_rate": 1.799467357662132e-05,
+          "rows": 222288,
+          "score_quantile_from": 0.5,
+          "score_quantile_to": 0.9
+        },
+        {
+          "mean_predicted": 5.595959009951912e-05,
+          "observed_rate": 0.00021593608291945585,
+          "rows": 27786,
+          "score_quantile_from": 0.9,
+          "score_quantile_to": 0.95
+        },
+        {
+          "mean_predicted": 0.000573359546251595,
+          "observed_rate": 0.001079719272989023,
+          "rows": 22228,
+          "score_quantile_from": 0.95,
+          "score_quantile_to": 0.99
+        },
+        {
+          "mean_predicted": 0.016033178195357323,
+          "observed_rate": 0.023029866858582222,
+          "rows": 2779,
+          "score_quantile_from": 0.99,
+          "score_quantile_to": 0.995
+        },
+        {
+          "mean_predicted": 0.7733113169670105,
+          "observed_rate": 0.7365958978049658,
+          "rows": 2779,
+          "score_quantile_from": 0.995,
+          "score_quantile_to": 1.0
+        }
+      ],
+      "method": "isotonic",
+      "test_brier_after": 0.0005367237608879805,
+      "test_brier_before": 0.0005455298814922571,
+      "test_log_loss_after": 0.00238161557354033,
+      "test_log_loss_before": 0.0022490592673420906
+    },
+    "importance_by_group": {
+      "group_gain_share": {
+        "amount_vs_card_history": 0.01887590040634407,
+        "base": 0.3556779378182783,
+        "card_velocity_and_timing": 0.17266764586757596,
+        "category": 0.44209057430725124,
+        "familiarity": 0.010687941600550418
+      },
+      "top_features": [
+        {
+          "feature": "amount",
+          "gain_share": 0.30476830377723746
+        },
+        {
+          "feature": "category_gas_transport",
+          "gain_share": 0.10737334051273131
+        },
+        {
+          "feature": "category_grocery_pos",
+          "gain_share": 0.09654849965236542
+        },
+        {
+          "feature": "card_amount_sum_last_86400s",
+          "gain_share": 0.08560667976141752
+        },
+        {
+          "feature": "category_grocery_net",
+          "gain_share": 0.047941881098392924
+        },
+        {
+          "feature": "category_travel",
+          "gain_share": 0.04125734210897893
+        },
+        {
+          "feature": "card_amount_sum_last_3600s",
+          "gain_share": 0.026134562223972903
+        },
+        {
+          "feature": "category_home",
+          "gain_share": 0.02557327787345543
+        }
+      ]
+    },
+    "learning_curve": [
+      {
+        "selection_pr_auc": 0.7006197310155942,
+        "train_sample_pr_auc": 0.7353118684380141,
+        "tree": 1
+      },
+      {
+        "selection_pr_auc": 0.9354596654392381,
+        "train_sample_pr_auc": 0.9388012954272885,
+        "tree": 21
+      },
+      {
+        "selection_pr_auc": 0.9571147938568297,
+        "train_sample_pr_auc": 0.963711673247218,
+        "tree": 42
+      },
+      {
+        "selection_pr_auc": 0.9658883226674125,
+        "train_sample_pr_auc": 0.9767568832215232,
+        "tree": 62
+      },
+      {
+        "selection_pr_auc": 0.9706120759787737,
+        "train_sample_pr_auc": 0.9842822203664898,
+        "tree": 83
+      },
+      {
+        "selection_pr_auc": 0.973450391111896,
+        "train_sample_pr_auc": 0.9895419428588106,
+        "tree": 104
+      },
+      {
+        "selection_pr_auc": 0.9749519556387379,
+        "train_sample_pr_auc": 0.9929476697889468,
+        "tree": 124
+      },
+      {
+        "selection_pr_auc": 0.9771566219107499,
+        "train_sample_pr_auc": 0.9951840779225821,
+        "tree": 145
+      },
+      {
+        "selection_pr_auc": 0.9785005153057722,
+        "train_sample_pr_auc": 0.9969035314640363,
+        "tree": 166
+      },
+      {
+        "selection_pr_auc": 0.9789236129848609,
+        "train_sample_pr_auc": 0.9978814675264703,
+        "tree": 186
+      },
+      {
+        "selection_pr_auc": 0.979192148844874,
+        "train_sample_pr_auc": 0.9985270578154364,
+        "tree": 207
+      },
+      {
+        "selection_pr_auc": 0.9794632658124435,
+        "train_sample_pr_auc": 0.9988709503134698,
+        "tree": 227
+      },
+      {
+        "selection_pr_auc": 0.9800267565017672,
+        "train_sample_pr_auc": 0.9991733091545982,
+        "tree": 248
+      },
+      {
+        "selection_pr_auc": 0.9801020324309357,
+        "train_sample_pr_auc": 0.9994402739299588,
+        "tree": 269
+      },
+      {
+        "selection_pr_auc": 0.9803539525540549,
+        "train_sample_pr_auc": 0.9996320882083671,
+        "tree": 289
+      },
+      {
+        "selection_pr_auc": 0.9804792965854728,
+        "train_sample_pr_auc": 0.9998084658052726,
+        "tree": 310
+      },
+      {
+        "selection_pr_auc": 0.9807825225063169,
+        "train_sample_pr_auc": 0.9999217536817978,
+        "tree": 331
+      },
+      {
+        "selection_pr_auc": 0.9810317869476326,
+        "train_sample_pr_auc": 0.999983040150991,
+        "tree": 351
+      },
+      {
+        "selection_pr_auc": 0.9809969396913296,
+        "train_sample_pr_auc": 0.9999985333366171,
+        "tree": 372
+      },
+      {
+        "selection_pr_auc": 0.981096758527469,
+        "train_sample_pr_auc": 1.0,
+        "tree": 392
+      },
+      {
+        "selection_pr_auc": 0.9811814338316958,
+        "train_sample_pr_auc": 1.0,
+        "tree": 413
+      },
+      {
+        "selection_pr_auc": 0.9812374511269181,
+        "train_sample_pr_auc": 1.0,
+        "tree": 434
+      },
+      {
+        "selection_pr_auc": 0.9813626995029645,
+        "train_sample_pr_auc": 1.0,
+        "tree": 454
+      },
+      {
+        "selection_pr_auc": 0.9810614591095989,
+        "train_sample_pr_auc": 1.0,
+        "tree": 475
+      },
+      {
+        "selection_pr_auc": 0.9808881477066864,
+        "train_sample_pr_auc": 1.0,
+        "tree": 496
+      }
+    ],
+    "monthly_stability": [
+      {
+        "log_loss": 0.00203496590256691,
+        "month": "2020-06",
+        "positives": 133,
+        "pr_auc": 0.9734075957226651,
+        "prevalence": 0.004424778761061947,
+        "roc_auc": 0.9997851772287863,
+        "rows": 30058
+      },
+      {
+        "log_loss": 0.002917989855632186,
+        "month": "2020-07",
+        "positives": 321,
+        "pr_auc": 0.9447183913303951,
+        "prevalence": 0.003739166899636567,
+        "roc_auc": 0.9975775990580955,
+        "rows": 85848
+      },
+      {
+        "log_loss": 0.002305686241015792,
+        "month": "2020-08",
+        "positives": 415,
+        "pr_auc": 0.9700007996168034,
+        "prevalence": 0.004675582194481686,
+        "roc_auc": 0.9996260510665319,
+        "rows": 88759
+      },
+      {
+        "log_loss": 0.0023091330658644438,
+        "month": "2020-09",
+        "positives": 340,
+        "pr_auc": 0.9711122574686131,
+        "prevalence": 0.004889764572217508,
+        "roc_auc": 0.9995278764172847,
+        "rows": 69533
+      },
+      {
+        "log_loss": 0.00272501353174448,
+        "month": "2020-10",
+        "positives": 384,
+        "pr_auc": 0.9705187296834407,
+        "prevalence": 0.005537290188613947,
+        "roc_auc": 0.9996312236577537,
+        "rows": 69348
+      },
+      {
+        "log_loss": 0.0024404816795140505,
+        "month": "2020-11",
+        "positives": 294,
+        "pr_auc": 0.9621076894281412,
+        "prevalence": 0.004047635437461279,
+        "roc_auc": 0.9990276587819573,
+        "rows": 72635
+      },
+      {
+        "log_loss": 0.0014814914902672172,
+        "month": "2020-12",
+        "positives": 258,
+        "pr_auc": 0.9386489913073769,
+        "prevalence": 0.001848958706588886,
+        "roc_auc": 0.9990288927774735,
+        "rows": 139538
+      }
+    ],
+    "partition_metrics": {
+      "calibration_fit": {
+        "log_loss": 0.0023927204310894012,
+        "positives": 832,
+        "pr_auc": 0.9805197740685961,
+        "prevalence": 0.006416435947465431,
+        "roc_auc": 0.999511039761651,
+        "rows": 129667
+      },
+      "selection": {
+        "log_loss": 0.002007301663979888,
+        "positives": 706,
+        "pr_auc": 0.9814189479400253,
+        "prevalence": 0.005444674090754851,
+        "roc_auc": 0.9997817395141059,
+        "rows": 129668
+      },
+      "test": {
+        "log_loss": 0.0022490592673420906,
+        "positives": 2145,
+        "pr_auc": 0.9613934555599877,
+        "prevalence": 0.0038598644278853163,
+        "roc_auc": 0.9991617859223636,
+        "rows": 555719
+      },
+      "train": {
+        "log_loss": 0.00046797667164355516,
+        "positives": 5968,
+        "pr_auc": 0.999966795497502,
+        "prevalence": 0.005753176393467908,
+        "roc_auc": 0.9999998146291279,
+        "rows": 1037340
+      }
+    },
+    "shuffled_label_control": {
+      "pr_auc": 0.0038511932382686393,
+      "prevalence": 0.0038598644278853163,
+      "roc_auc": 0.45530131881387537
+    }
+  },
+  "git_revision": "b27a40bb43b1920ba3ab2b7d89b2a2c39c248db2",
+  "limitations": [
+    "Results are Sparkov synthetic benchmark mechanics and are not a production fraud-performance claim.",
+    "Sparkov fraud is produced by a simulator: a high score shows the model learned that generator's patterns, not how it would perform on real fraud.",
+    "The card and merchant history features have no established online equivalent, so none is approved for runtime.",
+    "No operating threshold is selected and no model is promoted; this report is proposed evidence only."
+  ],
+  "partition_counts": {
+    "calibration": 259335,
+    "calibration_fit": 129667,
+    "selection": 129668,
+    "test": 555719,
+    "train": 1037340
+  },
+  "random_seed": 20260916,
+  "reference_mechanics_v1": {
+    "logistic_regression_baseline": {
+      "brier_score": 0.08889316647443758,
+      "pr_auc": 0.13543549943788571,
+      "roc_auc": 0.8324493775026133
+    },
+    "xgboost_candidate": {
+      "brier_score": 0.04890920966863632,
+      "pr_auc": 0.4318553664894112,
+      "roc_auc": 0.978867837270508
+    }
+  },
+  "report_sha256": "9a64887bbf4c409b12828bcc94d784ccbdaf96cf5cf76957091441a4efa10247",
+  "selection": {
+    "calibration_data": "second chronological half of the calibration partition",
+    "chosen_index": 2,
+    "selection_data": "first chronological half of the calibration partition",
+    "trials": [
+      {
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "scale_pos_weight_mode": "none",
+        "selection_pr_auc": 0.9765700069739157,
+        "trees_kept": 677
+      },
+      {
+        "max_depth": 8,
+        "min_child_weight": 5.0,
+        "scale_pos_weight_mode": "none",
+        "selection_pr_auc": 0.9769599654459283,
+        "trees_kept": 316
+      },
+      {
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "scale_pos_weight_mode": "sqrt_ratio",
+        "selection_pr_auc": 0.9814189479400253,
+        "trees_kept": 446
+      },
+      {
+        "max_depth": 8,
+        "min_child_weight": 5.0,
+        "scale_pos_weight_mode": "sqrt_ratio",
+        "selection_pr_auc": 0.9805613703339455,
+        "trees_kept": 353
+      }
+    ]
+  },
+  "status": "proposed",
+  "test_summary": {
+    "log_loss": 0.0022490592673420906,
+    "positives": 2145,
+    "pr_auc": 0.9613934555599877,
+    "precision_in_top_share": {
+      "0.005": 0.7365958978049658,
+      "0.01": 0.379812882331774
+    },
+    "prevalence": 0.0038598644278853163,
+    "recall_at_false_positive_rate": {
+      "0.001": 0.9445221445221446,
+      "0.01": 0.9888111888111888
+    },
+    "roc_auc": 0.9991617859223636,
+    "rows": 555719
+  },
+  "training_scope": "synthetic benchmark mechanics only; never production training, runtime scoring, or a fraud-performance claim",
+  "version": "0.1"
+}
