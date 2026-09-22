@@ -27,7 +27,7 @@ export function useShowcaseInvestigationTour() {
       smoothScroll: !reduceMotion,
       allowClose: true,
       allowKeyboardControl: true,
-      overlayColor: "#0a2540",
+      overlayColor: "#0b0b0b",
       overlayOpacity: 0.5,
       stagePadding: 6,
       stageRadius: 8,

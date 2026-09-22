@@ -7,11 +7,19 @@ specific to `apps/web`.
 - Focused checks, run from the repository root: `make web-lint`,
   `make web-design-check`, `make web-build`, and `make web-test`. CI uses
   Node 22.
-- The Payments design system is frozen. `work/payments-design-concept.html` is
-  the approved visual source, and the frozen Rules Performance reference and the
-  tokens in `docs/design/payments-design-system.md` must not change as a side
-  effect of feature work. Use the documented tokens and components; do not
-  approximate a value with the nearest utility class.
+- The product has one app-wide design system: the shadcn dashboard palette in
+  `src/app-theme.css` (`:root`/`.dark`, unscoped). It used to be scoped to the
+  Overview route only, with the Payments pages carrying a separate
+  Stripe-derived palette (`payments-design-system.css`); that split was
+  retired in favour of one shared theme. `app-theme.css` loads after
+  `shadcn-defaults.css` and overrides both the shadcn `--background`/etc.
+  tokens and the legacy `--payments-*` primitives that
+  `payments-design-system.css`/`payments-typography.css` still define, so the
+  Payments component library renders in the new palette without that shared,
+  frozen CSS needing to change. The `references/*.html` pages under
+  `references/` do not load `app-theme.css` and still render the old palette
+  on purpose — they are frozen visual snapshots of what came before, not
+  something to keep matching.
 - For dashboard, chart, navigation, or shared UI work, use the
   `$payments-dashboard-consistency` skill, including screenshot validation of
   hover states.
@@ -27,10 +35,10 @@ specific to `apps/web`.
   tests would then exercise the wrong page. The Payments Overview is
   `references/overview-reference.html` for exactly that reason.
 - The Overview route is the shadcn dashboard (`src/Dashboard.tsx`), routed
-  outside the Payments shell. Its theme, `src/dashboard-theme.css`, redefines
-  Payments token names, so it is scoped to `:root[data-app-theme="dashboard"]`
-  and the route sets and clears that attribute. Keep the scope: widening it
-  restyles the approved pages.
+  outside the Payments shell. It is still the only page with a light/dark
+  toggle; `.dark` is only ever added by its own switch, so in practice dark
+  mode stays a Dashboard-only affordance even though the theme itself is now
+  global.
 - No API internals, database models, or secrets in browser code; consume only
   accepted contracts.
 - Chart, graph, and table components are presentational: they receive data only

@@ -178,7 +178,7 @@ export function TransactionForm({
         <div className="flex gap-2">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 flex-none text-destructive/80" />
           <div>
-            <div className="text-[12.5px] font-semibold text-destructive/90">Simulate LLM outage</div>
+            <div className="text-[12.5px] font-semibold text-destructive">Simulate LLM outage</div>
             <div className="mt-0.5 max-w-44 text-[11px] text-muted-foreground">
               Forces Stage 2 to fail — watch the fail-safe HOLD trigger live.
             </div>

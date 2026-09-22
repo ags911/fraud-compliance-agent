@@ -200,15 +200,12 @@ export default function Dashboard() {
   const [headerScenario, setHeaderScenario] = useState<RunnableShowcaseScenarioId | null>(null)
   const { start: startTour } = useOverviewTour({ selectedScenario: headerScenario, activeScenario: active, copy: tourCopy })
 
-  // The dashboard theme is scoped to this attribute, so the tokens apply while
-  // this route is mounted and the Payments pages keep their own on every other
-  // route. The dark class is removed with it: no other page has a dark theme.
+  // Light and dark are both this route's theme now that it is the app-wide
+  // palette, but the toggle below is only offered here, so `.dark` in practice
+  // stays a Dashboard-only affordance without any extra scoping.
   useEffect(() => {
-    const root = document.documentElement
-    root.dataset.appTheme = "dashboard"
     return () => {
-      delete root.dataset.appTheme
-      root.classList.remove("dark")
+      document.documentElement.classList.remove("dark")
     }
   }, [])
 

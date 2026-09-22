@@ -5,31 +5,46 @@
 > source docs (`payments-design-system.md`, `typography-standard.md`) are
 > archived under `docs/archive/apps/web/docs/design/`; this file, plus the
 > five live reference pages below, is now the current, approved source.
-> **Changing a primitive, semantic token, component contract, or baseline
-> screenshot is a design change requiring explicit visual approval** —
-> `apps/web/AGENTS.md`: "The Payments design system is frozen... must not
-> change as a side effect of feature work."
+> **Changing a component contract or a reference page's baseline screenshot
+> is a design change requiring explicit visual approval.**
 
-## Two Coexisting Systems (do not confuse them)
+## One App-Wide System
 
-1. **Payments system** (every route except Overview): Satoshi (UI chrome) +
-   Inter (dense data) + system monospace (identifiers); dark-mode-only by
-   root design ("an ops tool, not a themeable consumer product"); frozen
-   visual reference `work/payments-design-concept.html`.
-2. **Overview/Dashboard route**: the shadcn surface, with its own separately
-   scoped light+dark theme (`src/dashboard-theme.css`, scoped to
-   `:root[data-app-theme="dashboard"]`) so it never leaks into the Payments
-   shell.
-3. **`shadcn-defaults` reference page** (`references/shadcn-defaults.html`):
-   a third, fully independent system — **Geist Variable** font, unmodified
-   shadcn `radix-nova` preset, **light theme only**. Never import both this
-   theme and `index.css` into the same document.
+The live app has a single design system now: the shadcn dashboard palette in
+`src/app-theme.css` (unscoped `:root`/`.dark`), Geist Variable throughout.
+This used to be two separate systems — a Stripe-derived, Satoshi+Inter
+Payments palette on every route except Overview, and the shadcn dashboard
+palette scoped to the Overview route only via `:root[data-app-theme="dashboard"]`
+— until that split was retired in favour of one shared theme across every
+route. Overview/Dashboard remains the only page with a light/dark toggle;
+`.dark` is only ever added by its own switch, so dark mode stays a
+Dashboard-only affordance in practice even though the palette itself is
+global.
 
-See [Reference Pages](#reference-pages) below for all five standalone pages,
-their current paths, and which ones are actually linked from or tested
-against the live app.
+`app-theme.css` loads after `shadcn-defaults.css` in `main.tsx` and
+overrides both the shadcn tokens (`--background`, `--foreground`, etc.) and
+the legacy `--payments-*` primitives/fonts that `payments-design-system.css`
+and `payments-typography.css` still define, so the whole
+`src/components/payments-ui.tsx` component library (built on those
+`--payments-*` tokens) renders in the new palette without that shared CSS
+needing to change.
 
-## Payments Design System (`apps/web/docs/design/payments-design-system.md`)
+That shared CSS is still live, though, because the **frozen reference
+pages** under `references/` do not load `app-theme.css` and intentionally
+still render the old Stripe/Satoshi/Inter palette — they are snapshots of
+what the app looked like before, not something to keep matching. See
+[Reference Pages](#reference-pages) below for all five, their paths, and
+which ones are linked from or tested against the live app.
+
+## Payments Design System (frozen; `apps/web/docs/design/payments-design-system.md`)
+
+The tokens, geometry, and components below describe the frozen contract
+`payments-design-system.css`/`payments-typography.css` still define, which
+the `references/*.html` pages render unchanged. The live app now sources its
+actual colours from `src/app-theme.css` (see above), which overrides these
+`--payments-*` primitives; the semantic/component tier described here
+(spacing, radii, type recipes, sidebar geometry) is unaffected and still
+governs both the reference pages and the live Payments components.
 
 **Token tiers**: Tier 1 primitives (approved literal values, private to the
 token file) → Tier 2 semantic tokens (`background`, `border`, `success`) →
@@ -72,11 +87,13 @@ semantic-state/snapshot checks), `npm run test:payments:update` (only after
 an intentional, reviewed design change) — run in
 `.github/workflows/payments-design-contract.yml` on every PR.
 
-## Typography Standard (`typography-standard.md`, "Kepler," v1.1, 2026-09-15 — the authoritative/adopted spec)
+## Typography Standard (`typography-standard.md`, "Kepler," v1.1, 2026-09-15 — the authoritative/adopted spec for the frozen references)
 
-**Font-family tokens**:
+**Font-family tokens** (as the frozen reference pages render them; `app-theme.css`
+overrides `--payments-font-ui`/`--payments-font-data` to `"Geist Variable", sans-serif`
+for the live app, so live Payments pages use Geist, not Satoshi/Inter):
 
-| Token | Stack | Use |
+| Token | Stack (frozen references) | Use |
 |---|---|---|
 | `--payments-font-ui` | `"Satoshi", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif` | Headings, nav, buttons, explanatory text, badges, calendar labels |
 | `--payments-font-data` | `Inter, ui-sans-serif, system-ui, -apple-system, sans-serif` | Amounts, percentages, metric labels/values, dates/times, chart axes |
@@ -133,17 +150,19 @@ families, sidebar consistency, and desktop/mobile snapshots. "New role sizes
 require intentional review; do not update snapshots to hide unexplained
 differences."
 
-## `shadcn-defaults` Reference System (independent — originally documented in `docs/archive/apps/web/docs/design/shadcn-defaults.md`)
+## `shadcn-defaults` Reference Page (frozen; originally documented in `docs/archive/apps/web/docs/design/shadcn-defaults.md`)
 
-Unmodified shadcn `radix-nova` preset; **Geist Variable** font; base radius
-**0.625rem**; light theme only; payment/chart colors still follow the
-Payments palette via `src/shadcn-defaults-theme.css`. No compact-card
-overrides, bespoke pills, or global animation overrides. Import
-`shadcn-defaults.css` once at app entry instead of `index.css` — never both
-in the same document. `RulesPerformanceChart` (built on the shadcn chart
-helper + Recharts) provides semantic outcome tokens, a text summary +
-labelled legend, a keyboard-accessible SVG layer, and a native expandable
-data table for exact values.
+`references/shadcn-defaults.html` renders the shadcn `radix-nova` preset with
+the frozen Stripe-derived Payments colours layered on via
+`src/shadcn-defaults-theme.css` (the same file the live app used to source
+its base palette from, before `app-theme.css` started overriding it). Geist
+Variable font; base radius **0.625rem**; light theme only; no compact-card
+overrides, bespoke pills, or global animation overrides. It does not load
+`app-theme.css`, so it still shows the old palette on purpose — see
+[One App-Wide System](#one-app-wide-system) above. `RulesPerformanceChart`
+(built on the shadcn chart helper + Recharts) provides semantic outcome
+tokens, a text summary + labelled legend, a keyboard-accessible SVG layer,
+and a native expandable data table for exact values.
 
 ## Reference Pages
 
@@ -181,18 +200,20 @@ Two things worth knowing, not just where the files live:
   reference," so this may be intentional, but it means a regression there
   would not be caught by CI.
 
-## Layout, Radius, and Other Tokens (code-verified, `src/index.css`)
+## Layout, Radius, and Other Tokens (code-verified, `src/app-theme.css`)
 
-Tailwind v4 CSS-first config (no `tailwind.config.*`); base palette
-`--background: #0a0c10`, `--foreground: #e7eaf0` (identical for `:root` and
-`.dark` — deliberately dark-only for the Payments shell); domain outcome
-tokens `--color-pass`/`--color-hold`/`--color-challenge` (+ `-soft`
-variants) consumed by `OutcomeBadge.tsx`; a `--radius` base token feeds the
-generated `--radius-sm`/`--radius-md`/etc. utilities. Icon library:
-`lucide-react`. Class merging via the `cn` npm package
-(`src/lib/utils.ts` re-export). No `pages/` directory — page components sit
-directly under `src/`; the Payments shell is provided by `PaymentsShellLayout`
-wrapping every non-Overview route.
+Tailwind v4 CSS-first config (no `tailwind.config.*`); base palette (`:root`)
+`--background: #fcfcfc`, `--foreground: #0b0b0b`, `--primary: #0b0b0b`; `.dark`
+(Overview-only, see above) `--background: #151515`, `--foreground: #f2f2f2`;
+domain outcome tokens `--outcome-pass`/`--outcome-challenge` and the chart
+tokens `--chart-1`..`--chart-5`; a `--radius` base token feeds the generated
+`--radius-sm`/`--radius-md`/etc. utilities. Icon library: `lucide-react`.
+Class merging via the `cn` npm package (`src/lib/utils.ts` re-export). No
+`pages/` directory — page components sit directly under `src/`; the Payments
+shell is provided by `PaymentsShellLayout` wrapping every non-Overview route.
+`src/index.css` also exists in the tree but is **dead code** — nothing
+imports it — and describes a dark-only palette that was never actually live;
+do not treat it as a source of truth.
 
 ## Diagram Styling Convention (`docs/architecture/diagrams/`, D2 language)
 

@@ -40,13 +40,13 @@ const navItems: NavItem[] = [
 ]
 
 const focusRing =
-  "focus-visible:ring-0 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(99,91,255,0.32)]"
+  "focus-visible:ring-0 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[rgba(11,11,11,0.32)]"
 
 const HEALTH_DOT_COLOURS = {
   checking: "bg-sidebar-foreground/40",
-  waking: "bg-[#a16207]",
-  ready: "bg-[#087f45]",
-  unavailable: "bg-[#b42318]",
+  waking: "bg-[#f5a500]",
+  ready: "bg-[#00bd6c]",
+  unavailable: "bg-[#ee343b]",
 } as const
 
 /**
@@ -60,7 +60,7 @@ function ApiHealthFooter() {
   return (
     <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
       <p
-        className="flex items-center gap-[7px] text-sidebar-foreground/70 group-data-[collapsible=icon]:gap-0"
+        className="flex items-center gap-[7px] text-sidebar-foreground group-data-[collapsible=icon]:gap-0"
         data-testid="api-health"
         data-status={health.status}
       >
@@ -125,7 +125,7 @@ export function AppSidebar({
                     <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                   </span>
                   {showStaticBadges && item.badge ? (
-                    <span className={cn("pointer-events-none flex h-5 min-w-5 items-center justify-center rounded-[6px] px-1 payments-type-metadata payments-type-medium text-sidebar-foreground/70 tabular-nums group-data-[collapsible=icon]:hidden")}>
+                    <span className={cn("pointer-events-none flex h-5 min-w-5 items-center justify-center rounded-[6px] px-1 payments-type-metadata payments-type-medium text-sidebar-foreground tabular-nums group-data-[collapsible=icon]:hidden")}>
                       {item.badge}
                     </span>
                   ) : null}

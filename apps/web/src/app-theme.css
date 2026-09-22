@@ -1,0 +1,180 @@
+/*
+  The app's one global theme: the shadcn dashboard palette, applied everywhere.
+
+  This file used to be scoped to the Overview route's `data-app-theme="dashboard"`
+  attribute so it would not restyle the Payments pages, which carried their own
+  Stripe-derived palette. That separation was an approved decision until it wasn't:
+  the console has since standardised on this palette across every route, so the
+  values here are unscoped `:root`/`.dark` and load after `shadcn-defaults.css` so
+  they win the cascade.
+
+  `.dark` is only ever toggled by the Overview route's own light/dark switch
+  (see Dashboard.tsx); no other page offers a toggle, so in practice this stays a
+  Dashboard-only affordance without any extra scoping selector.
+
+  Tailwind, the font faces, and the `@theme` mappings are already loaded by
+  shadcn-defaults.css, so this file only carries values and a few component rules.
+  It also overrides the legacy `--payments-*` primitive and font tokens that
+  `payments-design-system.css` and `payments-typography.css` define, so the
+  Payments component library (built on those tokens) renders with this same
+  palette without its shared CSS needing to change — that file is still the
+  frozen visual source for the reference pages under `references/`.
+*/
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: #fcfcfc;
+  --foreground: #0b0b0b;
+  --card: #f5f5f5;
+  --card-foreground: #0b0b0b;
+  --popover: #f5f5f5;
+  --popover-foreground: #0b0b0b;
+  --primary: #0b0b0b;
+  --primary-foreground: #fcfcfc;
+  --secondary: #ededed;
+  --secondary-foreground: #0b0b0b;
+  --muted: #ededed;
+  --muted-foreground: #636363;
+  --accent: #ededed;
+  --accent-foreground: #0b0b0b;
+  /* Darker than chart-4/fraud-warning's #ee343b: this token is used for small
+     destructive text on a light background, and the brighter red the charts
+     use does not clear 4.5:1 there. */
+  --destructive: #c6282f;
+  --border: rgb(11 11 11 / 6%);
+  --input: rgb(11 11 11 / 12%);
+  --ring: #6f6f6f;
+  --chart-1: #3d3d3d;
+  --chart-2: #00bd6c;
+  --chart-3: #f5a500;
+  --chart-4: #ee343b;
+  --chart-5: #636363;
+  --chart-previous: #a3a3a3;
+  --chart-successful: #00bd6c;
+  --chart-blocked: #636363;
+  --chart-refunded: #3d3d3d;
+  --chart-disputed: #f5a500;
+  --chart-fraud-warning: #ee343b;
+  --success: #00bd6c;
+  --success-soft: rgb(0 189 108 / 14%);
+  --warning: #f5a500;
+  --warning-soft: rgb(245 165 0 / 14%);
+  --danger-soft: rgb(238 52 59 / 14%);
+  /* The sidebar follows beUI's: the page background, muted text that turns to the
+     foreground when active, a muted pill, and a hairline border. */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--muted-foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --outcome-pass: #00bd6c;
+  --outcome-challenge: #f5a500;
+
+  /* Legacy Payments tier-1 primitives and tier-2 fonts. Tier 2/3 rules in
+     payments-design-system.css and payments-typography.css consume these by
+     name, so overriding them here carries the palette through the whole
+     Payments component library without editing that shared, frozen file. */
+  --payments-white: var(--background);
+  --payments-ink-900: var(--foreground);
+  --payments-ink-600: var(--secondary-foreground);
+  --payments-ink-500: var(--muted-foreground);
+  --payments-grey-100: var(--card);
+  --payments-grey-150: var(--secondary);
+  --payments-grey-200: var(--border);
+  --payments-purple-500: var(--primary);
+  --payments-purple-100: var(--muted);
+  --payments-purple-700: var(--foreground);
+  --payments-green-100: var(--success-soft);
+  --payments-green-700: var(--success);
+  --payments-yellow-100: var(--warning-soft);
+  --payments-yellow-800: var(--warning);
+  --payments-red-100: var(--danger-soft);
+  --payments-red-700: var(--destructive);
+  --payments-focus: rgb(11 11 11 / 32%);
+  --payments-font-ui: "Geist Variable", sans-serif;
+  --payments-font-data: "Geist Variable", sans-serif;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #151515;
+  --foreground: #f2f2f2;
+  --card: #1c1c1c;
+  --card-foreground: #f2f2f2;
+  --popover: #1c1c1c;
+  --popover-foreground: #f2f2f2;
+  --primary: #f2f2f2;
+  --primary-foreground: #151515;
+  --secondary: #242424;
+  --secondary-foreground: #f2f2f2;
+  --muted: #242424;
+  --muted-foreground: #939393;
+  --accent: #242424;
+  --accent-foreground: #f2f2f2;
+  --destructive: #ee343b;
+  --border: rgb(255 255 255 / 5%);
+  --input: rgb(255 255 255 / 10%);
+  --ring: #8a8a8a;
+  --chart-1: #d4d4d4;
+  --chart-2: #00bd6c;
+  --chart-3: #f5a500;
+  --chart-4: #ee343b;
+  --chart-5: #939393;
+  --outcome-pass: #00bd6c;
+  --outcome-challenge: #f5a500;
+}
+
+@layer components {
+  /* A soft lift and a hairline, so cards read as surfaces rather than outlines. */
+  [data-slot="card"] {
+    box-shadow: 0 1px 2px rgb(11 11 11 / 5%);
+  }
+
+  [data-slot="table-container"][tabindex="0"]:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+/*
+  The guided tour runs on the Overview route, so its popover follows this theme.
+  Only the surface, text, and arrow colours change; the geometry stays as the
+  shared rules define it.
+*/
+.driver-popover.overview-tour {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+}
+
+.overview-tour .driver-popover-title,
+.overview-tour .driver-popover-close-btn {
+  color: var(--foreground);
+}
+
+.overview-tour .driver-popover-description,
+.overview-tour .driver-popover-progress-text {
+  color: var(--muted-foreground);
+}
+
+.overview-tour .driver-popover-footer button {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+}
+
+.overview-tour .driver-popover-footer .driver-popover-next-btn {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.overview-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--card); }
+.overview-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--card); }
+.overview-tour .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: var(--card); }
+.overview-tour .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--card); }

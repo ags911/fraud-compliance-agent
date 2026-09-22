@@ -433,17 +433,17 @@ test.describe("Product router", () => {
     await expect(page.locator('[data-payments-component="app-shell"]')).toBeVisible()
   })
 
-  test("the dashboard theme is scoped to its route and leaves the Payments pages alone", async ({ page }) => {
+  test("the Overview and Payments routes share one app-wide theme", async ({ page }) => {
     const primary = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--primary").trim())
 
+    // The palette used to be scoped to the Overview route via a data-app-theme
+    // attribute, with the Payments pages carrying a separate Stripe-derived
+    // one. That split was retired: both routes now render the same tokens.
     await page.goto("/overview")
     expect(await primary()).toBe("#0b0b0b")
-    expect(await page.locator("html").getAttribute("data-app-theme")).toBe("dashboard")
 
-    // Navigating away must restore the Payments tokens, not leave the page restyled.
     await page.goto("/insights")
-    expect(await primary()).toBe("#635bff")
-    expect(await page.locator("html").getAttribute("data-app-theme")).toBeNull()
+    expect(await primary()).toBe("#0b0b0b")
   })
 
   test("supports deep links and keeps visual references outside the product routes", async ({ page }) => {

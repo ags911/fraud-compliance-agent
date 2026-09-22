@@ -752,7 +752,7 @@
 }
 
 .payments-table-panel [data-slot="table-row"] {
-  border-bottom: 1px solid #eef1f4;
+  border-bottom: 1px solid var(--payments-color-divider);
 }
 
 .payments-table-panel [data-slot="table-header"] [data-slot="table-row"] {
