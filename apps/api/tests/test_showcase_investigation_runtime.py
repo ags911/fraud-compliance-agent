@@ -365,3 +365,65 @@ def test_groq_adapter_validates_json_without_retaining_raw_output() -> None:
     )
 
     assert plan.tools == ["get_payee_evidence", "get_device_session_evidence"]
+
+
+def test_live_graph_offers_only_tools_with_accepted_scenario_evidence(
+    repository_root,
+) -> None:
+    """The provider is never offered a tool that has no accepted S04 payload."""
+    scenario = load_fixture_packet(repository_root).scenarios["S04"]
+    offered: list[tuple[str, ...]] = []
+
+    class _RecordingProvider(_ValidProvider):
+        async def select_tools(self, facts, allowed_tools) -> ToolPlan:
+            offered.append(tuple(allowed_tools))
+            return await super().select_tools(facts, allowed_tools)
+
+    asyncio.run(run_live_graph(scenario, _RecordingProvider()))
+
+    assert offered == [("get_payee_evidence", "get_device_session_evidence")]
+
+
+def test_groq_assessment_prompt_states_the_exact_output_schema(
+    repository_root,
+) -> None:
+    """The prompt names the allowed recommendations and the claim id format.
+
+    Live models otherwise invent values such as ``manual_review`` or ``c1``,
+    which the strict validators correctly reject, so the schema is stated.
+    """
+    scenario = load_fixture_packet(repository_root).scenarios["S04"]
+    evidence = [item for items in scenario.tool_evidence.values() for item in items]
+    sent: list[list[dict[str, str]]] = []
+
+    class _Completions:
+        async def create(self, **kwargs):
+            sent.append(kwargs["messages"])
+            content = json.dumps(
+                {
+                    "recommendation": "CHALLENGE",
+                    "summary": "Mixed synthetic evidence.",
+                    "claims": [
+                        {
+                            "claim_id": "claim_recent_payee",
+                            "text": "The payee relationship is recent.",
+                            "evidence_ids": [evidence[0].evidence_id],
+                        }
+                    ],
+                    "uncertainties": [],
+                }
+            )
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+            )
+
+    client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
+    provider = GroqInvestigationProvider(
+        "test-only", "approved-test-model", client=client
+    )
+    asyncio.run(provider.assess(scenario.facts, evidence))
+
+    system_prompt = sent[0][0]["content"]
+    for allowed in ("PASS", "CHALLENGE", "HOLD"):
+        assert allowed in system_prompt
+    assert "claim_" in system_prompt

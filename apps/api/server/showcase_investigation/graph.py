@@ -81,7 +81,16 @@ async def run_live_graph(
 
     async def select_tools(state: _GraphState) -> dict[str, Any]:
         try:
-            plan = await provider.select_tools(state["facts"], _ALLOWED_TOOLS)
+            # Bind the offered tools to this scenario server-side: a tool with
+            # no accepted payload here is never offered, so a model cannot
+            # pick it and fail the run. A plan naming one anyway still fails
+            # closed in collect_evidence.
+            offered = tuple(
+                name
+                for name in _ALLOWED_TOOLS
+                if (scenario.tool_evidence or {}).get(name)
+            )
+            plan = await provider.select_tools(state["facts"], offered)
             if len(plan.tools) != len(set(plan.tools)):
                 return {"failure_reason": "tool_budget_exhausted"}
             return {"plan": plan, "called_tools": list(plan.tools)}
