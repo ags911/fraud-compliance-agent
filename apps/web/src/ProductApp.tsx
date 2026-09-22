@@ -31,7 +31,7 @@ const plannedRoutes: Record<string, ProductRoute> = {
   "/rules/performance": {
     title: "Rules performance",
     description: "This operational view remains unavailable until rules and performance data have a versioned API contract.",
-    referenceHref: "/rules-performance.html",
+    referenceHref: "/references/rules-performance.html",
   },
   "/insights": {
     title: "Insights",
@@ -120,7 +120,8 @@ function ProductRoutes() {
   return (
     <Routes>
       {/* The dashboard is the Overview. The former Payments Overview remains as a
-          design reference at /overview-reference.html and is no longer a product route. */}
+          design reference at /references/overview-reference.html and is no longer a
+          product route. */}
       <Route path="/" element={<Dashboard />} />
       <Route path="/overview" element={<Dashboard />} />
       <Route element={<PaymentsShellLayout />}>

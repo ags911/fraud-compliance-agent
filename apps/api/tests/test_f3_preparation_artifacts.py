@@ -8,18 +8,22 @@ operational F3 behavior, or a payment instruction.
 import json
 
 FIXTURE_PATH = "fixtures/s01-s08/scenarios.v1.json"
+# The ADRs are archived, historical-only records superseded by context/, but
+# the packet's own approval_reference (below) still names one by its archived
+# path, and these proposed ones must still visibly say so, forever.
+ADR_ROOT = "docs/archive/apps/api/docs/adr"
 ADR_PATHS = [
-    "apps/api/docs/adr/0001-application-sdk-package-boundary.md",
-    "apps/api/docs/adr/0002-canonical-domain-contract.md",
-    "apps/api/docs/adr/0003-plaid-mapping-feature-feasibility.md",
-    "apps/api/docs/adr/0004-fraud-target-corpus.md",
-    "apps/api/docs/adr/0005-model-artifact-evaluation-contract.md",
-    "apps/api/docs/adr/0006-router-authority-oversight.md",
-    "apps/api/docs/adr/0007-telemetry-signed-evidence.md",
-    "apps/api/docs/adr/0008-inventory-oversight-pack-linkage.md",
-    "apps/api/docs/adr/0009-postgresql-transitions-recovery.md",
-    "apps/api/docs/adr/0010-identity-roles-deployment.md",
-    "apps/api/docs/adr/0011-operational-acceptance-versioning.md",
+    f"{ADR_ROOT}/0001-application-sdk-package-boundary.md",
+    f"{ADR_ROOT}/0002-canonical-domain-contract.md",
+    f"{ADR_ROOT}/0003-plaid-mapping-feature-feasibility.md",
+    f"{ADR_ROOT}/0004-fraud-target-corpus.md",
+    f"{ADR_ROOT}/0005-model-artifact-evaluation-contract.md",
+    f"{ADR_ROOT}/0006-router-authority-oversight.md",
+    f"{ADR_ROOT}/0007-telemetry-signed-evidence.md",
+    f"{ADR_ROOT}/0008-inventory-oversight-pack-linkage.md",
+    f"{ADR_ROOT}/0009-postgresql-transitions-recovery.md",
+    f"{ADR_ROOT}/0010-identity-roles-deployment.md",
+    f"{ADR_ROOT}/0011-operational-acceptance-versioning.md",
 ]
 
 

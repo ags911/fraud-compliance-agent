@@ -39,7 +39,7 @@ async function readSidebarContract(page: import("@playwright/test").Page) {
 
 test.describe("Payments computed-style contracts", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/payments-design-system.html")
+    await page.goto("/references/payments-design-system.html")
     await waitForFonts(page)
   })
 
@@ -114,7 +114,7 @@ test.describe("Payments computed-style contracts", () => {
 
 test.describe("Rules Performance behavior contracts", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/rules-performance.html")
+    await page.goto("/references/rules-performance.html")
     await waitForFonts(page)
   })
 
@@ -264,7 +264,7 @@ test.describe("Rules Performance behavior contracts", () => {
 
 test.describe("Overview behavior contracts", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/overview-reference.html")
+    await page.goto("/references/overview-reference.html")
     await waitForFonts(page)
   })
 
@@ -382,11 +382,11 @@ test.describe("Overview behavior contracts", () => {
   test("sidebar typography and geometry match the Rules page", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === "mobile", "Desktop sidebar is represented by a Sheet on mobile")
 
-    await page.goto("/rules-performance-reference.html")
+    await page.goto("/references/rules-performance-reference.html")
     await waitForFonts(page)
     const reference = await readSidebarContract(page)
 
-    await page.goto("/overview-reference.html")
+    await page.goto("/references/overview-reference.html")
     await waitForFonts(page)
     const overview = await readSidebarContract(page)
 
@@ -428,7 +428,7 @@ test.describe("Product router", () => {
     }
 
     // The Payments Overview stays available as a design reference, not a route.
-    await page.goto("/overview-reference.html")
+    await page.goto("/references/overview-reference.html")
     await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible()
     await expect(page.locator('[data-payments-component="app-shell"]')).toBeVisible()
   })
@@ -451,26 +451,26 @@ test.describe("Product router", () => {
     await expect(page.getByRole("heading", { name: "Reviews" })).toBeVisible()
     await expect(page.getByText("Planned operational surface")).toBeVisible()
 
-    await page.goto("/rules-performance.html")
+    await page.goto("/references/rules-performance.html")
     await expect(page.getByRole("heading", { name: "Rules performance" })).toBeVisible()
   })
 })
 
 test.describe("Payments visual contracts", () => {
   test("component catalog", async ({ page }, testInfo) => {
-    await page.goto("/payments-design-system.html")
+    await page.goto("/references/payments-design-system.html")
     await waitForFonts(page)
     await expect(page).toHaveScreenshot(`payments-design-system-${testInfo.project.name}.png`, { fullPage: true })
   })
 
   test("rules performance", async ({ page }, testInfo) => {
-    await page.goto("/rules-performance.html")
+    await page.goto("/references/rules-performance.html")
     await waitForFonts(page)
     await expect(page).toHaveScreenshot(`rules-performance-${testInfo.project.name}.png`, { fullPage: true })
   })
 
   test("rules performance reference", async ({ page }, testInfo) => {
-    await page.goto("/rules-performance-reference.html")
+    await page.goto("/references/rules-performance-reference.html")
     await waitForFonts(page)
     await expect(page).toHaveScreenshot(
       `rules-performance-reference-${testInfo.project.name}.png`,
@@ -479,7 +479,7 @@ test.describe("Payments visual contracts", () => {
   })
 
   test("overview", async ({ page }, testInfo) => {
-    await page.goto("/overview-reference.html")
+    await page.goto("/references/overview-reference.html")
     await waitForFonts(page)
     await expect(page).toHaveScreenshot(`overview-${testInfo.project.name}.png`, { fullPage: true })
   })

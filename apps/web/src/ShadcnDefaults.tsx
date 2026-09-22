@@ -135,7 +135,7 @@ export default function ShadcnDefaults() {
           </a>
           <a
             className="inline-flex text-primary underline underline-offset-4"
-            href="/rules-performance.html"
+            href="/references/rules-performance.html"
           >
             View the Rules performance page built on this system
           </a>

@@ -10,7 +10,9 @@ from pathlib import Path
 import pytest
 
 DIAGRAMS = "docs/architecture/diagrams"
-DOCUMENT = "docs/architecture/system-architecture.md"
+# The document itself is archived (superseded by context/architecture.md);
+# the diagram sources and rendered SVGs it embedded stay live at DIAGRAMS.
+DOCUMENT = "docs/archive/docs/architecture/system-architecture.md"
 # GitHub shows an image at natural size up to about this width, so a wider
 # diagram is shrunk and its text ends up smaller than the others.
 MAX_WIDTH = 900

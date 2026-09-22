@@ -1,15 +1,16 @@
-"""The implementation plan's screen ticks must still be true.
+"""The progress tracker's screen ticks must still be true.
 
-The plan is the operational record of delivery status, and a tick on a screen
-says it exists. A route that is removed or renamed while its row stays ticked is
-the drift `docs/project-context.md` warns about, so this fails it.
+The tracker is the operational record of delivery status, and a tick on a
+screen says it exists. A route that is removed or renamed while its row stays
+ticked is the drift the canonical `context/` baseline warns about, so this
+fails it.
 """
 
 import re
 
 import pytest
 
-PLAN = "docs/product/implementation-plan.md"
+PLAN = "context/progress_tracker.md"
 ROUTER = "apps/web/src/ProductApp.tsx"
 VITE = "apps/web/vite.config.ts"
 SECTIONS = (
@@ -75,7 +76,14 @@ def test_every_ticked_screen_has_a_route(repository_root, routed) -> None:
 
 
 def routed_pages(repository_root) -> str:
-    """Return the names of the root HTML pages, which are the Vite entries."""
+    """Return the relative paths of the app's HTML pages, which are the Vite entries.
+
+    `index.html` is the only entry at the web root; the rest are grouped
+    under `apps/web/references/`.
+    """
+    web_root = repository_root / "apps/web"
     return "\n".join(
-        path.name for path in (repository_root / "apps/web").glob("*.html")
+        path.relative_to(web_root).as_posix()
+        for pattern in ("*.html", "references/*.html")
+        for path in web_root.glob(pattern)
     )

@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --host 127.0.0.1 --port ${port}`,
-    url: `${baseURL}/payments-design-system.html`,
+    url: `${baseURL}/references/payments-design-system.html`,
     reuseExistingServer: !process.env.CI,
   },
 })

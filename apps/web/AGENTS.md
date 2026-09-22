@@ -1,7 +1,8 @@
 # Web console instructions
 
-Read the [repository context](../../docs/project-context.md) first. This file
-adds only rules that are specific to `apps/web`.
+Read the [repository context](../../context/project_overview.md) first
+(and the rest of `../../context/`). This file adds only rules that are
+specific to `apps/web`.
 
 - Focused checks, run from the repository root: `make web-lint`,
   `make web-design-check`, `make web-build`, and `make web-test`. CI uses
@@ -17,12 +18,14 @@ adds only rules that are specific to `apps/web`.
 - Playwright screenshot baselines are recorded with Chrome on macOS, which is why
   CI runs the web job on macOS. Do not re-record a baseline to make a test pass.
   Use `npm run test:payments:update` only for an approved visual change.
-- The root `*.html` pages are Vite entries that the tests load by URL. Moving or
-  renaming one means updating `vite.config.ts` and the tests together. Do not add
-  an entry whose name shadows a product route: the dev server answers `/overview`
-  with an `overview.html` file if one exists, while production serves the app
-  there, and the tests would then exercise the wrong page. The Payments Overview
-  is `overview-reference.html` for exactly that reason.
+- The `references/*.html` pages (`index.html` is the only entry left at the
+  web root) are Vite entries that the tests load by URL. Moving or renaming
+  one means updating `vite.config.ts`, `playwright.config.ts`'s `webServer.url`,
+  and the tests together. Do not add an entry whose name shadows a product
+  route: the dev server answers `/overview` with an `overview.html` file if
+  one exists at the web root, while production serves the app there, and the
+  tests would then exercise the wrong page. The Payments Overview is
+  `references/overview-reference.html` for exactly that reason.
 - The Overview route is the shadcn dashboard (`src/Dashboard.tsx`), routed
   outside the Payments shell. Its theme, `src/dashboard-theme.css`, redefines
   Payments token names, so it is scoped to `:root[data-app-theme="dashboard"]`

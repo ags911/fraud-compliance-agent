@@ -34,4 +34,5 @@ it:
   non-root user and carries no private or offline code.
 
 The project's safety boundaries are described in
-[docs/project-context.md](docs/project-context.md).
+[context/architecture.md](context/architecture.md) and
+[context/ai_workflow_rules.md](context/ai_workflow_rules.md).
