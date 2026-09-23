@@ -25,6 +25,11 @@ export default defineConfig({
         overviewReference: path.resolve(import.meta.dirname, 'references/overview-reference.html'),
         rulesPerformance: path.resolve(import.meta.dirname, 'references/rules-performance.html'),
         rulesPerformanceReference: path.resolve(import.meta.dirname, 'references/rules-performance-reference.html'),
+        // An exact, unmodified copy of the RADAR-AGENT Overview mockup artifact —
+        // plain static HTML/CSS, no React entry, no app-theme.css. /radar embeds
+        // it via an iframe so the app route can reach it without any style bleed
+        // in either direction.
+        radarReference: path.resolve(import.meta.dirname, 'references/radar-reference.html'),
       },
     },
   },

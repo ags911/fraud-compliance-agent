@@ -3,7 +3,9 @@ import { BrowserRouter, Link, Outlet, Route, Routes } from "react-router-dom"
 import Dashboard from "@/Dashboard"
 import { ModelBenchmarkPage } from "@/ModelBenchmark"
 import { NewTransactionPage } from "@/NewTransaction"
+import RadarPage from "@/Radar"
 import { ShowcaseInvestigationPage } from "@/ShowcaseInvestigation"
+import SimulationPage from "@/Simulation"
 import { DemoSessionProvider } from "@/components/demo-session"
 import {
   PaymentsAppShell,
@@ -107,6 +109,15 @@ function ProductRoutes() {
           product route. */}
       <Route path="/" element={<Dashboard />} />
       <Route path="/overview" element={<Dashboard />} />
+      {/* Brings its own chrome (dark, standalone top nav), like the Overview
+          dashboard, rather than the shared Payments shell. Client-side
+          simulated demo only; see src/lib/simulation-data.ts. */}
+      <Route path="/simulation" element={<SimulationPage />} />
+      {/* Embeds references/radar-reference.html, an exact unmodified copy of
+          the RADAR-AGENT Overview mockup artifact, via an iframe — see
+          src/Radar.tsx. Not adapted to this app's design system; a starting
+          point for further iteration. */}
+      <Route path="/radar" element={<RadarPage />} />
       <Route element={<PaymentsShellLayout />}>
         <Route path="/insights" element={<ModelBenchmarkPage />} />
         <Route path="/transactions/new" element={<NewTransactionPage />} />

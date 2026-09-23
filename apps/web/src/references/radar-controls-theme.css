@@ -1,0 +1,47 @@
+/*
+ * RadarTopbarControls (./RadarTopbarControls.tsx) is built on this repo's
+ * real shadcn Select, which defaults to the app's own light theme -- wrong
+ * sitting in this page's dark mockup body. Radix's Select portals its
+ * dropdown content to <body> itself (outside any mount point in this
+ * document), not just outside the app's React tree, so CSS custom
+ * properties scoped to a mount-point id wouldn't reach it by inheritance --
+ * see radar-reference.html's own note on this. This whole document exists
+ * only for the /radar route, so it's safe (and simplest) to set these at
+ * :root instead: every mounted island and every Radix portal in this page
+ * inherits from it, mapped from radar-reference.html's own :root LCH
+ * tokens, not a new palette.
+ */
+:root {
+  --background: var(--lch-bg-pill);
+  --foreground: var(--lch-text-primary);
+  --border: var(--lch-border);
+  --input: var(--lch-border);
+  --ring: var(--accent-indigo);
+  --popover: var(--lch-bg-pill);
+  --popover-foreground: var(--lch-text-primary);
+  --accent: var(--lch-bg-hover);
+  --accent-foreground: var(--lch-text-primary);
+  --muted: var(--lch-bg-hover);
+  --muted-foreground: var(--lch-text-tertiary);
+}
+
+/*
+ * radar-reference.html's own stylesheet resets `* { padding: 0 }` as a
+ * plain, unlayered rule, which beats Tailwind's `@layer utilities` padding
+ * classes regardless of specificity (see the same note previously written
+ * for the sidebar, since removed with it). These selectors just need to
+ * out-specificity the bare `*` -- no `!important` required.
+ */
+[data-slot="select-trigger"] {
+  padding: 0.5rem 0.5rem 0.5rem 0.625rem;
+}
+[data-slot="select-item"] {
+  padding: 0.25rem 2rem 0.25rem 0.375rem;
+}
+[data-slot="select-group"] {
+  padding: 0.25rem;
+}
+[data-slot="select-scroll-up-button"],
+[data-slot="select-scroll-down-button"] {
+  padding: 0.25rem 0;
+}
