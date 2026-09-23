@@ -34,6 +34,8 @@ extend-select = ["I", "S"]
 # The API's own code under server/ has no exceptions.
 "../../notebooks/*.ipynb" = ["S310", "S603", "S607"]
 "../../scripts/*.py" = ["S310", "S603", "S607"]
+# Explicit importer scripts call the fixed HTTPS Plaid Sandbox host only.
+"scripts/import_plaid_sandbox_history.py" = ["S310"]
 
 [dependency-groups]
 dev = [

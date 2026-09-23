@@ -121,7 +121,9 @@ class SandboxScenarioAnalytics(StrictFiniteModel):
     scenario_id: str = Field(pattern=r"^S0[1-8]$")
     fixture_version: str = Field(min_length=1, max_length=128)
     source_class: Literal["sanitised_sandbox"]
-    enrichment_version: Literal["s04-enrichment-v1"]
+    enrichment_version: Literal["s04-enrichment-v1", "sandbox-enrichment-v2"]
+    baseline_version: str = Field(min_length=1, max_length=128)
+    overlay_version: str = Field(min_length=1, max_length=128)
     time_boundary: SandboxTimeBoundary
     daily_aggregates: list[SandboxDailyAggregate]
 

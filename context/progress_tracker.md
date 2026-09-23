@@ -93,28 +93,42 @@ default).
 "F3a is an explicit substage between F3 and F4, added so the source-to-score
 chain cannot be hidden inside Plaid integration or dashboard work."
 
-### Proposed next F3a slice: deterministic Sandbox event data
+### F3a in progress: deterministic Sandbox event data
 
-**Status: implementation prepared under an assumed specification, not
-deployed or accepted for runtime.** The candidate approach is an explicit
-Plaid Sandbox setup or refresh import that
-creates a versioned, sanitised PostgreSQL scenario dataset. Scenario runs,
-replay and charts would read the stored dated events and daily aggregates,
-not call Plaid directly. The proposed first proof is S04 with a 180-day
-historical baseline and incremental dated Sandbox events.
+**Status: Sandbox-only S04 proof activated locally on 2026-09-23; not
+accepted or publicly deployed.** The approach is an explicit import into a
+versioned, sanitised Neon PostgreSQL scenario dataset. Scenario runs, replay
+and charts read stored dated events and daily aggregates rather than calling
+Plaid directly.
 
-Before implementation, this slice needs a resolving decision for the
-canonical time-aware event schema, Plaid mapping, retention and persistence,
-then accepted fixture, aggregate and API contracts with isolation and
-provenance tests. Neon PostgreSQL is selected for this Sandbox-only proof. It
-is not a production deployment approval.
+**Initial proof evidence:** commit `9f82a9b`; migration
+`0001_sandbox_scenario_data.sql` applied; `S04:s04-sandbox-v1` imported; and
+the internal `GET /sandbox/scenarios/S04/analytics` endpoint returned `200`
+from a local API process with `DATABASE_URL` injected by Doppler. The initial
+eight-event fixture is retained as a reviewed local input, but has been
+superseded in Neon by the full Sandbox baseline described below.
 
-The preparation slice now includes versioned sanitised dataset and aggregate
-contracts, an idempotent Neon migration, deterministic importer and feature
-builder, a parameterised repository, a disabled-until-configured internal
-aggregate API, and Radar chart integration. It needs a Neon `DATABASE_URL`
-outside source control, migration application, fixture import, and ADR
-ratification before its data can be treated as a deployed runtime source.
+**Implemented and activated extension:** migration
+`0002_sandbox_baselines_and_appends.sql` is live in Neon. On 2026-09-24, the
+explicit Plaid Sandbox sync import stored a 331-event sanitised common
+baseline, dated 2026-06-29 through 2026-09-23, and materialised S01–S08. Each
+scenario stores all 87 days in that boundary, including zero-activity days.
+S01–S05 have one deterministic transaction-shaped fixture overlay (332 events
+each); S06–S08 retain the 331-event baseline until a scenario-specific
+simulated event is appended. The served API remains read only and never calls
+Plaid.
+
+**Verified runtime evidence:** `PsycopgScenarioRepository.read_analytics`
+read S04's latest Neon dataset as baseline
+`plaid-sandbox-e464225804a6e6d1`, with 87 daily aggregates and 332 events.
+The import uses Doppler-provided `PLAID_SANDBOX_ACCESS_TOKEN` and
+`SANDBOX_PSEUDONYMISATION_KEY`; neither value is committed.
+
+**Next decision and delivery work:** add controlled append fixtures for
+S06–S08 where future operational contracts supply transaction-shaped facts,
+connect the dashboard scenario selector to the API data, and ratify the
+time-aware event schema, Plaid mapping, retention and persistence in an ADR.
+Only then may the store be represented as an accepted runtime data source.
 
 ## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
 

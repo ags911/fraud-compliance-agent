@@ -189,7 +189,7 @@ requiring an approved target-policy decision; C has no S01–S08 equivalent.
 - Azure: referenced only as a deployment target; no managed database,
   VNet, cache, queue, or production identity service is authorised.
 
-### Deterministic Sandbox data plan (implementation prepared, not deployed)
+### Deterministic Sandbox data plan (S04 proof active locally)
 
 The next data slice is intended to make scenario data time-aware and
 repeatable without calling Plaid during an operator run. A controlled Plaid
@@ -215,12 +215,24 @@ only that dataset and its derived daily aggregates.
   proof. It does not authorise a production deployment or alter the
   database-free showcase.
 
-The repository contains an assumed-spec preparation slice: versioned
-sanitised dataset and aggregate contracts, an idempotent Neon migration,
-deterministic importer, repository, and a disabled-until-configured internal
-aggregate endpoint. It requires a resolving ADR before it can be treated as an
-accepted runtime contract. No Neon project, database URL, live Plaid access or
-provider data is configured or committed.
+The assumed-spec preparation slice was activated locally on 2026-09-23: the
+Neon migration applied, `s04-sandbox-v1` imported, and the internal
+`GET /sandbox/scenarios/S04/analytics` endpoint returned `200` through a
+Doppler-injected local API process. On 2026-09-24, an explicit Plaid Sandbox
+sync import replaced that small proof with a 331-event sanitised common
+baseline dated 2026-06-29 through 2026-09-23 and eight isolated scenario
+datasets. Each dataset has all 87 calendar days in that boundary, including
+zero-activity days; S01–S05 also carry their deterministic fixture overlay.
+It remains a Sandbox-only, non-public service.
+
+The database URL, import-only Sandbox access token, and pseudonymisation key
+remain outside source control. The implementation reads one complete Plaid
+Sandbox `/transactions/sync` history in memory, HMAC-pseudonymises permitted
+values into a common baseline, derives eight isolated S01–S08 datasets, and
+supports idempotent scenario-local simulated-event appends. It has no raw
+provider data or Azure deployment, and it must not create a new Item as a
+substitute for the intended history. A resolving ADR is still required before
+the store can be represented as an accepted runtime data source.
 
 ### Incomplete/placeholder in the web app
 - Routes `/transactions`, `/reviews`, `/rules/performance`, `/settings`

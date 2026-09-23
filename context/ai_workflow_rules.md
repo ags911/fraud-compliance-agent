@@ -114,10 +114,12 @@ preferences:
   other scenario's facts are Plaid-derived, and S05's outage is
   provider-independent by design (never Plaid-derived).
 - The deterministic Sandbox store does not change that accepted scope. The
-  current code is an assumed-spec preparation slice only: it is inactive
-  without a separately configured `DATABASE_URL`, has no live Plaid import,
-  and must not be represented as an accepted runtime contract until a
-  resolving ADR and versioned contract are accepted.
+  S04-only Neon proof was activated locally on 2026-09-23, and on 2026-09-24
+  one explicit Plaid Sandbox sync import materialised a sanitised common
+  baseline and isolated S01–S08 datasets through a Doppler-injected
+  `DATABASE_URL`. The served API, scenario execution and chart reads still do
+  not call Plaid. This must not be represented as an accepted runtime contract
+  until a resolving ADR and versioned contract are accepted.
 - Once approved, Sandbox import is a setup or refresh operation only.
   Scenario execution and chart reads must use a versioned, sanitised database
   dataset, never call Plaid directly. Every dataset needs a manifest with its

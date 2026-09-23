@@ -30,12 +30,13 @@ def apply_migration(database_url: str, migration_path: Path) -> None:
 
 
 def main() -> None:
-    """Apply the Sandbox schema only when a caller supplies a Neon URL."""
+    """Apply every reviewed Sandbox migration when a caller supplies a Neon URL."""
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SystemExit("DATABASE_URL must be configured outside source control")
-    migration_path = Path(__file__).resolve().parents[1] / "migrations" / "0001_sandbox_scenario_data.sql"
-    apply_migration(database_url, migration_path)
+    migrations_directory = Path(__file__).resolve().parents[1] / "migrations"
+    for migration_path in sorted(migrations_directory.glob("*_sandbox_*.sql")):
+        apply_migration(database_url, migration_path)
     print("sandbox migrations applied")
 
 

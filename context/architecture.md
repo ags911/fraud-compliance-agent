@@ -116,9 +116,9 @@ state machine (`none → ACCEPTED → PROCESSING → PENDING_REVIEW/COMPLETED_NO
 exists as draft vocabulary only — "state names are proposed vocabulary, not
 accepted API enums."
 
-### Proposed deterministic Sandbox store
+### Implemented deterministic Sandbox store (not accepted runtime)
 
-The proposed source-to-score slice uses a two-phase data path:
+The deterministic source-to-score slice uses a two-phase data path:
 
 ```
 explicit Plaid Sandbox import or refresh
@@ -141,11 +141,13 @@ fixture version. It must not retain raw provider payloads, access tokens,
 transaction descriptions or provider customer and account identifiers.
 
 Each scenario dataset is isolated by scenario ID and fixture version. An
-import or replay for one scenario must not mutate another scenario. A first
-proof is proposed for S04 with a 180-day historical baseline and dated
-incremental Sandbox events. The 180-day boundary and permitted feature set
-are selected for design; aggregation grain and retention require explicit
-approval.
+import or replay for one scenario must not mutate another scenario. The
+2026-09-24 explicit import created a 331-event sanitised common baseline dated
+2026-06-29 through 2026-09-23 and materialised isolated S01–S08 datasets with
+all 87 calendar days, including zero-activity days. S01–S05 have one
+transaction-shaped deterministic overlay; S06–S08 retain the baseline until a
+controlled scenario-local append is supplied. Aggregation grain and retention
+still require explicit approval.
 
 This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
 authorises a database nor changes the accepted database-free public showcase
