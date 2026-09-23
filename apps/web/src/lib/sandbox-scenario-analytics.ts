@@ -12,7 +12,11 @@ export type SandboxScenarioAnalytics = {
   scenario_id: string
   fixture_version: string
   source_class: "sanitised_sandbox"
-  enrichment_version: "s04-enrichment-v1"
+  enrichment_version: "s04-enrichment-v1" | "sandbox-enrichment-v2"
+  /** Common Sandbox baseline the dataset was built from ("fixture-only" for a fixture import). */
+  baseline_version: string
+  /** Scenario overlay applied on top of the baseline ("fixture-only" when none). */
+  overlay_version: string
   time_boundary: {
     start_date: string
     end_date: string
