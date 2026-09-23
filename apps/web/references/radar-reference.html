@@ -27,16 +27,21 @@
     to RADAR-AGENT's fraud-scenario domain rather than payments.
   */
   :root{
-    --lch-bg-sidebar:      lch(10 0.4 282);
-    --lch-bg-main:         lch(11.5 0.4 282);
-    --lch-bg-panel:        lch(13.5 0.4 282);
-    --lch-bg-hover:        lch(15 0.5 282);
-    --lch-bg-pill:         lch(17 0.6 282);
-    --lch-border:          lch(20 0.5 282);
-    --lch-border-soft:     lch(16 0.4 282);
-    --lch-text-primary:    lch(94 0.5 282);
-    --lch-text-secondary:  lch(64 1 282);
-    --lch-text-tertiary:   lch(46 1 282);
+    --radar-content-width: 1100px;
+    /* True neutral (zero-chroma) ramp, near-black background -- matches the
+       Linear-style Insights Dashboard reference's palette instead of the
+       mockup's original blue/violet-tinted dark theme (hue 282, chroma
+       0.4-0.6 on every one of these). */
+    --lch-bg-sidebar:      lch(6 0 0);
+    --lch-bg-main:         lch(4 0 0);
+    --lch-bg-panel:        lch(8 0 0);
+    --lch-bg-hover:        lch(11 0 0);
+    --lch-bg-pill:         lch(13 0 0);
+    --lch-border:          lch(20 0 0);
+    --lch-border-soft:     lch(14 0 0);
+    --lch-text-primary:    lch(97 0 0);
+    --lch-text-secondary:  lch(65 0 0);
+    --lch-text-tertiary:   lch(45 0 0);
 
     --accent-indigo: #5E6AD2;
     --accent-indigo-dim: rgba(94,106,210,0.16);
@@ -46,6 +51,7 @@
     --sev-high: #eb5757;
     --sev-high-dim: rgba(235,87,87,0.14);
     --sev-stepup: #f2994a;
+    --sev-moderate: #f2c94c;
     --sev-novel: #9b8afb;
     --sev-fallback: #56ccf2;
 
@@ -62,6 +68,8 @@
   *{ box-sizing: border-box; margin:0; padding:0; }
   html, body{ height:100%; background: var(--lch-bg-main); color: var(--lch-text-primary); -webkit-font-smoothing: antialiased; }
   body{ display:flex; font-size:13px; line-height:1.35; }
+  #radar-reference-root{ display:flex; flex:1; min-width:0; }
+  #radar-reference-root .main{ width:100%; }
   a{ color:inherit; text-decoration:none; }
 
   /* ---------------- Main ---------------- */
@@ -78,36 +86,39 @@
   }
   .topbar-inner{
     display:flex; align-items:center; justify-content:space-between; gap:20px;
-    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    max-width: var(--radar-content-width); margin: 0 auto; padding: 0 24px;
   }
-  /* Product/module context, not deep navigation -- so a muted "›" rather
-     than a "/" breadcrumb slash (which reads as a URL path), and the brand
-     mark stays at full strength (only the "Averlynx" text next to it
-     mutes) since a logomark is a wayfinding anchor, not content being
-     weighted in the hierarchy. Was a separate heading row between the
-     topbar and tabs; folded in here instead so it doesn't stack a third
-     bold line on top of the tabs and the "Scenario evaluation requests"
-     section heading. */
+  /* Logomark + product name only -- this page is a standalone portfolio
+     piece, so there's no parent brand for a "Averlynx ›" breadcrumb to
+     point back to. Was a separate heading row between the topbar and tabs;
+     folded in here so it doesn't stack a third bold line on top of the
+     tabs and the section heading. */
   .page-title{
     display:flex; align-items:center; gap:8px;
     font-size:15px; font-weight:500; flex-shrink:0;
   }
-  /* Mounted by src/radar-reference-main.tsx: the app's own NetworkMark
-     (src/components/averlynx-logo.tsx), currentColor so it already picks up
-     this color with no extra theming -- full-strength, not muted like
-     .title-brand, so the brand mark itself never looks dimmed/disabled. */
+  /* The app's own NetworkMark (src/components/averlynx-logo.tsx) is
+     currentColor, so it picks up the full-strength text colour here. */
   #radar-brand-icon-root{ display:flex; color: var(--lch-text-primary); }
-  .title-brand{ color: var(--lch-text-secondary); }
-  .title-sep{ color: var(--lch-text-tertiary); font-size:14px; }
   .title-module{ color: var(--lch-text-primary); font-weight:600; }
   .topbar-actions{ display:flex; align-items:center; gap:8px; }
+  .topbar-actions [data-slot="button"]{ height:32px; padding:0 0.875rem; border-radius:9999px; }
+  .topbar-actions [data-slot="select-trigger"]{ height:32px; padding:0 0.625rem; }
 
   /* ---------------- Tabs ---------------- */
 
+  /* .tabs positions/aligns with the rest of the centered content column,
+     same as .topbar-inner and .body-grid; .tabs-list is sized to just its
+     tab items (inline-flex, not the full row) so its own border-bottom --
+     the menu's underline -- stops after "Insights" instead of running the
+     full content width like .topbar's and .body-grid's borders do. */
   .tabs{
-    display:flex; gap:4px;
-    max-width: 1180px; margin: 16px auto 0;
-    padding: 0 24px; border-bottom: 1px solid var(--lch-border-soft);
+    max-width: var(--radar-content-width); margin: 16px auto 0;
+    padding: 0 24px;
+  }
+  .tabs-list{
+    display:inline-flex; gap:4px;
+    border-bottom: 1px solid var(--lch-border-soft);
   }
   .tab{ font-size:12.5px; font-weight:500; color: var(--lch-text-tertiary); padding: 12px 10px; border-bottom: 2px solid transparent; cursor:pointer; }
   .tab.active{ color: var(--lch-text-primary); border-bottom-color: var(--accent-indigo); }
@@ -120,20 +131,37 @@
     grid-template-columns: 1fr;
     gap: 32px;
     padding: 24px;
-    max-width: 1180px;
+    max-width: var(--radar-content-width);
     margin: 0 auto;
   }
+  .body-grid > *{ min-width:0; }
 
   .section-heading{ font-size:14px; font-weight:600; margin-bottom:4px; }
   .section-sub{ font-size:12.5px; color: var(--lch-text-tertiary); line-height:1.55; margin-bottom:18px; }
   .section-sub a{ color: var(--accent-indigo); }
   .section-sub a:hover{ text-decoration:underline; }
 
+  /* ---------------- Efficiency metrics bar ---------------- */
+
+  .efficiency-row{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:22px; }
+  .efficiency-card{
+    background: var(--lch-bg-panel);
+    border: 1px solid var(--lch-border-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .efficiency-title{ font-size:12px; color: var(--lch-text-primary); margin-bottom:8px; }
+  .efficiency-value{ font-size:22px; font-weight:700; margin-bottom:4px; color: var(--lch-text-primary); }
+  .efficiency-label{ font-size:11.5px; color: var(--lch-text-primary); }
+
   /* ---------------- Stat tiles ---------------- */
 
-  .stat-row{ display:flex; gap:10px; margin-bottom:22px; }
+  /* Three equal-width columns (P50 anomaly score per engine), the same
+     stat-card-row pattern as the Linear-style Insights Dashboard
+     reference's "P0/P1/P2 Lead Time" row -- was two tiles with a max-width
+     cap that left the row visibly unbalanced on wide viewports. */
+  .stat-row{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:22px; }
   .stat-tile{
-    flex:1; max-width:220px;
     background: var(--lch-bg-panel);
     border: 1px solid var(--lch-border-soft);
     border-radius: var(--radius-md);
@@ -141,11 +169,78 @@
     cursor:pointer;
   }
   .stat-tile.selected{ border-color: var(--accent-indigo); background: var(--accent-indigo-dim); }
-  .stat-label{ font-size:12px; color: var(--lch-text-tertiary); margin-bottom:6px; }
-  .stat-tile.selected .stat-label{ color:#9b9dff; }
-  .stat-value{ font-size:20px; font-weight:600; }
+  .stat-label{ font-size:12px; color: var(--lch-text-primary); margin-bottom:6px; }
+  .stat-tile.selected .stat-label{ color:var(--lch-text-primary); }
+  .stat-value{ font-size:20px; font-weight:600; color:var(--lch-text-primary); }
+  .stat-detail{ margin-top:5px; color:var(--lch-text-secondary); font-size:11.5px; }
 
-  /* ---------------- Chart ---------------- */
+  .radar-summary-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-auto-rows:1fr; gap:10px; margin-bottom:10px; }
+  .radar-summary-grid .stat-tile{ display:flex; flex-direction:column; min-height:104px; }
+  .radar-summary-grid .stat-detail{ margin-top:auto; }
+  .radar-detail-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-bottom:10px; }
+  .radar-detail-grid .chart-card{ grid-column:span 2; margin-bottom:0; }
+  .card-copy{ margin-top:8px; color:var(--lch-text-secondary); font-size:12.5px; line-height:1.55; }
+  .status-error{ margin-top:12px; color:var(--sev-high); font-size:12.5px; }
+  .benchmark-metrics{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:12px; }
+  .benchmark-metrics .stat-tile{ cursor:default; }
+  .empty-table{ padding:28px 16px; color:var(--lch-text-secondary); text-align:center; }
+  .radar-chart-card{ margin-bottom:10px; }
+  .radar-chart-empty{ display:flex; align-items:center; justify-content:center; height:160px; color:var(--lch-text-secondary); font-size:12.5px; }
+  /* Current session recommendations -- the Rules Performance card's
+     structure (header, distribution bar, legend toggles, stacked chart,
+     data disclosure; src/components/rules-performance-chart.tsx) in this
+     page's LCH palette. See src/references/RadarRecommendationChart.tsx. */
+  .chart-card.radar-outcome-card{ padding:0; overflow:hidden; }
+  .radar-outcome-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:17px 18px; border-bottom:1px solid var(--lch-border-soft); }
+  .radar-range-toggle{ display:flex; flex-shrink:0; gap:2px; padding:2px; background:var(--lch-bg-hover); border:1px solid var(--lch-border-soft); border-radius:8px; }
+  .radar-range-option{ height:27px; min-width:38px; padding:0 8px; border-radius:6px; color:var(--lch-text-tertiary); cursor:pointer; font:inherit; font-size:12px; font-weight:500; }
+  .radar-range-option:hover:not(.is-active){ color:var(--lch-text-secondary); }
+  .radar-range-option.is-active{ background:var(--lch-bg-pill); color:var(--lch-text-primary); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.4); }
+  .radar-range-option:focus-visible{ outline:2px solid var(--accent-indigo); outline-offset:1px; }
+  .radar-outcome-header .card-copy{ margin-top:5px; }
+  .radar-outcome-title-row{ display:flex; align-items:center; gap:8px; }
+  .radar-outcome-title-row .card-title{ margin-bottom:0; }
+  /* Neutral, not .active-pill's green: a data-source label, not a status. */
+  .radar-source-pill{
+    font-size:10.5px; font-weight:600; color: var(--lch-text-secondary);
+    background: var(--lch-bg-pill); border: 1px solid var(--lch-border);
+    padding: 1px 8px; border-radius: var(--radius-pill);
+  }
+  .radar-outcome-body{ padding:17px 18px 12px; }
+  .radar-outcome-distribution-wrap{ position:relative; }
+  .radar-outcome-distribution{ display:flex; height:9px; overflow:hidden; border-radius:var(--radius-pill); background:var(--lch-bg-hover); }
+  .radar-outcome-distribution-segment{ display:block; height:100%; min-width:0; border:0; cursor:pointer; }
+  .radar-outcome-distribution-segment + .radar-outcome-distribution-segment{ box-shadow:-1px 0 0 var(--lch-bg-panel); }
+  .radar-outcome-distribution-segment:focus-visible{ outline:2px solid var(--accent-indigo); outline-offset:2px; }
+  .radar-outcome-tooltip{
+    min-width:150px; padding:10px; white-space:nowrap; font-size:12px; font-variant-numeric:tabular-nums;
+    background:var(--lch-bg-pill); border:1px solid var(--lch-border); border-radius:var(--radius-sm);
+    color:var(--lch-text-primary); box-shadow:0 4px 16px rgba(0,0,0,0.35);
+  }
+  .radar-outcome-tooltip-floating{ position:absolute; bottom:17px; z-index:10; width:max-content; min-width:0; }
+  .radar-outcome-tooltip-title{ margin-bottom:6px; font-weight:600; }
+  .radar-outcome-tooltip-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; line-height:1.7; }
+  .radar-outcome-tooltip-row strong{ font-weight:600; }
+  .radar-outcome-tooltip-label{ display:inline-flex; align-items:center; gap:6px; color:var(--lch-text-secondary); }
+  .radar-outcome-legend{ display:flex; flex-wrap:wrap; gap:7px 16px; margin:11px 0 6px; list-style:none; }
+  .radar-outcome-toggle{ display:inline-flex; align-items:center; gap:6px; padding:2px 0; color:var(--lch-text-secondary); cursor:pointer; font:inherit; font-size:12px; }
+  .radar-outcome-toggle[aria-pressed="false"]{ opacity:0.42; text-decoration:line-through; }
+  .radar-outcome-name{ font-weight:600; }
+  .radar-outcome-swatch{ width:8px; height:8px; flex-shrink:0; border-radius:2px; }
+  .radar-outcome-count{ color:var(--lch-text-tertiary); font-variant-numeric:tabular-nums; }
+  .radar-chart-data{ border:1px solid var(--lch-border-soft); border-radius:var(--radius-sm); margin-top:12px; overflow:hidden; }
+  .radar-chart-data summary{ color:var(--lch-text-secondary); cursor:pointer; font-size:12px; padding:10px 12px; }
+  .radar-chart-data[open] summary{ border-bottom:1px solid var(--lch-border-soft); }
+  .radar-chart-data table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .radar-chart-data th, .radar-chart-data td{ padding:8px 12px; text-align:left; }
+  .radar-chart-data th{ color:var(--lch-text-tertiary); font-weight:500; }
+  .radar-chart-data th + th, .radar-chart-data td + td{ text-align:right; font-variant-numeric:tabular-nums; }
+  .radar-chart-data tbody tr + tr{ border-top:1px solid var(--lch-border-soft); }
+  .benchmark-details{ margin-bottom:10px; border:1px solid var(--lch-border-soft); border-radius:var(--radius-md); padding:12px 14px; }
+  .benchmark-details summary{ color:var(--lch-text-primary); cursor:pointer; font-size:12.5px; font-weight:600; }
+  .benchmark-details[open] summary{ margin-bottom:10px; }
+
+  /* ---------------- Charts ---------------- */
 
   .chart-card{
     background: var(--lch-bg-panel);
@@ -153,15 +248,22 @@
     border-radius: var(--radius-md);
     padding: 20px 20px 16px;
     margin-bottom: 24px;
+    min-width:0;
   }
+  /* Per-card title, top-left -- the same convention the Linear-style
+     Insights Dashboard reference uses on each of its chart cards ("High-
+     Priority Issues by Team", "SLA Success Rate") instead of one heading
+     for the whole page. */
+  .card-title{ font-size:13px; font-weight:600; margin-bottom:4px; }
 
   /* The hand-drawn chart (.chart-area, .chart-bars, .bar-base, .bar-overflow,
-     .bar-col, .bar-label, .y-axis) was replaced by a mounted Recharts
-     component -- see #radar-chart-root below and src/references/RadarChart.tsx.
-     The old gridlines were drawn as two pseudo-elements that only covered 2
-     of the 4 y-axis tick positions and, being absolutely positioned, painted
-     after (so on top of) the bars; Recharts ties gridlines to the same tick
-     scale as the axis and renders them behind the bars by construction. */
+     .bar-col, .bar-label, .y-axis) was replaced by mounted Recharts
+     components -- see #radar-chart-root/#radar-risk-chart-root below and
+     src/references/RadarChart.tsx / RadarRiskLevelChart.tsx. The old
+     gridlines were drawn as two pseudo-elements that only covered 2 of the
+     4 y-axis tick positions and, being absolutely positioned, painted after
+     (so on top of) the bars; Recharts ties gridlines to the same tick scale
+     as the axis and renders them behind the data by construction. */
 
   .legend-row{ display:flex; gap:28px; margin-top:18px; padding-top:14px; border-top:1px solid var(--lch-border-soft); }
   .legend-item{ display:flex; align-items:center; gap:8px; font-size:12.5px; color: var(--lch-text-secondary); cursor:pointer; }
@@ -207,6 +309,16 @@
     padding: 2px 8px; border-radius: var(--radius-pill);
   }
 
+  /* Ghost button -- same recipe the mockup's own topbar "+" button used
+     (since removed), reused here for "Filter Logs". */
+  .btn-ghost{
+    display:flex; align-items:center; gap:6px; background: var(--lch-bg-pill); color: var(--lch-text-secondary);
+    font-size:12.5px; font-weight:500; padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--lch-border); cursor:pointer; margin-left:auto;
+  }
+  .btn-ghost:hover{ color: var(--lch-text-primary); border-color: var(--lch-border); }
+  .btn-ghost svg{ width:13px; height:13px; }
+
   table{ width:100%; border-collapse:collapse; }
   thead th{
     text-align:left; font-size:11.5px; font-weight:500; color: var(--lch-text-tertiary);
@@ -222,29 +334,52 @@
   }
   .risk-high{ background: var(--sev-high-dim); border-color: rgba(235,87,87,0.3); color: var(--sev-high); }
   .risk-low{ background: var(--sev-low-dim); border-color: rgba(76,183,130,0.3); color: var(--sev-low); }
+  .risk-flagged{ background: rgba(242,201,76,0.14); border-color: rgba(242,201,76,0.3); color: var(--sev-moderate); }
 
+  /* XGB score -- coloured text, not a pill, matching the simulation
+     engine's own red/green/amber score readout convention. */
+  .score-red{ color: var(--sev-high); font-weight:600; }
+  .score-green{ color: var(--sev-low); font-weight:600; }
+  .score-amber{ color: var(--sev-moderate); font-weight:600; }
+
+  @keyframes pill-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+  .risk-pill.pulsing{ animation: pill-pulse 1.6s ease-in-out infinite; }
+
+  .action-link{ color: var(--accent-indigo); font-size:12.5px; font-weight:500; cursor:pointer; }
+  .action-link:hover{ text-decoration:underline; }
+
+  .td-mono{ font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:11px; color: var(--lch-text-secondary); }
   .td-scenario{ color: var(--lch-text-primary); font-weight:500; }
   .td-secondary{ color: var(--lch-text-secondary); }
   .td-tertiary{ color: var(--lch-text-tertiary); }
 
   @media (max-width: 700px){
-    .stat-row{ flex-wrap:wrap; }
+    .topbar{ padding:14px 0; }
+    .topbar-inner{ align-items:flex-start; flex-wrap:wrap; padding:0 16px; }
+    .topbar-actions{ width:100%; }
+    .topbar-actions [data-slot="select-trigger"]{ flex:1; min-width:0; }
+    .tabs{ margin-top:10px; padding:0 16px; overflow-x:auto; }
+    .body-grid{ gap:24px; padding:20px 16px; }
+    .section-sub{ overflow-wrap:anywhere; }
+    .stat-row, .radar-summary-grid, .radar-detail-grid, .benchmark-metrics{ grid-template-columns:1fr; }
     .chart-bars{ gap:10px; }
     .bar-stack{ width:28px; }
     table{ font-size:11px; }
     thead th:nth-child(3), tbody td:nth-child(3){ display:none; }
+    .radar-outcome-header{ flex-direction:column; gap:12px; }
+    .radar-chart-data thead th:nth-child(3), .radar-chart-data tbody td:nth-child(3){ display:table-cell; }
   }
 </style>
 </head>
 <body>
 
-  <main class="main">
+  <div id="radar-reference-root"></div>
+
+  <main class="main" hidden>
     <div class="topbar">
       <div class="topbar-inner">
         <div class="page-title">
           <div id="radar-brand-icon-root"></div>
-          <span class="title-brand">Averlynx</span>
-          <span class="title-sep" aria-hidden="true">›</span>
           <span class="title-module">Fraud Compliance Agent</span>
         </div>
         <div class="topbar-actions">
@@ -257,11 +392,13 @@
     </div>
 
     <div class="tabs">
-      <div class="tab active">Overview</div>
-      <div class="tab">Reviews</div>
-      <div class="tab">Rules</div>
-      <div class="tab">Risk controls</div>
-      <div class="tab">Insights</div>
+      <div class="tabs-list">
+        <div class="tab active">Overview</div>
+        <div class="tab">Reviews</div>
+        <div class="tab">Rules</div>
+        <div class="tab">Risk controls</div>
+        <div class="tab">Insights</div>
+      </div>
     </div>
 
     <div class="body-grid">
@@ -269,117 +406,110 @@
         <div class="section-heading">Scenario evaluation requests</div>
         <div class="section-sub">Review pipeline outcomes for autonomous <a href="#">scenario evaluations</a>. Includes agentic-buyer traffic and transactions scored by the fallback engine.</div>
 
+        <div class="efficiency-row">
+          <div class="efficiency-card">
+            <div class="efficiency-title">XGBoost ML pass-through rate</div>
+            <div class="efficiency-value">96.5%</div>
+            <div class="efficiency-label">Handled without LLM token cost</div>
+          </div>
+          <div class="efficiency-card">
+            <div class="efficiency-title">Avg decision latency</div>
+            <div class="efficiency-value">1.2 ms</div>
+            <div class="efficiency-label">Sub-millisecond ML inference</div>
+          </div>
+          <div class="efficiency-card">
+            <div class="efficiency-title">FCA rule coverage</div>
+            <div class="efficiency-value">100%</div>
+            <div class="efficiency-label">Deterministic statutory check</div>
+          </div>
+        </div>
+
         <div class="stat-row">
           <div class="stat-tile selected">
-            <div class="stat-label">All requests</div>
-            <div class="stat-value">980</div>
+            <div class="stat-label">ML Tier · P50 anomaly score</div>
+            <div class="stat-value">0.48</div>
           </div>
           <div class="stat-tile">
-            <div class="stat-label">Flagged</div>
-            <div class="stat-value">150</div>
+            <div class="stat-label">LLM Tier · P50 anomaly score</div>
+            <div class="stat-value">0.71</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">System · P50 anomaly score</div>
+            <div class="stat-value">0.55</div>
           </div>
         </div>
 
         <div class="chart-card">
+          <div class="card-title">Scenario evaluations by engine</div>
           <!-- Mounted by src/radar-reference-main.tsx -> src/references/RadarChart.tsx.
-               A real Recharts stacked bar chart in place of the original hand-drawn
-               divs, so the gridlines are tied to the same tick scale as the y-axis
-               numbers and render behind the bars instead of on top of them. -->
+               A real Recharts stacked area chart (styled after a Linear-style
+               Insights Dashboard reference: dashed vertical gridlines only,
+               smooth gradient-filled series, own legend row) in place of the
+               original hand-drawn bars. -->
           <div id="radar-chart-root" style="margin-top:8px;"></div>
+        </div>
 
-          <div class="legend-row">
-            <div class="legend-item">
-              <span class="legend-swatch" style="background:var(--chart-base);"></span>
-              Cleared <span class="legend-count">830</span>
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 5l6 5-6 5"/></svg>
-            </div>
-            <div class="legend-item">
-              <span class="legend-swatch" style="background:var(--chart-overflow);"></span>
-              Flagged <span class="legend-count">150</span>
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 5l6 5-6 5"/></svg>
-            </div>
-          </div>
+        <div class="chart-card">
+          <div class="card-title">Requests by risk level</div>
+          <!-- Mounted by src/radar-reference-main.tsx -> src/references/RadarRiskLevelChart.tsx.
+               One thin colour-coded bar per risk bucket, dashed horizontal
+               gridlines, no y-axis numbers -- the same minimal single-row
+               chart style as the reference's "SLA Success Rate" panel. -->
+          <div id="radar-risk-chart-root" style="margin-top:8px;"></div>
         </div>
 
         <div class="table-card">
           <div class="table-card-header">
-            <span class="table-card-title">Review blocked scenarios</span>
-            <span class="active-pill">Active</span>
-            <div class="table-filter">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6"/><path d="M17 17l-4-4"/></svg>
-              <input type="text" placeholder="Filter scenarios…">
-            </div>
+            <span class="table-card-title">Live Decision Stream</span>
+            <button class="btn-ghost">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14l-5.5 6.5V16l-3-1.5v-3L3 5z"/></svg>
+              Filter Logs
+            </button>
           </div>
           <table>
             <thead>
               <tr>
-                <th>Scenario</th>
-                <th>Risk level</th>
+                <th>Timestamp</th>
+                <th>Account</th>
+                <th>Merchant / Amount</th>
+                <th>XGB score</th>
                 <th>Engine</th>
-                <th>Anomaly score</th>
-                <th>Date</th>
+                <th>Decision</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="td-scenario">Botnet Velocity Drain</td>
-                <td><span class="risk-pill risk-high">High</span></td>
-                <td class="td-secondary">ML Tier</td>
-                <td class="td-secondary">0.96</td>
-                <td class="td-tertiary">23 Jun</td>
+                <td class="td-mono">14:22:01</td>
+                <td class="td-mono">pl_8821</td>
+                <td><div class="td-scenario">Crypto Exchange</div><div class="td-tertiary">£1,450.00</div></td>
+                <td class="score-red">0.94</td>
+                <td class="td-secondary">XGBoost</td>
+                <td><span class="risk-pill risk-high">BLOCKED</span></td>
+                <td></td>
               </tr>
               <tr>
-                <td class="td-scenario">Legitimate Power User</td>
-                <td><span class="risk-pill risk-low">Low</span></td>
-                <td class="td-secondary">ML Tier</td>
-                <td class="td-secondary">0.04</td>
-                <td class="td-tertiary">22 Jun</td>
+                <td class="td-mono">14:22:03</td>
+                <td class="td-mono">pl_1042</td>
+                <td><div class="td-scenario">Tesco Express</div><div class="td-tertiary">£14.50</div></td>
+                <td class="score-green">0.04</td>
+                <td class="td-secondary">XGBoost</td>
+                <td><span class="risk-pill risk-low">PASS</span></td>
+                <td></td>
               </tr>
               <tr>
-                <td class="td-scenario">Authorized Push Payment Scam</td>
-                <td><span class="risk-pill risk-high">High</span></td>
-                <td class="td-secondary">LLM Tier</td>
-                <td class="td-secondary">0.78</td>
-                <td class="td-tertiary">20 Jun</td>
-              </tr>
-              <tr>
-                <td class="td-scenario">Agentic AI Buyer Token</td>
-                <td><span class="risk-pill risk-low">Low</span></td>
-                <td class="td-secondary">LLM Tier</td>
-                <td class="td-secondary">0.71</td>
-                <td class="td-tertiary">19 Jun</td>
-              </tr>
-              <tr>
-                <td class="td-scenario">Model Outage Circuit Breaker</td>
-                <td><span class="risk-pill risk-high">High</span></td>
-                <td class="td-secondary">System</td>
-                <td class="td-secondary">0.55</td>
-                <td class="td-tertiary">18 Jun</td>
-              </tr>
-              <tr>
-                <td class="td-scenario">Botnet Velocity Drain</td>
-                <td><span class="risk-pill risk-high">High</span></td>
-                <td class="td-secondary">ML Tier</td>
-                <td class="td-secondary">0.91</td>
-                <td class="td-tertiary">17 Jun</td>
-              </tr>
-              <tr>
-                <td class="td-scenario">Legitimate Power User</td>
-                <td><span class="risk-pill risk-low">Low</span></td>
-                <td class="td-secondary">ML Tier</td>
-                <td class="td-secondary">0.06</td>
-                <td class="td-tertiary">16 Jun</td>
-              </tr>
-              <tr>
-                <td class="td-scenario">Agentic AI Buyer Token</td>
-                <td><span class="risk-pill risk-low">Low</span></td>
-                <td class="td-secondary">LLM Tier</td>
-                <td class="td-secondary">0.34</td>
-                <td class="td-tertiary">15 Jun</td>
+                <td class="td-mono">14:22:06</td>
+                <td class="td-mono">pl_9930</td>
+                <td><div class="td-scenario">Electronics Direct</div><div class="td-tertiary">£420.00</div></td>
+                <td class="score-amber">0.58</td>
+                <td class="td-secondary">LLM Agent</td>
+                <td><span class="risk-pill risk-flagged pulsing">FLAGGED</span></td>
+                <td><span class="action-link">Inspect Audit ›</span></td>
               </tr>
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   </main>

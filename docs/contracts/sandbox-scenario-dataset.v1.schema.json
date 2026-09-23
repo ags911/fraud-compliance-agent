@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sandbox-scenario-dataset.v1.schema.json",
+  "title": "Sanitised Sandbox scenario dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "fixture_version", "source_class", "creation_revision", "time_boundary", "permitted_fields", "intended_consumers", "events"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scenario_id": {"pattern": "^S0[1-8]$"},
+    "fixture_version": {"type": "string", "minLength": 1},
+    "source_class": {"const": "sanitised_sandbox"},
+    "creation_revision": {"type": "string", "minLength": 1},
+    "time_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_date", "end_date", "event_time_precision"],
+      "properties": {
+        "start_date": {"type": "string", "format": "date"},
+        "end_date": {"type": "string", "format": "date"},
+        "event_time_precision": {"const": "date"}
+      }
+    },
+    "permitted_fields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["event_date", "available_date", "amount_minor", "currency", "direction", "category_bucket", "payee_reference", "payment_channel"]}
+    },
+    "intended_consumers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_date", "available_date", "amount_minor", "currency", "direction", "category_bucket", "payee_reference", "payment_channel"],
+        "properties": {
+          "event_date": {"type": "string", "format": "date"},
+          "available_date": {"type": "string", "format": "date"},
+          "amount_minor": {"type": "integer", "minimum": 0},
+          "currency": {"pattern": "^[A-Z]{3}$"},
+          "direction": {"enum": ["inbound", "outbound"]},
+          "category_bucket": {"type": "string", "minLength": 1, "maxLength": 64},
+          "payee_reference": {"pattern": "^payee_[a-z0-9]+$"},
+          "payment_channel": {"type": "string", "maxLength": 32}
+        }
+      }
+    }
+  }
+}

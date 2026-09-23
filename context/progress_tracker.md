@@ -93,6 +93,29 @@ default).
 "F3a is an explicit substage between F3 and F4, added so the source-to-score
 chain cannot be hidden inside Plaid integration or dashboard work."
 
+### Proposed next F3a slice: deterministic Sandbox event data
+
+**Status: implementation prepared under an assumed specification, not
+deployed or accepted for runtime.** The candidate approach is an explicit
+Plaid Sandbox setup or refresh import that
+creates a versioned, sanitised PostgreSQL scenario dataset. Scenario runs,
+replay and charts would read the stored dated events and daily aggregates,
+not call Plaid directly. The proposed first proof is S04 with a 180-day
+historical baseline and incremental dated Sandbox events.
+
+Before implementation, this slice needs a resolving decision for the
+canonical time-aware event schema, Plaid mapping, retention and persistence,
+then accepted fixture, aggregate and API contracts with isolation and
+provenance tests. Neon PostgreSQL is selected for this Sandbox-only proof. It
+is not a production deployment approval.
+
+The preparation slice now includes versioned sanitised dataset and aggregate
+contracts, an idempotent Neon migration, deterministic importer and feature
+builder, a parameterised repository, a disabled-until-configured internal
+aggregate API, and Radar chart integration. It needs a Neon `DATABASE_URL`
+outside source control, migration application, fixture import, and ADR
+ratification before its data can be treated as a deployed runtime source.
+
 ## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
 
 Status legend from `docs/adr/README.md`: "`Proposed` means reviewable but

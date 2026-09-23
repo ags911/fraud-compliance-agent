@@ -60,10 +60,16 @@ from server.models import (
     HealthResponse,
     PresetRunRequest,
     RunRequest,
+    SandboxScenarioAnalytics,
     ScenarioNotFoundError,
     ScenarioSummary,
 )
 from server.records import read_record
+from server.sandbox_data.service import (
+    SandboxDataUnavailable,
+    ScenarioDatasetNotFound,
+    load_sandbox_analytics,
+)
 from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
 from server.showcase_investigation.models import (
     ShowcaseError,
@@ -438,6 +444,30 @@ def create_app() -> FastAPI:
     async def demo_model_summary() -> DemoModelSummary:
         """Return only the audit-safe synthetic benchmark summary for the portfolio UI."""
         return _demo_model_summary()
+
+    @app.get(
+        "/sandbox/scenarios/{scenario_id}/analytics",
+        include_in_schema=False,
+        response_model=SandboxScenarioAnalytics,
+        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+    )
+    def sandbox_scenario_analytics(scenario_id: str) -> SandboxScenarioAnalytics:
+        """Return read only, prepared aggregate data for one Sandbox scenario.
+
+        The route reads only a versioned sanitised dataset from the optional
+        Neon store. It cannot contact Plaid, return raw transactions, score a
+        payment, or mutate a scenario.
+        """
+        try:
+            return SandboxScenarioAnalytics.model_validate(
+                load_sandbox_analytics(scenario_id)
+            )
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(status_code=404, detail="sandbox_scenario_not_found") from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
 
     @app.post(
         "/showcase/investigations",

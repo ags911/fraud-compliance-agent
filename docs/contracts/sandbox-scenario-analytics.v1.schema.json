@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sandbox-scenario-analytics.v1.schema.json",
+  "title": "Sandbox scenario analytics response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scenario_id", "fixture_version", "source_class", "enrichment_version", "time_boundary", "daily_aggregates"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "scenario_id": {"pattern": "^S0[1-8]$"},
+    "fixture_version": {"type": "string", "minLength": 1},
+    "source_class": {"const": "sanitised_sandbox"},
+    "enrichment_version": {"const": "s04-enrichment-v1"},
+    "time_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_date", "end_date", "event_time_precision"],
+      "properties": {
+        "start_date": {"type": "string", "format": "date"},
+        "end_date": {"type": "string", "format": "date"},
+        "event_time_precision": {"enum": ["date", "minute", "second"]}
+      }
+    },
+    "daily_aggregates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["date", "transaction_count", "outbound_amount_minor", "category_counts"],
+        "properties": {
+          "date": {"type": "string", "format": "date"},
+          "transaction_count": {"type": "integer", "minimum": 0},
+          "outbound_amount_minor": {"type": "integer", "minimum": 0},
+          "category_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        }
+      }
+    }
+  }
+}

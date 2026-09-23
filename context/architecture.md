@@ -116,6 +116,51 @@ state machine (`none → ACCEPTED → PROCESSING → PENDING_REVIEW/COMPLETED_NO
 exists as draft vocabulary only — "state names are proposed vocabulary, not
 accepted API enums."
 
+### Proposed deterministic Sandbox store
+
+The proposed source-to-score slice uses a two-phase data path:
+
+```
+explicit Plaid Sandbox import or refresh
+  → sanitise and validate dated scenario events
+  → versioned PostgreSQL scenario dataset and daily aggregates
+  → deterministic scenario replay, API aggregates and charts
+```
+
+The import is a controlled preparation operation, not part of scenario
+execution. After a dataset version is accepted, the operator flow must read
+only the stored event and aggregate records. This avoids per-run provider
+latency, rate limits and changing Sandbox data, and permits reproducible
+time-based charts.
+
+The store must retain the minimum fields needed to preserve point-in-time
+semantics: pseudonymised scenario and account references, source revision,
+event time, available time, time precision, direction, amount in integer
+minor units, currency, permitted category or payee facts, provenance and
+fixture version. It must not retain raw provider payloads, access tokens,
+transaction descriptions or provider customer and account identifiers.
+
+Each scenario dataset is isolated by scenario ID and fixture version. An
+import or replay for one scenario must not mutate another scenario. A first
+proof is proposed for S04 with a 180-day historical baseline and dated
+incremental Sandbox events. The 180-day boundary and permitted feature set
+are selected for design; aggregation grain and retention require explicit
+approval.
+
+This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
+authorises a database nor changes the accepted database-free public showcase
+contracts.
+
+For the first proof, Neon PostgreSQL is the selected Sandbox-only managed
+PostgreSQL implementation. The permitted enrichment surface is a versioned
+`FeatureSnapshot`, not additional transaction fields: sanitised category
+bucket; pseudonymised payee reference; UTC day of week and weekend marker;
+UTC hour only when its precision is supplied; prior transaction count and
+mean amount; amount relative to that mean; one-day and seven-day count and
+amount velocity; and prior payee and category counts. Each value records its
+availability. Raw descriptions and merchant names, provider identifiers,
+access tokens, invented fraud labels and numeric risk scores are excluded.
+
 ## 5. Accepted Architecture Invariants (from Accepted ADRs — these ARE built rules)
 
 **Routing/authority/oversight precedence (ADR-006, product-owner accepted

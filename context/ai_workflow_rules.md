@@ -113,6 +113,31 @@ preferences:
   for exactly one item (S04's `get_account_activity_evidence`, ADR-019); no
   other scenario's facts are Plaid-derived, and S05's outage is
   provider-independent by design (never Plaid-derived).
+- The deterministic Sandbox store does not change that accepted scope. The
+  current code is an assumed-spec preparation slice only: it is inactive
+  without a separately configured `DATABASE_URL`, has no live Plaid import,
+  and must not be represented as an accepted runtime contract until a
+  resolving ADR and versioned contract are accepted.
+- Once approved, Sandbox import is a setup or refresh operation only.
+  Scenario execution and chart reads must use a versioned, sanitised database
+  dataset, never call Plaid directly. Every dataset needs a manifest with its
+  scenario ID, fixture version, source class, seed or creation revision, time
+  boundary, permitted fields, aggregate grain and intended consumers.
+- Raw Plaid responses, access tokens, provider IDs and transaction
+  descriptions must never be committed or stored in the application dataset.
+  Pseudonymised event and aggregate records must preserve event time,
+  availability time and time precision rather than fabricating intraday time
+  from a date-only value.
+- Scenario datasets must be isolated. A run, refresh or replay for one
+  scenario must not change another scenario's history, aggregates or expected
+  result.
+- The first selected design target is the S04 Sandbox-only proof on Neon
+  PostgreSQL, with a 180-day historical baseline. Its permitted deterministic
+  feature set is: sanitised category bucket, pseudonymised payee reference,
+  UTC day and weekend values, UTC hour only when present, account-history
+  counts and mean amount, relative amount, one-day and seven-day count and
+  amount velocity, and prior payee and category counts. New fields require a
+  versioned contract change and approval.
 - Test-data isolation extends to notebooks: `apps/api/tests/sparkov_fixtures.py`
   generates seeded Sparkov-shaped synthetic data (plus 7 deliberately broken
   variants) so a test never reads the real Sparkov corpus.

@@ -97,6 +97,35 @@ class DemoModelSummary(BaseModel):
     report_sha256: str
 
 
+class SandboxTimeBoundary(StrictFiniteModel):
+    """Describe the declared date boundary for one sanitised scenario dataset."""
+
+    start_date: str
+    end_date: str
+    event_time_precision: Literal["date", "minute", "second"]
+
+
+class SandboxDailyAggregate(StrictFiniteModel):
+    """Expose one dashboard safe, scenario scoped daily aggregate."""
+
+    date: str
+    transaction_count: int = Field(ge=0)
+    outbound_amount_minor: int = Field(ge=0)
+    category_counts: dict[str, int]
+
+
+class SandboxScenarioAnalytics(StrictFiniteModel):
+    """Expose read only, sanitised scenario data for a dashboard chart."""
+
+    contract_version: Literal["1.0"]
+    scenario_id: str = Field(pattern=r"^S0[1-8]$")
+    fixture_version: str = Field(min_length=1, max_length=128)
+    source_class: Literal["sanitised_sandbox"]
+    enrichment_version: Literal["s04-enrichment-v1"]
+    time_boundary: SandboxTimeBoundary
+    daily_aggregates: list[SandboxDailyAggregate]
+
+
 class HistoryPoint(StrictFiniteModel):
     """One bounded, amount-only historical observation for the demo pipeline."""
 

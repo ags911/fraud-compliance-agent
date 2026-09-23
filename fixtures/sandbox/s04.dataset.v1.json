@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "S04",
+  "fixture_version": "s04-sandbox-v1",
+  "source_class": "sanitised_sandbox",
+  "creation_revision": "s04-seed-20260923",
+  "time_boundary": {"start_date": "2026-03-27", "end_date": "2026-09-23", "event_time_precision": "date"},
+  "permitted_fields": ["event_date", "available_date", "amount_minor", "currency", "direction", "category_bucket", "payee_reference", "payment_channel"],
+  "intended_consumers": ["sandbox-scenario-analytics-api", "radar-reference"],
+  "events": [
+    {"event_date": "2026-03-27", "available_date": "2026-03-28", "amount_minor": 1240, "currency": "GBP", "direction": "outbound", "category_bucket": "food_dining", "payee_reference": "payee_7f6d", "payment_channel": "card"},
+    {"event_date": "2026-04-18", "available_date": "2026-04-19", "amount_minor": 6850, "currency": "GBP", "direction": "outbound", "category_bucket": "travel", "payee_reference": "payee_a31c", "payment_channel": "card"},
+    {"event_date": "2026-05-03", "available_date": "2026-05-04", "amount_minor": 2430, "currency": "GBP", "direction": "outbound", "category_bucket": "grocery", "payee_reference": "payee_447a", "payment_channel": "card"},
+    {"event_date": "2026-06-09", "available_date": "2026-06-10", "amount_minor": 12999, "currency": "GBP", "direction": "outbound", "category_bucket": "shopping", "payee_reference": "payee_d840", "payment_channel": "online"},
+    {"event_date": "2026-07-14", "available_date": "2026-07-15", "amount_minor": 1890, "currency": "GBP", "direction": "outbound", "category_bucket": "food_dining", "payee_reference": "payee_7f6d", "payment_channel": "card"},
+    {"event_date": "2026-08-02", "available_date": "2026-08-03", "amount_minor": 4200, "currency": "GBP", "direction": "outbound", "category_bucket": "electronics", "payee_reference": "payee_b288", "payment_channel": "online"},
+    {"event_date": "2026-09-06", "available_date": "2026-09-07", "amount_minor": 1550, "currency": "GBP", "direction": "outbound", "category_bucket": "grocery", "payee_reference": "payee_447a", "payment_channel": "card"},
+    {"event_date": "2026-09-23", "available_date": "2026-09-23", "amount_minor": 42000, "currency": "GBP", "direction": "outbound", "category_bucket": "electronics", "payee_reference": "payee_c914", "payment_channel": "online"}
+  ]
+}

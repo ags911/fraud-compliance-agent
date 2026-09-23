@@ -189,6 +189,39 @@ requiring an approved target-policy decision; C has no S01–S08 equivalent.
 - Azure: referenced only as a deployment target; no managed database,
   VNet, cache, queue, or production identity service is authorised.
 
+### Deterministic Sandbox data plan (implementation prepared, not deployed)
+
+The next data slice is intended to make scenario data time-aware and
+repeatable without calling Plaid during an operator run. A controlled Plaid
+Sandbox import would create a scenario-specific, versioned and sanitised
+dataset in PostgreSQL. Scenario execution, replay and charts would then read
+only that dataset and its derived daily aggregates.
+
+- **Import boundary:** Plaid Sandbox is contacted only by an explicit setup
+  or refresh job. It is never called from an operator scenario run, chart
+  request or browser.
+- **Scenario isolation:** every scenario has its own fixture version, stable
+  seed, dated event history and expected derived facts. A run cannot append
+  data to or otherwise affect another scenario.
+- **Data boundary:** raw provider responses, access tokens, account IDs and
+  transaction descriptions stay outside Git and outside the application
+  store. The database contains only pseudonymised, sanitised events and
+  derived aggregates needed for deterministic replay and display.
+- **Time boundary:** a first S04 proof may use a proposed 180-day historical
+  baseline plus dated incremental Sandbox events. The approved duration,
+  fields and aggregation grain must be recorded in a fixture manifest before
+  implementation.
+- **Storage choice:** Neon PostgreSQL is selected for the Sandbox-only S04
+  proof. It does not authorise a production deployment or alter the
+  database-free showcase.
+
+The repository contains an assumed-spec preparation slice: versioned
+sanitised dataset and aggregate contracts, an idempotent Neon migration,
+deterministic importer, repository, and a disabled-until-configured internal
+aggregate endpoint. It requires a resolving ADR before it can be treated as an
+accepted runtime contract. No Neon project, database URL, live Plaid access or
+provider data is configured or committed.
+
 ### Incomplete/placeholder in the web app
 - Routes `/transactions`, `/reviews`, `/rules/performance`, `/settings`
   render a generic `PlannedPage` placeholder.
