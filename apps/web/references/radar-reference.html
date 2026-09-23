@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>Overview — RADAR-AGENT (Inline Filter)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +29,11 @@
   */
   :root{
     --radar-content-width: 1100px;
+    /* One inner padding for every card on the page (stat tiles, chart
+       cards and their header/body bands, the table card, the benchmark
+       disclosure), taken from the stat tiles. */
+    --card-pad-y: 12px;
+    --card-pad-x: 14px;
     /* True neutral (zero-chroma) ramp, near-black background -- matches the
        Linear-style Insights Dashboard reference's palette instead of the
        mockup's original blue/violet-tinted dark theme (hue 282, chroma
@@ -43,8 +49,14 @@
     --lch-text-secondary:  lch(65 0 0);
     --lch-text-tertiary:   lch(45 0 0);
 
-    --accent-indigo: #5E6AD2;
-    --accent-indigo-dim: rgba(94,106,210,0.16);
+    /* The page's one accent (primary button, active tab, focus rings,
+       links, selected tile). Currently trialling monochrome: near-white,
+       the live app's own dark-mode primary, so PASS/CHALLENGE/HOLD are
+       the only colour on the page. Dark label text on it: 17.6:1.
+       Signal blue alternative: #4C8DFF / rgba(76,141,255,0.14). */
+    --radar-accent: #f2f2f2;
+    --radar-accent-dim: rgba(242,242,242,0.07);
+    --radar-accent-foreground: #0b0b0b;
 
     --sev-low: #4cb782;
     --sev-low-dim: rgba(76,183,130,0.14);
@@ -107,21 +119,29 @@
 
   /* ---------------- Tabs ---------------- */
 
-  /* .tabs positions/aligns with the rest of the centered content column,
-     same as .topbar-inner and .body-grid; .tabs-list is sized to just its
-     tab items (inline-flex, not the full row) so its own border-bottom --
-     the menu's underline -- stops after "Insights" instead of running the
-     full content width like .topbar's and .body-grid's borders do. */
+  /* Tab bar styled after the Stripe Radar dashboard's own tabs (layout
+     only, not colour): the first label sits flush on the content edge,
+     each underline is exactly its label's width (no side padding), wider
+     gaps between labels, and a hairline track under the whole content
+     column with the active underline sitting on top of it. */
   .tabs{
     max-width: var(--radar-content-width); margin: 16px auto 0;
     padding: 0 24px;
   }
   .tabs-list{
-    display:inline-flex; gap:4px;
+    display:flex; gap:24px;
     border-bottom: 1px solid var(--lch-border-soft);
   }
-  .tab{ font-size:12.5px; font-weight:500; color: var(--lch-text-tertiary); padding: 12px 10px; border-bottom: 2px solid transparent; cursor:pointer; }
-  .tab.active{ color: var(--lch-text-primary); border-bottom-color: var(--accent-indigo); }
+  .tab{
+    position:relative; flex-shrink:0; padding: 12px 0 11px;
+    font-size:13px; font-weight:500; color: var(--lch-text-tertiary); cursor:pointer;
+  }
+  .tab::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+    border-radius:2px; background:transparent;
+  }
+  .tab.active{ color: var(--lch-text-primary); }
+  .tab.active::after{ background: var(--radar-accent); }
   .tab:hover:not(.active){ color: var(--lch-text-secondary); }
 
   /* ---------------- Body layout ---------------- */
@@ -138,7 +158,7 @@
 
   .section-heading{ font-size:14px; font-weight:600; margin-bottom:4px; }
   .section-sub{ font-size:12.5px; color: var(--lch-text-tertiary); line-height:1.55; margin-bottom:18px; }
-  .section-sub a{ color: var(--accent-indigo); }
+  .section-sub a{ color: var(--radar-accent); }
   .section-sub a:hover{ text-decoration:underline; }
 
   /* ---------------- Efficiency metrics bar ---------------- */
@@ -148,7 +168,7 @@
     background: var(--lch-bg-panel);
     border: 1px solid var(--lch-border-soft);
     border-radius: var(--radius-md);
-    padding: 14px 16px;
+    padding: var(--card-pad-y) var(--card-pad-x);
   }
   .efficiency-title{ font-size:12px; color: var(--lch-text-primary); margin-bottom:8px; }
   .efficiency-value{ font-size:22px; font-weight:700; margin-bottom:4px; color: var(--lch-text-primary); }
@@ -165,10 +185,10 @@
     background: var(--lch-bg-panel);
     border: 1px solid var(--lch-border-soft);
     border-radius: var(--radius-md);
-    padding: 12px 14px;
+    padding: var(--card-pad-y) var(--card-pad-x);
     cursor:pointer;
   }
-  .stat-tile.selected{ border-color: var(--accent-indigo); background: var(--accent-indigo-dim); }
+  .stat-tile.selected{ border-color: var(--radar-accent); background: var(--radar-accent-dim); }
   .stat-label{ font-size:12px; color: var(--lch-text-primary); margin-bottom:6px; }
   .stat-tile.selected .stat-label{ color:var(--lch-text-primary); }
   .stat-value{ font-size:20px; font-weight:600; color:var(--lch-text-primary); }
@@ -191,12 +211,12 @@
      data disclosure; src/components/rules-performance-chart.tsx) in this
      page's LCH palette. See src/references/RadarRecommendationChart.tsx. */
   .chart-card.radar-outcome-card{ padding:0; overflow:hidden; }
-  .radar-outcome-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:17px 18px; border-bottom:1px solid var(--lch-border-soft); }
+  .radar-outcome-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding: var(--card-pad-y) var(--card-pad-x); border-bottom:1px solid var(--lch-border-soft); }
   .radar-range-toggle{ display:flex; flex-shrink:0; gap:2px; padding:2px; background:var(--lch-bg-hover); border:1px solid var(--lch-border-soft); border-radius:8px; }
   .radar-range-option{ height:27px; min-width:38px; padding:0 8px; border-radius:6px; color:var(--lch-text-tertiary); cursor:pointer; font:inherit; font-size:12px; font-weight:500; }
   .radar-range-option:hover:not(.is-active){ color:var(--lch-text-secondary); }
   .radar-range-option.is-active{ background:var(--lch-bg-pill); color:var(--lch-text-primary); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.4); }
-  .radar-range-option:focus-visible{ outline:2px solid var(--accent-indigo); outline-offset:1px; }
+  .radar-range-option:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:1px; }
   .radar-outcome-header .card-copy{ margin-top:5px; }
   .radar-outcome-title-row{ display:flex; align-items:center; gap:8px; }
   .radar-outcome-title-row .card-title{ margin-bottom:0; }
@@ -206,12 +226,12 @@
     background: var(--lch-bg-pill); border: 1px solid var(--lch-border);
     padding: 1px 8px; border-radius: var(--radius-pill);
   }
-  .radar-outcome-body{ padding:17px 18px 12px; }
+  .radar-outcome-body{ padding: var(--card-pad-y) var(--card-pad-x); }
   .radar-outcome-distribution-wrap{ position:relative; }
   .radar-outcome-distribution{ display:flex; height:9px; overflow:hidden; border-radius:var(--radius-pill); background:var(--lch-bg-hover); }
   .radar-outcome-distribution-segment{ display:block; height:100%; min-width:0; border:0; cursor:pointer; }
   .radar-outcome-distribution-segment + .radar-outcome-distribution-segment{ box-shadow:-1px 0 0 var(--lch-bg-panel); }
-  .radar-outcome-distribution-segment:focus-visible{ outline:2px solid var(--accent-indigo); outline-offset:2px; }
+  .radar-outcome-distribution-segment:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:2px; }
   .radar-outcome-tooltip{
     min-width:150px; padding:10px; white-space:nowrap; font-size:12px; font-variant-numeric:tabular-nums;
     background:var(--lch-bg-pill); border:1px solid var(--lch-border); border-radius:var(--radius-sm);
@@ -236,7 +256,8 @@
   .radar-chart-data th{ color:var(--lch-text-tertiary); font-weight:500; }
   .radar-chart-data th + th, .radar-chart-data td + td{ text-align:right; font-variant-numeric:tabular-nums; }
   .radar-chart-data tbody tr + tr{ border-top:1px solid var(--lch-border-soft); }
-  .benchmark-details{ margin-bottom:10px; border:1px solid var(--lch-border-soft); border-radius:var(--radius-md); padding:12px 14px; }
+  .radar-chart-data-note{ padding:8px 12px 10px; border-top:1px solid var(--lch-border-soft); color:var(--lch-text-tertiary); font-size:11.5px; }
+  .benchmark-details{ margin-bottom:10px; border:1px solid var(--lch-border-soft); border-radius:var(--radius-md); padding: var(--card-pad-y) var(--card-pad-x); }
   .benchmark-details summary{ color:var(--lch-text-primary); cursor:pointer; font-size:12.5px; font-weight:600; }
   .benchmark-details[open] summary{ margin-bottom:10px; }
 
@@ -246,7 +267,7 @@
     background: var(--lch-bg-panel);
     border: 1px solid var(--lch-border-soft);
     border-radius: var(--radius-md);
-    padding: 20px 20px 16px;
+    padding: var(--card-pad-y) var(--card-pad-x);
     margin-bottom: 24px;
     min-width:0;
   }
@@ -282,7 +303,7 @@
   }
   .table-card-header{
     display:flex; align-items:center; gap:10px;
-    padding: 14px 16px; border-bottom: 1px solid var(--lch-border-soft);
+    padding: var(--card-pad-y) var(--card-pad-x); border-bottom: 1px solid var(--lch-border-soft);
   }
   .table-card-title{ font-size:13px; font-weight:600; }
 
@@ -295,7 +316,7 @@
     width: 220px;
     margin-left: auto;
   }
-  .table-filter:focus-within{ border-color: var(--accent-indigo); }
+  .table-filter:focus-within{ border-color: var(--radar-accent); }
   .table-filter svg{ width:13px; height:13px; color: var(--lch-text-tertiary); flex-shrink:0; }
   .table-filter input{
     background:none; border:none; outline:none;
@@ -322,9 +343,9 @@
   table{ width:100%; border-collapse:collapse; }
   thead th{
     text-align:left; font-size:11.5px; font-weight:500; color: var(--lch-text-tertiary);
-    padding: 9px 16px; border-bottom: 1px solid var(--lch-border-soft);
+    padding: 9px var(--card-pad-x); border-bottom: 1px solid var(--lch-border-soft);
   }
-  tbody td{ padding: 11px 16px; font-size:12.5px; border-bottom: 1px solid var(--lch-border-soft); }
+  tbody td{ padding: 11px var(--card-pad-x); font-size:12.5px; border-bottom: 1px solid var(--lch-border-soft); }
   tbody tr:last-child td{ border-bottom:none; }
   tbody tr:hover{ background: var(--lch-bg-hover); cursor:pointer; }
 
@@ -345,7 +366,7 @@
   @keyframes pill-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
   .risk-pill.pulsing{ animation: pill-pulse 1.6s ease-in-out infinite; }
 
-  .action-link{ color: var(--accent-indigo); font-size:12.5px; font-weight:500; cursor:pointer; }
+  .action-link{ color: var(--radar-accent); font-size:12.5px; font-weight:500; cursor:pointer; }
   .action-link:hover{ text-decoration:underline; }
 
   .td-mono{ font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:11px; color: var(--lch-text-secondary); }

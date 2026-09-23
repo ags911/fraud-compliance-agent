@@ -8,7 +8,11 @@ import {
   mockScenarioRecommendationHistory,
   type RecommendationHistoryRange,
 } from "@/lib/mock-scenario-recommendation-history"
-import { fetchSandboxScenarioAnalytics, type SandboxScenarioAnalytics } from "@/lib/sandbox-scenario-analytics"
+import {
+  fetchSandboxScenarioAnalytics,
+  sandboxDailyActivitySeries,
+  type SandboxScenarioAnalytics,
+} from "@/lib/sandbox-scenario-analytics"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
@@ -137,6 +141,7 @@ export function RadarReference() {
   const history = useMemo(() => mockScenarioRecommendationHistory(scenarioId, historyRange), [scenarioId, historyRange])
   const historyTotal = history.data.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
   const scenarioLabel = scenarios.find((scenario) => scenario.id === scenarioId)?.label
+  const sandboxActivity = useMemo(() => (sandboxAnalytics ? sandboxDailyActivitySeries(sandboxAnalytics) : null), [sandboxAnalytics])
   const xgboost = benchmark?.model_results.find((model) => model.model_id === "xgboost_candidate")
 
   return (
@@ -198,11 +203,12 @@ export function RadarReference() {
             title={`${scenarioId} recommendations over time`}
           />
 
-          <section className="chart-card radar-chart-card">
-            <div className="card-title">Sandbox scenario activity</div>
-            <p className="card-copy">S04 only. Prepared daily totals from the versioned, sanitised Sandbox dataset. No live provider request is made from this page.</p>
-            {sandboxAnalytics ? <RadarScenarioActivityChart data={sandboxAnalytics.daily_aggregates} /> : <p className="card-copy">Select S04 and start the local API with an imported Sandbox dataset to view historical activity.</p>}
-          </section>
+          <RadarScenarioActivityChart
+            data={sandboxActivity}
+            description="S04 only. Prepared daily totals from the versioned, sanitised Sandbox dataset. No live provider request is made from this page."
+            title="Sandbox scenario activity"
+            unavailableMessage="Select S04 and start the local API with an imported Sandbox dataset to view historical activity."
+          />
 
           <details className="benchmark-details">
             <summary>Synthetic benchmark evidence</summary>

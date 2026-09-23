@@ -1,3 +1,5 @@
+import { addDays, format, parseISO } from "date-fns"
+
 export type SandboxDailyAggregate = {
   date: string
   transaction_count: number
@@ -26,4 +28,42 @@ export async function fetchSandboxScenarioAnalytics(scenarioId: string): Promise
   const response = await fetch(`${API_BASE_URL}/sandbox/scenarios/${encodeURIComponent(scenarioId)}/analytics`)
   if (!response.ok) throw new Error("Sandbox scenario activity is unavailable")
   return response.json() as Promise<SandboxScenarioAnalytics>
+}
+
+/** One calendar day of scenario activity, shaped for the Radar activity chart. */
+export type SandboxActivityDatum = {
+  date: string
+  label: string
+  longLabel: string
+  transactionCount: number
+  outboundAmountMinor: number
+}
+
+/**
+ * Expand the aggregates to one entry per calendar day in the dataset's
+ * time boundary, so the chart's x-axis spaces days honestly. The importer
+ * already writes a zero-activity aggregate for every calendar day in that
+ * boundary (build_dataset in apps/api/server/sandbox_data/service.py), so a
+ * day missing inside it can only mean no activity -- it is filled with the
+ * same zero the importer would write, never with invented activity.
+ */
+export function sandboxDailyActivitySeries(analytics: SandboxScenarioAnalytics): SandboxActivityDatum[] {
+  const byDate = new Map(analytics.daily_aggregates.map((aggregate) => [aggregate.date, aggregate]))
+  // Dates are calendar days (event_time_precision "date"), so they are
+  // parsed as local dates with no time-of-day, and never shift by timezone.
+  const end = parseISO(analytics.time_boundary.end_date)
+  const days: SandboxActivityDatum[] = []
+  for (let day = parseISO(analytics.time_boundary.start_date); day <= end; day = addDays(day, 1)) {
+    const date = format(day, "yyyy-MM-dd")
+    const aggregate = byDate.get(date)
+    days.push({
+      date,
+      // Same "d MMM" labels as the mock recommendation history chart.
+      label: format(day, "d MMM"),
+      longLabel: format(day, "d MMM yyyy"),
+      transactionCount: aggregate?.transaction_count ?? 0,
+      outboundAmountMinor: aggregate?.outbound_amount_minor ?? 0,
+    })
+  }
+  return days
 }

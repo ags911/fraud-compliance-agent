@@ -16,7 +16,9 @@
   --foreground: var(--lch-text-primary);
   --border: var(--lch-border);
   --input: var(--lch-border);
-  --ring: var(--accent-indigo);
+  --ring: var(--radar-accent);
+  --primary: var(--radar-accent);
+  --primary-foreground: var(--radar-accent-foreground);
   --popover: var(--lch-bg-pill);
   --popover-foreground: var(--lch-text-primary);
   --accent: var(--lch-bg-hover);
