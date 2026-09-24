@@ -1,5 +1,6 @@
-import { addDays, format, subDays } from "date-fns"
+import { addDays, differenceInCalendarDays, format, max, subDays } from "date-fns"
 
+import type { DateWindow } from "@/lib/scenario-date-window"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 /**
@@ -15,8 +16,6 @@ import type { ShowcaseScenarioId } from "@/lib/showcase-types"
  * series chart has a shape to render. Replace it; do not extend it.
  */
 
-export type RecommendationHistoryRange = 7 | 30 | 90
-
 export type RecommendationHistoryDatum = {
   label: string
   PASS: number
@@ -28,15 +27,14 @@ export type RecommendationHistory = {
   scenarioId: ShowcaseScenarioId
   /** Always "mock" here; the planned Sandbox history is `plaid_sandbox_derived`. */
   sourceClass: "mock"
-  range: RecommendationHistoryRange
-  /** "day" for 7D/30D, "week" for 90D (weekly buckets keep 90D readable). */
-  bucket: "day" | "week"
+  /** One entry per calendar day in the requested window. */
   data: RecommendationHistoryDatum[]
 }
 
 const HISTORY_DAYS = 180
 // Fixed so the mock history (and screenshots of it) are reproducible.
 const HISTORY_END = new Date(2026, 8, 23)
+const HISTORY_START = subDays(HISTORY_END, HISTORY_DAYS - 1)
 
 // Per-scenario daily volume and PASS / CHALLENGE / HOLD mix, chosen to read
 // like each scenario's intent (S01 mostly clears, S05 is the fail-safe path).
@@ -60,63 +58,44 @@ function seededRandom(seed: number): () => number {
   }
 }
 
-type DailyCounts = { date: Date } & Omit<RecommendationHistoryDatum, "label">
-
-const historyCache = new Map<ShowcaseScenarioId, DailyCounts[]>()
-
-function dailyHistory(scenarioId: ShowcaseScenarioId): DailyCounts[] {
-  const cached = historyCache.get(scenarioId)
-  if (cached) return cached
-
+/**
+ * Mock PASS / CHALLENGE / HOLD split for one day. When the real Sandbox
+ * transaction count for that day is known, it is used as the day's volume,
+ * so the mock decides exactly the transactions the Sandbox chart shows and
+ * only the split is invented. Seeded per scenario and day, so a day always
+ * gets the same split whatever range it is viewed in.
+ */
+function mockDay(scenarioId: ShowcaseScenarioId, date: Date, knownVolume: number | undefined): RecommendationHistoryDatum {
+  const day: RecommendationHistoryDatum = { label: format(date, "d MMM"), PASS: 0, CHALLENGE: 0, HOLD: 0 }
   const profile = profiles[scenarioId]
-  if (!profile) return []
+  if (!profile) return day
   const { seed, volume, mix } = profile
-  const random = seededRandom(seed)
-  const start = subDays(HISTORY_END, HISTORY_DAYS - 1)
-  const history = Array.from({ length: HISTORY_DAYS }, (_, index) => {
-    const date = addDays(start, index)
-    const weekend = date.getDay() === 0 || date.getDay() === 6
-    const runs = Math.round(volume * (weekend ? 0.7 : 1) * (0.7 + random() * 0.6))
-    const day: DailyCounts = { date, PASS: 0, CHALLENGE: 0, HOLD: 0 }
-    for (let run = 0; run < runs; run += 1) {
-      const roll = random()
-      if (roll < mix[0]) day.PASS += 1
-      else if (roll < mix[0] + mix[1]) day.CHALLENGE += 1
-      else day.HOLD += 1
-    }
-    return day
-  })
-  historyCache.set(scenarioId, history)
-  return history
+  const random = seededRandom(seed * 100_000 + differenceInCalendarDays(date, HISTORY_START))
+  const weekend = date.getDay() === 0 || date.getDay() === 6
+  const runs = knownVolume ?? Math.round(volume * (weekend ? 0.7 : 1) * (0.7 + random() * 0.6))
+  for (let run = 0; run < runs; run += 1) {
+    const roll = random()
+    if (roll < mix[0]) day.PASS += 1
+    else if (roll < mix[0] + mix[1]) day.CHALLENGE += 1
+    else day.HOLD += 1
+  }
+  return day
 }
 
-/** Return the selected window of mock history, bucketed for charting. */
+/**
+ * Return one day of mock history per calendar day in `window` (the Scenario
+ * tab's shared range, already clipped to the Sandbox dataset's boundary).
+ * `volumes` maps "yyyy-MM-dd" to that day's real Sandbox transaction count.
+ */
 export function mockScenarioRecommendationHistory(
   scenarioId: ShowcaseScenarioId,
-  range: RecommendationHistoryRange,
+  window: DateWindow,
+  volumes?: ReadonlyMap<string, number>,
 ): RecommendationHistory {
-  const days = dailyHistory(scenarioId).slice(-range)
-  if (range !== 90) {
-    return {
-      scenarioId,
-      sourceClass: "mock",
-      range,
-      bucket: "day",
-      data: days.map(({ date, PASS, CHALLENGE, HOLD }) => ({ label: format(date, "d MMM"), PASS, CHALLENGE, HOLD })),
-    }
+  const data: RecommendationHistoryDatum[] = []
+  const start = max([window.start, HISTORY_START])
+  for (let date = start; date <= window.end && date <= HISTORY_END; date = addDays(date, 1)) {
+    data.push(mockDay(scenarioId, date, volumes?.get(format(date, "yyyy-MM-dd"))))
   }
-
-  // Weekly buckets anchored on the latest day, so the newest week is always
-  // complete; the oldest bucket absorbs the remainder (90 = 12 x 7 + 6).
-  const weeks: RecommendationHistoryDatum[] = []
-  for (let end = days.length; end > 0; end -= 7) {
-    const week = days.slice(Math.max(0, end - 7), end)
-    weeks.unshift({
-      label: format(week[0].date, "d MMM"),
-      PASS: week.reduce((sum, day) => sum + day.PASS, 0),
-      CHALLENGE: week.reduce((sum, day) => sum + day.CHALLENGE, 0),
-      HOLD: week.reduce((sum, day) => sum + day.HOLD, 0),
-    })
-  }
-  return { scenarioId, sourceClass: "mock", range, bucket: "week", data: weeks }
+  return { scenarioId, sourceClass: "mock", data }
 }

@@ -133,16 +133,47 @@
     border-bottom: 1px solid var(--lch-border-soft);
   }
   .tab{
-    position:relative; flex-shrink:0; padding: 12px 0 11px;
+    position:relative; flex-shrink:0; display:inline-flex; align-items:center; gap:6px;
+    padding: 12px 0 11px; border:0; background:none; font:inherit;
     font-size:13px; font-weight:500; color: var(--lch-text-tertiary); cursor:pointer;
   }
+  .tab:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:2px; border-radius:4px; }
   .tab::after{
     content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
     border-radius:2px; background:transparent;
   }
-  .tab.active{ color: var(--lch-text-primary); }
-  .tab.active::after{ background: var(--radar-accent); }
-  .tab:hover:not(.active){ color: var(--lch-text-secondary); }
+  /* .active is the frozen static markup; data-state is the live Radix tabs. */
+  .tab.active, .tab[data-state="active"]{ color: var(--lch-text-primary); }
+  .tab.active::after, .tab[data-state="active"]::after{ background: var(--radar-accent); }
+  .tab:hover:not(.active):not([data-state="active"]){ color: var(--lch-text-secondary); }
+  .tab-count{
+    min-width:18px; padding:1px 6px; border-radius:9999px; font-size:10.5px; font-weight:600;
+    background: var(--lch-bg-pill); border:1px solid var(--lch-border); color: var(--lch-text-secondary);
+    font-variant-numeric: tabular-nums; text-align:center;
+  }
+
+  /* One tab's content: every card on it is spaced by the same 10px gap,
+     so no card's own margin decides the rhythm. */
+  .tab-panel{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .tab-panel:focus-visible{ outline:none; }
+  .tab-panel > *, .tab-panel .radar-summary-grid, .tab-panel .chart-card{ margin-bottom:0; }
+  .tab-panel .section-sub{ margin-bottom:8px; }
+  .panel-toolbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
+  .panel-toolbar .section-sub{ margin-bottom:8px; }
+  .empty-card{
+    display:grid; justify-items:start; gap:10px;
+    background: var(--lch-bg-panel); border:1px solid var(--lch-border-soft); border-radius: var(--radius-md);
+    padding: 28px var(--card-pad-x);
+  }
+  .empty-card .card-copy{ margin-top:0; max-width:62ch; }
+  .empty-card [data-slot="button"]{ height:32px; padding:0 0.875rem; border-radius:9999px; margin-top:4px; }
+  .session-share{ margin-top:2px; }
+  .table-scroll{ overflow-x:auto; }
+  .radar-collapsible{ background: var(--lch-bg-panel); border:1px solid var(--lch-border-soft); border-radius: var(--radius-md); overflow:hidden; }
+  .radar-collapsible > summary{ padding: var(--card-pad-y) var(--card-pad-x); color: var(--lch-text-primary); cursor:pointer; font-size:12.5px; font-weight:600; }
+  .radar-collapsible > summary:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:-2px; }
+  .radar-collapsible[open] > summary{ border-bottom:1px solid var(--lch-border-soft); }
+  .radar-collapsible .radar-outcome-card{ border:0; border-radius:0; margin:0; background:transparent; }
 
   /* ---------------- Body layout ---------------- */
 
@@ -189,7 +220,7 @@
     cursor:pointer;
   }
   .stat-tile.selected{ border-color: var(--radar-accent); background: var(--radar-accent-dim); }
-  .stat-label{ font-size:12px; color: var(--lch-text-primary); margin-bottom:6px; }
+  .stat-label{ display:flex; align-items:center; gap:6px; font-size:12px; color: var(--lch-text-primary); margin-bottom:6px; }
   .stat-tile.selected .stat-label{ color:var(--lch-text-primary); }
   .stat-value{ font-size:20px; font-weight:600; color:var(--lch-text-primary); }
   .stat-detail{ margin-top:5px; color:var(--lch-text-secondary); font-size:11.5px; }
@@ -197,6 +228,7 @@
   .radar-summary-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-auto-rows:1fr; gap:10px; margin-bottom:10px; }
   .radar-summary-grid .stat-tile{ display:flex; flex-direction:column; min-height:104px; }
   .radar-summary-grid .stat-detail{ margin-top:auto; }
+  .benchmark-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .radar-detail-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-bottom:10px; }
   .radar-detail-grid .chart-card{ grid-column:span 2; margin-bottom:0; }
   .card-copy{ margin-top:8px; color:var(--lch-text-secondary); font-size:12.5px; line-height:1.55; }
@@ -382,12 +414,15 @@
     .tabs{ margin-top:10px; padding:0 16px; overflow-x:auto; }
     .body-grid{ gap:24px; padding:20px 16px; }
     .section-sub{ overflow-wrap:anywhere; }
-    .stat-row, .radar-summary-grid, .radar-detail-grid, .benchmark-metrics{ grid-template-columns:1fr; }
+    .stat-row, .radar-detail-grid, .benchmark-metrics{ grid-template-columns:1fr; }
+    .radar-summary-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .radar-summary-grid .stat-tile{ min-height:0; }
     .chart-bars{ gap:10px; }
     .bar-stack{ width:28px; }
     table{ font-size:11px; }
     thead th:nth-child(3), tbody td:nth-child(3){ display:none; }
     .radar-outcome-header{ flex-direction:column; gap:12px; }
+    .panel-toolbar{ flex-direction:column; align-items:flex-start; gap:4px; }
     .radar-chart-data thead th:nth-child(3), .radar-chart-data tbody td:nth-child(3){ display:table-cell; }
   }
 </style>

@@ -4,8 +4,9 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { evenTicks } from "@/lib/chart-ticks"
-import type { RecommendationHistoryRange } from "@/lib/mock-scenario-recommendation-history"
-import { cn } from "@/lib/utils"
+import type { ScenarioRange } from "@/lib/scenario-date-window"
+
+import { RadarRangeToggle } from "./RadarRangeToggle"
 
 // Recharts' <Bar> animates with these defaults (duration 1500ms, CSS
 // "ease" curve) -- mirrored here so the horizontal distribution bar's
@@ -36,8 +37,6 @@ function runsLabel(count: number): string {
   return `${countFormatter.format(count)} ${count === 1 ? "run" : "runs"}`
 }
 
-const rangeChoices: RecommendationHistoryRange[] = [7, 30, 90]
-
 type RadarRecommendationChartProps = {
   data: readonly RadarRecommendationDatum[]
   title: string
@@ -47,10 +46,13 @@ type RadarRecommendationChartProps = {
   emptyMessage: string
   /** Short data-source label shown as a pill beside the title, e.g. "Mock data". */
   badge?: string
-  /** When provided (with onRangeChange), renders the 7D/30D/90D toggle in
+  /** When provided (with onRangeChange), renders the 7D/30D/All toggle in
    * the card header, as RulesPerformanceChart does. */
-  activeRange?: RecommendationHistoryRange
-  onRangeChange?: (range: RecommendationHistoryRange) => void
+  activeRange?: ScenarioRange
+  onRangeChange?: (range: ScenarioRange) => void
+  /** Reserve this much y-axis width (no labels) so the plot lines up with a
+   * neighbouring chart that shows its y-axis numbers. Omit to use the full width. */
+  yAxisWidth?: number
   /** Rendered at the bottom of the card body, e.g. a run error. */
   children?: ReactNode
 }
@@ -60,8 +62,7 @@ type RadarRecommendationChartProps = {
  * header, distribution bar with hover tooltips, toggleable legend, stacked
  * bar chart and "View chart data" disclosure -- restyled with this page's
  * LCH tokens and stacked by final recommendation. Used for both the
- * current-session card (by scenario, no range toggle) and the selected
- * scenario's time series (by day/week, with the 7D/30D/90D toggle).
+ * Session tab's breakdown by scenario and the Scenario tab's daily history.
  */
 export function RadarRecommendationChart({
   data,
@@ -72,6 +73,7 @@ export function RadarRecommendationChart({
   activeRange,
   onRangeChange,
   badge,
+  yAxisWidth,
   children,
 }: RadarRecommendationChartProps) {
   const [activeSeries, setActiveSeries] = useState<Set<RadarRecommendation>>(() => new Set(allKeys))
@@ -128,21 +130,7 @@ export function RadarRecommendationChart({
           </div>
           <p className="card-copy">{description}</p>
         </div>
-        {activeRange && onRangeChange ? (
-          <div aria-label="Chart date range" className="radar-range-toggle" role="group">
-            {rangeChoices.map((range) => (
-              <button
-                aria-pressed={activeRange === range}
-                className={cn("radar-range-option", activeRange === range && "is-active")}
-                key={range}
-                onClick={() => onRangeChange(range)}
-                type="button"
-              >
-                {range}D
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {activeRange && onRangeChange ? <RadarRangeToggle label="Chart date range" onChange={onRangeChange} value={activeRange} /> : null}
       </div>
       <div className="radar-outcome-body">
         {total === 0 ? (
@@ -211,7 +199,7 @@ export function RadarRecommendationChart({
                   square bars, dashed horizontal gridlines, a solid baseline
                   and no y-axis numbers -- exact counts live in the tooltip
                   and the "View chart data" table. */}
-              <BarChart accessibilityLayer data={[...data]} margin={{ top: 16, right: 8, bottom: 0, left: 8 }}>
+              <BarChart accessibilityLayer data={[...data]} margin={{ top: 16, right: 8, bottom: 0, left: yAxisWidth ? 0 : 8 }}>
                 <CartesianGrid stroke="var(--lch-border)" strokeDasharray="3 4" vertical={false} />
                 <XAxis
                   axisLine={{ stroke: "var(--lch-border)" }}
@@ -221,7 +209,11 @@ export function RadarRecommendationChart({
                   tickLine={false}
                   tickMargin={12}
                 />
-                <YAxis domain={[0, yTicks[yTicks.length - 1]]} hide ticks={yTicks} />
+                {yAxisWidth ? (
+                  <YAxis axisLine={false} domain={[0, yTicks[yTicks.length - 1]]} tick={false} tickLine={false} ticks={yTicks} width={yAxisWidth} />
+                ) : (
+                  <YAxis domain={[0, yTicks[yTicks.length - 1]]} hide ticks={yTicks} />
+                )}
                 <ChartTooltip
                   cursor={{ fill: "var(--lch-bg-hover)", fillOpacity: 0.5 }}
                   content={({ active, payload, label }) => {

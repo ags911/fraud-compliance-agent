@@ -10,7 +10,12 @@ type RadarScenarioActivityChartProps = {
   data: readonly SandboxActivityDatum[] | null
   title: string
   description: string
+  /** Shown instead of the chart while data is null (loading or unavailable). */
   unavailableMessage: string
+  /** Short data-source label shown as a pill beside the title, e.g. "Sandbox". */
+  badge?: string
+  /** Y-axis width, shared with a neighbouring chart so their days line up. */
+  yAxisWidth?: number
 }
 
 const chartConfig = {
@@ -22,13 +27,13 @@ const wholePounds = new Intl.NumberFormat("en-GB", { style: "currency", currency
 const countFormatter = new Intl.NumberFormat("en-GB")
 
 /**
- * Daily S04 outbound spend, on the same card, grid and bar treatment as
+ * Daily outbound spend for the selected scenario, on the same card, grid and bar treatment as
  * RadarRecommendationChart. Bars are neutral grey: this is spend, not a
  * decision, so it never borrows the PASS/CHALLENGE/HOLD colours. Unlike the
  * count charts it keeps its y-axis numbers -- money is worth reading off
  * the scale. Presentational only: the page fetches and shapes the data.
  */
-export function RadarScenarioActivityChart({ data, title, description, unavailableMessage }: RadarScenarioActivityChartProps) {
+export function RadarScenarioActivityChart({ data, title, description, unavailableMessage, badge, yAxisWidth = 56 }: RadarScenarioActivityChartProps) {
   const activeDays = useMemo(() => (data ?? []).filter((day) => day.transactionCount > 0), [data])
   // Ticks are chosen in whole pounds, then converted back to the minor
   // units the data is plotted in.
@@ -41,7 +46,10 @@ export function RadarScenarioActivityChart({ data, title, description, unavailab
     <section className="chart-card radar-chart-card radar-outcome-card">
       <div className="radar-outcome-header">
         <div>
-          <div className="card-title">{title}</div>
+          <div className="radar-outcome-title-row">
+            <div className="card-title">{title}</div>
+            {badge ? <span className="radar-source-pill">{badge}</span> : null}
+          </div>
           <p className="card-copy">{description}</p>
         </div>
       </div>
@@ -56,8 +64,7 @@ export function RadarScenarioActivityChart({ data, title, description, unavailab
                 <XAxis
                   axisLine={{ stroke: "var(--lch-border)" }}
                   dataKey="label"
-                  interval="preserveStartEnd"
-                  minTickGap={32}
+                  minTickGap={24}
                   tick={{ fill: "var(--lch-text-tertiary)", fontSize: 11, fontFamily: "Inter, sans-serif" }}
                   tickLine={false}
                   tickMargin={12}
@@ -70,7 +77,7 @@ export function RadarScenarioActivityChart({ data, title, description, unavailab
                   tickLine={false}
                   tickMargin={10}
                   ticks={yTicks}
-                  width={48}
+                  width={yAxisWidth}
                 />
                 <ChartTooltip
                   cursor={{ fill: "var(--lch-bg-hover)", fillOpacity: 0.5 }}

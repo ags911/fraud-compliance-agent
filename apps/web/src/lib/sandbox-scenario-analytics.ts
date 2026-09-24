@@ -1,5 +1,7 @@
 import { addDays, format, parseISO } from "date-fns"
 
+import type { DateWindow } from "@/lib/scenario-date-window"
+
 export type SandboxDailyAggregate = {
   date: string
   transaction_count: number
@@ -51,13 +53,14 @@ export type SandboxActivityDatum = {
  * day missing inside it can only mean no activity -- it is filled with the
  * same zero the importer would write, never with invented activity.
  */
-export function sandboxDailyActivitySeries(analytics: SandboxScenarioAnalytics): SandboxActivityDatum[] {
+export function sandboxDailyActivitySeries(analytics: SandboxScenarioAnalytics, window?: DateWindow): SandboxActivityDatum[] {
   const byDate = new Map(analytics.daily_aggregates.map((aggregate) => [aggregate.date, aggregate]))
   // Dates are calendar days (event_time_precision "date"), so they are
   // parsed as local dates with no time-of-day, and never shift by timezone.
   const end = parseISO(analytics.time_boundary.end_date)
   const days: SandboxActivityDatum[] = []
   for (let day = parseISO(analytics.time_boundary.start_date); day <= end; day = addDays(day, 1)) {
+    if (window && (day < window.start || day > window.end)) continue
     const date = format(day, "yyyy-MM-dd")
     const aggregate = byDate.get(date)
     days.push({
@@ -70,4 +73,27 @@ export function sandboxDailyActivitySeries(analytics: SandboxScenarioAnalytics):
     })
   }
   return days
+}
+
+export type SandboxActivitySummary = {
+  transactionCount: number
+  outboundAmountMinor: number
+  activeDays: number
+  totalDays: number
+  largestDay: SandboxActivityDatum | null
+}
+
+/** Totals for the Scenario tab's stat cards, over the days already selected. */
+export function summariseSandboxActivity(days: readonly SandboxActivityDatum[]): SandboxActivitySummary {
+  let largestDay: SandboxActivityDatum | null = null
+  for (const day of days) {
+    if (day.outboundAmountMinor > 0 && (!largestDay || day.outboundAmountMinor > largestDay.outboundAmountMinor)) largestDay = day
+  }
+  return {
+    transactionCount: days.reduce((sum, day) => sum + day.transactionCount, 0),
+    outboundAmountMinor: days.reduce((sum, day) => sum + day.outboundAmountMinor, 0),
+    activeDays: days.filter((day) => day.transactionCount > 0).length,
+    totalDays: days.length,
+    largestDay,
+  }
 }
