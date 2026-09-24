@@ -219,13 +219,13 @@ Build approach: none is recorded in the project, so this assumes thin end to end
 11a. [x] Web: show "Saved · Open case" or "Not saved" on `/transactions/investigation` after each run; satisfies **AC-18**.
 
 **Slice 3: the full case page**
-12. Group events into Route, Evidence and Outcome stages, each expandable to its raw events, reusing `ShowcaseModeLabel`, `ShowcaseEvidenceTrace` and `ShowcaseOutcome` from `src/components/console/ShowcaseTrace.tsx` where they fit; satisfies **AC-11**, **AC-19**.
-13. Evidence items and claims with evidence ID links; satisfies **AC-13**.
-14. The failure banner from the stored `investigation_result`, using the existing `FAILURE_REASON_LABELS` and the stored summary; satisfies **AC-12**.
-15. The error with retry state and the "Back to Radar" link; satisfies **AC-14**.
+12. [x] Group events into Route, Evidence and Outcome stages, each expandable to its raw events, reusing `ShowcaseModeLabel`, `ShowcaseEvidenceTrace` and `ShowcaseOutcome` from `src/components/console/ShowcaseTrace.tsx` where they fit; satisfies **AC-11**, **AC-19**.
+13. [x] Evidence items and claims with evidence ID links; satisfies **AC-13**.
+14. [x] The failure banner from the stored `investigation_result`, using the existing `FAILURE_REASON_LABELS` and the stored summary; satisfies **AC-12**.
+15. [x] The error with retry state and the "Back to Radar" link; satisfies **AC-14**.
 
 **Across slices**
-16. API tests for storage, rollback, scoping, retention and the cap, and a check that the frozen drift tests are unchanged; Playwright tests for the Cases tab (both modes) and the case page states; satisfies **AC-1** to **AC-19**.
+16. [x] API tests for storage, rollback, scoping, retention and the cap, and a check that the frozen drift tests are unchanged; Playwright tests for the Cases tab (both modes) and the case page states; satisfies **AC-1** to **AC-19**.
 
 ## Consequences
 

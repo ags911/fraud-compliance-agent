@@ -3,56 +3,21 @@ import { CircleAlert, Database, SkipForward } from 'lucide-react'
 import { OutcomeBadge } from '@/components/console/OutcomeBadge'
 import { PaymentsStatePanel, PaymentsTonePill } from '@/components/payments-ui'
 import type {
-  ShowcaseEvidenceCategory,
   ShowcaseEvidenceItem,
-  ShowcaseFailureReason,
   ShowcaseInvestigationResultEvent,
   ShowcaseInvestigationSkippedEvent,
   ShowcaseRunStartedEvent,
-  ShowcaseSkipReason,
   ShowcaseToolCallEvent,
-  ShowcaseToolName,
   ShowcaseToolResultEvent,
 } from '@/lib/showcase-types'
-
-const TOOL_LABELS: Record<ShowcaseToolName, string> = {
-  get_payee_evidence: 'Payee evidence',
-  get_account_activity_evidence: 'Account activity evidence',
-  get_device_session_evidence: 'Device session evidence',
-}
-
-const EVIDENCE_CATEGORY_LABELS: Record<ShowcaseEvidenceCategory, string> = {
-  payee_relationship: 'Payee relationship',
-  payee_name_match: 'Payee name match',
-  account_balance_impact: 'Account balance impact',
-  payment_velocity: 'Payment velocity',
-  recent_credit_context: 'Recent credit context',
-  device_familiarity: 'Device familiarity',
-  session_change: 'Session change',
-  location_channel_context: 'Location and channel context',
-}
-
-const SKIP_REASON_LABELS: Record<ShowcaseSkipReason, string> = {
-  deterministic_clear_route: 'A deterministic clear route resolved this payment, so no agent ran.',
-  hard_deterministic_control: 'A hard deterministic control resolved this payment, so no agent ran.',
-  hard_app_control: 'A hard authorised-push-payment control resolved this payment, so no agent ran.',
-  existing_recorded_recommendation: 'An existing recorded recommendation applies, so no agent ran.',
-  non_investigation_scenario: 'This scenario is not an investigation path, so no agent ran.',
-}
-
-const FAILURE_REASON_LABELS: Record<ShowcaseFailureReason, string> = {
-  provider_unavailable: 'The provider was unavailable.',
-  tool_failed: 'An evidence tool returned no accepted result.',
-  invalid_output: 'The agent returned output that failed validation.',
-  timeout: 'The investigation passed its time limit.',
-  tool_budget_exhausted: 'The investigation exhausted its tool budget.',
-}
-
-const FALLBACK_REASON_LABELS = {
-  live_disabled: 'Live mode is switched off, so this is recorded playback.',
-  admission_limited: 'The live demonstration limit was reached, so this is recorded playback.',
-  provider_unavailable: 'The live provider was unavailable, so this is recorded playback.',
-} as const
+import {
+  evidenceAnchorId,
+  EVIDENCE_CATEGORY_LABELS,
+  FAILURE_REASON_LABELS,
+  FALLBACK_REASON_LABELS,
+  SKIP_REASON_LABELS,
+  TOOL_LABELS,
+} from '@/lib/showcase-labels'
 
 /**
  * State the execution mode plainly, because a recorded replay and a live model
@@ -102,9 +67,12 @@ export function ShowcaseSkippedTrace({
   )
 }
 
-function EvidenceRow({ item }: { item: ShowcaseEvidenceItem }) {
+function EvidenceRow({ item, showProvenance }: { item: ShowcaseEvidenceItem; showProvenance: boolean }) {
   return (
-    <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-2 last:border-b-0">
+    <li
+      className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-2 last:border-b-0 target:bg-muted/60"
+      id={showProvenance ? evidenceAnchorId(item.evidence_id) : undefined}
+    >
       <span className="payments-type-support text-muted-foreground">
         {EVIDENCE_CATEGORY_LABELS[item.category]}
       </span>
@@ -114,6 +82,12 @@ function EvidenceRow({ item }: { item: ShowcaseEvidenceItem }) {
           is named here rather than left implicit. */}
       {item.source_class === 'plaid_sandbox_derived' ? (
         <PaymentsTonePill tone="neutral">Plaid Sandbox test data</PaymentsTonePill>
+      ) : showProvenance ? (
+        <PaymentsTonePill tone="neutral">Synthetic fixture</PaymentsTonePill>
+      ) : null}
+      {/* A saved case records which fixture version produced each item. */}
+      {showProvenance ? (
+        <span className="payments-type-support text-muted-foreground">Fixture {item.fixture_version}</span>
       ) : null}
       {/* The evidence ID is what claims cite, so it stays visible and checkable. */}
       <code className="payments-type-support text-muted-foreground">{item.evidence_id}</code>
@@ -128,9 +102,12 @@ function EvidenceRow({ item }: { item: ShowcaseEvidenceItem }) {
 export function ShowcaseEvidenceTrace({
   toolCalls,
   toolResults,
+  showProvenance = false,
 }: {
   toolCalls: ShowcaseToolCallEvent[]
   toolResults: ShowcaseToolResultEvent[]
+  /** Show every item's source class and fixture version, and anchor it for claim links. */
+  showProvenance?: boolean
 }) {
   if (toolCalls.length === 0) return null
   return (
@@ -148,7 +125,7 @@ export function ShowcaseEvidenceTrace({
             {result ? (
               <ul className="mt-2">
                 {result.evidence.map((item) => (
-                  <EvidenceRow key={item.evidence_id} item={item} />
+                  <EvidenceRow key={item.evidence_id} item={item} showProvenance={showProvenance} />
                 ))}
               </ul>
             ) : (
@@ -168,8 +145,14 @@ export function ShowcaseEvidenceTrace({
  */
 export function ShowcaseOutcome({
   investigation,
+  linkEvidence = false,
+  showFailurePanel = true,
 }: {
   investigation: ShowcaseInvestigationResultEvent
+  /** Link each cited evidence ID to its anchored item (the saved case page). */
+  linkEvidence?: boolean
+  /** Off where the page already shows its own failure banner. */
+  showFailurePanel?: boolean
 }) {
   const incomplete = investigation.investigation_status === 'incomplete'
   return (
@@ -185,7 +168,7 @@ export function ShowcaseOutcome({
       </div>
       <p className="text-sm">{investigation.summary}</p>
 
-      {incomplete && investigation.failure_reason ? (
+      {showFailurePanel && incomplete && investigation.failure_reason ? (
         <PaymentsStatePanel
           title="No outcome was decided"
           description={`${FAILURE_REASON_LABELS[investigation.failure_reason]} This is a recommendation to hold, not a completed decision.`}
@@ -202,7 +185,17 @@ export function ShowcaseOutcome({
                 <p className="text-sm">{claim.text}</p>
                 {/* Every visible claim cites evidence returned in this same run. */}
                 <p className="payments-type-support mt-1 text-muted-foreground">
-                  Cites {claim.evidence_ids.join(', ')}
+                  Cites{' '}
+                  {linkEvidence
+                    ? claim.evidence_ids.map((evidenceId, index) => (
+                        <span key={evidenceId}>
+                          {index ? ', ' : null}
+                          <a className="underline underline-offset-4" href={`#${evidenceAnchorId(evidenceId)}`}>
+                            {evidenceId}
+                          </a>
+                        </span>
+                      ))
+                    : claim.evidence_ids.join(', ')}
                 </p>
               </li>
             ))}

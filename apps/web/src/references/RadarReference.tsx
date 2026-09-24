@@ -20,10 +20,13 @@ import {
   type ScenarioRange,
 } from "@/lib/scenario-date-window"
 import type { ShowcaseCaseFilters, ShowcaseCaseSummary } from "@/lib/showcase-cases"
+import { useRadarCaseParam } from "@/lib/useRadarCaseParam"
+import { useShowcaseCase } from "@/lib/useShowcaseCase"
 import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
+import { RadarCaseDrawer } from "./RadarCaseDrawer"
 import { RadarCasesPanel, type RadarCaseRow, type RadarCasesSummary } from "./RadarCasesPanel"
 import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
 import { RadarRangeToggle } from "./RadarRangeToggle"
@@ -89,7 +92,12 @@ function timeNow(): string {
 }
 
 export function RadarReference() {
-  const [tab, setTab] = useState<DashboardTab>("scenario")
+  // The case drawer's state lives in ?case=<id>, so refresh, Back and shared
+  // links work; the full case is fetched only while the drawer is open.
+  const caseParam = useRadarCaseParam()
+  const openCase = useShowcaseCase(caseParam.caseId ?? undefined, { enabled: caseParam.caseId !== null })
+  // A shared ?case= link opens on the Cases tab, where the drawer belongs.
+  const [tab, setTab] = useState<DashboardTab>(() => (caseParam.caseId ? "cases" : "scenario"))
   const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>("S01")
   const [range, setRange] = useState<ScenarioRange>(30)
   const [runs, setRuns] = useState<SessionRun[]>([])
@@ -380,6 +388,7 @@ export function RadarReference() {
               loadingMore={cases.state.status === "ready" && cases.state.loadingMore}
               mode={casesMode}
               onFiltersChange={setCaseFilters}
+              onOpenCase={caseParam.openCase}
               onRun={runShowcase}
               onShowMore={cases.loadMore}
               rows={caseRows}
@@ -387,6 +396,12 @@ export function RadarReference() {
               running={running}
               scenarioOptions={scenarios}
               summary={casesSummary}
+            />
+            <RadarCaseDrawer
+              caseId={caseParam.caseId}
+              onClose={caseParam.closeCase}
+              onRetry={openCase.retry}
+              state={openCase.state}
             />
           </TabsPrimitive.Content>
 

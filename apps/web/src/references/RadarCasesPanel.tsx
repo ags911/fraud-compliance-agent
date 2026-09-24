@@ -1,10 +1,11 @@
-import type { ReactNode } from "react"
+import type { MouseEvent, ReactNode } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ShowcaseCaseFilters } from "@/lib/showcase-cases"
 
 import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
+import { recommendationPillClass } from "./radar-pills"
 import { RadarRecommendationChart, type RadarRecommendationDatum } from "./RadarRecommendationChart"
 
 /** One table row, from a saved case or (fallback / not saved) a session run. */
@@ -48,6 +49,8 @@ type RadarCasesPanelProps = {
   running: boolean
   onRun: () => void
   error: string | null
+  /** Open a saved case in the drawer instead of navigating away. */
+  onOpenCase: (caseId: string) => void
 }
 
 const recommendationColors = {
@@ -80,12 +83,6 @@ const COPY = {
     breakdownEmpty: "No completed showcase runs in this session.",
   },
 } as const
-
-function recommendationClass(recommendation: RadarCaseRow["recommendation"]): string {
-  if (recommendation === "PASS") return "risk-low"
-  if (recommendation === "HOLD") return "risk-high"
-  return "risk-flagged"
-}
 
 function plural(count: number, one: string, many: string): string {
   return `${countFormatter.format(count)} ${count === 1 ? one : many}`
@@ -189,8 +186,17 @@ export function RadarCasesPanel(props: RadarCasesPanelProps) {
                         <td className="td-mono">{row.time}</td>
                         <td className="td-mono">
                           {row.href ? (
-                            // The Radar page is an iframe; the case page opens in the whole window.
-                            <a className="case-link" href={row.href} target="_top">{row.id}</a>
+                            // A plain click opens the drawer; the link still works as a
+                            // whole window deep link (new tab, copy link, no JavaScript).
+                            <a
+                              className="case-link"
+                              data-case-link={row.id}
+                              href={row.href}
+                              onClick={openInDrawer(row.id, props.onOpenCase)}
+                              target="_top"
+                            >
+                              {row.id}
+                            </a>
                           ) : (
                             row.id
                           )}
@@ -198,7 +204,7 @@ export function RadarCasesPanel(props: RadarCasesPanelProps) {
                         </td>
                         <td className="td-scenario">{row.scenarioId}</td>
                         <td className="td-secondary">{row.route}</td>
-                        <td><span className={`risk-pill ${recommendationClass(row.recommendation)}`}>{row.recommendation}</span></td>
+                        <td><span className={`risk-pill ${recommendationPillClass(row.recommendation)}`}>{row.recommendation}</span></td>
                         <td className="td-secondary">{row.investigationStatus}</td>
                         <td className="td-secondary">{row.evidenceCount}</td>
                         <td className="td-secondary">{row.mode}</td>
@@ -233,6 +239,15 @@ export function RadarCasesPanel(props: RadarCasesPanelProps) {
       )}
     </>
   )
+}
+
+function openInDrawer(caseId: string, onOpenCase: (caseId: string) => void) {
+  return (event: MouseEvent<HTMLAnchorElement>) => {
+    // Leave modified clicks (new tab or window) to the browser.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    onOpenCase(caseId)
+  }
 }
 
 function hasActiveFilters(filters: ShowcaseCaseFilters): boolean {

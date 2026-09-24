@@ -42,7 +42,12 @@ Setup for the storage on steps: an API with `DATABASE_URL` (migration `0004_show
 - [ ] Run S01, S04, S05: rows appear newest first with local "d MMM, HH:mm:ss" times, each Run ID links to its case → AC-9
 - [ ] Filter "HOLD" → only S05; the stat cards do not change → AC-9, AC-6
 - [ ] With more than 20 cases: 20 rows, then "Show more" loads the rest and disappears → AC-9
-- [ ] Clicking a Run ID opens `/transactions/<id>` in the whole window, not inside the Radar frame → AC-9
+- [ ] Clicking a Run ID opens the case drawer over the Cases tab (table, filters and totals stay behind it), and `/radar` gains `?case=<id>`; the case is fetched only then → AC-9 (drawer decided 2026-09-24)
+- [ ] Escape, the Close button and browser Back each close the drawer, and focus returns to that row's Run ID link → AC-9
+- [ ] Refresh or share `/radar?case=<id>` → Radar opens on the Cases tab with that case's drawer; closing it stays on `/radar` → AC-9
+- [ ] A claim's cited evidence ID in the drawer scrolls to that item without adding a history entry → AC-13
+- [ ] At phone width the drawer fills the screen, with no sideways scroll → AC-9
+- [ ] Cmd or Ctrl click on a Run ID still opens `/transactions/<id>` in a new tab → AC-11
 - [ ] Save a case from `/transactions/investigation`, then open Radar's Cases tab → it is listed (the tab refreshes when opened) → AC-9
 - [ ] A finished run missing from the list (simulate by hiding it from the `/cases` response) → an unlinked row tagged "Not saved", outside the totals → AC-10
 - [ ] Mode column shows `recorded (live off)` style wording when a live request ran as recorded → AC-19
@@ -52,10 +57,19 @@ Setup for the storage on steps: an API with `DATABASE_URL` (migration `0004_show
 - [ ] Cases tab heading "This visit's runs" with the "Not saved: case history is off in this environment" description, table "This visit's decisions", no filters, no links → AC-10
 - [ ] `/transactions/investigation` after a run: "Not saved: case history is off in this environment." → AC-18
 
-## Slice 3 (not built yet)
-Steps for AC-12, AC-13 and the full AC-11 stages are added when slice 3 lands.
+## Slice 3 (built)
+
+### Commands
+- [ ] `npx playwright test tests/showcase-cases.spec.ts` (from `apps/web`) → 18 pass on desktop and mobile → AC-9, AC-10, AC-11, AC-12, AC-13, AC-14
+
+### UI / manual (storage on)
+- [ ] Open an S04 case → Summary, then Route ("Eligible for investigation"), Evidence and Outcome stages; each stage's "Stored events (N)" expands to its events with sequence, event ID and recorded time, and the counts add up to 8 → AC-11
+- [ ] In the S04 Evidence stage, each item shows its category, value, "Synthetic fixture" and "Fixture s04-r1" → AC-13
+- [ ] In the S04 Outcome stage, each claim's "Cites" ID is a link, and clicking it jumps to that evidence item → AC-13
+- [ ] Open an S05 case → a red "Investigation incomplete: fail safe HOLD" banner naming the failure reason, stating that authority was not evaluated and no action was simulated; nowhere says "Investigation complete" → AC-12
+- [ ] Open an S01 case → the Route stage shows "Investigation skipped", Evidence says none was gathered, and Outcome shows the deterministic PASS → AC-11
 
 ## Acceptance criteria coverage
 - AC-1 slice 1 commands 1, 2 · AC-2, AC-4, AC-5, AC-16 slice 1 pytest · AC-3 commands 6, 7 · AC-7 commands 3, 4 · AC-8 cap command · AC-11 UI 3 · AC-14 UI 1, 2, 4, 5 · AC-15 command 6 · AC-17 UI 6
 - AC-6 slice 2 commands 1 to 3 · AC-9 slice 2 UI (storage on) 1 to 7 · AC-10 slice 2 UI unsaved row, storage off · AC-18 slice 2 investigation page steps · AC-19 slice 2 Mode column step
-- Not yet covered (slice 3): AC-12, AC-13, and the grouped stages of AC-11
+- AC-11 stages, AC-12, AC-13 slice 3 UI steps · slice 3 Playwright file covers AC-9 to AC-14 in the browser

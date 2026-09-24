@@ -8,8 +8,14 @@ export type ShowcaseCaseState = ShowcaseCaseResult | { status: "loading" } | { s
 // retry reads as "loading" until its own response arrives.
 type Settled = { key: string; state: ShowcaseCaseState }
 
-/** Load one durable case for this browser, with a retry for unexpected errors. */
-export function useShowcaseCase(caseId: string | undefined): {
+/**
+ * Load one durable case for this browser, with a retry for unexpected errors.
+ * With `enabled: false` nothing is requested (Radar's closed case drawer).
+ */
+export function useShowcaseCase(
+  caseId: string | undefined,
+  { enabled = true }: { enabled?: boolean } = {},
+): {
   state: ShowcaseCaseState
   retry: () => void
 } {
@@ -18,6 +24,7 @@ export function useShowcaseCase(caseId: string | undefined): {
   const key = `${caseId ?? ""}#${attempt}`
 
   useEffect(() => {
+    if (!enabled) return
     const controller = new AbortController()
     fetchShowcaseCase(caseId ?? "", controller.signal).then(
       (result) => setSettled({ key, state: result }),
@@ -27,7 +34,7 @@ export function useShowcaseCase(caseId: string | undefined): {
       },
     )
     return () => controller.abort()
-  }, [caseId, key])
+  }, [caseId, enabled, key])
 
   const retry = useCallback(() => setAttempt((value) => value + 1), [])
   return { state: settled?.key === key ? settled.state : { status: "loading" }, retry }
