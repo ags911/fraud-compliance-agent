@@ -13,6 +13,7 @@ import type {
   ShowcaseToolResultEvent,
 } from '@/lib/showcase-types'
 import { parseShowcaseEvent } from '@/lib/showcase-event-validation'
+import { showcaseBrowserHeaders } from '@/lib/showcase-browser-id'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8010'
 
@@ -231,7 +232,9 @@ export function useShowcaseInvestigation() {
       try {
         const response = await fetch(`${API_BASE_URL}/showcase/investigations`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // The browser key lets the API save this run as a durable case (spec
+          // 0002); without it the run behaves exactly as before and is not saved.
+          headers: { 'Content-Type': 'application/json', ...showcaseBrowserHeaders() },
           body: JSON.stringify({ scenario_id: scenarioId, execution_mode: executionMode }),
           signal: controller.signal,
         })

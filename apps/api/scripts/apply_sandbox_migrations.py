@@ -1,4 +1,4 @@
-"""Apply idempotent Sandbox data migrations to configured Neon PostgreSQL."""
+"""Apply every idempotent, numbered data migration to configured Neon PostgreSQL."""
 
 import os
 from pathlib import Path
@@ -30,14 +30,18 @@ def apply_migration(database_url: str, migration_path: Path) -> None:
 
 
 def main() -> None:
-    """Apply every reviewed Sandbox migration when a caller supplies a Neon URL."""
+    """Apply every reviewed numbered migration when a caller supplies a Neon URL.
+
+    Covers the Sandbox store and durable showcase cases (spec 0002). The runner
+    keeps no record of applied files, so every migration must be rerunnable.
+    """
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SystemExit("DATABASE_URL must be configured outside source control")
     migrations_directory = Path(__file__).resolve().parents[1] / "migrations"
-    for migration_path in sorted(migrations_directory.glob("*_sandbox_*.sql")):
+    for migration_path in sorted(migrations_directory.glob("[0-9][0-9][0-9][0-9]_*.sql")):
         apply_migration(database_url, migration_path)
-    print("sandbox migrations applied")
+    print("migrations applied")
 
 
 if __name__ == "__main__":

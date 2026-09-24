@@ -158,8 +158,10 @@ before its referencing `sandbox_transactions`/`sandbox_daily_aggregates`, so
 re-importing an existing fixture version fails with a foreign-key violation
 (the append path deletes children first; fix: children first, plus
 appends once migration 0002 applies, with a regression test).
-`scripts/apply_sandbox_migrations.py` globs only `*_sandbox_*.sql` and keeps
-no applied-migration record, so every migration must be rerunnable.
+`scripts/apply_sandbox_migrations.py` applies every numbered migration
+(`[0-9][0-9][0-9][0-9]_*.sql`, widened from `*_sandbox_*.sql` for spec 0002's
+`0004_showcase_cases.sql`) and keeps no applied-migration record, so every
+migration must be rerunnable.
 
 Each scenario dataset is isolated by scenario ID and fixture version. An
 import or replay for one scenario must not mutate another scenario. The

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "showcase-cases.v0.proposed.schema.json",
+  "title": "Showcase cases read responses (proposed)",
+  "description": "Proposed read contract for durable showcase investigation cases (spec 0002). Not accepted: it may move to docs/contracts/ as v1 only through an ADR. The stored events inside a case are the accepted public-showcase-events.v1 payloads, unchanged.",
+  "x-contract-version": "0.1",
+  "x-approval-status": "proposed",
+  "x-runtime-consumption": "internal-only",
+  "x-request-header": {
+    "name": "X-Showcase-Browser-Id",
+    "description": "Anonymous scoping key: a lowercase version 4 UUID created by the browser. Not authentication.",
+    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/caseListResponse" },
+    { "$ref": "#/$defs/caseDetailResponse" },
+    { "$ref": "#/$defs/errorResponse" }
+  ],
+  "$defs": {
+    "recommendation": { "enum": ["PASS", "CHALLENGE", "HOLD"] },
+    "scenarioId": { "type": "string", "pattern": "^S0[1-8]$" },
+    "caseId": { "type": "string", "pattern": "^run_[a-z0-9_]{3,64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "recommendationCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["PASS", "CHALLENGE", "HOLD"],
+      "properties": {
+        "PASS": { "type": "integer", "minimum": 0 },
+        "CHALLENGE": { "type": "integer", "minimum": 0 },
+        "HOLD": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "caseSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "scenario_id", "requested_mode", "execution_mode", "fallback_reason",
+        "provider", "model_id", "deterministic_route", "investigation_status",
+        "recommendation", "recommendation_basis", "failure_reason", "authority_status",
+        "tool_call_count", "evidence_count", "event_count", "fixture_version",
+        "started_at", "completed_at", "expires_at", "contract_version"
+      ],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/caseId" },
+        "scenario_id": { "$ref": "#/$defs/scenarioId" },
+        "requested_mode": { "enum": ["recorded", "live"] },
+        "execution_mode": { "enum": ["recorded", "live"] },
+        "fallback_reason": { "enum": [null, "live_disabled", "admission_limited", "provider_unavailable"] },
+        "provider": { "enum": [null, "groq"] },
+        "model_id": { "type": ["string", "null"] },
+        "deterministic_route": { "enum": ["PASS", "HOLD", "INVESTIGATE"] },
+        "investigation_status": { "enum": ["skipped", "complete", "incomplete"] },
+        "recommendation": { "$ref": "#/$defs/recommendation" },
+        "recommendation_basis": { "enum": ["deterministic", "evidence_grounded", "fail_safe"] },
+        "failure_reason": { "enum": [null, "provider_unavailable", "tool_failed", "invalid_output", "timeout", "tool_budget_exhausted"] },
+        "authority_status": { "const": "not_evaluated" },
+        "tool_call_count": { "type": "integer", "minimum": 0 },
+        "evidence_count": { "type": "integer", "minimum": 0 },
+        "event_count": { "type": "integer", "minimum": 1 },
+        "fixture_version": { "type": ["string", "null"] },
+        "started_at": { "$ref": "#/$defs/timestamp" },
+        "completed_at": { "$ref": "#/$defs/timestamp" },
+        "expires_at": { "$ref": "#/$defs/timestamp" },
+        "contract_version": { "const": "1.0" }
+      }
+    },
+    "storedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "event_id", "event_type", "recorded_at", "payload"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 0 },
+        "event_id": { "type": "string", "minLength": 1 },
+        "event_type": { "type": "string", "minLength": 1 },
+        "recorded_at": { "$ref": "#/$defs/timestamp" },
+        "payload": {
+          "type": "object",
+          "description": "One accepted public-showcase-events.v1 payload, exactly as emitted."
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "by_recommendation", "by_scenario", "deterministic_passes", "fail_safe_holds", "completed_investigations"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "by_recommendation": { "$ref": "#/$defs/recommendationCounts" },
+        "by_scenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08"],
+          "patternProperties": { "^S0[1-8]$": { "$ref": "#/$defs/recommendationCounts" } }
+        },
+        "deterministic_passes": { "type": "integer", "minimum": 0 },
+        "fail_safe_holds": { "type": "integer", "minimum": 0 },
+        "completed_investigations": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "caseListResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "items", "next_cursor", "totals"],
+      "properties": {
+        "contract_version": { "const": "1.0" },
+        "items": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/caseSummary" } },
+        "next_cursor": { "type": ["string", "null"] },
+        "totals": { "$ref": "#/$defs/totals" }
+      }
+    },
+    "caseDetailResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "case", "events"],
+      "properties": {
+        "contract_version": { "const": "1.0" },
+        "case": { "$ref": "#/$defs/caseSummary" },
+        "events": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/storedEvent" } }
+      }
+    },
+    "errorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detail"],
+      "properties": {
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "enum": ["cases_unavailable", "invalid_browser_id", "invalid_cursor", "invalid_parameters", "case_not_found"] },
+            "message": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

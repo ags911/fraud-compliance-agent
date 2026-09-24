@@ -623,6 +623,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "groq" },
+    { name = "jsonschema" },
     { name = "langgraph" },
     { name = "psycopg", extra = ["binary"] },
     { name = "python-dotenv" },
@@ -637,7 +638,6 @@ sdk = [
 [package.dev-dependencies]
 dev = [
     { name = "ipykernel" },
-    { name = "jsonschema" },
     { name = "nbclient" },
     { name = "nbformat" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -656,6 +656,7 @@ requires-dist = [
     { name = "arbiris", extras = ["db"], marker = "extra == 'sdk'", editable = "vendor/arbiris-sdk" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "groq", specifier = ">=1.4.0" },
+    { name = "jsonschema", specifier = ">=4.26.0" },
     { name = "langgraph", specifier = ">=0.2.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -666,7 +667,6 @@ provides-extras = ["sdk"]
 [package.metadata.requires-dev]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.0" },
-    { name = "jsonschema", specifier = ">=4.26.0" },
     { name = "nbclient", specifier = ">=0.10.0" },
     { name = "nbformat", specifier = ">=5.10.0" },
     { name = "numpy", specifier = ">=2.0.0" },

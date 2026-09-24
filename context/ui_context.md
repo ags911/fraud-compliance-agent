@@ -209,6 +209,107 @@ Two things worth knowing, not just where the files live:
   reference," so this may be intentional, but it means a regression there
   would not be caught by CI.
 
+## Radar Portfolio Page (`/radar`, actively iterated — not a frozen reference)
+
+`/radar` is a **standalone portfolio piece**, not part of the Payments shell
+and not one of the five frozen snapshots above. `src/Radar.tsx` embeds
+`references/radar-reference.html` (Vite entry `radarReference`) in a
+same-origin iframe **without a `sandbox` attribute** — case links from it use
+`target="_top"` and it shares `localStorage` with the app, both of which
+depend on that setup. The HTML bootstraps `src/radar-reference-main.tsx` →
+`src/references/RadarReference.tsx`. It carries its **own dark LCH palette**
+in the HTML's `:root` (not `app-theme.css`); `src/references/radar-controls-theme.css`
+remaps the shadcn tokens at `:root` so Radix portals (Select) match. Its CSS is
+unlayered, so it beats Tailwind `@layer` utilities and the HTML's
+`* { padding: 0 }` reset — style it with the HTML's own classes. Stale
+leftovers: the code comments in `Radar.tsx`/`ProductApp.tsx` still call it an
+"exact unmodified copy" of the mockup (it is not any more), and the HTML still
+contains the original static `<main hidden>` mockup markup, which never
+renders. **No Playwright coverage** exists for `/radar`.
+
+**Structure** (Radix `Tabs` primitive from `radix-ui` directly, not the
+shadcn wrapper, whose utilities fight the Radar CSS; inactive tabs unmount,
+so charts replay their grow-in animation and the collapsed breakdown resets
+on return):
+- Top bar: NetworkMark + "Fraud Compliance Agent" only (no "Averlynx ›"
+  breadcrumb — standalone piece), scenario Select (S01–S05), pill "Run
+  showcase" (switches to the Session tab, where results appear).
+- **Scenario** (default): heading `S0x · <label>` + date span and day count;
+  one shared `7D / 30D / All` toggle (`src/references/RadarRangeToggle.tsx`,
+  window from `src/lib/scenario-date-window.ts`, clipped to the dataset's
+  time boundary); real Sandbox stat cards (transactions, outbound spend,
+  active days, largest day); "Recommendations over time" (Mock data badge);
+  "Outbound activity" (Sandbox badge); one "About this data" footnote
+  carrying the full provenance and the dataset ID.
+- **Session**: one empty state with a `Run S0x` button before any run; then
+  Runs completed / PASS / CHALLENGE / HOLD stat cards (recommendation
+  vocabulary; route and fail-safe counts moved into detail lines), the
+  outcome share bar, the "Current session decisions" table, and a collapsed
+  "Breakdown by scenario" chart. Session runs are browser-memory only.
+- **Model**: XGBoost PR-AUC and Brier score cards, labelled as benchmark
+  results, not runtime scores. Planned home for future ML charts.
+  (Model data must never be placed beside session decisions — it would imply
+  the model made them; MVP 3 has no runtime model score.)
+
+**Radar tokens and geometry**:
+- **One accent, `--radar-accent`** (button, active tab underline, focus
+  rings, links, selected tile). Currently **monochrome `#f2f2f2`** with
+  `--radar-accent-foreground: #0b0b0b` (17.6:1). **Signal blue `#4C8DFF`**
+  (dark label 6.1:1) is the recorded chromatic alternative. It replaced two
+  *borrowed* purples — Stripe's `#635bff` (shadcn `--primary`) and Linear's
+  `#5E6AD2` — which read as another company's brand in a portfolio. Aqua
+  `#3CC6D8` was rejected (too close to PASS green, incl. under
+  deuteranopia); warm hues are excluded (they sit between CHALLENGE and
+  HOLD). The comparison lives in a published artifact, "Radar Accent Options".
+- **Card padding** `--card-pad-y: 12px` / `--card-pad-x: 14px` on every card
+  (stat tiles, chart header and body bands, table card, disclosures); table
+  cells use the same 14px side inset. Every gap between cards in a tab panel
+  is 10px (`.tab-panel` flex gap), not card margins.
+- **Tab bar** (layout after Stripe Radar's tabs, colour Radar's own): first
+  label flush on the content edge, underline exactly the label's width
+  (2px, rounded ends, sits on the track), 24px gap, hairline track across
+  the full content column.
+- **Buttons** are pills (`border-radius: 9999px`).
+- **Contrast**: readable supporting copy (section descriptions, stat-card
+  detail lines, inactive toggle labels, footnote) uses `--lch-text-secondary`
+  (≈7:1). `--lch-text-tertiary` (≈3.5:1, fails AA for small text) is only for
+  chart axis ticks.
+- **Stat cards**: label and value white; detail line secondary grey.
+- **Colour roles**: PASS `--sev-low #4cb782`, CHALLENGE `--sev-moderate
+  #f2c94c`, HOLD `--sev-high #eb5757` are for decisions only; spend bars are
+  neutral grey (`--lch-text-secondary`). `--chart-base #7c7ff2` (purple) is
+  still defined but no longer used by any chart.
+
+**Radar chart conventions** (`src/references/RadarRecommendationChart.tsx`,
+`RadarScenarioActivityChart.tsx`):
+- Card structure copied from the Rules Performance chart
+  (`src/components/rules-performance-chart.tsx`): header band with title,
+  optional source badge and description; distribution share bar with hover
+  tooltips; toggleable legend (at least one series stays on); stacked bars;
+  "View chart data" table.
+- Plot style after the Linear Insights reference: thin **square** bars
+  (`maxBarSize`/`barSize` 10, `radius 0`, no segment strokes), dashed
+  horizontal gridlines (`--lch-border`), solid baseline.
+- Y ticks always from `evenTicks()` in `src/lib/chart-ticks.ts` (nice
+  1/2/2.5/5×10ⁿ whole steps, top of scale on a tick) so every gridline gap
+  measures the same. Both Scenario charts show y-axis numbers and reserve the
+  **same 56px y-axis width**, so a given day sits at the same x in each.
+- Time series plot **every calendar day** in the window (zero days included)
+  so spacing is honest; labels via date-fns `d MMM` (not `Intl` `en-GB`, which
+  prints "Sept").
+- **Data-honesty pattern**: every chart keeps a one-word source badge
+  (`Mock data`, `Sandbox`) on its title, and each tab ends with one "About
+  this data" footnote holding the full explanation. Never rely on a footnote
+  alone — a chart must still say what it is when seen on its own.
+
+## Favicon
+
+`apps/web/public/favicon.svg` is the NetworkMark (`src/components/averlynx-logo.tsx`),
+app-wide, replacing the Vite placeholder. Favicons cannot inherit
+`currentColor`, so the SVG switches `#18181b` / `#fafafa` with a
+`prefers-color-scheme` media query. `references/radar-reference.html` links it
+too.
+
 ## Layout, Radius, and Other Tokens (code-verified, `src/app-theme.css`)
 
 Tailwind v4 CSS-first config (no `tailwind.config.*`); base palette (`:root`)

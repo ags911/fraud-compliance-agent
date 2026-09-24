@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Outlet, Route, Routes } from "react-router-dom"
 
+import { CaseDetailPage } from "@/CaseDetail"
 import Dashboard from "@/Dashboard"
 import { ModelBenchmarkPage } from "@/ModelBenchmark"
 import { NewTransactionPage } from "@/NewTransaction"
@@ -124,6 +125,10 @@ function ProductRoutes() {
         {/* The SDK-free showcase investigation is its own surface. The legacy
             A-F workspace above stays until an explicit cutover decision. */}
         <Route path="/transactions/investigation" element={<ShowcaseInvestigationPage />} />
+        {/* One durable showcase case (spec 0002). React Router ranks the static
+            /transactions/new and /transactions/investigation routes above this
+            dynamic one, so they keep their pages. */}
+        <Route path="/transactions/:caseId" element={<CaseDetailPage />} />
         {Object.entries(plannedRoutes).map(([path, route]) => (
           <Route key={path} path={path} element={<PlannedPage route={route} />} />
         ))}

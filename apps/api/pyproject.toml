@@ -11,6 +11,8 @@ dependencies = [
     "groq>=1.4.0",
     "psycopg[binary]>=3.1.0",
     "python-dotenv>=1.0.0",
+    # Validates stored showcase case events against the accepted v1 schema.
+    "jsonschema>=4.26.0",
 ]
 
 # The live demo pipeline needs the private Arbiris SDK submodule. Everything else
@@ -40,7 +42,6 @@ extend-select = ["I", "S"]
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.0",
-    "jsonschema>=4.26.0",
     "nbclient>=0.10.0",
     "nbformat>=5.10.0",
     "numpy>=2.0.0",

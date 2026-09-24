@@ -21,6 +21,7 @@ import asyncio
 import json
 import math
 import os
+import re
 import sys
 from collections.abc import AsyncIterator
 from dataclasses import asdict, is_dataclass
@@ -74,6 +75,15 @@ from server.sandbox_data.service import (
     load_sandbox_simulation_run,
     start_sandbox_simulation,
 )
+from server.showcase_cases.capture import EventValidator
+from server.showcase_cases.models import CaseDetailResponse
+from server.showcase_cases.repository import (
+    CaseNotFound,
+    CasesUnavailable,
+    PsycopgCaseRepository,
+)
+from server.showcase_cases.settings import load_case_settings, valid_browser_id
+from server.showcase_cases.stream import CaseRecorder, record_case_stream
 from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
 from server.showcase_investigation.models import (
     ShowcaseError,
@@ -364,6 +374,16 @@ async def _stream_bounded_run(
         yield "event: done\ndata: {}\n\n"
 
 
+_CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+
+
+def _case_error(status_code: int, code: str, message: str) -> HTTPException:
+    """Build a case route error in the showcase ``{code, message}`` shape."""
+    return HTTPException(
+        status_code=status_code, detail={"code": code, "message": message}
+    )
+
+
 def create_app() -> FastAPI:
     """Create the demo-only API with redacted streaming routes.
 
@@ -389,6 +409,23 @@ def create_app() -> FastAPI:
         # Health and legacy demo routes remain available if packaged showcase
         # inputs are absent. The new endpoint returns its accepted redacted 503.
         showcase_runtime = None
+
+    # Durable showcase cases (spec 0002) are off unless explicitly enabled with
+    # a database, so the database free public deployment never stores cases.
+    case_settings = load_case_settings()
+    case_repository: PsycopgCaseRepository | None = None
+    case_recorder: CaseRecorder | None = None
+    if case_settings.ready and case_settings.database_url:
+        try:
+            case_repository = PsycopgCaseRepository(case_settings.database_url)
+            case_recorder = CaseRecorder(
+                case_repository, EventValidator(case_settings.event_schema_path)
+            )
+        except (CasesUnavailable, OSError, ValueError):
+            # A bad URL or an unreadable event schema leaves storage off; runs
+            # still stream normally and the case routes answer 503.
+            case_repository = None
+            case_recorder = None
 
     app = FastAPI(
         title="Fraud Compliance Agent Console API",
@@ -467,10 +504,53 @@ def create_app() -> FastAPI:
                 load_sandbox_analytics(scenario_id)
             )
         except ScenarioDatasetNotFound as error:
-            raise HTTPException(status_code=404, detail="sandbox_scenario_not_found") from error
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
         except SandboxDataUnavailable as error:
             raise HTTPException(
                 status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/cases/{case_id}",
+        include_in_schema=False,
+        response_model=CaseDetailResponse,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def read_showcase_case(case_id: str, request: Request) -> CaseDetailResponse:
+        """Return one durable showcase case for the calling browser (spec 0002).
+
+        Checks run in a fixed order, first failure wins: storage off or
+        unreachable (503), then a missing or malformed browser key (400). A
+        case that does not exist, has expired, belongs to another browser, or
+        has a malformed ID is the same 404, so IDs reveal nothing.
+        """
+        if case_repository is None:
+            raise _case_error(
+                503, "cases_unavailable", "Case history is off in this environment."
+            )
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+        if browser_id is None:
+            raise _case_error(
+                400, "invalid_browser_id", "A valid browser key is required."
+            )
+        not_found = _case_error(404, "case_not_found", "Case not found.")
+        if not re.fullmatch(r"run_[a-z0-9_]{3,64}", case_id):
+            raise not_found
+        try:
+            return CaseDetailResponse.model_validate(
+                case_repository.get_case(browser_id, case_id)
+            )
+        except CaseNotFound as error:
+            raise not_found from error
+        except CasesUnavailable as error:
+            raise _case_error(
+                503, "cases_unavailable", "Case history is unavailable."
             ) from error
 
     @app.post(
@@ -484,11 +564,17 @@ def create_app() -> FastAPI:
     ) -> SandboxSimulationRun:
         """Start one internal deterministic run without accepting browser event data."""
         try:
-            return SandboxSimulationRun.model_validate(start_sandbox_simulation(scenario_id))
+            return SandboxSimulationRun.model_validate(
+                start_sandbox_simulation(scenario_id)
+            )
         except ScenarioDatasetNotFound as error:
-            raise HTTPException(status_code=404, detail="sandbox_scenario_not_found") from error
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
         except SandboxDataUnavailable as error:
-            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
 
     @app.get(
         "/sandbox/simulation-runs/{run_id}",
@@ -499,11 +585,17 @@ def create_app() -> FastAPI:
     def sandbox_simulation_run(run_id: str) -> SandboxSimulationRun:
         """Return one internal simulation run's safe progress information."""
         try:
-            return SandboxSimulationRun.model_validate(load_sandbox_simulation_run(run_id))
+            return SandboxSimulationRun.model_validate(
+                load_sandbox_simulation_run(run_id)
+            )
         except ScenarioSimulationNotFound as error:
-            raise HTTPException(status_code=404, detail="sandbox_simulation_not_found") from error
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
         except SandboxDataUnavailable as error:
-            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
 
     @app.get(
         "/sandbox/simulation-runs/{run_id}/events",
@@ -514,6 +606,7 @@ def create_app() -> FastAPI:
         run_id: str, request: Request
     ) -> StreamingResponse:
         """Stream changed safe run state while a browser remains connected."""
+
         async def event_stream() -> AsyncIterator[str]:
             previous: str | None = None
             for _ in range(60):
@@ -582,8 +675,16 @@ def create_app() -> FastAPI:
         # The socket peer is server-observed metadata. Arbitrary forwarding or
         # caller-supplied identity headers are deliberately ignored.
         client_key = request.client.host if request.client else "unknown"
+        # The browser key only scopes where a completed case is saved (spec
+        # 0002). It never feeds admission or rate limiting, and the stream is
+        # passed through unchanged whether or not the case is saved.
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         return StreamingResponse(
-            showcase_runtime.stream(body, client_key),
+            record_case_stream(
+                showcase_runtime.stream(body, client_key),
+                browser_id=browser_id,
+                recorder=case_recorder,
+            ),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
         )
