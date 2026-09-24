@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { format } from "date-fns"
 import { Tabs as TabsPrimitive } from "radix-ui"
 
 import { NetworkMark } from "@/components/averlynx-logo"
@@ -18,11 +19,15 @@ import {
   windowDayCount,
   type ScenarioRange,
 } from "@/lib/scenario-date-window"
+import type { ShowcaseCaseFilters, ShowcaseCaseSummary } from "@/lib/showcase-cases"
+import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
+import { RadarCasesPanel, type RadarCaseRow, type RadarCasesSummary } from "./RadarCasesPanel"
+import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
 import { RadarRangeToggle } from "./RadarRangeToggle"
-import { RadarRecommendationChart, type RadarRecommendationDatum } from "./RadarRecommendationChart"
+import { RadarRecommendationChart } from "./RadarRecommendationChart"
 import { RadarScenarioActivityChart } from "./RadarScenarioActivityChart"
 
 const scenarios: ReadonlyArray<{ id: ShowcaseScenarioId; label: string }> = [
@@ -33,7 +38,7 @@ const scenarios: ReadonlyArray<{ id: ShowcaseScenarioId; label: string }> = [
   { id: "S05", label: "Investigation failure path" },
 ]
 
-type DashboardTab = "scenario" | "session" | "model"
+type DashboardTab = "scenario" | "cases" | "model"
 
 type SessionRun = {
   runId: string
@@ -43,19 +48,25 @@ type SessionRun = {
   recommendation: "PASS" | "CHALLENGE" | "HOLD"
   investigationStatus: "skipped" | "complete" | "incomplete"
   executionMode: "recorded" | "live"
+  fallbackReason: ShowcaseCaseSummary["fallback_reason"]
   evidenceCount: number
   isFailSafe: boolean
+}
+
+// Short Mode column wording, so a live request that ran as recorded says why.
+const FALLBACK_SHORT = {
+  live_disabled: "live off",
+  admission_limited: "live limit reached",
+  provider_unavailable: "live provider unavailable",
+} as const
+
+function modeLabel(mode: "recorded" | "live", fallbackReason: ShowcaseCaseSummary["fallback_reason"]): string {
+  return fallbackReason ? `${mode} (${FALLBACK_SHORT[fallbackReason]})` : mode
 }
 
 // The Sandbox result is stored with the scenario it belongs to, so a
 // scenario switch reads as "loading" until its own response arrives.
 type SandboxResult = { scenarioId: ShowcaseScenarioId; analytics: SandboxScenarioAnalytics | null }
-
-const recommendationColors = {
-  PASS: "var(--sev-low)",
-  CHALLENGE: "var(--sev-moderate)",
-  HOLD: "var(--sev-high)",
-} as const
 
 // Both Scenario charts reserve the same y-axis width, so a given day sits
 // at the same x position in each and the two can be read together.
@@ -68,10 +79,6 @@ function runsLabel(count: number): string {
   return `${countFormatter.format(count)} ${count === 1 ? "run" : "runs"}`
 }
 
-function percentOf(part: number, whole: number): string {
-  return whole ? `${Math.round((part / whole) * 100)}% of runs` : "No runs yet"
-}
-
 function timeNow(): string {
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
@@ -81,12 +88,6 @@ function timeNow(): string {
   }).format(new Date())
 }
 
-function recommendationClass(recommendation: SessionRun["recommendation"]): string {
-  if (recommendation === "PASS") return "risk-low"
-  if (recommendation === "HOLD") return "risk-high"
-  return "risk-flagged"
-}
-
 export function RadarReference() {
   const [tab, setTab] = useState<DashboardTab>("scenario")
   const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>("S01")
@@ -94,8 +95,11 @@ export function RadarReference() {
   const [runs, setRuns] = useState<SessionRun[]>([])
   const [benchmark, setBenchmark] = useState<DemoModelSummary | null>(null)
   const [sandboxResult, setSandboxResult] = useState<SandboxResult | null>(null)
+  const [caseFilters, setCaseFilters] = useState<ShowcaseCaseFilters>({})
   const seenRunIds = useRef(new Set<string>())
   const investigation = useShowcaseInvestigation()
+  const cases = useShowcaseCases(caseFilters)
+  const { trackRun } = cases
 
   useEffect(() => {
     let active = true
@@ -140,12 +144,15 @@ export function RadarReference() {
         recommendation: runResult.recommendation,
         investigationStatus: runResult.investigation_status,
         executionMode: runResult.execution_mode,
+        fallbackReason: runStarted.fallback_reason,
         evidenceCount,
         isFailSafe: runResult.recommendation_basis === "fail_safe",
       },
       ...current,
     ])
-  }, [investigation])
+    // Ask the API whether this run was saved, then refresh the Cases list.
+    trackRun(runStarted.run_id)
+  }, [investigation, trackRun])
 
   const scenarioLabel = scenarios.find((scenario) => scenario.id === scenarioId)?.label ?? ""
 
@@ -168,35 +175,86 @@ export function RadarReference() {
   }, [scenarioId, dateWindow, sandboxActivity])
   const historyTotal = history.data.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
 
-  // ---- Session tab ---------------------------------------------------------
-  const summary = useMemo(() => {
+  // ---- Cases tab -----------------------------------------------------------
+  // Saved cases when storage is on; this visit's runs as the fallback (AC-10).
+  const casesMode = cases.state.status === "ready" ? "saved" : cases.state.status === "unavailable" ? "fallback" : "loading"
+  const sessionRow = (run: SessionRun, notSaved: boolean): RadarCaseRow => ({
+    id: run.runId,
+    time: run.timestamp,
+    scenarioId: run.scenarioId,
+    route: run.route,
+    recommendation: run.recommendation,
+    investigationStatus: run.investigationStatus,
+    evidenceCount: run.evidenceCount,
+    mode: modeLabel(run.executionMode, run.fallbackReason),
+    href: null,
+    notSaved,
+  })
+  const caseRows = useMemo<RadarCaseRow[]>(() => {
+    if (cases.state.status !== "ready") return runs.map((run) => sessionRow(run, false))
+    // A finished run missing from the saved list is shown, unlinked, as "Not
+    // saved" (left out of the totals), when it matches the current filters.
+    const unsaved = runs
+      .filter((run) => cases.savedStates[run.runId] === "not_saved")
+      .filter((run) => !caseFilters.scenarioId || run.scenarioId === caseFilters.scenarioId)
+      .filter((run) => !caseFilters.recommendation || run.recommendation === caseFilters.recommendation)
+      .map((run) => sessionRow(run, true))
+    const saved = cases.state.items.map<RadarCaseRow>((item) => ({
+      id: item.case_id,
+      time: format(new Date(item.completed_at), "d MMM, HH:mm:ss"),
+      scenarioId: item.scenario_id,
+      route: item.deterministic_route,
+      recommendation: item.recommendation,
+      investigationStatus: item.investigation_status,
+      evidenceCount: item.evidence_count,
+      mode: modeLabel(item.execution_mode, item.fallback_reason),
+      href: `/transactions/${item.case_id}`,
+      notSaved: false,
+    }))
+    return [...unsaved, ...saved]
+    // sessionRow is a pure mapping defined above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cases.state, cases.savedStates, runs, caseFilters])
+  const casesSummary = useMemo<RadarCasesSummary>(() => {
+    if (cases.state.status === "ready") {
+      const { totals } = cases.state
+      return {
+        total: totals.total,
+        ...totals.by_recommendation,
+        deterministicPasses: totals.deterministic_passes,
+        failSafeHolds: totals.fail_safe_holds,
+        completedInvestigations: totals.completed_investigations,
+        byScenario: scenarios.map(({ id }) => ({ label: id, ...(totals.by_scenario[id] ?? { PASS: 0, CHALLENGE: 0, HOLD: 0 }) })),
+      }
+    }
     const count = (predicate: (run: SessionRun) => boolean) => runs.filter(predicate).length
     return {
-      processed: runs.length,
-      completedInvestigations: count((run) => run.investigationStatus === "complete"),
+      total: runs.length,
       PASS: count((run) => run.recommendation === "PASS"),
       CHALLENGE: count((run) => run.recommendation === "CHALLENGE"),
       HOLD: count((run) => run.recommendation === "HOLD"),
       deterministicPasses: count((run) => run.route === "PASS"),
       failSafeHolds: count((run) => run.isFailSafe),
+      completedInvestigations: count((run) => run.investigationStatus === "complete"),
+      byScenario: scenarios.map(({ id }) => {
+        const scenarioRuns = runs.filter((run) => run.scenarioId === id)
+        return {
+          label: id,
+          PASS: scenarioRuns.filter((run) => run.recommendation === "PASS").length,
+          CHALLENGE: scenarioRuns.filter((run) => run.recommendation === "CHALLENGE").length,
+          HOLD: scenarioRuns.filter((run) => run.recommendation === "HOLD").length,
+        }
+      }),
     }
-  }, [runs])
-  const recommendationsByScenario = useMemo<readonly RadarRecommendationDatum[]>(() => scenarios.map(({ id }) => {
-    const scenarioRuns = runs.filter((run) => run.scenarioId === id)
-    return {
-      label: id,
-      PASS: scenarioRuns.filter((run) => run.recommendation === "PASS").length,
-      CHALLENGE: scenarioRuns.filter((run) => run.recommendation === "CHALLENGE").length,
-      HOLD: scenarioRuns.filter((run) => run.recommendation === "HOLD").length,
-    }
-  }), [runs])
+  }, [cases.state, runs])
+  const casesTabCount = cases.state.status === "ready" ? cases.state.totals.total : runs.length
 
   // ---- Model tab -----------------------------------------------------------
   const xgboost = benchmark?.model_results.find((model) => model.model_id === "xgboost_candidate")
 
   function runShowcase() {
-    // The result only appears on the Session tab, so take the viewer there.
-    setTab("session")
+    // The result only appears on the Cases tab, so take the viewer there.
+    setTab("cases")
     void investigation.start(scenarioId, "recorded")
   }
 
@@ -226,12 +284,20 @@ export function RadarReference() {
         </div>
       </div>
 
-      <TabsPrimitive.Root value={tab} onValueChange={(value) => setTab(value as DashboardTab)}>
+      <TabsPrimitive.Root
+        value={tab}
+        onValueChange={(value) => {
+          setTab(value as DashboardTab)
+          // Cases can be saved from other pages (the investigation page), so
+          // opening the tab always reads the latest first page.
+          if (value === "cases") cases.refresh()
+        }}
+      >
         <div className="tabs">
           <TabsPrimitive.List aria-label="Dashboard sections" className="tabs-list">
             <TabsPrimitive.Trigger className="tab" value="scenario">Scenario</TabsPrimitive.Trigger>
-            <TabsPrimitive.Trigger className="tab" value="session">
-              Session{runs.length ? <span className="tab-count">{runs.length}</span> : null}
+            <TabsPrimitive.Trigger className="tab" value="cases">
+              Cases{casesTabCount ? <span className="tab-count">{casesTabCount}</span> : null}
             </TabsPrimitive.Trigger>
             <TabsPrimitive.Trigger className="tab" value="model">Model</TabsPrimitive.Trigger>
           </TabsPrimitive.List>
@@ -305,77 +371,23 @@ export function RadarReference() {
             </footer>
           </TabsPrimitive.Content>
 
-          {/* ---------------- Session ---------------- */}
-          <TabsPrimitive.Content className="tab-panel" value="session">
-            <div>
-              <div className="section-heading">Synthetic showcase decision stream</div>
-              <div className="section-sub">Only completed, synthetic showcase runs from this browser session appear here. No payments are executed and no runtime model score is shown.</div>
-            </div>
-
-            {investigation.error ? <p className="status-error">{investigation.error}</p> : null}
-
-            {runs.length === 0 ? (
-              <section className="empty-card">
-                <div className="card-title">{running ? "Running your first showcase…" : "No showcase runs yet"}</div>
-                <p className="card-copy">
-                  Run {scenarioId} · {scenarioLabel} to see its deterministic route, final recommendation and evidence here. Runs stay in this browser session only.
-                </p>
-                <Button size="sm" onClick={runShowcase} disabled={running}>
-                  {running ? "Running…" : `Run ${scenarioId}`}
-                </Button>
-              </section>
-            ) : (
-              <>
-                <div className="radar-summary-grid" aria-label="Current session summary">
-                  <MetricCard label="Runs completed" value={countFormatter.format(summary.processed)} detail={`${countFormatter.format(summary.completedInvestigations)} ${summary.completedInvestigations === 1 ? "investigation" : "investigations"} completed`} />
-                  <MetricCard label="PASS" swatch={recommendationColors.PASS} value={countFormatter.format(summary.PASS)} detail={`${countFormatter.format(summary.deterministicPasses)} via deterministic route`} />
-                  <MetricCard label="CHALLENGE" swatch={recommendationColors.CHALLENGE} value={countFormatter.format(summary.CHALLENGE)} detail={percentOf(summary.CHALLENGE, summary.processed)} />
-                  <MetricCard label="HOLD" swatch={recommendationColors.HOLD} value={countFormatter.format(summary.HOLD)} detail={`${countFormatter.format(summary.failSafeHolds)} fail-safe (incomplete investigation)`} />
-                </div>
-
-                <div
-                  aria-label={`PASS ${summary.PASS}, CHALLENGE ${summary.CHALLENGE}, HOLD ${summary.HOLD}`}
-                  className="radar-outcome-distribution session-share"
-                  role="img"
-                >
-                  {(["PASS", "CHALLENGE", "HOLD"] as const).map((key) =>
-                    summary[key] ? (
-                      <span
-                        className="radar-outcome-distribution-segment"
-                        key={key}
-                        style={{ backgroundColor: recommendationColors[key], width: `${(summary[key] / summary.processed) * 100}%` }}
-                      />
-                    ) : null,
-                  )}
-                </div>
-
-                <section className="table-card">
-                  <div className="table-card-header"><span className="table-card-title">Current session decisions</span><span className="active-pill">Synthetic</span></div>
-                  <div className="table-scroll">
-                    <table>
-                      <thead><tr><th>Time</th><th>Run</th><th>Scenario</th><th>Route</th><th>Recommendation</th><th>Investigation</th><th>Evidence</th><th>Mode</th></tr></thead>
-                      <tbody>
-                        {runs.map((run) => <tr key={run.runId}>
-                          <td className="td-mono">{run.timestamp}</td><td className="td-mono">{run.runId}</td><td className="td-scenario">{run.scenarioId}</td><td className="td-secondary">{run.route}</td>
-                          <td><span className={`risk-pill ${recommendationClass(run.recommendation)}`}>{run.recommendation}</span></td><td className="td-secondary">{run.investigationStatus}</td><td className="td-secondary">{run.evidenceCount}</td><td className="td-secondary">{run.executionMode}</td>
-                        </tr>)}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                <details className="radar-collapsible">
-                  <summary>Breakdown by scenario</summary>
-                  <RadarRecommendationChart
-                    categoryLabel="Scenario"
-                    data={recommendationsByScenario}
-                    description={`${runsLabel(summary.processed)} completed. Showcase runs by scenario and final recommendation. This is not a historical trend or a runtime score distribution.`}
-                    emptyMessage="No completed showcase runs in this session."
-                    title="Current session recommendations"
-                  />
-                </details>
-              </>
-            )}
+          {/* ---------------- Cases ---------------- */}
+          <TabsPrimitive.Content className="tab-panel" value="cases">
+            <RadarCasesPanel
+              error={investigation.error}
+              filters={caseFilters}
+              hasMore={cases.state.status === "ready" && Boolean(cases.state.nextCursor)}
+              loadingMore={cases.state.status === "ready" && cases.state.loadingMore}
+              mode={casesMode}
+              onFiltersChange={setCaseFilters}
+              onRun={runShowcase}
+              onShowMore={cases.loadMore}
+              rows={caseRows}
+              runLabel={`${scenarioId} · ${scenarioLabel}`}
+              running={running}
+              scenarioOptions={scenarios}
+              summary={casesSummary}
+            />
           </TabsPrimitive.Content>
 
           {/* ---------------- Model ---------------- */}
@@ -399,20 +411,5 @@ export function RadarReference() {
         </div>
       </TabsPrimitive.Root>
     </main>
-  )
-}
-
-type MetricCardProps = { label: string; value: string; detail: string; swatch?: string }
-
-function MetricCard({ label, value, detail, swatch }: MetricCardProps) {
-  return (
-    <div className="stat-tile">
-      <div className="stat-label">
-        {swatch ? <span aria-hidden="true" className="radar-outcome-swatch" style={{ backgroundColor: swatch }} /> : null}
-        {label}
-      </div>
-      <div className="stat-value">{value}</div>
-      <div className="stat-detail">{detail}</div>
-    </div>
   )
 }

@@ -68,3 +68,32 @@ class CaseDetailResponse(StrictShowcaseModel):
     contract_version: Literal["1.0"]
     case: CaseSummary
     events: list[StoredCaseEvent] = Field(min_length=1)
+
+
+class RecommendationCounts(StrictShowcaseModel):
+    """How many cases ended in each final recommendation."""
+
+    PASS: int = Field(ge=0)
+    CHALLENGE: int = Field(ge=0)
+    HOLD: int = Field(ge=0)
+
+
+class CaseTotals(StrictShowcaseModel):
+    """Tab wide totals over all of a browser's unexpired cases (filters ignored)."""
+
+    total: int = Field(ge=0)
+    by_recommendation: RecommendationCounts
+    # Every scenario S01 to S08 is present, zero filled, for the breakdown chart.
+    by_scenario: dict[str, RecommendationCounts]
+    deterministic_passes: int = Field(ge=0)
+    fail_safe_holds: int = Field(ge=0)
+    completed_investigations: int = Field(ge=0)
+
+
+class CaseListResponse(StrictShowcaseModel):
+    """One newest first page of cases, the next page cursor, and the totals."""
+
+    contract_version: Literal["1.0"]
+    items: list[CaseSummary] = Field(max_length=20)
+    next_cursor: str | None
+    totals: CaseTotals

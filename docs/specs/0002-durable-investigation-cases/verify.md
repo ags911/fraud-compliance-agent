@@ -27,9 +27,35 @@ Setup for the storage on steps: an API with `DATABASE_URL` (migration `0004_show
 - [ ] In the browser, `localStorage["showcase-browser-id"]` holds one lowercase UUID, and every run request carries it as `X-Showcase-Browser-Id` → AC-17
 - [ ] `/transactions/investigation` and `/transactions/new` still open their own pages → route precedence
 
-## Slices 2 and 3 (not built yet)
-Steps for AC-6, AC-9, AC-10, AC-12, AC-13, AC-18 and AC-19 are added when those slices land.
+## Slice 2 (built)
+
+### Commands
+- [ ] `GET /cases` with `$BID` after S01, S04 and S05 runs → items newest first (S05, S04, S01), `next_cursor` null, `totals.total` 3, `totals.by_scenario` has S01 to S08 with zeros, `fail_safe_holds` 1, `deterministic_passes` 1 → AC-6, value sourcing
+- [ ] With 22 cases: page 1 has 20 items and a `next_cursor`; `?cursor=<it>` returns the other 2 and `next_cursor` null; no case appears twice → AC-6
+- [ ] `?scenario_id=S04&recommendation=CHALLENGE` → only S04 rows, while `totals.total` still counts every case → AC-6
+- [ ] `?cursor=abc@def` → 400 `invalid_cursor`; `?limit=0`, `?limit=21`, `?limit=ten`, `?scenario_id=S09`, `?recommendation=RELEASE` → 422 `invalid_parameters`; no body contains the bad value → error order, no echo
+- [ ] With no key and `?limit=ten` → 400 `invalid_browser_id` (key before parameters); with storage off → 503 `cases_unavailable` (storage first) → error order
+
+### UI / manual (storage on)
+- [ ] Radar tabs read Scenario · Cases · Model; the Cases count badge equals `totals.total` → AC-9
+- [ ] Before any run: "Saved cases" heading and the "No saved cases yet" empty state with a Run button → AC-9 copy
+- [ ] Run S01, S04, S05: rows appear newest first with local "d MMM, HH:mm:ss" times, each Run ID links to its case → AC-9
+- [ ] Filter "HOLD" → only S05; the stat cards do not change → AC-9, AC-6
+- [ ] With more than 20 cases: 20 rows, then "Show more" loads the rest and disappears → AC-9
+- [ ] Clicking a Run ID opens `/transactions/<id>` in the whole window, not inside the Radar frame → AC-9
+- [ ] Save a case from `/transactions/investigation`, then open Radar's Cases tab → it is listed (the tab refreshes when opened) → AC-9
+- [ ] A finished run missing from the list (simulate by hiding it from the `/cases` response) → an unlinked row tagged "Not saved", outside the totals → AC-10
+- [ ] Mode column shows `recorded (live off)` style wording when a live request ran as recorded → AC-19
+- [ ] `/transactions/investigation` after a run: "Saved · Open case" linking to the case → AC-18
+
+### UI / manual (storage off)
+- [ ] Cases tab heading "This visit's runs" with the "Not saved: case history is off in this environment" description, table "This visit's decisions", no filters, no links → AC-10
+- [ ] `/transactions/investigation` after a run: "Not saved: case history is off in this environment." → AC-18
+
+## Slice 3 (not built yet)
+Steps for AC-12, AC-13 and the full AC-11 stages are added when slice 3 lands.
 
 ## Acceptance criteria coverage
 - AC-1 slice 1 commands 1, 2 · AC-2, AC-4, AC-5, AC-16 slice 1 pytest · AC-3 commands 6, 7 · AC-7 commands 3, 4 · AC-8 cap command · AC-11 UI 3 · AC-14 UI 1, 2, 4, 5 · AC-15 command 6 · AC-17 UI 6
-- Not yet covered (later slices): AC-6, AC-9, AC-10, AC-12, AC-13, AC-18, AC-19
+- AC-6 slice 2 commands 1 to 3 · AC-9 slice 2 UI (storage on) 1 to 7 · AC-10 slice 2 UI unsaved row, storage off · AC-18 slice 2 investigation page steps · AC-19 slice 2 Mode column step
+- Not yet covered (slice 3): AC-12, AC-13, and the grouped stages of AC-11

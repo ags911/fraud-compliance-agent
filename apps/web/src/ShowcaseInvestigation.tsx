@@ -20,6 +20,7 @@ import {
 import { SectionTabs } from '@/components/section-tabs'
 import { showcaseScenarios, toRunnableShowcaseScenario } from '@/lib/showcase-scenarios'
 import type { ShowcaseExecutionMode, ShowcaseScenarioId } from '@/lib/showcase-types'
+import { useCaseSavedStatus } from '@/lib/useCaseSavedStatus'
 import { useShowcaseInvestigation } from '@/lib/useShowcaseInvestigation'
 import { useShowcaseInvestigationTour } from '@/lib/useShowcaseInvestigationTour'
 
@@ -41,6 +42,9 @@ export function ShowcaseInvestigationPage() {
   )
   const [executionMode, setExecutionMode] = useState<ShowcaseExecutionMode>('recorded')
   const investigation = useShowcaseInvestigation()
+  const savedStatus = useCaseSavedStatus(
+    investigation.status === 'done' ? (investigation.runStarted?.run_id ?? null) : null,
+  )
 
   // The Overview's Run hands off here with `autoRun` in navigation state. It
   // always runs as recorded playback, and the state is cleared at once so a
@@ -213,6 +217,24 @@ export function ShowcaseInvestigationPage() {
                 <p className="text-sm" data-testid="showcase-run-result">
                   Deterministic recommendation: <strong>{investigation.runResult.recommendation}</strong>. Authority not
                   evaluated, no simulated action.
+                </p>
+              ) : null}
+
+              {/* Whether this finished run was saved as a durable case (spec 0002). */}
+              {savedStatus && savedStatus !== 'checking' && investigation.runStarted ? (
+                <p className="text-sm text-muted-foreground" data-testid="showcase-case-saved">
+                  {savedStatus === 'saved' ? (
+                    <>
+                      Saved ·{' '}
+                      <a className="underline underline-offset-4" href={`/transactions/${investigation.runStarted.run_id}`}>
+                        Open case
+                      </a>
+                    </>
+                  ) : savedStatus === 'not_saved' ? (
+                    'Not saved.'
+                  ) : (
+                    'Not saved: case history is off in this environment.'
+                  )}
                 </p>
               ) : null}
             </div>

@@ -213,10 +213,10 @@ Build approach: none is recorded in the project, so this assumes thin end to end
 8. [x] Web: add the `/transactions/:caseId` route (ID format checked before any request) with a minimal case page (header and a plain event list) and its loading, not found and unavailable states; satisfies **AC-11**, **AC-14**.
 
 **Slice 2: the Cases list**
-9. Add `GET /cases` with paging (`limit` plus 1, base64url cursor), filters, `totals`, the error order and the non echoing 422 handler; satisfies **AC-6**, **AC-8**.
-10. Web: add `src/lib/showcase-cases.ts` (types and fetchers) and a hook; rename Radar's Session tab to Cases and fill it from `GET /cases` with the Copy table, filters, "Show more", the tab count, the local time column, the fallback reason in the Mode column, the saved check (refetch after each run) and `target="_top"` row links; satisfies **AC-9**, **AC-19**.
-11. Web: the storage unavailable fallback with the "Not saved" note, and unlinked "Not saved" rows outside the totals; satisfies **AC-10**.
-11a. Web: show "Saved · Open case" or "Not saved" on `/transactions/investigation` after each run; satisfies **AC-18**.
+9. [x] Add `GET /cases` with paging (`limit` plus 1, base64url cursor), filters, `totals`, the error order and the non echoing 422 handler; satisfies **AC-6**, **AC-8**.
+10. [x] Web: add `src/lib/showcase-cases.ts` (types and fetchers) and a hook; rename Radar's Session tab to Cases and fill it from `GET /cases` with the Copy table, filters, "Show more", the tab count, the local time column, the fallback reason in the Mode column, the saved check (refetch after each run) and `target="_top"` row links; satisfies **AC-9**, **AC-19**.
+11. [x] Web: the storage unavailable fallback with the "Not saved" note, and unlinked "Not saved" rows outside the totals; satisfies **AC-10**.
+11a. [x] Web: show "Saved · Open case" or "Not saved" on `/transactions/investigation` after each run; satisfies **AC-18**.
 
 **Slice 3: the full case page**
 12. Group events into Route, Evidence and Outcome stages, each expandable to its raw events, reusing `ShowcaseModeLabel`, `ShowcaseEvidenceTrace` and `ShowcaseOutcome` from `src/components/console/ShowcaseTrace.tsx` where they fit; satisfies **AC-11**, **AC-19**.

@@ -494,3 +494,176 @@ def test_storage_off_means_no_repository_is_ever_built(monkeypatch) -> None:
     monkeypatch.setattr(main, "PsycopgCaseRepository", forbidden)
     response = _run_through_api(TestClient(main.create_app()), "S01", BROWSER_ID)
     assert response.status_code == 200
+
+
+# ---- GET /cases (spec 0002 slice 2) -----------------------------------------
+
+
+class ListingCaseRepository(InMemoryCaseRepository):
+    """Adds list_cases with the real paging, filter and totals rules."""
+
+    def list_cases(
+        self,
+        browser_id,
+        *,
+        limit=20,
+        cursor=None,
+        scenario_id=None,
+        recommendation=None,
+    ):
+        from server.showcase_cases.repository import (
+            CasePage,
+            _summary,
+            decode_cursor,
+            empty_totals,
+            encode_cursor,
+        )
+
+        position = decode_cursor(cursor) if cursor else None
+        mine = sorted(
+            (record for record, owner in self.cases.values() if owner == browser_id),
+            key=lambda record: (record.completed_at, record.case_id),
+            reverse=True,
+        )
+        totals = empty_totals()
+        for record in mine:
+            totals["total"] += 1
+            totals["by_recommendation"][record.recommendation] += 1
+            totals["by_scenario"][record.scenario_id][record.recommendation] += 1
+            totals["deterministic_passes"] += record.deterministic_route == "PASS"
+            totals["fail_safe_holds"] += record.recommendation_basis == "fail_safe"
+            totals["completed_investigations"] += (
+                record.investigation_status == "complete"
+            )
+        rows = [
+            record
+            for record in mine
+            if (not scenario_id or record.scenario_id == scenario_id)
+            and (not recommendation or record.recommendation == recommendation)
+            and (not position or (record.completed_at, record.case_id) < position)
+        ][: limit + 1]
+        page = rows[:limit]
+        next_cursor = (
+            encode_cursor(page[-1].completed_at, page[-1].case_id)
+            if len(rows) > limit
+            else None
+        )
+        return CasePage(
+            [_summary(_row(record)) for record in page], next_cursor, totals
+        )
+
+
+@pytest.fixture
+def listing_cases(monkeypatch):
+    import server.main as main
+
+    monkeypatch.setenv("SHOWCASE_CASES_ENABLED", "true")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example/db")
+    repositories: list[ListingCaseRepository] = []
+
+    def build(database_url: str) -> ListingCaseRepository:
+        repositories.append(ListingCaseRepository(database_url))
+        return repositories[-1]
+
+    monkeypatch.setattr(main, "PsycopgCaseRepository", build)
+    return TestClient(main.create_app()), repositories[0]
+
+
+def _key(browser_id: str = BROWSER_ID) -> dict[str, str]:
+    return {"X-Showcase-Browser-Id": browser_id}
+
+
+def test_list_returns_this_browsers_cases_newest_first_with_totals(
+    listing_cases, repository_root: Path
+) -> None:
+    """AC-6: scoped, newest first, totals over everything, valid against the draft."""
+    client, _ = listing_cases
+    for scenario in ["S01", "S04", "S05"]:
+        _run_through_api(client, scenario, BROWSER_ID)
+    _run_through_api(client, "S02", "7c9e6679-7425-40de-944b-e07fc1f90ae7")
+
+    reply = client.get("/cases", headers=_key())
+    body = reply.json()
+    schema = json.loads((repository_root / PROPOSED_SCHEMA).read_text(encoding="utf-8"))
+    Draft202012Validator(
+        {**schema["$defs"]["caseListResponse"], "$defs": schema["$defs"]}
+    ).validate(body)
+
+    assert reply.status_code == 200
+    assert [item["scenario_id"] for item in body["items"]] == ["S05", "S04", "S01"]
+    assert body["next_cursor"] is None
+    assert body["totals"]["total"] == 3
+    assert body["totals"]["by_scenario"]["S02"] == {
+        "PASS": 0,
+        "CHALLENGE": 0,
+        "HOLD": 0,
+    }
+    assert body["totals"]["fail_safe_holds"] == 1
+    assert body["totals"]["deterministic_passes"] == 1
+
+
+def test_list_pages_and_filters_without_changing_totals(listing_cases) -> None:
+    """AC-6: 20 per page, a cursor for the rest, filters leave totals alone."""
+    client, _ = listing_cases
+    for _ in range(21):
+        _run_through_api(client, "S01", BROWSER_ID)
+    _run_through_api(client, "S04", BROWSER_ID)
+
+    first = client.get("/cases", headers=_key()).json()
+    second = client.get(
+        "/cases", params={"cursor": first["next_cursor"]}, headers=_key()
+    ).json()
+    filtered = client.get(
+        "/cases",
+        params={"scenario_id": "S04", "recommendation": "CHALLENGE"},
+        headers=_key(),
+    ).json()
+
+    assert len(first["items"]) == 20
+    assert len(second["items"]) == 2
+    assert second["next_cursor"] is None
+    assert {item["case_id"] for item in first["items"]}.isdisjoint(
+        item["case_id"] for item in second["items"]
+    )
+    assert [item["scenario_id"] for item in filtered["items"]] == ["S04"]
+    assert filtered["totals"]["total"] == 22
+
+
+@pytest.mark.parametrize(
+    ("params", "code"),
+    [
+        ({"cursor": "abc@def"}, "invalid_cursor"),
+        ({"limit": "0"}, "invalid_parameters"),
+        ({"limit": "21"}, "invalid_parameters"),
+        ({"limit": "ten"}, "invalid_parameters"),
+        ({"scenario_id": "S09"}, "invalid_parameters"),
+        ({"recommendation": "RELEASE"}, "invalid_parameters"),
+    ],
+)
+def test_list_rejects_bad_parameters_without_echoing_them(
+    listing_cases, params, code
+) -> None:
+    """Bad cursor 400, other bad parameters 422, never echoing the input."""
+    client, _ = listing_cases
+    reply = client.get("/cases", params=params, headers=_key())
+
+    assert reply.status_code == (400 if code == "invalid_cursor" else 422)
+    assert reply.json()["detail"]["code"] == code
+    for value in params.values():
+        assert value not in reply.text
+
+
+def test_list_error_order_puts_storage_and_key_before_parameters(
+    listing_cases, monkeypatch
+) -> None:
+    """503 first, then 400 for the key, then parameter errors."""
+    client, _ = listing_cases
+    assert (
+        client.get("/cases", params={"limit": "ten"}).json()["detail"]["code"]
+        == "invalid_browser_id"
+    )
+
+    monkeypatch.delenv("SHOWCASE_CASES_ENABLED")
+    disabled = TestClient(create_app()).get("/cases", params={"limit": "ten"})
+    assert disabled.status_code == 503
+    assert disabled.json()["detail"]["code"] == "cases_unavailable"

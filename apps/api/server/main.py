@@ -76,10 +76,12 @@ from server.sandbox_data.service import (
     start_sandbox_simulation,
 )
 from server.showcase_cases.capture import EventValidator
-from server.showcase_cases.models import CaseDetailResponse
+from server.showcase_cases.models import CaseDetailResponse, CaseListResponse
 from server.showcase_cases.repository import (
+    PAGE_SIZE,
     CaseNotFound,
     CasesUnavailable,
+    InvalidCursor,
     PsycopgCaseRepository,
 )
 from server.showcase_cases.settings import load_case_settings, valid_browser_id
@@ -448,6 +450,18 @@ def create_app() -> FastAPI:
         request: Request, error: RequestValidationError
     ) -> JSONResponse:
         """Redact only the public-showcase route's request-validation details."""
+        if request.url.path == "/cases" or request.url.path.startswith("/cases/"):
+            # Case routes validate their own inputs; this is a safety net so a
+            # framework validation error can never echo request input back.
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": {
+                        "code": "invalid_parameters",
+                        "message": "Check the case filters and page size.",
+                    }
+                },
+            )
         if request.url.path == "/showcase/investigations":
             detail = ShowcaseErrorDetail(
                 code="invalid_request",
@@ -511,6 +525,80 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
+
+    @app.get(
+        "/cases",
+        include_in_schema=False,
+        response_model=CaseListResponse,
+        responses={
+            400: {"model": DemoError},
+            422: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def list_showcase_cases(
+        request: Request,
+        limit: str | None = None,
+        cursor: str | None = None,
+        scenario_id: str | None = None,
+        recommendation: str | None = None,
+    ) -> CaseListResponse:
+        """Return one page of the calling browser's durable cases (spec 0002).
+
+        Parameters arrive as plain strings and are validated here, so the
+        fixed error order holds: storage off (503), then the browser key (400),
+        then a bad cursor (400) or other bad parameters (422). No error body
+        echoes request input.
+        """
+        if case_repository is None:
+            raise _case_error(
+                503, "cases_unavailable", "Case history is off in this environment."
+            )
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+        if browser_id is None:
+            raise _case_error(
+                400, "invalid_browser_id", "A valid browser key is required."
+            )
+        invalid = _case_error(
+            422, "invalid_parameters", "Check the case filters and page size."
+        )
+        if limit is not None and not re.fullmatch(r"[1-9][0-9]?", limit):
+            raise invalid
+        page_size = int(limit) if limit is not None else PAGE_SIZE
+        if page_size > PAGE_SIZE:
+            raise invalid
+        if scenario_id is not None and not re.fullmatch(r"S0[1-8]", scenario_id):
+            raise invalid
+        if recommendation is not None and recommendation not in {
+            "PASS",
+            "CHALLENGE",
+            "HOLD",
+        }:
+            raise invalid
+        try:
+            page = case_repository.list_cases(
+                browser_id,
+                limit=page_size,
+                cursor=cursor,
+                scenario_id=scenario_id,
+                recommendation=recommendation,
+            )
+        except InvalidCursor as error:
+            raise _case_error(
+                400, "invalid_cursor", "The page cursor is not valid."
+            ) from error
+        except CasesUnavailable as error:
+            raise _case_error(
+                503, "cases_unavailable", "Case history is unavailable."
+            ) from error
+        return CaseListResponse.model_validate(
+            {
+                "contract_version": "1.0",
+                "items": page.items,
+                "next_cursor": page.next_cursor,
+                "totals": page.totals,
+            }
+        )
 
     @app.get(
         "/cases/{case_id}",

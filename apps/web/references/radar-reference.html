@@ -176,6 +176,19 @@
   .empty-card [data-slot="button"]{ height:32px; padding:0 0.875rem; border-radius:9999px; margin-top:4px; }
   .session-share{ margin-top:2px; }
   .table-scroll{ overflow-x:auto; }
+  /* Cases tab (spec 0002): case links, the unsaved tag, filters, paging. */
+  .case-link{ color: var(--lch-text-primary); text-decoration: underline; text-decoration-color: var(--lch-border); text-underline-offset: 3px; }
+  .case-link:hover{ text-decoration-color: var(--lch-text-secondary); }
+  .case-link:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:2px; border-radius:2px; }
+  .not-saved-pill{
+    margin-left:8px; font-family: 'Inter', sans-serif; font-size:10.5px; font-weight:600;
+    color: var(--lch-text-secondary); background: var(--lch-bg-pill); border:1px solid var(--lch-border);
+    padding:1px 7px; border-radius: var(--radius-pill); white-space:nowrap;
+  }
+  .case-filters{ display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+  .case-filters [data-slot="select-trigger"]{ height:30px; padding:0 0.625rem; border-radius:9999px; }
+  .table-card-footer{ display:flex; justify-content:center; padding: var(--card-pad-y) var(--card-pad-x); border-top:1px solid var(--lch-border-soft); }
+  .table-card-footer .show-more{ border-radius:9999px; }
   .radar-collapsible{ background: var(--lch-bg-panel); border:1px solid var(--lch-border-soft); border-radius: var(--radius-md); overflow:hidden; }
   .radar-collapsible > summary{ padding: var(--card-pad-y) var(--card-pad-x); color: var(--lch-text-primary); cursor:pointer; font-size:12.5px; font-weight:600; }
   .radar-collapsible > summary:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:-2px; }
@@ -432,6 +445,8 @@
     thead th:nth-child(3), tbody td:nth-child(3){ display:none; }
     .radar-outcome-header{ flex-direction:column; gap:12px; }
     .panel-toolbar{ flex-direction:column; align-items:flex-start; gap:10px; }
+    .table-card-header{ flex-wrap:wrap; }
+    .case-filters{ margin-left:0; width:100%; }
     .radar-chart-data thead th:nth-child(3), .radar-chart-data tbody td:nth-child(3){ display:table-cell; }
   }
 </style>

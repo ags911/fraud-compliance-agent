@@ -95,3 +95,67 @@ export async function fetchShowcaseCase(caseId: string, signal?: AbortSignal): P
   if (!response.ok) throw new Error(`Case request failed with status ${response.status}`)
   return { status: "found", detail: (await response.json()) as ShowcaseCaseDetail }
 }
+
+export type ShowcaseRecommendationCounts = { PASS: number; CHALLENGE: number; HOLD: number }
+
+export type ShowcaseCaseTotals = {
+  total: number
+  by_recommendation: ShowcaseRecommendationCounts
+  by_scenario: Record<string, ShowcaseRecommendationCounts>
+  deterministic_passes: number
+  fail_safe_holds: number
+  completed_investigations: number
+}
+
+export type ShowcaseCasePage = {
+  contract_version: "1.0"
+  items: ShowcaseCaseSummary[]
+  next_cursor: string | null
+  totals: ShowcaseCaseTotals
+}
+
+export type ShowcaseCaseFilters = {
+  scenarioId?: ShowcaseScenarioId
+  recommendation?: ShowcaseCaseSummary["recommendation"]
+}
+
+/** How a list read ended: a page, or case history unavailable (AC-10 fallback). */
+export type ShowcaseCaseListResult = { status: "ok"; page: ShowcaseCasePage } | { status: "unavailable" }
+
+/**
+ * Read one newest first page of this browser's cases.
+ *
+ * Any failure (storage off, no browser key, the API unreachable or erroring)
+ * returns `unavailable`, which the Cases tab turns into its session fallback.
+ */
+export async function fetchShowcaseCases(
+  filters: ShowcaseCaseFilters = {},
+  cursor?: string | null,
+  signal?: AbortSignal,
+): Promise<ShowcaseCaseListResult> {
+  const headers = showcaseBrowserHeaders()
+  if (!Object.keys(headers).length) return { status: "unavailable" }
+  const params = new URLSearchParams()
+  if (filters.scenarioId) params.set("scenario_id", filters.scenarioId)
+  if (filters.recommendation) params.set("recommendation", filters.recommendation)
+  if (cursor) params.set("cursor", cursor)
+  const query = params.toString()
+  try {
+    const response = await fetch(`${API_BASE_URL}/cases${query ? `?${query}` : ""}`, { headers, signal })
+    if (!response.ok) return { status: "unavailable" }
+    return { status: "ok", page: (await response.json()) as ShowcaseCasePage }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error
+    return { status: "unavailable" }
+  }
+}
+
+/**
+ * Whether a finished run was saved: it is on the unfiltered newest first page.
+ * A run missing from that page was not saved (AC-4, AC-10).
+ */
+export async function checkShowcaseCaseSaved(runId: string): Promise<"saved" | "not_saved" | "unavailable"> {
+  const result = await fetchShowcaseCases()
+  if (result.status === "unavailable") return "unavailable"
+  return result.page.items.some((item) => item.case_id === runId) ? "saved" : "not_saved"
+}
