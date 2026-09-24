@@ -93,7 +93,11 @@
      edge of the page chrome, not part of the centered content itself.
      .topbar-inner matches .body-grid's max-width + centering so the brand
      and scenario select still line up with the content column below. */
+  /* Sticky inside .main (the page's scroll container). Solid background so
+     content scrolls under it; z-index below the drawer and menus (z-50). */
   .topbar{
+    position: sticky; top: 0; z-index: 20;
+    background: var(--lch-bg-main);
     padding: 18px 0; border-bottom: 1px solid var(--lch-border-soft);
   }
   .topbar-inner{
