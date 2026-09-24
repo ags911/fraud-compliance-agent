@@ -23,11 +23,13 @@ import type { ShowcaseCaseFilters, ShowcaseCaseSummary } from "@/lib/showcase-ca
 import { useRadarCaseParam } from "@/lib/useRadarCaseParam"
 import { useShowcaseCase } from "@/lib/useShowcaseCase"
 import { useShowcaseCases } from "@/lib/useShowcaseCases"
+import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 import { RadarCaseDrawer } from "./RadarCaseDrawer"
 import { RadarCasesPanel, type RadarCaseRow, type RadarCasesSummary } from "./RadarCasesPanel"
+import { RadarFeedBar } from "./RadarFeedBar"
 import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
 import { RadarRangeToggle } from "./RadarRangeToggle"
 import { RadarRecommendationChart } from "./RadarRecommendationChart"
@@ -107,6 +109,8 @@ export function RadarReference() {
   const seenRunIds = useRef(new Set<string>())
   const investigation = useShowcaseInvestigation()
   const cases = useShowcaseCases(caseFilters)
+  // The live feed's payments are added to the imported base for this view.
+  const feed = useSandboxFeed(scenarioId)
   const { trackRun } = cases
 
   useEffect(() => {
@@ -124,7 +128,9 @@ export function RadarReference() {
 
   useEffect(() => {
     let active = true
-    fetchSandboxScenarioAnalytics(scenarioId).then(
+    // Refetched as each feed payment lands (feed.revision), keeping the last
+    // figures on screen until the new ones arrive.
+    fetchSandboxScenarioAnalytics(scenarioId, feed.runId).then(
       (analytics) => {
         if (active) setSandboxResult({ scenarioId, analytics })
       },
@@ -135,7 +141,7 @@ export function RadarReference() {
     return () => {
       active = false
     }
-  }, [scenarioId])
+  }, [scenarioId, feed.runId, feed.revision])
 
   useEffect(() => {
     const { runStarted, route, runResult, status, toolResults } = investigation
@@ -324,6 +330,8 @@ export function RadarReference() {
               <RadarRangeToggle label="Scenario date range" onChange={setRange} value={range} />
             </div>
 
+            <RadarFeedBar onStart={feed.start} onStop={feed.stop} scenarioId={scenarioId} state={feed.state} />
+
             <div className="radar-summary-grid" aria-label={`${scenarioId} Sandbox activity summary`}>
               <MetricCard
                 label="Transactions"
@@ -373,6 +381,7 @@ export function RadarReference() {
                 <span className="panel-footnote-label">About this data</span>
                 <strong>Mock data:</strong> the PASS / CHALLENGE / HOLD split is simulated over each day&apos;s real Sandbox transaction count, until Sandbox events are scored by the decision engine.{" "}
                 <strong>Sandbox:</strong> transactions, spend and active days are sanitised Plaid Sandbox data, read from the prepared store; no live provider request is made from this page.{" "}
+                <strong>Live feed:</strong> when started, simulated payments from a fixed, repeatable schedule are added on top of that data for this view only, on its latest day; they are not Plaid data and are never written into the dataset.{" "}
                 Neither is production or model-training data.
                 {sandboxAnalytics ? <> Dataset <code>{sandboxAnalytics.fixture_version}</code>.</> : null}
               </p>

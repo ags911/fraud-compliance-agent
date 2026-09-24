@@ -25,6 +25,18 @@ A reset creates a new run with a new run ID. It does not erase a prior run or
 rewrite its records. The worker may be run locally now and is intended for a
 future Azure Container Apps Job deployment after ratification.
 
+**Continuous feed (engineer's choices, 2026-09-24, during /develop):** a run
+is a long bounded feed, not a short burst: 200 payments, one every 3 seconds
+for 10 minutes, with a Stop. Amounts vary by up to 30% around each
+scenario's typical amount, from a fixed seed, so a run position always yields
+the same payment. Each run starts from the imported base: the worker only
+marks a scheduled event as shown and never rewrites the scenario dataset, and
+the analytics endpoint adds one run's shown events to the base only when that
+run is named. Feed payments land on the dataset's latest day, so the date
+window does not move while a run counts up. Starting a run cancels any run
+still going for that scenario, and Radar stops a feed when the viewer
+changes scenario.
+
 ## Code area
 
 `apps/api/migrations/`, `apps/api/server/`, `apps/api/scripts/`,
@@ -34,8 +46,17 @@ future Azure Container Apps Job deployment after ratification.
 
 - AC-1: A run and its scheduled events are persisted per scenario, fixture
   version, run ID, and ordered sequence.
-- AC-2: Advancing a due event is atomic and idempotent. It updates only its
-  scenario dataset and its derived aggregates.
+- AC-2: Advancing a due event is atomic and idempotent. It marks only that
+  event as shown and never changes the imported scenario dataset; a Stop
+  waits for an in flight batch, so nothing is added after it.
+- AC-6: `GET /sandbox/scenarios/{id}/analytics?simulation_run_id=` returns the
+  imported base plus that run's shown events, and 404s a run of another
+  scenario or an older import; without it, the base alone.
+- AC-7: `POST /sandbox/simulation-runs/{run_id}/cancel` stops a run; shown
+  payments stay shown.
+- AC-8: Radar's Scenario tab starts, follows and stops a feed, and its
+  figures count up from the base as payments land; it says when the worker
+  is not running.
 - AC-3: A local worker command can advance due events without Plaid access.
 - AC-4: Internal API endpoints expose only safe run state and a read-only SSE
   notice stream. They do not expose raw transaction data or accept event

@@ -71,6 +71,7 @@ from server.sandbox_data.service import (
     SandboxDataUnavailable,
     ScenarioDatasetNotFound,
     ScenarioSimulationNotFound,
+    cancel_sandbox_simulation,
     load_sandbox_analytics,
     load_sandbox_simulation_run,
     start_sandbox_simulation,
@@ -377,6 +378,8 @@ async def _stream_bounded_run(
 
 
 _CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+# A simulation progress stream stays open for one feed run plus a margin.
+_SIMULATION_STREAM_SECONDS = 660
 
 
 def _case_error(status_code: int, code: str, message: str) -> HTTPException:
@@ -506,17 +509,24 @@ def create_app() -> FastAPI:
         response_model=SandboxScenarioAnalytics,
         responses={404: {"model": DemoError}, 503: {"model": DemoError}},
     )
-    def sandbox_scenario_analytics(scenario_id: str) -> SandboxScenarioAnalytics:
+    def sandbox_scenario_analytics(
+        scenario_id: str, simulation_run_id: str | None = None
+    ) -> SandboxScenarioAnalytics:
         """Return read only, prepared aggregate data for one Sandbox scenario.
 
         The route reads only a versioned sanitised dataset from the optional
         Neon store. It cannot contact Plaid, return raw transactions, score a
-        payment, or mutate a scenario.
+        payment, or mutate a scenario. With ``simulation_run_id``, that run's
+        shown feed payments are added to the imported base.
         """
         try:
             return SandboxScenarioAnalytics.model_validate(
-                load_sandbox_analytics(scenario_id)
+                load_sandbox_analytics(scenario_id, simulation_run_id)
             )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
         except ScenarioDatasetNotFound as error:
             raise HTTPException(
                 status_code=404, detail="sandbox_scenario_not_found"
@@ -664,6 +674,21 @@ def create_app() -> FastAPI:
                 status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
 
+    @app.post(
+        "/sandbox/simulation-runs/{run_id}/cancel",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+    )
+    def cancel_sandbox_scenario_simulation(run_id: str) -> SandboxSimulationRun:
+        """Stop one internal run; payments already shown stay shown."""
+        try:
+            return SandboxSimulationRun.model_validate(cancel_sandbox_simulation(run_id))
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(status_code=404, detail="sandbox_simulation_not_found") from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+
     @app.get(
         "/sandbox/simulation-runs/{run_id}",
         include_in_schema=False,
@@ -697,7 +722,8 @@ def create_app() -> FastAPI:
 
         async def event_stream() -> AsyncIterator[str]:
             previous: str | None = None
-            for _ in range(60):
+            # Long enough to follow a whole feed run, then the client reconnects.
+            for _ in range(_SIMULATION_STREAM_SECONDS):
                 if await request.is_disconnected():
                     return
                 try:

@@ -25,5 +25,9 @@ After the migrations and import, start it with
 `uv run python scripts/run_sandbox_simulation_worker.py`. An internal client
 can create a run with `POST /sandbox/scenarios/{scenario_id}/simulation-runs`,
 observe its safe state with `GET /sandbox/simulation-runs/{run_id}`, and
-subscribe to `GET /sandbox/simulation-runs/{run_id}/events`. The worker, not
-the browser, appends due sanitised events. It never calls Plaid.
+subscribe to `GET /sandbox/simulation-runs/{run_id}/events`, and stop it with
+`POST /sandbox/simulation-runs/{run_id}/cancel`. A run is a live feed of 200
+payments, one every 3 seconds. The worker, not the browser, marks due events
+as shown; the imported dataset is never changed, and
+`GET /sandbox/scenarios/{scenario_id}/analytics?simulation_run_id=<run>`
+returns the base plus that run's payments. It never calls Plaid.

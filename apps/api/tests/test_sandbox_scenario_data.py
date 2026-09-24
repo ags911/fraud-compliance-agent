@@ -11,10 +11,15 @@ from server import main
 from server.main import create_app
 from server.sandbox_data.service import (
     SanitisedEvent,
+    _overlay_shown_events,
     build_dataset,
     build_scenario_datasets,
 )
-from server.sandbox_data.simulation import build_scenario_schedule
+from server.sandbox_data.simulation import (
+    FEED_EVENT_COUNT,
+    FEED_INTERVAL_SECONDS,
+    build_scenario_schedule,
+)
 
 
 def test_dataset_builder_preserves_date_precision_and_derived_history() -> None:
@@ -168,11 +173,92 @@ def test_transaction_schedules_are_deterministic_and_skip_workflow_scenarios() -
     """Keep payment schedules scoped to transaction-shaped accepted scenarios."""
     schedule = build_scenario_schedule("S02", date(2026, 9, 24), "run-test")
 
-    assert [item.sequence for item in schedule] == [1, 2, 3]
-    assert [item.delay_seconds for item in schedule] == [0, 3, 6]
+    assert len(schedule) == FEED_EVENT_COUNT == 200
+    assert [item.sequence for item in schedule[:3]] == [1, 2, 3]
+    assert [item.delay_seconds for item in schedule[:3]] == [0, 3, 6]
+    assert schedule[-1].delay_seconds == (FEED_EVENT_COUNT - 1) * FEED_INTERVAL_SECONDS
     assert all(item.event.event_id.startswith("simulation_run-test_") for item in schedule)
     assert all(item.event.event_date == date(2026, 9, 24) for item in schedule)
     assert build_scenario_schedule("S06", date(2026, 9, 24), "run-test") == ()
+
+
+def test_feed_amounts_vary_but_repeat_for_the_same_position() -> None:
+    """A run position always yields the same payment, within 30% of typical."""
+    first = build_scenario_schedule("S04", date(2026, 9, 23), "run-a")
+    second = build_scenario_schedule("S04", date(2026, 9, 23), "run-b")
+
+    amounts = [item.event.amount_minor for item in first]
+    assert amounts == [item.event.amount_minor for item in second]
+    assert len(set(amounts)) > 1
+    assert all(0.7 * 26500 <= amount <= 1.3 * 26500 for amount in amounts)
+    assert all(item.event.amount_minor >= 0 for item in first)
+
+
+def test_shown_feed_events_are_added_to_the_base_aggregates_only() -> None:
+    """Overlay counts, outbound amounts and categories without changing the base."""
+    base = [
+        {"aggregate_date": date(2026, 9, 22), "transaction_count": 2, "outbound_amount_minor": 500, "category_counts": {"grocery": 2}},
+        {"aggregate_date": date(2026, 9, 23), "transaction_count": 1, "outbound_amount_minor": 100, "category_counts": {"grocery": 1}},
+    ]
+    shown = [
+        {"event_date": date(2026, 9, 23), "amount_minor": 140000, "direction": "outbound", "category_bucket": "high_velocity"},
+        {"event_date": date(2026, 9, 23), "amount_minor": 140000, "direction": "outbound", "category_bucket": "high_velocity"},
+        # Outside the dataset boundary: never invented into a new day.
+        {"event_date": date(2026, 9, 30), "amount_minor": 1, "direction": "outbound", "category_bucket": "grocery"},
+    ]
+
+    overlaid = _overlay_shown_events(base, shown)
+
+    assert overlaid[0] == base[0]
+    assert overlaid[1]["transaction_count"] == 3
+    assert overlaid[1]["outbound_amount_minor"] == 280100
+    assert overlaid[1]["category_counts"] == {"grocery": 1, "high_velocity": 2}
+    # The stored base rows are not mutated.
+    assert base[1]["transaction_count"] == 1
+    assert base[1]["category_counts"] == {"grocery": 1}
+
+
+def test_analytics_endpoint_passes_the_run_and_rejects_another_scenarios_run(monkeypatch) -> None:
+    """Read the base plus one run, and 404 a run that is not this scenario's."""
+    calls = []
+
+    def fake(scenario_id, simulation_run_id=None):
+        calls.append((scenario_id, simulation_run_id))
+        raise main.ScenarioSimulationNotFound(simulation_run_id)
+
+    monkeypatch.setattr(main, "load_sandbox_analytics", fake)
+
+    response = TestClient(create_app()).get(
+        "/sandbox/scenarios/S02/analytics?simulation_run_id=run-other"
+    )
+
+    assert calls == [("S02", "run-other")]
+    assert response.status_code == 404
+    assert response.json() == {"detail": "sandbox_simulation_not_found"}
+
+
+def test_cancel_simulation_endpoint_returns_the_stopped_run(monkeypatch) -> None:
+    """Stop a run through the internal route without accepting a body."""
+    monkeypatch.setattr(
+        main,
+        "cancel_sandbox_simulation",
+        lambda run_id: {
+            "run_id": run_id,
+            "scenario_id": "S02",
+            "fixture_version": "fixture-test",
+            "seed": "sandbox-simulation-v1",
+            "state": "cancelled",
+            "scheduled_event_count": 200,
+            "appended_event_count": 12,
+            "next_due_at": "2026-09-24T00:10:00+00:00",
+        },
+    )
+
+    response = TestClient(create_app()).post("/sandbox/simulation-runs/run-test/cancel")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "cancelled"
+    assert response.json()["appended_event_count"] == 12
 
 
 def test_start_simulation_endpoint_returns_safe_run_state(monkeypatch) -> None:
@@ -283,7 +369,7 @@ def test_analytics_endpoint_returns_only_sanitised_aggregates(
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id: dataset.to_analytics_response(),
+        lambda scenario_id, simulation_run_id=None: dataset.to_analytics_response(),
     )
 
     response = TestClient(create_app()).get("/sandbox/scenarios/S04/analytics")
@@ -314,7 +400,9 @@ def test_analytics_endpoint_redacts_database_unavailability(monkeypatch) -> None
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id: (_ for _ in ()).throw(main.SandboxDataUnavailable()),
+        lambda scenario_id, simulation_run_id=None: (_ for _ in ()).throw(
+            main.SandboxDataUnavailable()
+        ),
     )
 
     response = TestClient(create_app()).get("/sandbox/scenarios/S04/analytics")

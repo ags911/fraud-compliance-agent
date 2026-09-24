@@ -29,9 +29,17 @@ export type SandboxScenarioAnalytics = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8010"
 
-/** Fetch read only, sanitised daily scenario aggregates for chart rendering. */
-export async function fetchSandboxScenarioAnalytics(scenarioId: string): Promise<SandboxScenarioAnalytics> {
-  const response = await fetch(`${API_BASE_URL}/sandbox/scenarios/${encodeURIComponent(scenarioId)}/analytics`)
+/**
+ * Fetch read only, sanitised daily scenario aggregates for chart rendering.
+ * With a live feed run, the aggregates are the imported base plus that run's
+ * payments so far.
+ */
+export async function fetchSandboxScenarioAnalytics(
+  scenarioId: string,
+  simulationRunId?: string | null,
+): Promise<SandboxScenarioAnalytics> {
+  const query = simulationRunId ? `?simulation_run_id=${encodeURIComponent(simulationRunId)}` : ""
+  const response = await fetch(`${API_BASE_URL}/sandbox/scenarios/${encodeURIComponent(scenarioId)}/analytics${query}`)
   if (!response.ok) throw new Error("Sandbox scenario activity is unavailable")
   return response.json() as Promise<SandboxScenarioAnalytics>
 }
