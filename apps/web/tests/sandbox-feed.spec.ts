@@ -62,24 +62,26 @@ async function stubFeed(page: Page, { appended, cancelled }: { appended: number;
   return calls
 }
 
-test("starts a live feed, shows the base plus its payments, and stops it", async ({ page }) => {
+test("the Live switch starts a feed, shows the base plus its payments, and stops it", async ({ page }) => {
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
   await page.goto("/references/radar-reference.html")
 
-  const feed = page.getByRole("region", { name: "Live feed" })
-  await expect(feed).toContainText("Adds a simulated S01 payment every 3 seconds")
+  const live = page.getByRole("switch", { name: "Live feed" })
+  const status = page.locator(".live-status")
   const transactions = page.getByLabel("S01 Sandbox activity summary").locator(".stat-value").first()
+  await expect(live).not.toBeChecked()
   await expect(transactions).toHaveText("10")
 
-  await feed.getByRole("button", { name: "Start live feed" }).click()
-  await expect(feed).toContainText("2 payments added of 200.")
+  await live.click()
+  await expect(live).toBeChecked()
+  await expect(status).toHaveText("2 / 200")
   // The figures are re-read with the run, so they count up from the base.
   await expect(transactions).toHaveText("12")
   expect(calls).toContain(`analytics:${RUN_ID}`)
 
-  await feed.getByRole("button", { name: "Stop" }).click()
-  await expect(feed).toContainText("Feed stopped")
-  await expect(feed).toContainText("2 payments added. Starting again begins from the imported data.")
+  await live.click()
+  await expect(live).not.toBeChecked()
+  await expect(status).toHaveText("Stopped · 2")
   expect(calls).toContain("cancel")
   await expect(transactions).toHaveText("12")
 })
@@ -91,8 +93,8 @@ test("says the feed is unavailable when the API cannot start it", async ({ page 
   )
   await page.goto("/references/radar-reference.html")
 
-  const feed = page.getByRole("region", { name: "Live feed" })
-  await feed.getByRole("button", { name: "Start live feed" }).click()
-  await expect(feed).toContainText("Live feed unavailable")
-  await expect(feed.getByRole("button", { name: "Try again" })).toBeVisible()
+  const live = page.getByRole("switch", { name: "Live feed" })
+  await live.click()
+  await expect(page.locator(".live-status")).toHaveText("Unavailable")
+  await expect(live).not.toBeChecked()
 })

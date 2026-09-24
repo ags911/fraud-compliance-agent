@@ -29,7 +29,7 @@ import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 import { RadarCaseDrawer } from "./RadarCaseDrawer"
 import { RadarCasesPanel, type RadarCaseRow, type RadarCasesSummary } from "./RadarCasesPanel"
-import { RadarFeedBar } from "./RadarFeedBar"
+import { RadarLiveSwitch } from "./RadarLiveSwitch"
 import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
 import { RadarRangeToggle } from "./RadarRangeToggle"
 import { RadarRecommendationChart } from "./RadarRecommendationChart"
@@ -291,6 +291,7 @@ export function RadarReference() {
                 {scenarios.map((scenario) => <SelectItem key={scenario.id} value={scenario.id}>{scenario.id} · {scenario.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <RadarLiveSwitch onStart={feed.start} onStop={feed.stop} state={feed.state} />
             <Button size="sm" onClick={runShowcase} disabled={running}>
               {running ? "Running…" : "Run showcase"}
             </Button>
@@ -329,8 +330,6 @@ export function RadarReference() {
               </div>
               <RadarRangeToggle label="Scenario date range" onChange={setRange} value={range} />
             </div>
-
-            <RadarFeedBar onStart={feed.start} onStop={feed.stop} scenarioId={scenarioId} state={feed.state} />
 
             <div className="radar-summary-grid" aria-label={`${scenarioId} Sandbox activity summary`}>
               <MetricCard
@@ -376,14 +375,11 @@ export function RadarReference() {
 
             {/* The full explanation lives here once; each chart keeps only its
                 one-word source badge, so a chart on its own still says what it is. */}
+            {/* One line only; the per source detail moves to a help control later. */}
             <footer className="panel-footnote">
               <p>
                 <span className="panel-footnote-label">About this data</span>
-                <strong>Mock data:</strong> the PASS / CHALLENGE / HOLD split is simulated over each day&apos;s real Sandbox transaction count, until Sandbox events are scored by the decision engine.{" "}
-                <strong>Sandbox:</strong> transactions, spend and active days are sanitised Plaid Sandbox data, read from the prepared store; no live provider request is made from this page.{" "}
-                <strong>Live feed:</strong> when started, simulated payments from a fixed, repeatable schedule are added on top of that data for this view only, on its latest day; they are not Plaid data and are never written into the dataset.{" "}
-                Neither is production or model-training data.
-                {sandboxAnalytics ? <> Dataset <code>{sandboxAnalytics.fixture_version}</code>.</> : null}
+                Sanitised Plaid Sandbox data, with mock recommendations and simulated live feed payments. Not production or model training data.
               </p>
             </footer>
           </TabsPrimitive.Content>

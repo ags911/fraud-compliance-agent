@@ -37,6 +37,13 @@ window does not move while a run counts up. Starting a run cancels any run
 still going for that scenario, and Radar stops a feed when the viewer
 changes scenario.
 
+**Worker placement (engineer's choice, 2026-09-24):** for local demos the
+worker runs inside the API process as a background task, started only when
+`SIMULATION_WORKER_ENABLED=true` and a database is configured; it is off by
+default, so the public showcase starts no worker. The standalone script stays
+for a future separate job. Radar's control is a Live switch in the top bar,
+beside the scenario selector.
+
 ## Code area
 
 `apps/api/migrations/`, `apps/api/server/`, `apps/api/scripts/`,

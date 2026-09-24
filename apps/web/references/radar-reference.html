@@ -162,9 +162,7 @@
   .panel-toolbar .section-heading{ margin-bottom:2px; }
   .panel-toolbar .section-sub{ margin-bottom:0; font-variant-numeric: tabular-nums; }
   .panel-footnote{ margin-top:4px; color: var(--lch-text-secondary); font-size:11.5px; line-height:1.6; }
-  .panel-footnote p{ max-width:80ch; }
-  .panel-footnote{ padding-top:10px; border-top:1px solid var(--lch-border-soft); }
-  .panel-footnote-label{ display:block; margin-bottom:2px; color: var(--lch-text-primary); font-weight:600; }
+  .panel-footnote-label{ margin-right:6px; color: var(--lch-text-primary); font-weight:600; }
   .panel-footnote strong{ color: var(--lch-text-primary); font-weight:500; }
   .panel-footnote code{ font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:11px; color: var(--lch-text-secondary); overflow-wrap:anywhere; }
   .empty-card{
@@ -428,20 +426,19 @@
   .td-secondary{ color: var(--lch-text-secondary); }
   .td-tertiary{ color: var(--lch-text-tertiary); }
 
-  /* ---------------- Live feed bar (spec 0003) ---------------- */
-  .feed-bar{
-    display:flex; align-items:center; gap:10px;
-    background: var(--lch-bg-panel); border:1px solid var(--lch-border-soft); border-radius: var(--radius-md);
-    padding: var(--card-pad-y) var(--card-pad-x);
-  }
-  .feed-dot{ width:7px; height:7px; flex-shrink:0; border-radius:50%; background: var(--lch-text-tertiary); }
-  .feed-bar[data-state="live"] .feed-dot{ background: var(--sev-low); animation: pill-pulse 1.6s ease-in-out infinite; }
-  .feed-bar[data-state="unavailable"] .feed-dot{ background: var(--sev-high); }
-  .feed-text{ display:grid; gap:1px; min-width:0; flex:1; }
-  .feed-label{ font-size:12.5px; font-weight:600; }
-  .feed-copy{ font-size:12px; color: var(--lch-text-secondary); line-height:1.5; overflow-wrap:anywhere; font-variant-numeric: tabular-nums; }
-  .feed-bar [data-slot="button"]{ height:30px; padding:0 0.875rem; border-radius:9999px; flex-shrink:0; }
-  @media (prefers-reduced-motion: reduce){ .feed-bar[data-state="live"] .feed-dot{ animation:none; } }
+  /* ---------------- Live switch (spec 0003) ---------------- */
+  .live-switch{ display:flex; align-items:center; gap:8px; height:32px; padding:0 4px; }
+  .live-switch-label{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:500; color: var(--lch-text-secondary); cursor:pointer; }
+  .live-switch[data-state="live"] .live-switch-label{ color: var(--lch-text-primary); }
+  .live-switch[data-state="unsupported"] .live-switch-label{ cursor:not-allowed; opacity:0.5; }
+  .live-switch [data-slot="switch-thumb"][data-state="unchecked"]{ background: var(--lch-text-secondary); }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background: var(--lch-text-tertiary); }
+  .live-switch[data-state="live"] .live-dot{ background: var(--sev-low); animation: pill-pulse 1.6s ease-in-out infinite; }
+  .live-switch[data-state="unavailable"] .live-dot{ background: var(--sev-high); }
+  /* A fixed minimum width, so the top bar does not shift as the count changes. */
+  .live-status{ min-width:72px; font-size:11.5px; color: var(--lch-text-tertiary); font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .live-status:empty{ min-width:0; }
+  @media (prefers-reduced-motion: reduce){ .live-switch[data-state="live"] .live-dot{ animation:none; } }
 
   /* ---------------- Case drawer (spec 0002) ----------------
      shadcn's Sheet, retokened for this page: panel background, the page's
@@ -508,7 +505,6 @@
     .stat-row, .radar-detail-grid, .benchmark-metrics{ grid-template-columns:1fr; }
     .radar-summary-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .radar-case-drawer[data-slot="sheet-content"]{ width:100%; border-left:0; }
-    .feed-bar{ flex-wrap:wrap; }
     .case-drawer-header{ padding:14px 52px 12px 16px; }
     .case-drawer-body{ padding:14px 16px 20px; }
     .case-facts{ grid-template-columns:1fr; }

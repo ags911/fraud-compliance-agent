@@ -409,3 +409,51 @@ def test_analytics_endpoint_redacts_database_unavailability(monkeypatch) -> None
 
     assert response.status_code == 503
     assert response.json() == {"detail": "sandbox_scenario_data_unavailable"}
+
+
+def test_in_process_worker_advances_until_stopped(monkeypatch) -> None:
+    """Poll the schedule, survive an unavailable store, and stop on shutdown."""
+    import asyncio
+
+    from server.sandbox_data import worker
+
+    calls = []
+
+    def advance() -> int:
+        calls.append(1)
+        if len(calls) == 1:
+            raise worker.SandboxDataUnavailable()
+        return 1
+
+    monkeypatch.setattr(worker, "advance_sandbox_simulation_events", advance)
+
+    async def scenario() -> None:
+        stop = asyncio.Event()
+        task = asyncio.create_task(worker.run_simulation_worker(stop, poll_seconds=0.01))
+        await asyncio.sleep(0.08)
+        stop.set()
+        await asyncio.wait_for(task, timeout=1)
+
+    asyncio.run(scenario())
+    assert len(calls) >= 2
+
+
+def test_api_starts_no_worker_unless_enabled(monkeypatch) -> None:
+    """Keep the public, database free API free of any background worker."""
+    started = []
+
+    async def fake_worker(stop) -> None:
+        started.append(1)
+        await stop.wait()
+
+    monkeypatch.setattr(main, "run_simulation_worker", fake_worker)
+    monkeypatch.delenv("SIMULATION_WORKER_ENABLED", raising=False)
+    with TestClient(create_app()):
+        pass
+    assert started == []
+
+    monkeypatch.setenv("SIMULATION_WORKER_ENABLED", "true")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/db")
+    with TestClient(create_app()):
+        pass
+    assert started == [1]

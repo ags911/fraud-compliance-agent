@@ -20,9 +20,11 @@ scenario timeline. To append a reviewed simulated event to one scenario, run
 Raw provider payloads, descriptions, identifiers and access tokens must never
 be committed.
 
-The local deterministic simulation worker is separate from the API process.
-After the migrations and import, start it with
-`uv run python scripts/run_sandbox_simulation_worker.py`. An internal client
+The local deterministic simulation worker can run inside the API: start the
+API with `SIMULATION_WORKER_ENABLED=true` (and `DATABASE_URL`), and Radar's
+Live switch needs no second terminal. It can still run on its own with
+`uv run python scripts/run_sandbox_simulation_worker.py`, the shape a separate
+job would take later. An internal client
 can create a run with `POST /sandbox/scenarios/{scenario_id}/simulation-runs`,
 observe its safe state with `GET /sandbox/simulation-runs/{run_id}`, and
 subscribe to `GET /sandbox/simulation-runs/{run_id}/events`, and stop it with

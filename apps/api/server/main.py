@@ -24,6 +24,7 @@ import os
 import re
 import sys
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
@@ -76,6 +77,7 @@ from server.sandbox_data.service import (
     load_sandbox_simulation_run,
     start_sandbox_simulation,
 )
+from server.sandbox_data.worker import run_simulation_worker
 from server.showcase_cases.capture import EventValidator
 from server.showcase_cases.models import CaseDetailResponse, CaseListResponse
 from server.showcase_cases.repository import (
@@ -432,7 +434,27 @@ def create_app() -> FastAPI:
             case_repository = None
             case_recorder = None
 
+    # The local live feed's worker (spec 0003) runs inside the API only when
+    # explicitly enabled with a database; it is off for the public showcase.
+    run_worker = _boolean_env("SIMULATION_WORKER_ENABLED", False) and bool(
+        os.getenv("DATABASE_URL", "").strip()
+    )
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if not run_worker:
+            yield
+            return
+        stop = asyncio.Event()
+        worker = asyncio.create_task(run_simulation_worker(stop))
+        try:
+            yield
+        finally:
+            stop.set()
+            await worker
+
     app = FastAPI(
+        lifespan=lifespan,
         title="Fraud Compliance Agent Console API",
         description=(
             "Synthetic-only recruiter-showcase API. It streams the current "
