@@ -148,21 +148,6 @@ export function RadarCasesPanel(props: RadarCasesPanelProps) {
             />
           </div>
 
-          <div
-            aria-label={`PASS ${summary.PASS}, CHALLENGE ${summary.CHALLENGE}, HOLD ${summary.HOLD}`}
-            className="radar-outcome-distribution session-share"
-            role="img"
-          >
-            {(["PASS", "CHALLENGE", "HOLD"] as const).map((key) =>
-              summary[key] && summary.total ? (
-                <span
-                  className="radar-outcome-distribution-segment"
-                  key={key}
-                  style={{ backgroundColor: recommendationColors[key], width: `${(summary[key] / summary.total) * 100}%` }}
-                />
-              ) : null,
-            )}
-          </div>
 
           <section className="table-card">
             <div className="table-card-header">
