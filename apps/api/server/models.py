@@ -128,6 +128,19 @@ class SandboxScenarioAnalytics(StrictFiniteModel):
     daily_aggregates: list[SandboxDailyAggregate]
 
 
+class SandboxSimulationRun(StrictFiniteModel):
+    """Expose safe progress for one server-owned Sandbox simulation run."""
+
+    run_id: str = Field(min_length=1, max_length=64)
+    scenario_id: str = Field(pattern=r"^S0[1-8]$")
+    fixture_version: str = Field(min_length=1, max_length=128)
+    seed: str = Field(min_length=1, max_length=128)
+    state: Literal["pending", "running", "completed", "failed", "cancelled"]
+    scheduled_event_count: int = Field(ge=0)
+    appended_event_count: int = Field(ge=0)
+    next_due_at: str | None = None
+
+
 class HistoryPoint(StrictFiniteModel):
     """One bounded, amount-only historical observation for the demo pipeline."""
 

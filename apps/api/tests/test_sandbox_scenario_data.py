@@ -6,6 +6,7 @@ from datetime import date
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
+from scripts.import_plaid_sandbox_history import sanitise_history
 from server import main
 from server.main import create_app
 from server.sandbox_data.service import (
@@ -13,7 +14,7 @@ from server.sandbox_data.service import (
     build_dataset,
     build_scenario_datasets,
 )
-from scripts.import_plaid_sandbox_history import sanitise_history
+from server.sandbox_data.simulation import build_scenario_schedule
 
 
 def test_dataset_builder_preserves_date_precision_and_derived_history() -> None:
@@ -161,6 +162,55 @@ def test_plaid_history_sanitisation_never_retains_raw_provider_identity() -> Non
     assert events[0].payee_reference.startswith("payee_")
     assert "Raw Merchant Name" not in repr(events[0])
     assert "provider-transaction-id" not in repr(events[0])
+
+
+def test_transaction_schedules_are_deterministic_and_skip_workflow_scenarios() -> None:
+    """Keep payment schedules scoped to transaction-shaped accepted scenarios."""
+    schedule = build_scenario_schedule("S02", date(2026, 9, 24), "run-test")
+
+    assert [item.sequence for item in schedule] == [1, 2, 3]
+    assert [item.delay_seconds for item in schedule] == [0, 3, 6]
+    assert all(item.event.event_id.startswith("simulation_run-test_") for item in schedule)
+    assert all(item.event.event_date == date(2026, 9, 24) for item in schedule)
+    assert build_scenario_schedule("S06", date(2026, 9, 24), "run-test") == ()
+
+
+def test_start_simulation_endpoint_returns_safe_run_state(monkeypatch) -> None:
+    """Start a server-owned schedule without accepting a browser event body."""
+    monkeypatch.setattr(
+        main,
+        "start_sandbox_simulation",
+        lambda scenario_id: {
+            "run_id": "run-test",
+            "scenario_id": scenario_id,
+            "fixture_version": "fixture-test",
+            "seed": "sandbox-simulation-v1",
+            "state": "pending",
+            "scheduled_event_count": 3,
+            "appended_event_count": 0,
+            "next_due_at": "2026-09-24T00:00:00+00:00",
+        },
+    )
+
+    response = TestClient(create_app()).post("/sandbox/scenarios/S02/simulation-runs")
+
+    assert response.status_code == 200
+    assert response.json()["scenario_id"] == "S02"
+    assert response.json()["scheduled_event_count"] == 3
+
+
+def test_simulation_status_endpoint_redacts_store_unavailability(monkeypatch) -> None:
+    """Keep simulation database failures free of connection details."""
+    monkeypatch.setattr(
+        main,
+        "load_sandbox_simulation_run",
+        lambda run_id: (_ for _ in ()).throw(main.SandboxDataUnavailable()),
+    )
+
+    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "sandbox_scenario_data_unavailable"}
 
 
 def test_s04_fixture_is_validated_by_the_sanitised_dataset_contract(

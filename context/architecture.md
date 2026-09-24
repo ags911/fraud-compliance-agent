@@ -53,7 +53,10 @@ below for why that SDK is documented separately.
   instance in `apps/api/server/main.py` (no `APIRouter`). Current routes:
   `GET /health`, `GET /scenarios`, `GET /demo/model-summary`,
   `POST /showcase/investigations` (SSE), `POST /run` (SSE),
-  `POST /run/preset/{scenario_id}` (SSE). Target/candidate routes (not
+  `POST /run/preset/{scenario_id}` (SSE), plus the internal (hidden from the
+  OpenAPI, `include_in_schema=False`) `GET /sandbox/scenarios/{scenario_id}/analytics`.
+  Proposed internal routes (spec 0002, not built): `GET /cases`,
+  `GET /cases/{case_id}`. Target/candidate routes (not
   built): `POST /risk/score`, `POST /transactions/{id}/process`,
   `GET /transactions/{id}`, `GET /reviews`, `GET /reviews/{id}`,
   `POST /reviews/{id}/decision`, `GET /monitoring/model-health`,
@@ -140,6 +143,24 @@ minor units, currency, permitted category or payee facts, provenance and
 fixture version. It must not retain raw provider payloads, access tokens,
 transaction descriptions or provider customer and account identifiers.
 
+Web consumption: Radar's Scenario tab fetches the analytics for whichever
+S01–S05 scenario is selected (no longer S04 only) and fills zero days across
+`time_boundary` (`sandboxDailyActivitySeries` in
+`apps/web/src/lib/sandbox-scenario-analytics.ts`, matching what the importer
+writes). `read_analytics` serves the **newest imported** dataset per scenario
+(`ORDER BY imported_at DESC`), so re-importing an older fixture would shadow
+the Plaid-derived dataset. The web type `SandboxScenarioAnalytics` mirrors the
+v1 contract, including `baseline_version`, `overlay_version` and
+`enrichment_version` `s04-enrichment-v1 | sandbox-enrichment-v2`.
+
+Known caveats: `replace_dataset()` deletes the parent `sandbox_datasets` row
+before its referencing `sandbox_transactions`/`sandbox_daily_aggregates`, so
+re-importing an existing fixture version fails with a foreign-key violation
+(the append path deletes children first; fix: children first, plus
+appends once migration 0002 applies, with a regression test).
+`scripts/apply_sandbox_migrations.py` globs only `*_sandbox_*.sql` and keeps
+no applied-migration record, so every migration must be rerunnable.
+
 Each scenario dataset is isolated by scenario ID and fixture version. An
 import or replay for one scenario must not mutate another scenario. The
 2026-09-24 explicit import created a 331-event sanitised common baseline dated
@@ -148,6 +169,44 @@ all 87 calendar days, including zero-activity days. S01–S05 have one
 transaction-shaped deterministic overlay; S06–S08 retain the baseline until a
 controlled scenario-local append is supplied. Aggregation grain and retention
 still require explicit approval.
+
+#### Proposed durable investigation cases (spec 0002 — **Proposed**, not built)
+
+[`docs/specs/0002-durable-investigation-cases/`](../docs/specs/0002-durable-investigation-cases/index.md)
+designs F4 as a durable **record** of completed runs (not durable
+processing, which stays F3/ADR-009). The API wraps its own SSE output in
+`main.py` (runtime untouched), buffers identity-bearing events, validates them
+against `public-showcase-events.v1`, and on the `done` frame commits one
+`showcase_cases` row plus append-only `showcase_case_events` in one
+transaction (3 s limit, shielded thread) — the stream is never altered and a
+storage failure only means "Not saved". Cases are scoped to an anonymous
+`X-Showcase-Browser-Id` (localStorage UUID; a scoping key, not auth), private
+to that browser, 30 days / 50 cases, behind `SHOWCASE_CASES_ENABLED`
+(default off; the public showcase stays database-free per ADR-016). Radar's
+Session tab becomes Cases; case detail lives at `/transactions/:caseId`. It
+needs an ADR accepting `showcase-cases.v1` before it is a contract.
+
+#### Implemented local deterministic simulation runtime
+
+The current local service now has a worker command, internal simulation-run
+API, and browser subscription endpoint. The runtime introduces one durable, scenario-scoped
+simulation run. A run has a fixed dataset revision, seed, ordered schedule,
+current sequence, state (`pending`, `running`, `completed`, `failed`, or
+`cancelled`), and a reset lineage. Scheduled events are immutable and unique
+by `(simulation_run_id, sequence)`; their append record is the idempotency
+boundary. A worker advances due events from the stored schedule. It never
+calls Plaid, and each successful append recomputes only the affected scenario
+features and daily aggregates in the same database transaction.
+
+The browser receives a read-only SSE stream of run state and appended-event
+notices, then reads the updated analytics representation. It cannot supply an
+event body, alter a schedule, or write to another scenario. Reconnection uses
+the durable sequence cursor, rather than re-emitting events. Starting a new
+run is explicit and must either use a new isolated dataset revision or reset
+to a declared baseline; it must never silently rewrite the historical record.
+This local implementation needs a versioned API contract, an accepted
+persistence decision, and an operational worker deployment decision before it
+can be deployed or described as accepted runtime behaviour.
 
 This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
 authorises a database nor changes the accepted database-free public showcase
@@ -363,6 +422,11 @@ approval state.
 locally trained artifact is a runtime model by default." Promotion needs an
 approved target, data basis, evaluation criteria, release record, rollback
 approach, and the corresponding contract/policy version.
+
+**Proposed case retention** (spec 0002, not policy until built and
+ratified): showcase cases kept 30 days and at most 50 per anonymous browser
+ID; synthetic data only; stored content is the contract events (no prompts,
+raw provider responses or reasoning).
 
 **Accepted Plaid Sandbox boundary** (the one rule in this doc marked
 accepted): local, zero-retention Sandbox analysis only — a notebook may hold

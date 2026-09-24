@@ -125,6 +125,16 @@ preferences:
   dataset, never call Plaid directly. Every dataset needs a manifest with its
   scenario ID, fixture version, source class, seed or creation revision, time
   boundary, permitted fields, aggregate grain and intended consumers.
+- A proposed live scenario display is driven only by a deterministic,
+  scenario-scoped stored schedule. It must record the dataset revision, seed,
+  run ID, sequence and append idempotency key before an event can become
+  visible. Browser SSE is read only. It must not become a browser-owned timer,
+  a path to call Plaid, or a way to inject an event body. A reconnect resumes
+  from the durable sequence; it must not repeat events.
+- A simulation reset is explicit and auditable. It creates a new run or
+  declared reset lineage rather than deleting or overwriting an existing
+  timeline. S06–S08 must retain their workflow-only semantics until their
+  operational contracts provide relevant event facts.
 - Raw Plaid responses, access tokens, provider IDs and transaction
   descriptions must never be committed or stored in the application dataset.
   Pseudonymised event and aggregate records must preserve event time,

@@ -124,11 +124,48 @@ read S04's latest Neon dataset as baseline
 The import uses Doppler-provided `PLAID_SANDBOX_ACCESS_TOKEN` and
 `SANDBOX_PSEUDONYMISATION_KEY`; neither value is committed.
 
+**Dashboard wiring (2026-09-24):** Radar's scenario selector now reads the
+Neon analytics for S01–S05 (Scenario tab stat cards and outbound chart). The
+leftover 8-event `S04:s04-sandbox-v1` dataset was deleted from Neon (children
+first, no appends referenced it), so S04 has only the Plaid-derived dataset.
+Open defect: `replace_dataset()` deletes parent before child rows and fails
+on re-import (see `architecture.md` §4 caveats).
+
 **Next decision and delivery work:** add controlled append fixtures for
 S06–S08 where future operational contracts supply transaction-shaped facts,
-connect the dashboard scenario selector to the API data, and ratify the
+fix the `replace_dataset()` delete order, and ratify the
 time-aware event schema, Plaid mapping, retention and persistence in an ADR.
 Only then may the store be represented as an accepted runtime data source.
+
+**Implemented local extension, 2026-09-24:** migration
+`0003_sandbox_simulation_runs.sql` is live in Neon. It adds durable,
+scenario-scoped run and scheduled-event records. The local worker command
+`run_sandbox_simulation_worker.py` advances due events idempotently; internal
+API endpoints create and read run state and expose read-only SSE notices. A
+live Neon S02 run completed all three scheduled high-velocity events, proving
+the append and aggregate path end to end. S01–S05 have transaction-shaped
+schedules. S06–S08 remain workflow cases, not fabricated transaction streams.
+This is still an assumed, internal Sandbox design. The API contract, reset
+lifecycle, worker deployment, and dashboard integration require ratification.
+
+### F4 designed, not started: durable investigation cases
+
+**Spec [0002](../docs/specs/0002-durable-investigation-cases/index.md) —
+Proposed (accepted by the engineer as a design on 2026-09-24).** Scope is F4
+only, narrowed to a durable record of completed runs; 19 acceptance
+criteria, three Tracer Bullet slices. Prerequisites before it is a runtime
+contract: an ADR accepting `showcase-cases.v1` and case persistence; any
+public enablement additionally needs an ADR revisiting ADR-016, a rate
+limit, an expiry sweep and a hosting/secrets plan.
+
+**Dashboard implications for F5–F6** (agreed direction, not designed): Radar
+stays the overview and links into product routes. F5's review queue belongs
+on `/reviews` (S06 stale version shown as a case-page error); F6 adds a Radar
+Health tab (freshness, dataset versions, provider status) and a read-only
+replay/compare view on the case page (S08, "Replay, no action taken"). The
+single "Run showcase" button does not fit S06–S08; their actions belong on the
+case page and review queue, and the selector would group Decisions (S01–S05)
+and Operations (S06–S08). Radar's Model tab overlaps the planned `/insights`.
 
 ## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
 

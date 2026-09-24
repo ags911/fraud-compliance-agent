@@ -109,7 +109,14 @@ recommendation cannot bypass a hard control or missing critical evidence."
 5. **Overview dashboard** (built): `/` and `/overview` render the shadcn
    dashboard with synthetic demo data, outside the Payments shell used by
    every other route.
-6. **Stateless scoring (`POST /risk/score`) and stateful processing
+6. **Radar portfolio overview** (built, standalone): `/radar` embeds
+   `references/radar-reference.html` — Scenario / Session / Model tabs. The
+   Scenario tab reads the internal `GET /sandbox/scenarios/{id}/analytics`
+   for the selected S01–S05 scenario (real sanitised Sandbox aggregates) next
+   to a clearly badged **mock** PASS/CHALLENGE/HOLD history; the Session tab
+   shows this browser's recorded showcase runs; the Model tab shows the
+   accepted benchmark summary. See `ui_context.md` → Radar Portfolio Page.
+7. **Stateless scoring (`POST /risk/score`) and stateful processing
    (`POST /transactions/{transaction_id}/process`)** (target, **not built**):
    named in the PRD/implementation plan as candidate operations only; exact
    paths/envelopes/status codes remain unresolved pending the canonical
@@ -233,6 +240,31 @@ supports idempotent scenario-local simulated-event appends. It has no raw
 provider data or Azure deployment, and it must not create a new Item as a
 substitute for the intended history. A resolving ADR is still required before
 the store can be represented as an accepted runtime data source.
+
+### Implemented local scenario simulation and live display foundation
+
+The current datasets are deliberately finite. They are not live streams: no
+route starts a simulator, no worker advances a scenario clock, and the
+dashboard has no subscription to scenario changes. Existing SSE describes an
+investigation trace only, not changing Sandbox transaction data.
+
+The local Sandbox slice now includes a deterministic simulator. It keeps Plaid as an
+import-only source, starts from the selected scenario's versioned baseline
+and overlay, and emits that scenario's predeclared events in sequence. Each
+emission is appended only to that scenario timeline, updates its daily
+aggregates and derived features, and becomes visible to the dashboard. The
+same seed, starting revision and sequence must reproduce the same result.
+
+The implementation has durable simulation-run state, scheduled event records,
+idempotency per `(run_id, sequence)`, an explicit reset or new-run operation,
+and a read-only browser stream. A browser disconnect must not create duplicate
+events or let one scenario affect another. S01–S05 need scenario-specific
+transaction sequences before they can honestly demonstrate recurring,
+velocity, new-payee, contextual, or outage behaviour. S06–S08 are workflow
+scenarios and must not receive invented payment events merely to animate a
+chart. It remains a local, internal Sandbox capability. Its worker deployment,
+API contract, reset lifecycle, and public exposure are not yet accepted as a
+runtime contract.
 
 ### Incomplete/placeholder in the web app
 - Routes `/transactions`, `/reviews`, `/rules/performance`, `/settings`

@@ -61,6 +61,7 @@ from server.models import (
     PresetRunRequest,
     RunRequest,
     SandboxScenarioAnalytics,
+    SandboxSimulationRun,
     ScenarioNotFoundError,
     ScenarioSummary,
 )
@@ -68,7 +69,10 @@ from server.records import read_record
 from server.sandbox_data.service import (
     SandboxDataUnavailable,
     ScenarioDatasetNotFound,
+    ScenarioSimulationNotFound,
     load_sandbox_analytics,
+    load_sandbox_simulation_run,
+    start_sandbox_simulation,
 )
 from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
 from server.showcase_investigation.models import (
@@ -468,6 +472,66 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
+
+    @app.post(
+        "/sandbox/scenarios/{scenario_id}/simulation-runs",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+    )
+    def start_sandbox_scenario_simulation(
+        scenario_id: str,
+    ) -> SandboxSimulationRun:
+        """Start one internal deterministic run without accepting browser event data."""
+        try:
+            return SandboxSimulationRun.model_validate(start_sandbox_simulation(scenario_id))
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(status_code=404, detail="sandbox_scenario_not_found") from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+
+    @app.get(
+        "/sandbox/simulation-runs/{run_id}",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+    )
+    def sandbox_simulation_run(run_id: str) -> SandboxSimulationRun:
+        """Return one internal simulation run's safe progress information."""
+        try:
+            return SandboxSimulationRun.model_validate(load_sandbox_simulation_run(run_id))
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(status_code=404, detail="sandbox_simulation_not_found") from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+
+    @app.get(
+        "/sandbox/simulation-runs/{run_id}/events",
+        include_in_schema=False,
+        response_class=StreamingResponse,
+    )
+    async def sandbox_simulation_events(
+        run_id: str, request: Request
+    ) -> StreamingResponse:
+        """Stream changed safe run state while a browser remains connected."""
+        async def event_stream() -> AsyncIterator[str]:
+            previous: str | None = None
+            for _ in range(60):
+                if await request.is_disconnected():
+                    return
+                try:
+                    state = load_sandbox_simulation_run(run_id)
+                except (SandboxDataUnavailable, ScenarioSimulationNotFound):
+                    return
+                payload = json.dumps(state, sort_keys=True)
+                if payload != previous:
+                    yield f"event: simulation_state\\ndata: {payload}\\n\\n"
+                    previous = payload
+                if state["state"] in {"completed", "failed", "cancelled"}:
+                    return
+                await asyncio.sleep(1)
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     @app.post(
         "/showcase/investigations",
