@@ -7,6 +7,12 @@ import { expect, test, type Page } from "@playwright/test"
  */
 
 const RUN_ID = "3f2a9c1e-7b4d-4e8a-9c2f-1a6b5d8e0f42"
+const BROWSER_ID = "0b6f2d4e-7a1c-4e8b-9f3a-2c5d8e1f4a6b"
+
+// Every feed request for a run must carry this browser's ID (spec 0003, AC-9).
+async function useBrowserId(page: Page) {
+  await page.addInitScript((id) => window.localStorage.setItem("showcase-browser-id", id), BROWSER_ID)
+}
 
 function run(state: string, appended: number) {
   return {
@@ -43,18 +49,20 @@ async function stubFeed(page: Page, { appended, cancelled }: { appended: number;
   await page.route("**/sandbox/scenarios/S01/analytics**", (route) => {
     const runId = new URL(route.request().url()).searchParams.get("simulation_run_id")
     calls.push(`analytics:${runId ?? "base"}`)
+    if (runId) calls.push(`analytics-header:${route.request().headers()["x-showcase-browser-id"] ?? "none"}`)
     return route.fulfill({ json: analytics(runId ? appended : 0) })
   })
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) => {
-    calls.push("start")
+    calls.push(`start:${route.request().headers()["x-showcase-browser-id"] ?? "none"}`)
     return route.fulfill({ json: run("pending", 0) })
   })
-  await page.route(`**/sandbox/simulation-runs/${RUN_ID}/events`, (route) =>
-    route.fulfill({
+  await page.route(`**/sandbox/simulation-runs/${RUN_ID}/events`, (route) => {
+    calls.push(`stream:${route.request().headers()["x-showcase-browser-id"] ?? "none"}`)
+    return route.fulfill({
       contentType: "text/event-stream",
       body: `event: simulation_state\ndata: ${JSON.stringify(run("running", appended))}\n\n`,
-    }),
-  )
+    })
+  })
   await page.route(`**/sandbox/simulation-runs/${RUN_ID}/cancel`, (route) => {
     calls.push("cancel")
     return route.fulfill({ json: run("cancelled", cancelled) })
@@ -63,6 +71,7 @@ async function stubFeed(page: Page, { appended, cancelled }: { appended: number;
 }
 
 test("the Live switch starts a feed, shows the base plus its payments, and stops it", async ({ page }) => {
+  await useBrowserId(page)
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
   await page.goto("/references/radar-reference.html")
 
@@ -78,6 +87,10 @@ test("the Live switch starts a feed, shows the base plus its payments, and stops
   // The figures are re-read with the run, so they count up from the base.
   await expect(transactions).toHaveText("12")
   expect(calls).toContain(`analytics:${RUN_ID}`)
+  // The browser ID travels as a header on start, the fetch stream and the overlay.
+  expect(calls).toContain(`start:${BROWSER_ID}`)
+  expect(calls).toContain(`stream:${BROWSER_ID}`)
+  expect(calls).toContain(`analytics-header:${BROWSER_ID}`)
 
   await live.click()
   await expect(live).not.toBeChecked()
@@ -96,5 +109,19 @@ test("says the feed is unavailable when the API cannot start it", async ({ page 
   const live = page.getByRole("switch", { name: "Live feed" })
   await live.click()
   await expect(page.locator(".live-status")).toHaveText("Unavailable")
+  await expect(live).not.toBeChecked()
+})
+
+test("says the feed is busy when the API is at a limit", async ({ page }) => {
+  await useBrowserId(page)
+  await page.route("**/sandbox/scenarios/S01/analytics**", (route) => route.fulfill({ json: analytics(0) }))
+  await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
+    route.fulfill({ status: 429, json: { detail: "simulation_busy" } }),
+  )
+  await page.goto("/references/radar-reference.html")
+
+  const live = page.getByRole("switch", { name: "Live feed" })
+  await live.click()
+  await expect(page.locator(".live-status")).toHaveText("Busy")
   await expect(live).not.toBeChecked()
 })

@@ -438,6 +438,7 @@
   .live-dot{ width:6px; height:6px; border-radius:50%; background: var(--lch-text-tertiary); }
   .live-switch[data-state="live"] .live-dot{ background: var(--sev-low); animation: pill-pulse 1.6s ease-in-out infinite; }
   .live-switch[data-state="unavailable"] .live-dot{ background: var(--sev-high); }
+  .live-switch[data-state="busy"] .live-dot{ background: var(--sev-moderate); }
   /* A fixed minimum width, so the top bar does not shift as the count changes. */
   .live-status{ min-width:72px; font-size:11.5px; color: var(--lch-text-tertiary); font-variant-numeric: tabular-nums; white-space:nowrap; }
   .live-status:empty{ min-width:0; }

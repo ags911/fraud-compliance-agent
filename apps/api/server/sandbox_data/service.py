@@ -31,6 +31,21 @@ class ScenarioSimulationNotFound(RuntimeError):
     """Signal that a requested deterministic simulation run does not exist."""
 
 
+class SimulationBusy(RuntimeError):
+    """Signal that the site already has the maximum number of live feed runs."""
+
+
+class SimulationRateLimited(RuntimeError):
+    """Signal that one browser started too many feed runs in the last minute."""
+
+
+# Spec 0003 limits: live runs across the site, starts per browser per rolling
+# minute, and how long a finished run is kept before the worker sweeps it.
+MAX_LIVE_SIMULATION_RUNS = 20
+MAX_SIMULATION_STARTS_PER_MINUTE = 3
+SIMULATION_RETENTION = timedelta(days=7)
+
+
 @dataclass(frozen=True)
 class SanitisedEvent:
     """Represent one permitted date precision event without provider identifiers."""
@@ -504,81 +519,43 @@ class PsycopgScenarioRepository:
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
-    @staticmethod
-    def _append_simulated_event_cursor(
-        cursor: psycopg.Cursor[Any], scenario_id: str, event: SanitisedEvent
-    ) -> bool:
-        """Append one event using an existing transaction and rebuild its timeline."""
-        if scenario_id not in SCENARIO_IDS or not event.event_id:
-            raise ValueError("simulated events require a valid scenario and event_id")
-        cursor.execute(
-            """SELECT scenario_id, fixture_version, creation_revision, start_date, end_date, baseline_version, overlay_version
-                FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1""",
-            (scenario_id,),
-        )
-        metadata = cursor.fetchone()
-        if metadata is None:
-            raise ScenarioDatasetNotFound(scenario_id)
-        cursor.execute(
-            """INSERT INTO sandbox_simulated_event_appends (scenario_id, fixture_version, event_id)
-                VALUES (%s, %s, %s) ON CONFLICT DO NOTHING RETURNING event_id""",
-            (scenario_id, metadata["fixture_version"], event.event_id),
-        )
-        if cursor.fetchone() is None:
-            return False
-        cursor.execute(
-            """SELECT transaction_id, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel
-                FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s""",
-            (scenario_id, metadata["fixture_version"]),
-        )
-        existing = [
-            SanitisedEvent(
-                row["event_date"], row["available_date"], row["amount_minor"],
-                row["currency"], row["direction"], row["category_bucket"],
-                row["payee_reference"], row["payment_channel"], row["transaction_id"],
-            )
-            for row in cursor.fetchall()
-        ]
-        next_end_date = max(metadata["end_date"], event.event_date, event.available_date)
-        dataset = build_dataset(
-            scenario_id=scenario_id, fixture_version=metadata["fixture_version"],
-            creation_revision=metadata["creation_revision"], start_date=metadata["start_date"],
-            end_date=next_end_date, events=[*existing, event],
-            baseline_version=metadata["baseline_version"], overlay_version=metadata["overlay_version"],
-        )
-        cursor.execute("DELETE FROM sandbox_daily_aggregates WHERE scenario_id = %s AND fixture_version = %s", (scenario_id, metadata["fixture_version"]))
-        cursor.execute("DELETE FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s", (scenario_id, metadata["fixture_version"]))
-        cursor.execute("UPDATE sandbox_datasets SET end_date = %s, imported_at = CURRENT_TIMESTAMP WHERE scenario_id = %s AND fixture_version = %s", (next_end_date, scenario_id, metadata["fixture_version"]))
-        PsycopgScenarioRepository._insert_dataset_contents(cursor, dataset)
-        return True
-
-    def append_simulated_event(self, scenario_id: str, event: SanitisedEvent) -> bool:
-        """Idempotently append one sanitised event and rebuild one scenario timeline."""
-        try:
-            with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
-                return self._append_simulated_event_cursor(cursor, scenario_id, event)
-        except ScenarioDatasetNotFound:
-            raise
-        except psycopg.Error as error:
-            raise SandboxDataUnavailable("Sandbox database is unavailable") from error
-
     def create_simulation_run(
-        self, scenario_id: str, run_id: str, seed: str, schedule: tuple[Any, ...]
+        self,
+        scenario_id: str,
+        run_id: str,
+        seed: str,
+        schedule: tuple[Any, ...],
+        browser_id: str,
     ) -> dict[str, object]:
-        """Persist one immutable scheduled run for the current scenario dataset."""
-        if scenario_id not in SCENARIO_IDS or not run_id or not seed:
-            raise ValueError("simulation run requires a valid scenario, run ID and seed")
+        """Persist one immutable scheduled run owned by one browser.
+
+        Under one transaction wide advisory lock, so concurrent starts cannot
+        overshoot a limit: refuse when this browser started too many runs in the
+        last minute or the site is at its live run cap, then cancel this
+        browser's other live run (never another browser's) and insert.
+        """
+        if scenario_id not in SCENARIO_IDS or not run_id or not seed or not browser_id:
+            raise ValueError("simulation run requires a scenario, run ID, seed and browser ID")
         try:
             with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT fixture_version FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1", (scenario_id,))
                 dataset = cursor.fetchone()
                 if dataset is None:
                     raise ScenarioDatasetNotFound(scenario_id)
-                # One live feed per scenario: a new run replaces any still going.
+                cursor.execute("SELECT pg_advisory_xact_lock(hashtext('sandbox_simulation_start'))")
+                cursor.execute("""SELECT count(*) AS starts FROM sandbox_simulation_runs
+                    WHERE browser_id = %s AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'""", (browser_id,))
+                if cursor.fetchone()["starts"] >= MAX_SIMULATION_STARTS_PER_MINUTE:
+                    raise SimulationRateLimited(browser_id)
+                # This browser's own live run is about to be replaced, so it does not count.
+                cursor.execute("""SELECT count(*) AS live FROM sandbox_simulation_runs
+                    WHERE state IN ('pending', 'running') AND browser_id IS DISTINCT FROM %s""", (browser_id,))
+                if cursor.fetchone()["live"] >= MAX_LIVE_SIMULATION_RUNS:
+                    raise SimulationBusy()
                 cursor.execute("""UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
-                    WHERE scenario_id = %s AND state IN ('pending', 'running')""", (scenario_id,))
-                cursor.execute("""INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count)
-                    VALUES (%s, %s, %s, %s, 'pending', %s)""", (run_id, scenario_id, dataset["fixture_version"], seed, len(schedule)))
+                    WHERE browser_id = %s AND state IN ('pending', 'running')""", (browser_id,))
+                cursor.execute("""INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, browser_id)
+                    VALUES (%s, %s, %s, %s, 'pending', %s, %s)""", (run_id, scenario_id, dataset["fixture_version"], seed, len(schedule), browser_id))
                 now = datetime.now(UTC)
                 # One batched insert: a feed schedules hundreds of events.
                 cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel)
@@ -586,17 +563,19 @@ class PsycopgScenarioRepository:
                     (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel)
                     for item in schedule
                 ])
-                return self.read_simulation_run_cursor(cursor, run_id)
-        except ScenarioDatasetNotFound:
+                return self.read_simulation_run_cursor(cursor, run_id, browser_id)
+        except (ScenarioDatasetNotFound, SimulationBusy, SimulationRateLimited):
             raise
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
     @staticmethod
-    def read_simulation_run_cursor(cursor: psycopg.Cursor[Any], run_id: str) -> dict[str, object]:
-        """Return safe progress information from an existing database cursor."""
+    def read_simulation_run_cursor(
+        cursor: psycopg.Cursor[Any], run_id: str, browser_id: str
+    ) -> dict[str, object]:
+        """Return safe progress for one of this browser's runs; another's reads as missing."""
         cursor.execute("""SELECT run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, appended_event_count, created_at, started_at, completed_at, failure_reason
-            FROM sandbox_simulation_runs WHERE run_id = %s""", (run_id,))
+            FROM sandbox_simulation_runs WHERE run_id = %s AND browser_id = %s""", (run_id, browser_id))
         run = cursor.fetchone()
         if run is None:
             raise ScenarioSimulationNotFound(run_id)
@@ -604,25 +583,36 @@ class PsycopgScenarioRepository:
         next_due = cursor.fetchone()["next_due_at"]
         return {"run_id": run["run_id"], "scenario_id": run["scenario_id"], "fixture_version": run["fixture_version"], "seed": run["seed"], "state": run["state"], "scheduled_event_count": run["scheduled_event_count"], "appended_event_count": run["appended_event_count"], "next_due_at": next_due.isoformat() if next_due else None}
 
-    def read_simulation_run(self, run_id: str) -> dict[str, object]:
-        """Read safe state for one durable simulation run."""
+    def read_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
+        """Read safe state for one of this browser's simulation runs."""
         try:
             with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
-                return self.read_simulation_run_cursor(cursor, run_id)
+                return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except ScenarioSimulationNotFound:
             raise
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
-    def cancel_simulation_run(self, run_id: str) -> dict[str, object]:
-        """Stop one run; payments already shown stay shown, no more are added."""
+    def cancel_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
+        """Stop one of this browser's runs; shown payments stay shown, no more are added."""
         try:
             with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
                 cursor.execute("""UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
-                    WHERE run_id = %s AND state IN ('pending', 'running')""", (run_id,))
-                return self.read_simulation_run_cursor(cursor, run_id)
+                    WHERE run_id = %s AND browser_id = %s AND state IN ('pending', 'running')""", (run_id, browser_id))
+                return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except ScenarioSimulationNotFound:
             raise
+        except psycopg.Error as error:
+            raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+
+    def sweep_finished_simulation_runs(self, now: datetime | None = None) -> int:
+        """Delete finished runs older than the retention window; events cascade."""
+        cutoff = (now or datetime.now(UTC)) - SIMULATION_RETENTION
+        try:
+            with psycopg.connect(self._database_url) as connection, connection.cursor() as cursor:
+                cursor.execute("""DELETE FROM sandbox_simulation_runs
+                    WHERE state IN ('completed', 'cancelled', 'failed') AND completed_at < %s""", (cutoff,))
+                return cursor.rowcount
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
@@ -658,7 +648,10 @@ class PsycopgScenarioRepository:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
     def read_analytics(
-        self, scenario_id: str, simulation_run_id: str | None = None
+        self,
+        scenario_id: str,
+        simulation_run_id: str | None = None,
+        browser_id: str | None = None,
     ) -> dict[str, object]:
         """Read the newest imported aggregate response for one scenario.
 
@@ -688,11 +681,12 @@ class PsycopgScenarioRepository:
                 aggregates = cursor.fetchall()
                 if simulation_run_id is not None:
                     cursor.execute(
-                        """SELECT scenario_id, fixture_version FROM sandbox_simulation_runs WHERE run_id = %s""",
-                        (simulation_run_id,),
+                        """SELECT scenario_id, fixture_version FROM sandbox_simulation_runs
+                    WHERE run_id = %s AND browser_id = %s""",
+                        (simulation_run_id, browser_id),
                     )
                     run = cursor.fetchone()
-                    # A run for another scenario or an older import is not this dataset's.
+                    # Another browser's run, another scenario's or an older import's is not this one.
                     if (
                         run is None
                         or run["scenario_id"] != scenario_id
@@ -756,22 +750,25 @@ def _overlay_shown_events(
 
 
 def load_sandbox_analytics(
-    scenario_id: str, simulation_run_id: str | None = None
+    scenario_id: str,
+    simulation_run_id: str | None = None,
+    browser_id: str | None = None,
 ) -> dict[str, object]:
     """Load one scenario's prepared chart data, optionally with one run's feed added."""
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     return PsycopgScenarioRepository(database_url).read_analytics(
-        scenario_id, simulation_run_id
+        scenario_id, simulation_run_id, browser_id
     )
 
 
-def start_sandbox_simulation(scenario_id: str) -> dict[str, object]:
+def start_sandbox_simulation(scenario_id: str, browser_id: str) -> dict[str, object]:
     """Create one durable deterministic run for the latest selected dataset.
 
     Args:
         scenario_id: Scenario whose latest isolated dataset seeds the run.
+        browser_id: The anonymous showcase browser that owns the run.
 
     Returns:
         Dashboard-safe run state with no transaction-level information.
@@ -779,6 +776,8 @@ def start_sandbox_simulation(scenario_id: str) -> dict[str, object]:
     Raises:
         SandboxDataUnavailable: If the optional Neon store is unavailable.
         ScenarioDatasetNotFound: If the selected scenario was not imported.
+        SimulationBusy: If the site is at its live run cap.
+        SimulationRateLimited: If this browser started too many runs this minute.
     """
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
@@ -792,24 +791,24 @@ def start_sandbox_simulation(scenario_id: str) -> dict[str, object]:
     latest_day = date.fromisoformat(str(analytics["time_boundary"]["end_date"]))
     schedule = build_scenario_schedule(scenario_id, latest_day, run_id)
     return repository.create_simulation_run(
-        scenario_id, run_id, "sandbox-simulation-v1", schedule
+        scenario_id, run_id, "sandbox-simulation-v1", schedule, browser_id
     )
 
 
-def load_sandbox_simulation_run(run_id: str) -> dict[str, object]:
-    """Load safe state for one durable Sandbox simulation run."""
+def load_sandbox_simulation_run(run_id: str, browser_id: str) -> dict[str, object]:
+    """Load safe state for one of this browser's Sandbox simulation runs."""
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
-    return PsycopgScenarioRepository(database_url).read_simulation_run(run_id)
+    return PsycopgScenarioRepository(database_url).read_simulation_run(run_id, browser_id)
 
 
-def cancel_sandbox_simulation(run_id: str) -> dict[str, object]:
-    """Stop one durable Sandbox simulation run."""
+def cancel_sandbox_simulation(run_id: str, browser_id: str) -> dict[str, object]:
+    """Stop one of this browser's Sandbox simulation runs."""
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
-    return PsycopgScenarioRepository(database_url).cancel_simulation_run(run_id)
+    return PsycopgScenarioRepository(database_url).cancel_simulation_run(run_id, browser_id)
 
 
 def advance_sandbox_simulation_events() -> int:
@@ -818,3 +817,11 @@ def advance_sandbox_simulation_events() -> int:
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     return PsycopgScenarioRepository(database_url).advance_due_simulation_events()
+
+
+def sweep_sandbox_simulation_runs() -> int:
+    """Delete finished feed runs older than 7 days, with their events."""
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if not database_url:
+        raise SandboxDataUnavailable("DATABASE_URL is not configured")
+    return PsycopgScenarioRepository(database_url).sweep_finished_simulation_runs()

@@ -1,6 +1,7 @@
 import { addDays, format, parseISO } from "date-fns"
 
 import type { DateWindow } from "@/lib/scenario-date-window"
+import { showcaseBrowserHeaders } from "@/lib/showcase-browser-id"
 
 export type SandboxDailyAggregate = {
   date: string
@@ -39,7 +40,9 @@ export async function fetchSandboxScenarioAnalytics(
   simulationRunId?: string | null,
 ): Promise<SandboxScenarioAnalytics> {
   const query = simulationRunId ? `?simulation_run_id=${encodeURIComponent(simulationRunId)}` : ""
-  const response = await fetch(`${API_BASE_URL}/sandbox/scenarios/${encodeURIComponent(scenarioId)}/analytics${query}`)
+  // A run overlay is scoped to the browser that owns the run (spec 0003).
+  const headers = simulationRunId ? showcaseBrowserHeaders() : undefined
+  const response = await fetch(`${API_BASE_URL}/sandbox/scenarios/${encodeURIComponent(scenarioId)}/analytics${query}`, { headers })
   if (!response.ok) throw new Error("Sandbox scenario activity is unavailable")
   return response.json() as Promise<SandboxScenarioAnalytics>
 }

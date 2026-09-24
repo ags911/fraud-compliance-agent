@@ -72,6 +72,8 @@ from server.sandbox_data.service import (
     SandboxDataUnavailable,
     ScenarioDatasetNotFound,
     ScenarioSimulationNotFound,
+    SimulationBusy,
+    SimulationRateLimited,
     cancel_sandbox_simulation,
     load_sandbox_analytics,
     load_sandbox_simulation_run,
@@ -380,6 +382,18 @@ async def _stream_bounded_run(
 
 
 _CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+def _simulation_browser_id(request: Request) -> str:
+    """Return the caller's showcase browser ID, or raise a non echoing 400.
+
+    The live feed (spec 0003) scopes every run to this anonymous key, as saved
+    cases do (spec 0002); it is scoping, not authentication.
+    """
+    browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+    if browser_id is None:
+        raise HTTPException(status_code=400, detail="invalid_browser_id")
+    return browser_id
+
+
 # A simulation progress stream stays open for one feed run plus a margin.
 _SIMULATION_STREAM_SECONDS = 660
 
@@ -532,18 +546,22 @@ def create_app() -> FastAPI:
         responses={404: {"model": DemoError}, 503: {"model": DemoError}},
     )
     def sandbox_scenario_analytics(
-        scenario_id: str, simulation_run_id: str | None = None
+        scenario_id: str, request: Request, simulation_run_id: str | None = None
     ) -> SandboxScenarioAnalytics:
         """Return read only, prepared aggregate data for one Sandbox scenario.
 
         The route reads only a versioned sanitised dataset from the optional
         Neon store. It cannot contact Plaid, return raw transactions, score a
         payment, or mutate a scenario. With ``simulation_run_id``, that run's
-        shown feed payments are added to the imported base.
+        shown feed payments are added to the imported base, for its own
+        browser only.
         """
+        browser_id = (
+            _simulation_browser_id(request) if simulation_run_id is not None else None
+        )
         try:
             return SandboxScenarioAnalytics.model_validate(
-                load_sandbox_analytics(scenario_id, simulation_run_id)
+                load_sandbox_analytics(scenario_id, simulation_run_id, browser_id)
             )
         except ScenarioSimulationNotFound as error:
             raise HTTPException(
@@ -677,16 +695,32 @@ def create_app() -> FastAPI:
         "/sandbox/scenarios/{scenario_id}/simulation-runs",
         include_in_schema=False,
         response_model=SandboxSimulationRun,
-        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            429: {"model": DemoError},
+            503: {"model": DemoError},
+        },
     )
     def start_sandbox_scenario_simulation(
-        scenario_id: str,
+        scenario_id: str, request: Request
     ) -> SandboxSimulationRun:
-        """Start one internal deterministic run without accepting browser event data."""
+        """Start one browser's deterministic feed without accepting event data.
+
+        Refused with 429 when the site is at its live run cap or this browser
+        started too many runs this minute (spec 0003).
+        """
+        browser_id = _simulation_browser_id(request)
         try:
             return SandboxSimulationRun.model_validate(
-                start_sandbox_simulation(scenario_id)
+                start_sandbox_simulation(scenario_id, browser_id)
             )
+        except SimulationBusy as error:
+            raise HTTPException(status_code=429, detail="simulation_busy") from error
+        except SimulationRateLimited as error:
+            raise HTTPException(
+                status_code=429, detail="simulation_rate_limited"
+            ) from error
         except ScenarioDatasetNotFound as error:
             raise HTTPException(
                 status_code=404, detail="sandbox_scenario_not_found"
@@ -700,28 +734,46 @@ def create_app() -> FastAPI:
         "/sandbox/simulation-runs/{run_id}/cancel",
         include_in_schema=False,
         response_model=SandboxSimulationRun,
-        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
     )
-    def cancel_sandbox_scenario_simulation(run_id: str) -> SandboxSimulationRun:
-        """Stop one internal run; payments already shown stay shown."""
+    def cancel_sandbox_scenario_simulation(
+        run_id: str, request: Request
+    ) -> SandboxSimulationRun:
+        """Stop one of this browser's runs; payments already shown stay shown."""
+        browser_id = _simulation_browser_id(request)
         try:
-            return SandboxSimulationRun.model_validate(cancel_sandbox_simulation(run_id))
+            return SandboxSimulationRun.model_validate(
+                cancel_sandbox_simulation(run_id, browser_id)
+            )
         except ScenarioSimulationNotFound as error:
-            raise HTTPException(status_code=404, detail="sandbox_simulation_not_found") from error
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
         except SandboxDataUnavailable as error:
-            raise HTTPException(status_code=503, detail="sandbox_scenario_data_unavailable") from error
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
 
     @app.get(
         "/sandbox/simulation-runs/{run_id}",
         include_in_schema=False,
         response_model=SandboxSimulationRun,
-        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
     )
-    def sandbox_simulation_run(run_id: str) -> SandboxSimulationRun:
-        """Return one internal simulation run's safe progress information."""
+    def sandbox_simulation_run(run_id: str, request: Request) -> SandboxSimulationRun:
+        """Return one of this browser's runs' safe progress information."""
+        browser_id = _simulation_browser_id(request)
         try:
             return SandboxSimulationRun.model_validate(
-                load_sandbox_simulation_run(run_id)
+                load_sandbox_simulation_run(run_id, browser_id)
             )
         except ScenarioSimulationNotFound as error:
             raise HTTPException(
@@ -736,22 +788,39 @@ def create_app() -> FastAPI:
         "/sandbox/simulation-runs/{run_id}/events",
         include_in_schema=False,
         response_class=StreamingResponse,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
     )
     async def sandbox_simulation_events(
         run_id: str, request: Request
     ) -> StreamingResponse:
-        """Stream changed safe run state while a browser remains connected."""
+        """Stream one of this browser's runs' safe state while it is connected.
+
+        Read with ``fetch`` (spec 0003), so the browser ID arrives as a header.
+        Ownership is checked before streaming, so another browser's run is a
+        plain 404 rather than an empty stream.
+        """
+        browser_id = _simulation_browser_id(request)
+        try:
+            # psycopg is synchronous; each read runs off the event loop.
+            first = await asyncio.to_thread(load_sandbox_simulation_run, run_id, browser_id)
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
 
         async def event_stream() -> AsyncIterator[str]:
             previous: str | None = None
+            state = first
             # Long enough to follow a whole feed run, then the client reconnects.
             for _ in range(_SIMULATION_STREAM_SECONDS):
-                if await request.is_disconnected():
-                    return
-                try:
-                    state = load_sandbox_simulation_run(run_id)
-                except (SandboxDataUnavailable, ScenarioSimulationNotFound):
-                    return
                 payload = json.dumps(state, sort_keys=True)
                 if payload != previous:
                     yield f"event: simulation_state\ndata: {payload}\n\n"
@@ -759,6 +828,14 @@ def create_app() -> FastAPI:
                 if state["state"] in {"completed", "failed", "cancelled"}:
                     return
                 await asyncio.sleep(1)
+                if await request.is_disconnected():
+                    return
+                try:
+                    state = await asyncio.to_thread(
+                        load_sandbox_simulation_run, run_id, browser_id
+                    )
+                except (SandboxDataUnavailable, ScenarioSimulationNotFound):
+                    return
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 

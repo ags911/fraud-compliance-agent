@@ -218,97 +218,171 @@ def test_shown_feed_events_are_added_to_the_base_aggregates_only() -> None:
     assert base[1]["category_counts"] == {"grocery": 1}
 
 
-def test_analytics_endpoint_passes_the_run_and_rejects_another_scenarios_run(monkeypatch) -> None:
-    """Read the base plus one run, and 404 a run that is not this scenario's."""
+BROWSER = "0b6f2d4e-7a1c-4e8b-9f3a-2c5d8e1f4a6b"
+OWNER = {"X-Showcase-Browser-Id": BROWSER}
+
+
+def _run(run_id: str = "run-test", state: str = "pending", appended: int = 0) -> dict:
+    return {
+        "run_id": run_id,
+        "scenario_id": "S02",
+        "fixture_version": "fixture-test",
+        "seed": "sandbox-simulation-v1",
+        "state": state,
+        "scheduled_event_count": 200,
+        "appended_event_count": appended,
+        "next_due_at": "2026-09-24T00:00:00+00:00",
+    }
+
+
+def test_analytics_endpoint_passes_the_run_and_its_owner(monkeypatch) -> None:
+    """Read the base plus one run for its own browser, and 404 any other run."""
     calls = []
 
-    def fake(scenario_id, simulation_run_id=None):
-        calls.append((scenario_id, simulation_run_id))
+    def fake(scenario_id, simulation_run_id=None, browser_id=None):
+        calls.append((scenario_id, simulation_run_id, browser_id))
         raise main.ScenarioSimulationNotFound(simulation_run_id)
 
     monkeypatch.setattr(main, "load_sandbox_analytics", fake)
 
     response = TestClient(create_app()).get(
-        "/sandbox/scenarios/S02/analytics?simulation_run_id=run-other"
+        "/sandbox/scenarios/S02/analytics?simulation_run_id=run-other", headers=OWNER
     )
 
-    assert calls == [("S02", "run-other")]
+    assert calls == [("S02", "run-other", BROWSER)]
     assert response.status_code == 404
     assert response.json() == {"detail": "sandbox_simulation_not_found"}
 
 
-def test_cancel_simulation_endpoint_returns_the_stopped_run(monkeypatch) -> None:
-    """Stop a run through the internal route without accepting a body."""
+def test_run_analytics_need_a_browser_id_but_the_base_does_not(monkeypatch) -> None:
+    """Keep the plain base readable while a run overlay is scoped to its owner."""
     monkeypatch.setattr(
         main,
-        "cancel_sandbox_simulation",
-        lambda run_id: {
-            "run_id": run_id,
-            "scenario_id": "S02",
-            "fixture_version": "fixture-test",
-            "seed": "sandbox-simulation-v1",
-            "state": "cancelled",
-            "scheduled_event_count": 200,
-            "appended_event_count": 12,
-            "next_due_at": "2026-09-24T00:10:00+00:00",
-        },
+        "load_sandbox_analytics",
+        lambda scenario_id, simulation_run_id=None, browser_id=None: (_ for _ in ()).throw(
+            main.SandboxDataUnavailable()
+        ),
+    )
+    client = TestClient(create_app())
+
+    assert client.get("/sandbox/scenarios/S02/analytics").status_code == 503
+    missing = client.get("/sandbox/scenarios/S02/analytics?simulation_run_id=run-test")
+    assert missing.status_code == 400
+    assert missing.json() == {"detail": "invalid_browser_id"}
+
+
+def test_every_simulation_route_rejects_a_missing_or_malformed_browser_id() -> None:
+    """Refuse before touching the store, and never echo the bad value."""
+    client = TestClient(create_app())
+    calls = [
+        ("post", "/sandbox/scenarios/S02/simulation-runs"),
+        ("get", "/sandbox/simulation-runs/run-test"),
+        ("post", "/sandbox/simulation-runs/run-test/cancel"),
+        ("get", "/sandbox/simulation-runs/run-test/events"),
+    ]
+    for method, path in calls:
+        for headers in ({}, {"X-Showcase-Browser-Id": "NOT-A-UUID"}):
+            response = getattr(client, method)(path, headers=headers)
+            assert response.status_code == 400, (method, path, headers)
+            assert response.json() == {"detail": "invalid_browser_id"}
+            assert "NOT-A-UUID" not in response.text
+
+
+def test_cancel_simulation_endpoint_stops_the_callers_run(monkeypatch) -> None:
+    """Stop a run for its owner through the internal route without a body."""
+    calls = []
+
+    def fake(run_id, browser_id):
+        calls.append((run_id, browser_id))
+        return _run(run_id, "cancelled", 12)
+
+    monkeypatch.setattr(main, "cancel_sandbox_simulation", fake)
+
+    response = TestClient(create_app()).post(
+        "/sandbox/simulation-runs/run-test/cancel", headers=OWNER
     )
 
-    response = TestClient(create_app()).post("/sandbox/simulation-runs/run-test/cancel")
-
+    assert calls == [("run-test", BROWSER)]
     assert response.status_code == 200
     assert response.json()["state"] == "cancelled"
     assert response.json()["appended_event_count"] == 12
 
 
 def test_start_simulation_endpoint_returns_safe_run_state(monkeypatch) -> None:
-    """Start a server-owned schedule without accepting a browser event body."""
-    monkeypatch.setattr(
-        main,
-        "start_sandbox_simulation",
-        lambda scenario_id: {
-            "run_id": "run-test",
-            "scenario_id": scenario_id,
-            "fixture_version": "fixture-test",
-            "seed": "sandbox-simulation-v1",
-            "state": "pending",
-            "scheduled_event_count": 3,
-            "appended_event_count": 0,
-            "next_due_at": "2026-09-24T00:00:00+00:00",
-        },
+    """Start a run owned by the caller and expose only safe run state."""
+    calls = []
+
+    def fake(scenario_id, browser_id):
+        calls.append((scenario_id, browser_id))
+        return _run()
+
+    monkeypatch.setattr(main, "start_sandbox_simulation", fake)
+
+    response = TestClient(create_app()).post(
+        "/sandbox/scenarios/S02/simulation-runs", headers=OWNER
     )
 
-    response = TestClient(create_app()).post("/sandbox/scenarios/S02/simulation-runs")
-
+    assert calls == [("S02", BROWSER)]
     assert response.status_code == 200
     assert response.json()["scenario_id"] == "S02"
-    assert response.json()["scheduled_event_count"] == 3
+    assert response.json()["scheduled_event_count"] == 200
+    assert BROWSER not in response.text
+
+
+def test_start_simulation_endpoint_maps_both_limits_to_429(monkeypatch) -> None:
+    """Say which limit was hit with a stable code, and create nothing."""
+    client = TestClient(create_app())
+    for error, code in (
+        (main.SimulationBusy(), "simulation_busy"),
+        (main.SimulationRateLimited(BROWSER), "simulation_rate_limited"),
+    ):
+        monkeypatch.setattr(
+            main,
+            "start_sandbox_simulation",
+            lambda scenario_id, browser_id, error=error: (_ for _ in ()).throw(error),
+        )
+        response = client.post("/sandbox/scenarios/S02/simulation-runs", headers=OWNER)
+        assert response.status_code == 429
+        assert response.json() == {"detail": code}
+        assert BROWSER not in response.text
 
 
 def test_simulation_event_stream_sends_real_sse_frames(monkeypatch) -> None:
-    """Frame each state change with real line breaks so EventSource can parse it."""
-    monkeypatch.setattr(
-        main,
-        "load_sandbox_simulation_run",
-        lambda run_id: {
-            "run_id": run_id,
-            "scenario_id": "S02",
-            "fixture_version": "fixture-test",
-            "seed": "sandbox-simulation-v1",
-            "state": "completed",
-            "scheduled_event_count": 3,
-            "appended_event_count": 3,
-            "next_due_at": None,
-        },
+    """Frame each state change with real line breaks, for a fetch based reader."""
+    calls = []
+
+    def fake(run_id, browser_id):
+        calls.append((run_id, browser_id))
+        return _run(run_id, "completed", 200)
+
+    monkeypatch.setattr(main, "load_sandbox_simulation_run", fake)
+
+    response = TestClient(create_app()).get(
+        "/sandbox/simulation-runs/run-test/events", headers=OWNER
     )
 
-    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test/events")
-
     assert response.status_code == 200
+    assert calls == [("run-test", BROWSER)]
     assert "\\n" not in response.text
     frame = response.text.split("\n\n")[0].split("\n")
     assert frame[0] == "event: simulation_state"
-    assert json.loads(frame[1].removeprefix("data: "))["appended_event_count"] == 3
+    assert json.loads(frame[1].removeprefix("data: "))["appended_event_count"] == 200
+
+
+def test_simulation_event_stream_is_404_for_another_browsers_run(monkeypatch) -> None:
+    """Check ownership before streaming, so no empty 200 stream is returned."""
+    monkeypatch.setattr(
+        main,
+        "load_sandbox_simulation_run",
+        lambda run_id, browser_id: (_ for _ in ()).throw(main.ScenarioSimulationNotFound(run_id)),
+    )
+
+    response = TestClient(create_app()).get(
+        "/sandbox/simulation-runs/run-test/events", headers=OWNER
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "sandbox_simulation_not_found"}
 
 
 def test_simulation_status_endpoint_redacts_store_unavailability(monkeypatch) -> None:
@@ -316,10 +390,10 @@ def test_simulation_status_endpoint_redacts_store_unavailability(monkeypatch) ->
     monkeypatch.setattr(
         main,
         "load_sandbox_simulation_run",
-        lambda run_id: (_ for _ in ()).throw(main.SandboxDataUnavailable()),
+        lambda run_id, browser_id: (_ for _ in ()).throw(main.SandboxDataUnavailable()),
     )
 
-    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test")
+    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test", headers=OWNER)
 
     assert response.status_code == 503
     assert response.json() == {"detail": "sandbox_scenario_data_unavailable"}
@@ -369,7 +443,7 @@ def test_analytics_endpoint_returns_only_sanitised_aggregates(
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id, simulation_run_id=None: dataset.to_analytics_response(),
+        lambda scenario_id, simulation_run_id=None, browser_id=None: dataset.to_analytics_response(),
     )
 
     response = TestClient(create_app()).get("/sandbox/scenarios/S04/analytics")
@@ -400,7 +474,7 @@ def test_analytics_endpoint_redacts_database_unavailability(monkeypatch) -> None
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id, simulation_run_id=None: (_ for _ in ()).throw(
+        lambda scenario_id, simulation_run_id=None, browser_id=None: (_ for _ in ()).throw(
             main.SandboxDataUnavailable()
         ),
     )
@@ -425,7 +499,9 @@ def test_in_process_worker_advances_until_stopped(monkeypatch) -> None:
             raise worker.SandboxDataUnavailable()
         return 1
 
+    swept = []
     monkeypatch.setattr(worker, "advance_sandbox_simulation_events", advance)
+    monkeypatch.setattr(worker, "sweep_sandbox_simulation_runs", lambda: swept.append(1) or 0)
 
     async def scenario() -> None:
         stop = asyncio.Event()
@@ -436,6 +512,8 @@ def test_in_process_worker_advances_until_stopped(monkeypatch) -> None:
 
     asyncio.run(scenario())
     assert len(calls) >= 2
+    # The sweep runs once on start (after the first successful poll), then hourly.
+    assert swept == [1]
 
 
 def test_api_starts_no_worker_unless_enabled(monkeypatch) -> None:

@@ -5,6 +5,7 @@ import {
   FEED_SCENARIOS,
   followSandboxSimulation,
   isFinishedRun,
+  SandboxFeedError,
   startSandboxSimulation,
   type SandboxSimulationRun,
 } from "@/lib/sandbox-simulation"
@@ -19,10 +20,11 @@ export type SandboxFeedState =
   | { status: "starting" }
   | { status: "live"; run: SandboxSimulationRun; waitingForWorker: boolean }
   | { status: "finished"; run: SandboxSimulationRun }
+  | { status: "busy" }
   | { status: "unavailable" }
 
 type Feed =
-  | { scenarioId: string; status: "starting" | "unavailable" }
+  | { scenarioId: string; status: "starting" | "busy" | "unavailable" }
   | { scenarioId: string; status: "run"; run: SandboxSimulationRun; waitingForWorker: boolean }
 
 /**
@@ -84,7 +86,9 @@ export function useSandboxFeed(scenarioId: string): {
     setFeed({ scenarioId, status: "starting" })
     startSandboxSimulation(scenarioId).then(
       (run) => setFeed({ scenarioId, status: "run", run, waitingForWorker: false }),
-      () => setFeed({ scenarioId, status: "unavailable" }),
+      // At a limit (site cap or starts per minute) reads as busy, not broken.
+      (error: unknown) =>
+        setFeed({ scenarioId, status: error instanceof SandboxFeedError && error.reason === "busy" ? "busy" : "unavailable" }),
     )
   }, [scenarioId])
 

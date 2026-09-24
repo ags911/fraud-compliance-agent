@@ -15,9 +15,8 @@ For the S01–S08 history slice, set `PLAID_ENV=sandbox`,
 then run `uv run python scripts/import_plaid_sandbox_history.py`. That command
 calls Plaid once through `/transactions/sync`, keeps provider responses in
 memory, stores only sanitised values, and generates every calendar day in each
-scenario timeline. To append a reviewed simulated event to one scenario, run
-`uv run python scripts/append_sandbox_simulated_event.py path/to/event.json`.
-Raw provider payloads, descriptions, identifiers and access tokens must never
+scenario timeline. Simulated payments never change an imported dataset: the
+live feed overlays them at read time (spec 0003). Raw provider payloads, descriptions, identifiers and access tokens must never
 be committed.
 
 The local deterministic simulation worker can run inside the API: start the
@@ -28,7 +27,10 @@ job would take later. An internal client
 can create a run with `POST /sandbox/scenarios/{scenario_id}/simulation-runs`,
 observe its safe state with `GET /sandbox/simulation-runs/{run_id}`, and
 subscribe to `GET /sandbox/simulation-runs/{run_id}/events`, and stop it with
-`POST /sandbox/simulation-runs/{run_id}/cancel`. A run is a live feed of 200
+`POST /sandbox/simulation-runs/{run_id}/cancel`. Every call needs the
+`X-Showcase-Browser-Id` header: runs belong to that browser, at most 20 are live
+across the site, a browser may start 3 per minute, and finished runs are swept
+after 7 days. A run is a live feed of 200
 payments, one every 3 seconds. The worker, not the browser, marks due events
 as shown; the imported dataset is never changed, and
 `GET /sandbox/scenarios/{scenario_id}/analytics?simulation_run_id=<run>`

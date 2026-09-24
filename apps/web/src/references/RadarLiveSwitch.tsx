@@ -33,8 +33,10 @@ function status(state: SandboxFeedState): { text: string; hint: string } | null 
         text: `${state.run.state === "completed" ? "Finished" : "Stopped"} · ${countFormatter.format(state.run.appended_event_count)}`,
         hint: "Payments added by the last feed. Switching Live on again starts from the imported data.",
       }
+    case "busy":
+      return { text: "Busy", hint: "The live feed is at its limit right now. Try again in a minute." }
     case "unavailable":
-      return { text: "Unavailable", hint: "The live feed needs the local API with the Sandbox store configured." }
+      return { text: "Unavailable", hint: "The live feed needs the API with the Sandbox store configured, and site data allowed in this browser." }
   }
 }
 
