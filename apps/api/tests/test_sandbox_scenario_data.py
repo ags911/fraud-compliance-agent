@@ -199,6 +199,32 @@ def test_start_simulation_endpoint_returns_safe_run_state(monkeypatch) -> None:
     assert response.json()["scheduled_event_count"] == 3
 
 
+def test_simulation_event_stream_sends_real_sse_frames(monkeypatch) -> None:
+    """Frame each state change with real line breaks so EventSource can parse it."""
+    monkeypatch.setattr(
+        main,
+        "load_sandbox_simulation_run",
+        lambda run_id: {
+            "run_id": run_id,
+            "scenario_id": "S02",
+            "fixture_version": "fixture-test",
+            "seed": "sandbox-simulation-v1",
+            "state": "completed",
+            "scheduled_event_count": 3,
+            "appended_event_count": 3,
+            "next_due_at": None,
+        },
+    )
+
+    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test/events")
+
+    assert response.status_code == 200
+    assert "\\n" not in response.text
+    frame = response.text.split("\n\n")[0].split("\n")
+    assert frame[0] == "event: simulation_state"
+    assert json.loads(frame[1].removeprefix("data: "))["appended_event_count"] == 3
+
+
 def test_simulation_status_endpoint_redacts_store_unavailability(monkeypatch) -> None:
     """Keep simulation database failures free of connection details."""
     monkeypatch.setattr(

@@ -706,7 +706,7 @@ def create_app() -> FastAPI:
                     return
                 payload = json.dumps(state, sort_keys=True)
                 if payload != previous:
-                    yield f"event: simulation_state\\ndata: {payload}\\n\\n"
+                    yield f"event: simulation_state\ndata: {payload}\n\n"
                     previous = payload
                 if state["state"] in {"completed", "failed", "cancelled"}:
                     return
