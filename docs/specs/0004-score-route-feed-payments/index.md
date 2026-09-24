@@ -1,7 +1,7 @@
 # 0004. Score and route live feed payments into cases (F3a)
 
 **Date**: 2026-09-24
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -23,7 +23,7 @@ Every outbound payment in the live feed (spec 0003) is now decided, not just cou
 - **AC-6**: With case storage off, payments are still decided and counted, `case_status` = `storage_off`, and the feed runs.
 - **AC-7**: `GET /sandbox/scenarios/{id}/decisions` returns PASS, CHALLENGE and HOLD counts per day for the scenario's imported outbound payments (each decided by the same rule); with `simulation_run_id` and the owning browser's header it adds that run's revealed payments. S06 to S08 return 404 `sandbox_scenario_not_decided`.
 - **AC-8**: Radar's "Recommendations over time" chart reads those counts, drops its "Mock data" badge, and counts up during a feed; the mock generator is removed.
-- **AC-9**: Radar's Cases tab lists feed cases, its totals include them, and while the tab is open and a feed runs it refetches `/cases` when the feed's revealed count changes (at most every 3 seconds) and once when the feed ends; an open drawer is not disturbed.
+- **AC-9**: Radar's Cases tab lists feed cases, its totals include them, and while a feed runs, on any tab, it refetches `/cases` when the feed's revealed count changes (at most every 3 seconds) and once when the feed ends, so the Cases tab count stays current from the Scenario tab; an open drawer is not disturbed. (Amended 2026-09-24 at the engineer's request: originally only while the Cases tab was open.)
 - **AC-10**: For a feed case, the drawer and case page show "Live feed" instead of "Recorded playback" in the source pill and the Mode column, and the Route stage for S04 and S05 reads "Carried from the scenario's recorded investigation; no agent ran for this payment." The Evidence stage shows a Model signal: "Not scored yet" before slice 3, then the score, the model version and "Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It does not decide."
 - **AC-11**: (slice 3) A training script builds the model from the raw Sparkov files with the features below, Platt calibration on the calibration partition and metrics on test, and writes `model.json` and `manifest.json`; with pinned settings, two runs give identical file hashes.
 - **AC-12**: (slice 3) The API loads the artifact read only at startup, checks the SHA256 of both files and the feature tuple against constants pinned in server code, and on any mismatch or load failure keeps scores null with one warning log; it never fails startup.

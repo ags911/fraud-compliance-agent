@@ -233,12 +233,16 @@ so charts replay their grow-in animation and the collapsed breakdown resets
 on return):
 - Top bar: NetworkMark + "Fraud Compliance Agent" only (no "Averlynx ›"
   breadcrumb — standalone piece), scenario Select (S01–S05), pill "Run
-  showcase" (switches to the Session tab, where results appear).
+  showcase" (switches to the Cases tab, where results appear), and the Live
+  feed switch (spec 0003).
 - **Scenario** (default): heading `S0x · <label>` + date span and day count;
   one shared `7D / 30D / All` toggle (`src/references/RadarRangeToggle.tsx`,
   window from `src/lib/scenario-date-window.ts`, clipped to the dataset's
   time boundary); real Sandbox stat cards (transactions, outbound spend,
-  active days, largest day); "Recommendations over time" (Mock data badge);
+  active days, largest day); "Recommendations over time" (Sandbox badge:
+  outbound payments per day decided by the scenario's deterministic rule, from
+  `GET /sandbox/scenarios/{id}/decisions`, counting up during a feed; the
+  mock generator was removed in spec 0004);
   "Outbound activity" (Sandbox badge); one "About this data" footnote
   carrying the full provenance and the dataset ID.
 - **Session**: one empty state with a `Run S0x` button before any run; then
@@ -246,10 +250,28 @@ on return):
   vocabulary; route and fail-safe counts moved into detail lines), the
   outcome share bar, the "Current session decisions" table, and a collapsed
   "Breakdown by scenario" chart. Session runs are browser-memory only.
+- **Cases and the live feed** (spec 0004): feed cases list with Mode
+  `Live feed`; while a feed runs, on any tab, `/cases` is refetched quietly
+  (at most every 3 seconds, once more when it ends), keeping rows loaded with
+  "Show more" and an open drawer. The drawer and `/transactions/:caseId` show
+  a `Live feed` pill, the S04/S05 copy "Carried from the scenario's recorded
+  investigation; no agent ran for this payment.", and a Model signal reading
+  "Not scored yet" until an approved score exists.
 - **Model**: XGBoost PR-AUC and Brier score cards, labelled as benchmark
   results, not runtime scores. Planned home for future ML charts.
   (Model data must never be placed beside session decisions — it would imply
   the model made them; MVP 3 has no runtime model score.)
+
+**Proposed regulatory-reference surface (F4–F6, not built):** the S04 case
+detail page, not Radar's Scenario tab, receives a Regulatory references panel
+next to investigation evidence and the proposed route. Each reference shows
+the FCA provision title and identifier, a short retrieved excerpt, why it is
+relevant, a source link, corpus version, and retrieval time. A matching
+read-only retrieval event may appear in the investigation trace. The panel
+must say “Regulatory reference support, not legal advice.” It is never a
+general Handbook chat and must never present an “FCA compliant” claim. In F6,
+Radar's Health tab may show only corpus version, last review date, and
+retrieval availability.
 
 **Radar tokens and geometry**:
 - **One accent, `--radar-accent`** (button, active tab underline, focus

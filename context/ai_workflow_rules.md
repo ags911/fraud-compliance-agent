@@ -94,6 +94,32 @@ preferences:
   [`architecture.md`](architecture.md#5-accepted-architecture-invariants-from-accepted-adrs--these-are-built-rules)
   for the exact limits). Never fail over to a second LLM.
 
+### Proposed FCA Handbook RAG boundary (not a current tool)
+
+- The accepted tool allowlist above does not include the FCA Handbook, an FCA
+  API, or MCP. Do not add one without an approved contract and a versioned
+  corpus manifest.
+- The showcase direction is a small, curated, dated FCA Handbook extract
+  corpus. Retrieval must be server-side and bounded to that corpus, returning
+  a provision identifier or source link, corpus version, and quoted excerpt.
+- A durable case must preserve the retrieval bundle used by that run so a
+  replay uses the same reference material. The LLM may cite it as regulatory
+  reference support, never present it as legal advice or use it to override
+  policy, deterministic controls, authority, or human review.
+- A live FCA API or MCP connector is deferred to F6. It needs separate
+  approval for source terms, freshness, availability handling, caching,
+  monitoring, and replay. MCP is a tool protocol, not an authoritative
+  regulatory source.
+- Regulatory references render only in an eligible case detail: provision
+  identifier and title, concise retrieved excerpt, case relevance, source
+  link, corpus version, and retrieval time. The trace may render the matching
+  bounded retrieval event. Do not create a generic Handbook chat, a compliance
+  score, or an “FCA compliant” badge.
+- S04 is the normal retrieval path. S01–S03 do not retrieve regulatory
+  references by default; S05 treats retrieval failure as incomplete and fails
+  safe; S06–S08 rely on their operational controls instead. Radar may expose
+  only F6 health metadata: corpus version, last review, and availability.
+
 ## Scenario / Fixture Testing Isolation Rules
 
 - The accepted `fixtures/s01-s08/scenarios.v1.json` packet is the **sole**

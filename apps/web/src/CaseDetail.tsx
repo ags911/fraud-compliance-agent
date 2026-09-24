@@ -17,10 +17,19 @@ import {
   PaymentsPanel,
   PaymentsStatePanel,
   PaymentsTablePanel,
+  PaymentsTonePill,
   PaymentsTopBar,
 } from "@/components/payments-ui"
 import type { ShowcaseCaseDetail, ShowcaseStoredEvent } from "@/lib/showcase-cases"
-import { ELIGIBILITY_LABELS, FAILURE_REASON_LABELS, INVESTIGATION_LABELS } from "@/lib/showcase-labels"
+import {
+  ELIGIBILITY_LABELS,
+  FAILURE_REASON_LABELS,
+  FEED_CARRIED_ROUTE_COPY,
+  FEED_SOURCE_LABEL,
+  INVESTIGATION_LABELS,
+  MODEL_SIGNAL_NOTE,
+  MODEL_SIGNAL_UNSCORED,
+} from "@/lib/showcase-labels"
 import { readShowcaseCase } from "@/lib/showcase-case-view"
 import { useShowcaseCase } from "@/lib/useShowcaseCase"
 
@@ -98,6 +107,7 @@ function CaseDetailView({ detail }: { detail: ShowcaseCaseDetail }) {
   const summary = detail.case
   const { runStarted, route, skipped, toolCalls, toolResults, investigation, stageEvents } = readShowcaseCase(detail)
   const incomplete = summary.investigation_status === "incomplete"
+  const isFeed = summary.origin === "feed"
 
   return (
     <>
@@ -138,7 +148,17 @@ function CaseDetailView({ detail }: { detail: ShowcaseCaseDetail }) {
             <Field label="Deterministic route">{summary.deterministic_route}</Field>
             <Field label="Investigation">{INVESTIGATION_LABELS[summary.investigation_status]}</Field>
             <Field label="Mode">
-              {runStarted ? <ShowcaseModeLabel runStarted={runStarted} /> : summary.execution_mode}
+              {isFeed ? (
+                // A live feed payment decided by its scenario's rule (spec 0004).
+                <div className="flex flex-wrap items-center gap-2" data-testid="showcase-mode">
+                  <PaymentsTonePill tone="neutral">{FEED_SOURCE_LABEL}</PaymentsTonePill>
+                  <PaymentsTonePill tone="neutral">Synthetic data</PaymentsTonePill>
+                </div>
+              ) : runStarted ? (
+                <ShowcaseModeLabel runStarted={runStarted} />
+              ) : (
+                summary.execution_mode
+              )}
             </Field>
             <Field label="Started">{formatTime(summary.started_at)}</Field>
             <Field label="Completed">{formatTime(summary.completed_at)}</Field>
@@ -153,13 +173,33 @@ function CaseDetailView({ detail }: { detail: ShowcaseCaseDetail }) {
                 {route ? ELIGIBILITY_LABELS[route.investigation_eligibility] : "Not recorded"}
               </Field>
             </dl>
-            {skipped ? <ShowcaseSkippedTrace skipped={skipped} /> : null}
+            {skipped ? (
+              <ShowcaseSkippedTrace
+                message={isFeed && skipped.reason === "existing_recorded_recommendation" ? FEED_CARRIED_ROUTE_COPY : undefined}
+                skipped={skipped}
+              />
+            ) : null}
             <StoredEvents events={stageEvents.route} />
           </div>
         </PaymentsPanel>
 
         <PaymentsPanel title="Evidence" description="Each allowlisted tool call and the evidence it returned.">
           <div className="grid gap-3" data-testid="case-stage-evidence">
+            {isFeed ? (
+              <dl data-testid="case-model-signal">
+                <Field label="Model signal">
+                  {summary.model_score === null ? (
+                    MODEL_SIGNAL_UNSCORED
+                  ) : (
+                    <>
+                      {summary.model_score.toFixed(3)}
+                      {summary.model_version ? ` · ${summary.model_version}` : null}
+                      <span className="block text-sm text-muted-foreground">{MODEL_SIGNAL_NOTE}</span>
+                    </>
+                  )}
+                </Field>
+              </dl>
+            ) : null}
             {skipped ? (
               <p className="text-sm text-muted-foreground">No evidence was gathered, because the investigation was skipped.</p>
             ) : toolCalls.length ? (

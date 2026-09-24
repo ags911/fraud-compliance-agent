@@ -33,8 +33,13 @@ const chartConfig = Object.fromEntries(
 
 const countFormatter = new Intl.NumberFormat("en-GB")
 
-function runsLabel(count: number): string {
-  return `${countFormatter.format(count)} ${count === 1 ? "run" : "runs"}`
+/** What one counted item is called, e.g. a showcase run or a feed payment. */
+export type RadarCountUnit = { one: string; other: string }
+
+const RUN_UNIT: RadarCountUnit = { one: "run", other: "runs" }
+
+function countLabel(count: number, unit: RadarCountUnit): string {
+  return `${countFormatter.format(count)} ${count === 1 ? unit.one : unit.other}`
 }
 
 type RadarRecommendationChartProps = {
@@ -44,8 +49,10 @@ type RadarRecommendationChartProps = {
   /** Header of the "View chart data" table's first column, e.g. "Scenario". */
   categoryLabel: string
   emptyMessage: string
-  /** Short data-source label shown as a pill beside the title, e.g. "Mock data". */
+  /** Short data-source label shown as a pill beside the title, e.g. "Sandbox". */
   badge?: string
+  /** What each counted item is called in accessible labels (default: run). */
+  unit?: RadarCountUnit
   /** When provided (with onRangeChange), renders the 7D/30D/All toggle in
    * the card header, as RulesPerformanceChart does. */
   activeRange?: ScenarioRange
@@ -74,6 +81,7 @@ export function RadarRecommendationChart({
   onRangeChange,
   badge,
   yAxisWidth,
+  unit = RUN_UNIT,
   children,
 }: RadarRecommendationChartProps) {
   const [activeSeries, setActiveSeries] = useState<Set<RadarRecommendation>>(() => new Set(allKeys))
@@ -139,7 +147,7 @@ export function RadarRecommendationChart({
           <>
             <div className="radar-outcome-distribution-wrap" ref={distributionWrapRef}>
               <div
-                aria-label={totals.map(({ label, value }) => `${label}: ${runsLabel(value)}`).join(", ")}
+                aria-label={totals.map(({ label, value }) => `${label}: ${countLabel(value, unit)}`).join(", ")}
                 className="radar-outcome-distribution"
                 role="img"
               >
@@ -149,7 +157,7 @@ export function RadarRecommendationChart({
                   return (
                     <motion.button
                       animate={{ width: `${percentage}%` }}
-                      aria-label={`${label}: ${runsLabel(value)}, ${percentage.toFixed(1)}% of visible runs`}
+                      aria-label={`${label}: ${countLabel(value, unit)}, ${percentage.toFixed(1)}% of visible ${unit.other}`}
                       className="radar-outcome-distribution-segment"
                       initial={{ width: 0 }}
                       key={key}

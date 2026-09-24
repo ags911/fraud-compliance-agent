@@ -39,7 +39,8 @@
         "provider", "model_id", "deterministic_route", "investigation_status",
         "recommendation", "recommendation_basis", "failure_reason", "authority_status",
         "tool_call_count", "evidence_count", "event_count", "fixture_version",
-        "started_at", "completed_at", "expires_at", "contract_version"
+        "started_at", "completed_at", "expires_at", "contract_version",
+        "origin", "model_score", "model_version"
       ],
       "properties": {
         "case_id": { "$ref": "#/$defs/caseId" },
@@ -62,8 +63,21 @@
         "started_at": { "$ref": "#/$defs/timestamp" },
         "completed_at": { "$ref": "#/$defs/timestamp" },
         "expires_at": { "$ref": "#/$defs/timestamp" },
-        "contract_version": { "const": "1.0" }
-      }
+        "contract_version": { "const": "1.0" },
+        "origin": {
+          "enum": ["showcase", "feed"],
+          "description": "showcase: saved from a Run showcase stream. feed: a live feed payment decided by its scenario's rule (spec 0004)."
+        },
+        "model_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Display only model evidence on a feed case; null until an ADR approves a runtime score. It never decides a route, a recommendation or whether a case is saved."
+        },
+        "model_version": { "type": ["string", "null"] }
+      },
+      "if": { "properties": { "origin": { "const": "showcase" } }, "required": ["origin"] },
+      "then": { "properties": { "model_score": { "const": null }, "model_version": { "const": null } } }
     },
     "storedEvent": {
       "type": "object",

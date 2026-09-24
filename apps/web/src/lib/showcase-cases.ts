@@ -35,6 +35,11 @@ export type ShowcaseCaseSummary = {
   completed_at: string
   expires_at: string
   contract_version: "1.0"
+  /** "feed": a live feed payment decided by its scenario's rule (spec 0004). */
+  origin: "showcase" | "feed"
+  /** A feed case's display only model score; null until an ADR approves one. */
+  model_score: number | null
+  model_version: string | null
 }
 
 export type ShowcaseStoredEvent = {

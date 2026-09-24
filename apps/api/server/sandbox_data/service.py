@@ -1,5 +1,6 @@
 """Build, persist, and read deterministic, sanitised Sandbox scenario data."""
 
+import functools
 import hashlib
 import json
 import os
@@ -12,6 +13,12 @@ from typing import Any, Literal
 
 import psycopg
 from psycopg.types.json import Jsonb
+
+from server.sandbox_data.decisions import FeedDecision, feed_decision
+from server.sandbox_data.feed_cases import build_feed_case
+from server.showcase_cases.capture import CaseCaptureError, EventValidator
+from server.showcase_cases.repository import PsycopgCaseRepository
+from server.showcase_cases.settings import load_case_settings
 
 ENRICHMENT_VERSION = "sandbox-enrichment-v2"
 OVERLAY_VERSION = "s01-s08-overlay-v1"
@@ -29,6 +36,10 @@ class ScenarioDatasetNotFound(RuntimeError):
 
 class ScenarioSimulationNotFound(RuntimeError):
     """Signal that a requested deterministic simulation run does not exist."""
+
+
+class ScenarioNotDecided(RuntimeError):
+    """Signal a workflow scenario (S06 to S08), which has no feed decision rule."""
 
 
 class SimulationBusy(RuntimeError):
@@ -557,10 +568,19 @@ class PsycopgScenarioRepository:
                 cursor.execute("""INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, browser_id)
                     VALUES (%s, %s, %s, %s, 'pending', %s, %s)""", (run_id, scenario_id, dataset["fixture_version"], seed, len(schedule), browser_id))
                 now = datetime.now(UTC)
+                # Every outbound payment is decided now, by the scenario's rule
+                # alone (spec 0004); the model score stays null until slice 3.
+                decision = feed_decision(scenario_id)
+
+                def decided(direction: str) -> tuple[str | None, str | None, str | None]:
+                    if decision is None or direction != "outbound":
+                        return (None, None, None)
+                    return (decision.deterministic_route, decision.recommendation, decision.recommendation_basis)
+
                 # One batched insert: a feed schedules hundreds of events.
-                cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", [
-                    (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel)
+                cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, deterministic_route, recommendation, recommendation_basis)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", [
+                    (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel, *decided(item.event.direction))
                     for item in schedule
                 ])
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
@@ -616,36 +636,134 @@ class PsycopgScenarioRepository:
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
 
-    def advance_due_simulation_events(self, now: datetime | None = None) -> int:
-        """Mark every due event as shown exactly once and return the number advanced.
+    def advance_due_simulation_events(
+        self,
+        now: datetime | None = None,
+        case_validator: EventValidator | None = None,
+    ) -> int:
+        """Reveal every due event exactly once and return the number revealed.
+
+        Each payment is revealed in its own transaction; a revealed non PASS
+        payment's feed case is saved in that same transaction (spec 0004), so a
+        failure before commit leaves the payment unrevealed and no case.
 
         The imported scenario dataset is never changed: a run's shown events
         are overlaid on it only when that run's analytics are read, so every
         run starts from the same imported base.
+
+        Args:
+            now: The clock used to find due events.
+            case_validator: The accepted event schema when case storage is on;
+                None when it is off, so payments are marked ``storage_off``.
         """
         now = now or datetime.now(UTC)
         advanced = 0
         try:
-            with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
+            # Autocommit, so each ``transaction()`` block is one real transaction.
+            with psycopg.connect(self._database_url, autocommit=True, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
                 cursor.execute("""SELECT event.run_id, event.sequence
                     FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
                     WHERE event.appended_at IS NULL AND event.due_at <= %s AND run.state IN ('pending', 'running')
-                    ORDER BY event.due_at, event.run_id, event.sequence FOR UPDATE OF event, run SKIP LOCKED""", (now,))
-                # The run row is locked too, so a Stop waits for this batch and
-                # then reports its true count; nothing is added after it.
+                    ORDER BY event.due_at, event.run_id, event.sequence""", (now,))
                 for row in cursor.fetchall():
-                    cursor.execute("UPDATE sandbox_simulation_events SET appended_at = CURRENT_TIMESTAMP WHERE run_id = %s AND sequence = %s AND appended_at IS NULL", (row["run_id"], row["sequence"]))
-                    if cursor.rowcount:
-                        cursor.execute("UPDATE sandbox_simulation_runs SET state = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), appended_event_count = appended_event_count + 1 WHERE run_id = %s", (row["run_id"],))
-                        advanced += 1
-                cursor.execute("""UPDATE sandbox_simulation_runs AS run SET state = 'completed', completed_at = CURRENT_TIMESTAMP
-                    WHERE state IN ('pending', 'running') AND scheduled_event_count = appended_event_count
-                    AND NOT EXISTS (SELECT 1 FROM sandbox_simulation_events AS event WHERE event.run_id = run.run_id AND event.appended_at IS NULL)""")
+                    with connection.transaction():
+                        advanced += self._reveal_event(cursor, row["run_id"], row["sequence"], case_validator)
+                with connection.transaction():
+                    cursor.execute("""UPDATE sandbox_simulation_runs AS run SET state = 'completed', completed_at = CURRENT_TIMESTAMP
+                        WHERE state IN ('pending', 'running') AND scheduled_event_count = appended_event_count
+                        AND NOT EXISTS (SELECT 1 FROM sandbox_simulation_events AS event WHERE event.run_id = run.run_id AND event.appended_at IS NULL)""")
                 return advanced
         except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
             raise
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+
+    @staticmethod
+    def _reveal_event(
+        cursor: psycopg.Cursor[Any],
+        run_id: str,
+        sequence: int,
+        case_validator: EventValidator | None,
+    ) -> int:
+        """Reveal one due payment and save its feed case, in the caller's transaction.
+
+        Returns:
+            1 when the payment was revealed now; 0 when another worker holds
+            it, it was already revealed, or its run was stopped meanwhile.
+        """
+        # The run row is locked too, so a Stop waits for this payment and then
+        # reports its true count; nothing is revealed after it.
+        cursor.execute("""SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
+                event.model_score, event.model_version, event.case_id, run.scenario_id, run.browser_id
+            FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
+            WHERE event.run_id = %s AND event.sequence = %s AND event.appended_at IS NULL
+              AND run.state IN ('pending', 'running')
+            FOR UPDATE OF event, run SKIP LOCKED""", (run_id, sequence))
+        event = cursor.fetchone()
+        if event is None:
+            return 0
+        cursor.execute("UPDATE sandbox_simulation_events SET appended_at = CURRENT_TIMESTAMP WHERE run_id = %s AND sequence = %s", (run_id, sequence))
+        cursor.execute("UPDATE sandbox_simulation_runs SET state = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), appended_event_count = appended_event_count + 1 WHERE run_id = %s", (run_id,))
+        # PASS payments, and rows from before migration 0006, get no case.
+        rule = feed_decision(event["scenario_id"])
+        if rule is None or event["recommendation"] in (None, "PASS") or event["case_id"] is not None:
+            return 1
+        case_id: str | None = None
+        # Runs from before migration 0005 have no owner, but they also have no
+        # decision, so an ownerless decided payment does not occur in practice.
+        if case_validator is None or event["browser_id"] is None:
+            case_status = "storage_off"
+        else:
+            try:
+                record = build_feed_case(
+                    simulation_run_id=run_id,
+                    sequence=sequence,
+                    scenario_id=event["scenario_id"],
+                    # The stored decision, with the rule's skip reason.
+                    decision=FeedDecision(event["deterministic_route"], rule.skip_reason, event["recommendation"], event["recommendation_basis"]),
+                    due_at=event["due_at"],
+                    validator=case_validator,
+                    model_score=float(event["model_score"]) if event["model_score"] is not None else None,
+                    model_version=event["model_version"],
+                )
+            except (CaseCaptureError, KeyError, TypeError, ValueError):
+                # Revealed but never retried: the payment is shown, no case is kept.
+                case_status = "invalid"
+            else:
+                if PsycopgCaseRepository.insert_case(cursor, record, event["browser_id"]):
+                    case_id, case_status = record.case_id, "saved"
+                else:
+                    # The case ID already belongs to another row (a collision the
+                    # run UUID makes near impossible). Nothing was saved, and the
+                    # pointer stays empty so the unique case_id is never shared.
+                    case_status = "invalid"
+        cursor.execute("UPDATE sandbox_simulation_events SET case_id = %s, case_status = %s WHERE run_id = %s AND sequence = %s", (case_id, case_status, run_id, sequence))
+        return 1
+
+    @staticmethod
+    def _require_owned_run(
+        cursor: psycopg.Cursor[Any],
+        simulation_run_id: str,
+        browser_id: str | None,
+        dataset: dict[str, Any],
+    ) -> None:
+        """Raise ScenarioSimulationNotFound unless the run is this browser's, on this dataset.
+
+        Another browser's run, another scenario's, or one on an older import
+        all read as the same missing run, so a run ID reveals nothing.
+        """
+        cursor.execute(
+            """SELECT scenario_id, fixture_version FROM sandbox_simulation_runs
+        WHERE run_id = %s AND browser_id = %s""",
+            (simulation_run_id, browser_id),
+        )
+        run = cursor.fetchone()
+        if (
+            run is None
+            or run["scenario_id"] != dataset["scenario_id"]
+            or run["fixture_version"] != dataset["fixture_version"]
+        ):
+            raise ScenarioSimulationNotFound(simulation_run_id)
 
     def read_analytics(
         self,
@@ -680,19 +798,7 @@ class PsycopgScenarioRepository:
                 )
                 aggregates = cursor.fetchall()
                 if simulation_run_id is not None:
-                    cursor.execute(
-                        """SELECT scenario_id, fixture_version FROM sandbox_simulation_runs
-                    WHERE run_id = %s AND browser_id = %s""",
-                        (simulation_run_id, browser_id),
-                    )
-                    run = cursor.fetchone()
-                    # Another browser's run, another scenario's or an older import's is not this one.
-                    if (
-                        run is None
-                        or run["scenario_id"] != scenario_id
-                        or run["fixture_version"] != dataset["fixture_version"]
-                    ):
-                        raise ScenarioSimulationNotFound(simulation_run_id)
+                    self._require_owned_run(cursor, simulation_run_id, browser_id, dataset)
                     cursor.execute(
                         """SELECT event_date, amount_minor, direction, category_bucket
                     FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NOT NULL""",
@@ -728,6 +834,123 @@ class PsycopgScenarioRepository:
         }
 
 
+    def read_decisions(
+        self,
+        scenario_id: str,
+        simulation_run_id: str | None = None,
+        browser_id: str | None = None,
+    ) -> dict[str, object]:
+        """Count PASS, CHALLENGE and HOLD per day for one scenario (spec 0004).
+
+        Every imported outbound payment is decided by the scenario's rule, so
+        the base assigns each day's outbound count to that one recommendation.
+        With a simulation run, that run's revealed, decided payments are added.
+        Inbound credits are never counted.
+
+        Raises:
+            ScenarioNotDecided: For S06 to S08, which have no decision rule.
+            ScenarioDatasetNotFound: If the scenario was never imported.
+            ScenarioSimulationNotFound: As for ``read_analytics``.
+            SandboxDataUnavailable: If the store cannot be read.
+        """
+        decision = feed_decision(scenario_id)
+        if decision is None and scenario_id in SCENARIO_IDS:
+            raise ScenarioNotDecided(scenario_id)
+        try:
+            with (
+                psycopg.connect(
+                    self._database_url, row_factory=psycopg.rows.dict_row
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
+                cursor.execute(
+                    """SELECT scenario_id, fixture_version, start_date, end_date
+                FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1""",
+                    (scenario_id,),
+                )
+                dataset = cursor.fetchone()
+                if dataset is None or decision is None:
+                    raise ScenarioDatasetNotFound(scenario_id)
+                cursor.execute(
+                    """SELECT event_date, count(*) AS payments FROM sandbox_transactions
+                WHERE scenario_id = %s AND fixture_version = %s AND direction = 'outbound'
+                GROUP BY event_date""",
+                    (scenario_id, dataset["fixture_version"]),
+                )
+                imported = cursor.fetchall()
+                revealed: list[dict[str, Any]] = []
+                if simulation_run_id is not None:
+                    self._require_owned_run(cursor, simulation_run_id, browser_id, dataset)
+                    # Rows from before migration 0006 have no decision and are skipped.
+                    cursor.execute(
+                        """SELECT event_date, recommendation, count(*) AS payments
+                    FROM sandbox_simulation_events
+                    WHERE run_id = %s AND appended_at IS NOT NULL AND direction = 'outbound'
+                      AND recommendation IS NOT NULL
+                    GROUP BY event_date, recommendation""",
+                        (simulation_run_id,),
+                    )
+                    revealed = cursor.fetchall()
+        except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
+            raise
+        except psycopg.Error as error:
+            raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+        return {
+            "contract_version": "0",
+            "scenario_id": dataset["scenario_id"],
+            "fixture_version": dataset["fixture_version"],
+            **_decision_days(
+                dataset["start_date"],
+                dataset["end_date"],
+                decision.recommendation,
+                imported,
+                revealed,
+            ),
+        }
+
+
+def _decision_days(
+    start_date: date,
+    end_date: date,
+    rule_recommendation: str,
+    imported: list[dict[str, Any]],
+    revealed: list[dict[str, Any]],
+) -> dict[str, object]:
+    """Count decided outbound payments per calendar day, zero days included.
+
+    Args:
+        start_date: The dataset's first day.
+        end_date: The dataset's last day.
+        rule_recommendation: The scenario rule's recommendation, which every
+            imported outbound payment receives.
+        imported: ``{event_date, payments}`` rows of imported outbound payments.
+        revealed: ``{event_date, recommendation, payments}`` rows of one run's
+            revealed, decided payments.
+
+    Returns:
+        ``days`` (one PASS, CHALLENGE and HOLD count per day) and ``totals``.
+    """
+    days = {
+        day: dict.fromkeys(("PASS", "CHALLENGE", "HOLD"), 0)
+        for day in _calendar_days(start_date, end_date)
+    }
+    for row in imported:
+        if row["event_date"] in days:
+            days[row["event_date"]][rule_recommendation] += row["payments"]
+    # A payment outside the dataset's boundary is never invented into a new day.
+    for row in revealed:
+        if row["event_date"] in days:
+            days[row["event_date"]][row["recommendation"]] += row["payments"]
+    totals = dict.fromkeys(("PASS", "CHALLENGE", "HOLD"), 0)
+    for counts in days.values():
+        for recommendation, count in counts.items():
+            totals[recommendation] += count
+    return {
+        "days": [{"date": day.isoformat(), **counts} for day, counts in days.items()],
+        "totals": totals,
+    }
+
+
 def _overlay_shown_events(
     aggregates: list[dict[str, Any]], events: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -759,6 +982,20 @@ def load_sandbox_analytics(
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     return PsycopgScenarioRepository(database_url).read_analytics(
+        scenario_id, simulation_run_id, browser_id
+    )
+
+
+def load_sandbox_decisions(
+    scenario_id: str,
+    simulation_run_id: str | None = None,
+    browser_id: str | None = None,
+) -> dict[str, object]:
+    """Load one scenario's decided payment counts per day, optionally with one run's feed."""
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if not database_url:
+        raise SandboxDataUnavailable("DATABASE_URL is not configured")
+    return PsycopgScenarioRepository(database_url).read_decisions(
         scenario_id, simulation_run_id, browser_id
     )
 
@@ -811,12 +1048,40 @@ def cancel_sandbox_simulation(run_id: str, browser_id: str) -> dict[str, object]
     return PsycopgScenarioRepository(database_url).cancel_simulation_run(run_id, browser_id)
 
 
+@functools.lru_cache(maxsize=1)
+def _compiled_event_validator(schema_path: Path) -> EventValidator:
+    """Compile the accepted event schema once per path, not on every poll."""
+    return EventValidator(schema_path)
+
+
+def _feed_case_validator() -> EventValidator | None:
+    """Return the event schema when case storage is on, else None (storage off).
+
+    The same switch as Run showcase cases: ``SHOWCASE_CASES_ENABLED`` plus a
+    database. An unreadable schema leaves storage off, as it does for the API.
+    """
+    settings = load_case_settings()
+    if not settings.ready:
+        return None
+    try:
+        return _compiled_event_validator(settings.event_schema_path)
+    except (OSError, ValueError):
+        return None
+
+
 def advance_sandbox_simulation_events() -> int:
-    """Advance due scheduled events without contacting Plaid or a browser."""
+    """Reveal due scheduled events without contacting Plaid or a browser.
+
+    Side effects:
+        Marks due payments as shown and, with case storage on, saves one feed
+        case per revealed non PASS payment (spec 0004).
+    """
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
-    return PsycopgScenarioRepository(database_url).advance_due_simulation_events()
+    return PsycopgScenarioRepository(database_url).advance_due_simulation_events(
+        case_validator=_feed_case_validator()
+    )
 
 
 def sweep_sandbox_simulation_runs() -> int:

@@ -50,6 +50,11 @@ class CaseSummary(StrictShowcaseModel):
     completed_at: str
     expires_at: str
     contract_version: Literal["1.0"]
+    # Spec 0004: which path saved the case, and a feed case's display only
+    # model score (null until an ADR approves it; it never decides anything).
+    origin: Literal["showcase", "feed"]
+    model_score: float | None = Field(ge=0, le=1)
+    model_version: str | None
 
 
 class StoredCaseEvent(StrictShowcaseModel):

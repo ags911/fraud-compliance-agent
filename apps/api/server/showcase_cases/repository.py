@@ -14,7 +14,7 @@ from psycopg.types.json import Jsonb
 
 from server.showcase_cases.capture import (
     CONTRACT_VERSION,
-    MAX_CASES_PER_BROWSER,
+    MAX_CASES_BY_ORIGIN,
     CaseRecord,
 )
 
@@ -46,11 +46,16 @@ _SUMMARY_COLUMNS = (
     "completed_at",
     "expires_at",
     "contract_version",
+    "origin",
+    "model_score",
+    "model_version",
 )
 # Column lists are composed from these fixed identifiers, never from input.
 _SELECT_SUMMARY = sql.SQL(", ").join(map(sql.Identifier, _SUMMARY_COLUMNS))
+# A case ID already present (a retried feed reveal) inserts nothing.
 _INSERT_CASE = sql.SQL(
-    "INSERT INTO showcase_cases (browser_id, {columns}) VALUES ({values})"
+    "INSERT INTO showcase_cases (browser_id, {columns}) VALUES ({values}) "
+    "ON CONFLICT (case_id) DO NOTHING RETURNING case_id"
 ).format(
     columns=_SELECT_SUMMARY,
     values=sql.SQL(", ").join(sql.Placeholder() * (len(_SUMMARY_COLUMNS) + 1)),
@@ -110,6 +115,9 @@ def _summary(row: dict[str, Any]) -> dict[str, Any]:
     summary = {column: row[column] for column in _SUMMARY_COLUMNS}
     for column in ("started_at", "completed_at", "expires_at"):
         summary[column] = summary[column].isoformat()
+    # NUMERIC reads back as Decimal; the summary carries a plain number.
+    if summary["model_score"] is not None:
+        summary["model_score"] = float(summary["model_score"])
     return summary
 
 
@@ -151,6 +159,73 @@ class PsycopgCaseRepository:
             )
         )
 
+    @staticmethod
+    def insert_case(
+        cursor: psycopg.Cursor[Any], record: CaseRecord, browser_id: str
+    ) -> bool:
+        """Insert one case and its events, then apply retention, in the caller's transaction.
+
+        Args:
+            cursor: A cursor inside the transaction that must hold the case.
+            record: The validated case to store.
+            browser_id: The anonymous browser that owns the case.
+
+        Returns:
+            True when the case was inserted; False when its ID already existed,
+            in which case nothing is written.
+
+        Raises:
+            psycopg.Error: If the database rejects the write.
+
+        Side effects:
+            Takes this browser's advisory lock for the rest of the transaction,
+            inserts the case and its events, then deletes this browser's
+            expired cases and any of the record's origin beyond that origin's
+            newest cap (50 showcase, 20 feed). Other origins are untouched.
+        """
+        # Serialise writes per browser so parallel writers cannot overshoot a cap.
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (browser_id,)
+        )
+        cursor.execute(
+            _INSERT_CASE,
+            (browser_id, *(getattr(record, column) for column in _SUMMARY_COLUMNS)),
+        )
+        if cursor.fetchone() is None:
+            return False
+        cursor.executemany(
+            """INSERT INTO showcase_case_events (case_id, sequence, event_id, event_type, payload, recorded_at)
+            VALUES (%s, %s, %s, %s, %s, %s)""",
+            [
+                (
+                    record.case_id,
+                    event.sequence,
+                    event.payload["event_id"],
+                    event.payload["event"],
+                    Jsonb(event.payload),
+                    event.recorded_at,
+                )
+                for event in record.events
+            ],
+        )
+        cursor.execute(
+            "DELETE FROM showcase_cases WHERE browser_id = %s AND expires_at <= now()",
+            (browser_id,),
+        )
+        cursor.execute(
+            """DELETE FROM showcase_cases WHERE browser_id = %s AND origin = %s AND case_id NOT IN (
+                SELECT case_id FROM showcase_cases WHERE browser_id = %s AND origin = %s
+                ORDER BY completed_at DESC, case_id DESC LIMIT %s)""",
+            (
+                browser_id,
+                record.origin,
+                browser_id,
+                record.origin,
+                MAX_CASES_BY_ORIGIN[record.origin],
+            ),
+        )
+        return True
+
     def save_case(self, record: CaseRecord, browser_id: str) -> None:
         """Insert one case and its events, then apply retention, atomically.
 
@@ -159,44 +234,12 @@ class PsycopgCaseRepository:
                 transaction is rolled back, so no partial case remains.
 
         Side effects:
-            Inserts one case with its events, then deletes this browser's
-            expired cases and any beyond its newest ``MAX_CASES_PER_BROWSER``.
+            As ``insert_case``, in a transaction of its own with every
+            statement bounded to a few seconds.
         """
         with self._connect() as connection, connection.cursor() as cursor:
             self._limit_statements(cursor)
-            # Serialise writes per browser so parallel runs cannot overshoot the cap.
-            cursor.execute(
-                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (browser_id,)
-            )
-            cursor.execute(
-                _INSERT_CASE,
-                (browser_id, *(getattr(record, column) for column in _SUMMARY_COLUMNS)),
-            )
-            cursor.executemany(
-                """INSERT INTO showcase_case_events (case_id, sequence, event_id, event_type, payload, recorded_at)
-                VALUES (%s, %s, %s, %s, %s, %s)""",
-                [
-                    (
-                        record.case_id,
-                        event.sequence,
-                        event.payload["event_id"],
-                        event.payload["event"],
-                        Jsonb(event.payload),
-                        event.recorded_at,
-                    )
-                    for event in record.events
-                ],
-            )
-            cursor.execute(
-                "DELETE FROM showcase_cases WHERE browser_id = %s AND expires_at <= now()",
-                (browser_id,),
-            )
-            cursor.execute(
-                """DELETE FROM showcase_cases WHERE browser_id = %s AND case_id NOT IN (
-                    SELECT case_id FROM showcase_cases WHERE browser_id = %s
-                    ORDER BY completed_at DESC, case_id DESC LIMIT %s)""",
-                (browser_id, browser_id, MAX_CASES_PER_BROWSER),
-            )
+            self.insert_case(cursor, record, browser_id)
 
     def list_cases(
         self,

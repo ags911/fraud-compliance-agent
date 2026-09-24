@@ -128,6 +128,34 @@ class SandboxScenarioAnalytics(StrictFiniteModel):
     daily_aggregates: list[SandboxDailyAggregate]
 
 
+class SandboxDecisionCounts(StrictFiniteModel):
+    """How many outbound payments ended in each recommendation."""
+
+    PASS: int = Field(ge=0)
+    CHALLENGE: int = Field(ge=0)
+    HOLD: int = Field(ge=0)
+
+
+class SandboxDecisionDay(SandboxDecisionCounts):
+    """One calendar day of decided outbound payments."""
+
+    date: str
+
+
+class SandboxScenarioDecisions(StrictFiniteModel):
+    """Decided outbound payments per day for one scenario (spec 0004, internal).
+
+    Each payment is decided by the scenario's deterministic rule alone; no model
+    score contributes. Contract version "0": not an accepted contract.
+    """
+
+    contract_version: Literal["0"]
+    scenario_id: str = Field(pattern=r"^S0[1-5]$")
+    fixture_version: str = Field(min_length=1, max_length=128)
+    days: list[SandboxDecisionDay]
+    totals: SandboxDecisionCounts
+
+
 class SandboxSimulationRun(StrictFiniteModel):
     """Expose safe progress for one server-owned Sandbox simulation run."""
 

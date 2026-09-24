@@ -11,7 +11,14 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
 RETENTION = timedelta(days=30)
+# Per browser caps, each applied only to its own origin (spec 0004): Run
+# showcase cases and live feed cases never trim each other.
 MAX_CASES_PER_BROWSER = 50
+MAX_FEED_CASES_PER_BROWSER = 20
+MAX_CASES_BY_ORIGIN = {
+    "showcase": MAX_CASES_PER_BROWSER,
+    "feed": MAX_FEED_CASES_PER_BROWSER,
+}
 CONTRACT_VERSION = "1.0"
 
 
@@ -58,6 +65,11 @@ class CaseRecord:
     expires_at: datetime
     events: tuple[CapturedEvent, ...]
     contract_version: str = CONTRACT_VERSION
+    # "showcase" for a Run showcase stream, "feed" for a live feed payment.
+    origin: str = "showcase"
+    # Display only evidence on a feed case; null until spec 0004 slice 3.
+    model_score: float | None = None
+    model_version: str | None = None
 
 
 class EventValidator:

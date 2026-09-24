@@ -63,3 +63,16 @@ export const INVESTIGATION_LABELS = {
   complete: 'Completed',
   incomplete: 'Incomplete',
 } as const
+
+// Live feed cases (spec 0004): a payment decided by its scenario's rule, with
+// no agent run and no investigation of its own.
+export const FEED_SOURCE_LABEL = 'Live feed'
+
+/** Route stage copy for an S04 or S05 feed payment, which carries a recorded run's recommendation. */
+export const FEED_CARRIED_ROUTE_COPY =
+  "Carried from the scenario's recorded investigation; no agent ran for this payment."
+
+export const MODEL_SIGNAL_UNSCORED = 'Not scored yet'
+
+export const MODEL_SIGNAL_NOTE =
+  'Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It does not decide.'

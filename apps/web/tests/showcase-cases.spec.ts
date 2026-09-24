@@ -56,6 +56,9 @@ function summary(caseId: string, overrides: Record<string, unknown>) {
     completed_at: "2026-09-24T09:15:04Z",
     expires_at: "2026-10-24T09:15:04Z",
     contract_version: "1.0",
+    origin: "showcase",
+    model_score: null,
+    model_version: null,
     ...overrides,
   }
 }
@@ -161,6 +164,47 @@ const S05_DETAIL = detail(
   ],
 )
 
+// A live feed payment's case (spec 0004): an S04 payment carrying the
+// scenario's recorded CHALLENGE, with no agent run and no score yet.
+const FEED_ID = "run_feed_3f2a9c1e7b4d_007"
+const FEED_EVENT = (n: number) => `evt_feed_3f2a9c1e7b4d_007_${n}`
+const FEED_DETAIL = detail(
+  summary(FEED_ID, {
+    origin: "feed",
+    investigation_status: "skipped",
+    tool_call_count: 0,
+    evidence_count: 0,
+    event_count: 4,
+    fixture_version: null,
+    started_at: "2026-09-23T12:00:07Z",
+    completed_at: "2026-09-23T12:00:07Z",
+    expires_at: "2026-10-23T12:00:07Z",
+  }),
+  [
+    { ...runStarted(FEED_ID, "S04"), event_id: FEED_EVENT(1) },
+    {
+      ...identity(FEED_ID, "S04", 2, "route_resolved"),
+      event_id: FEED_EVENT(2),
+      deterministic_route: "INVESTIGATE",
+      investigation_eligibility: "skipped",
+    },
+    { ...identity(FEED_ID, "S04", 3, "investigation_skipped"), event_id: FEED_EVENT(3), reason: "existing_recorded_recommendation" },
+    {
+      ...identity(FEED_ID, "S04", 4, "run_result"),
+      event_id: FEED_EVENT(4),
+      investigation_status: "skipped",
+      recommendation: "CHALLENGE",
+      recommendation_basis: "evidence_grounded",
+      authority_status: "not_evaluated",
+      simulated_action: "none",
+      execution_mode: "recorded",
+      data_label: "synthetic",
+    },
+  ],
+)
+
+const CARRIED_COPY = "Carried from the scenario's recorded investigation; no agent ran for this payment."
+
 function zeroScenarios() {
   return Object.fromEntries(
     ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08"].map((id) => [id, { PASS: 0, CHALLENGE: 0, HOLD: 0 }]),
@@ -251,6 +295,40 @@ test.describe("Case page", () => {
     await expect(page.getByText("Case not found")).toBeVisible()
     await expect(page.getByRole("link", { name: "Back to Radar" })).toHaveAttribute("href", "/radar")
     expect(requested).toBe(false)
+  })
+
+  test("shows a live feed case as Live feed, with the carried route copy and no score yet", async ({ page }) => {
+    await stubCase(page, 200, FEED_DETAIL)
+    await page.goto(`/transactions/${FEED_ID}`)
+
+    await expect(page.getByRole("heading", { name: "S04 · CHALLENGE" })).toBeVisible()
+    await expect(page.getByTestId("showcase-mode")).toContainText("Live feed")
+    await expect(page.getByTestId("showcase-mode")).not.toContainText("Recorded playback")
+    await expect(page.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
+    await expect(page.getByTestId("case-model-signal")).toContainText("Not scored yet")
+  })
+
+  test("shows an S05 feed case as a carried fail safe HOLD with no agent run and no failure banner", async ({ page }) => {
+    // covers: AC-10 (the S05 half of the carried route copy)
+    const s05Id = "run_feed_3f2a9c1e7b4d_008"
+    const s05 = JSON.parse(
+      JSON.stringify(FEED_DETAIL)
+        .replaceAll(FEED_ID, s05Id)
+        .replaceAll("run_feed_3f2a9c1e7b4d_007", "run_feed_3f2a9c1e7b4d_008")
+        .replaceAll("evt_feed_3f2a9c1e7b4d_007", "evt_feed_3f2a9c1e7b4d_008")
+        .replaceAll('"S04"', '"S05"')
+        .replaceAll('"CHALLENGE"', '"HOLD"')
+        .replaceAll('"evidence_grounded"', '"fail_safe"'),
+    )
+    await stubCase(page, 200, s05)
+    await page.goto(`/transactions/${s05Id}`)
+
+    await expect(page.getByRole("heading", { name: "S05 · HOLD" })).toBeVisible()
+    await expect(page.getByTestId("showcase-mode")).toContainText("Live feed")
+    await expect(page.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
+    await expect(page.getByTestId("case-model-signal")).toContainText("Not scored yet")
+    // A skipped investigation is not an incomplete one, so no failure banner.
+    await expect(page.getByTestId("case-failure-banner")).toHaveCount(0)
   })
 
   test("says case history is off when storage is unavailable", async ({ page }) => {
@@ -364,6 +442,33 @@ test.describe("Radar Cases tab", () => {
     await expect(page).toHaveURL(/radar-reference\.html$/)
     // The modal hides the page from assistive tech while open, so the tab is checked after.
     await expect(page.getByRole("tab", { name: /^Cases/ })).toHaveAttribute("aria-selected", "true")
+  })
+
+  test("lists a feed case as Live feed and opens it with the carried route and no score", async ({ page }) => {
+    await page.route(/\/cases(\?.*)?$/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...CASE_PAGE, items: [FEED_DETAIL.case, ...CASE_PAGE.items] }),
+      }),
+    )
+    await page.route("**/cases/run_*", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FEED_DETAIL) }),
+    )
+    await page.goto("/references/radar-reference.html")
+    await page.getByRole("tab", { name: /^Cases/ }).click()
+
+    const feedRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: FEED_ID }) })
+    await expect(feedRow).toContainText("Live feed")
+    const showcaseRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: S04_ID }) })
+    await expect(showcaseRow).toContainText("recorded")
+
+    await page.getByRole("link", { name: FEED_ID }).click()
+    const drawer = page.getByRole("dialog")
+    await expect(drawer.locator(".radar-source-pill").first()).toHaveText("Live feed")
+    await expect(drawer.getByText("Recorded playback")).toHaveCount(0)
+    await expect(drawer.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
+    await expect(drawer.getByTestId("case-model-signal")).toContainText("Not scored yet")
   })
 
   test("falls back to this visit's runs, unlinked, when case history is off", async ({ page }) => {

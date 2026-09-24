@@ -1,0 +1,12 @@
+{
+  "tool": "pytest",
+  "gate": null,
+  "additionalTools": [],
+  "e2eTool": "playwright",
+  "testDir": "apps/api/tests",
+  "filePattern": "test_*.py",
+  "e2eTestDir": "apps/web/tests",
+  "e2eFilePattern": "*.spec.ts",
+  "packageManager": "npm",
+  "notes": "apps/api: pytest via `make api-test` (uv). apps/web: Playwright only via `make web-test`; the web app has no unit runner by design."
+}

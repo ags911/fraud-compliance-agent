@@ -11,7 +11,11 @@ import {
   evidenceAnchorId,
   FAILURE_REASON_LABELS,
   FALLBACK_REASON_LABELS,
+  FEED_CARRIED_ROUTE_COPY,
+  FEED_SOURCE_LABEL,
   INVESTIGATION_LABELS,
+  MODEL_SIGNAL_NOTE,
+  MODEL_SIGNAL_UNSCORED,
   SKIP_REASON_LABELS,
   TOOL_LABELS,
 } from "@/lib/showcase-labels"
@@ -104,6 +108,7 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
   const view = readShowcaseCase(detail)
   const { runStarted, route, skipped, toolCalls, toolResults, investigation } = view
   const incomplete = summary.investigation_status === "incomplete"
+  const isFeed = summary.origin === "feed"
 
   return (
     <>
@@ -134,7 +139,9 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
           <Fact label="Investigation">{INVESTIGATION_LABELS[summary.investigation_status]}</Fact>
           <Fact label="Mode">
             <span className="case-pills">
-              <span className="radar-source-pill">{summary.execution_mode === "live" ? "Live model run" : "Recorded playback"}</span>
+              <span className="radar-source-pill">
+                {isFeed ? FEED_SOURCE_LABEL : summary.execution_mode === "live" ? "Live model run" : "Recorded playback"}
+              </span>
               <span className="radar-source-pill">Synthetic data</span>
             </span>
             {summary.execution_mode === "live" && summary.provider ? (
@@ -154,11 +161,31 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
             <Fact label="Investigation eligibility">{route ? ELIGIBILITY_LABELS[route.investigation_eligibility] : "Not recorded"}</Fact>
           </dl>
           {skipped ? (
-            <p className="card-copy">Investigation skipped. {SKIP_REASON_LABELS[skipped.reason]}</p>
+            <p className="card-copy">
+              {/* An S04 or S05 feed payment carries its scenario's recorded outcome (spec 0004). */}
+              {isFeed && skipped.reason === "existing_recorded_recommendation"
+                ? FEED_CARRIED_ROUTE_COPY
+                : `Investigation skipped. ${SKIP_REASON_LABELS[skipped.reason]}`}
+            </p>
           ) : null}
         </Stage>
 
         <Stage title="Evidence" sub="Each allowlisted tool call and the evidence it returned." testId="case-stage-evidence" events={view.stageEvents.evidence}>
+          {isFeed ? (
+            <dl className="case-facts" data-testid="case-model-signal">
+              <Fact label="Model signal">
+                {summary.model_score === null ? (
+                  MODEL_SIGNAL_UNSCORED
+                ) : (
+                  <>
+                    {summary.model_score.toFixed(3)}
+                    {summary.model_version ? <span className="td-secondary"> · {summary.model_version}</span> : null}
+                    <span className="case-fact-note">{MODEL_SIGNAL_NOTE}</span>
+                  </>
+                )}
+              </Fact>
+            </dl>
+          ) : null}
           {skipped ? (
             <p className="card-copy">No evidence was gathered, because the investigation was skipped.</p>
           ) : toolCalls.length ? (

@@ -110,11 +110,14 @@ recommendation cannot bypass a hard control or missing critical evidence."
    dashboard with synthetic demo data, outside the Payments shell used by
    every other route.
 6. **Radar portfolio overview** (built, standalone): `/radar` embeds
-   `references/radar-reference.html` — Scenario / Session / Model tabs. The
+   `references/radar-reference.html` — Scenario / Cases / Model tabs. The
    Scenario tab reads the internal `GET /sandbox/scenarios/{id}/analytics`
    for the selected S01–S05 scenario (real sanitised Sandbox aggregates) next
-   to a clearly badged **mock** PASS/CHALLENGE/HOLD history; the Session tab
-   shows this browser's recorded showcase runs; the Model tab shows the
+   to PASS/CHALLENGE/HOLD counts per day from the internal
+   `GET /sandbox/scenarios/{id}/decisions`, each outbound payment decided by
+   its scenario's deterministic rule (spec 0004; no model score decides
+   anything); the Cases tab lists this browser's saved cases, including
+   live feed cases, and refreshes while a feed runs; the Model tab shows the
    accepted benchmark summary. See `ui_context.md` → Radar Portfolio Page.
 7. **Stateless scoring (`POST /risk/score`) and stateful processing
    (`POST /transactions/{transaction_id}/process`)** (target, **not built**):
@@ -247,6 +250,34 @@ The current datasets are deliberately finite. They are not live streams: no
 route starts a simulator, no worker advances a scenario clock, and the
 dashboard has no subscription to scenario changes. Existing SSE describes an
 investigation trace only, not changing Sandbox transaction data.
+
+### Proposed regulatory-reference support (showcase only)
+
+The intended regulatory-reference experience is a small, curated, dated FCA
+Handbook corpus with retrieval-augmented generation (RAG), not a live FCA API
+or MCP dependency. It would support an S04 investigation by returning
+relevant, cited extracts from the reviewed corpus. Each durable case must
+retain the corpus version, source link or provision identifier, and the exact
+retrieved extracts used in that run so a later replay can show the same
+evidence. The feature is regulatory-reference support, not legal advice and
+not an authority to change a deterministic decision, simulated action, or
+human-review outcome.
+
+The present agent has no FCA Handbook tool. A direct API or MCP connector is
+deferred: it would need separately approved source terms, availability and
+freshness controls, caching, source-version capture, monitoring, and replay
+semantics. MCP is only a tool protocol, not a regulatory source.
+
+**Planned dashboard placement:** regulatory references belong on an S04 case
+detail page, alongside the evidence, deterministic controls, and proposed
+route. The panel must show the provision title and identifier, short retrieved
+excerpt, relevance to the case, FCA source link, corpus version, and retrieval
+time. The investigation trace may show a bounded retrieval event with the same
+provenance. Radar must not become a generic Handbook chat or assert “FCA
+compliant”; its future Health tab may show only corpus version, last review,
+and retrieval availability. S01–S03 do not retrieve regulatory references by
+default, S05 fails safe when retrieval is unavailable, and S06–S08 rely on
+their conflict, idempotency, and revision controls rather than retrieval.
 
 The local Sandbox slice now includes a deterministic simulator. It keeps Plaid as an
 import-only source, starts from the selected scenario's versioned baseline

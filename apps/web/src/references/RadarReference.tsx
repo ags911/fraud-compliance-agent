@@ -6,13 +6,17 @@ import { NetworkMark } from "@/components/averlynx-logo"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchDemoModelSummary, type DemoModelSummary } from "@/lib/demo-model-summary"
-import { mockScenarioRecommendationHistory } from "@/lib/mock-scenario-recommendation-history"
 import {
   fetchSandboxScenarioAnalytics,
   sandboxDailyActivitySeries,
   summariseSandboxActivity,
   type SandboxScenarioAnalytics,
 } from "@/lib/sandbox-scenario-analytics"
+import {
+  fetchSandboxScenarioDecisions,
+  sandboxDecisionSeries,
+  type SandboxScenarioDecisions,
+} from "@/lib/sandbox-scenario-decisions"
 import {
   formatDateWindow,
   scenarioDateWindow,
@@ -25,6 +29,7 @@ import { useShowcaseCase } from "@/lib/useShowcaseCase"
 import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
+import { FEED_SOURCE_LABEL } from "@/lib/showcase-labels"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 import { RadarCaseDrawer } from "./RadarCaseDrawer"
@@ -69,9 +74,18 @@ function modeLabel(mode: "recorded" | "live", fallbackReason: ShowcaseCaseSummar
   return fallbackReason ? `${mode} (${FALLBACK_SHORT[fallbackReason]})` : mode
 }
 
+// A saved case's Mode column: a live feed payment is not a recorded playback.
+function caseModeLabel(item: ShowcaseCaseSummary): string {
+  return item.origin === "feed" ? FEED_SOURCE_LABEL : modeLabel(item.execution_mode, item.fallback_reason)
+}
+
 // The Sandbox result is stored with the scenario it belongs to, so a
 // scenario switch reads as "loading" until its own response arrives.
 type SandboxResult = { scenarioId: ShowcaseScenarioId; analytics: SandboxScenarioAnalytics | null }
+type DecisionsResult = { scenarioId: ShowcaseScenarioId; decisions: SandboxScenarioDecisions | null }
+
+// While the Cases tab is open during a feed, refetch cases at most this often.
+const FEED_CASES_POLL_MS = 3000
 
 // Both Scenario charts reserve the same y-axis width, so a given day sits
 // at the same x position in each and the two can be read together.
@@ -80,9 +94,11 @@ const CHART_Y_AXIS_WIDTH = 56
 const pounds = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" })
 const countFormatter = new Intl.NumberFormat("en-GB")
 
-function runsLabel(count: number): string {
-  return `${countFormatter.format(count)} ${count === 1 ? "run" : "runs"}`
+function paymentsLabel(count: number): string {
+  return `${countFormatter.format(count)} ${count === 1 ? "payment" : "payments"}`
 }
+
+const PAYMENT_UNIT = { one: "payment", other: "payments" }
 
 function timeNow(): string {
   return new Intl.DateTimeFormat("en-GB", {
@@ -105,13 +121,14 @@ export function RadarReference() {
   const [runs, setRuns] = useState<SessionRun[]>([])
   const [benchmark, setBenchmark] = useState<DemoModelSummary | null>(null)
   const [sandboxResult, setSandboxResult] = useState<SandboxResult | null>(null)
+  const [decisionsResult, setDecisionsResult] = useState<DecisionsResult | null>(null)
   const [caseFilters, setCaseFilters] = useState<ShowcaseCaseFilters>({})
   const seenRunIds = useRef(new Set<string>())
   const investigation = useShowcaseInvestigation()
   const cases = useShowcaseCases(caseFilters)
   // The live feed's payments are added to the imported base for this view.
   const feed = useSandboxFeed(scenarioId)
-  const { trackRun } = cases
+  const { trackRun, pollQuietly } = cases
 
   useEffect(() => {
     let active = true
@@ -142,6 +159,39 @@ export function RadarReference() {
       active = false
     }
   }, [scenarioId, feed.runId, feed.revision])
+
+  useEffect(() => {
+    let active = true
+    // Decided counts follow the same feed revisions as the activity figures.
+    fetchSandboxScenarioDecisions(scenarioId, feed.runId).then(
+      (decisions) => {
+        if (active) setDecisionsResult({ scenarioId, decisions })
+      },
+      () => {
+        if (active) setDecisionsResult({ scenarioId, decisions: null })
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [scenarioId, feed.runId, feed.revision])
+
+  // Feed cases are saved as payments are revealed, so while a feed runs,
+  // refetch when its revealed count changes (at most every few seconds) and
+  // once more when it ends. This runs on every tab, so the Cases tab count
+  // stays current from the Scenario tab too. An open drawer reads its own
+  // case separately, so it is not disturbed.
+  const lastCasesPoll = useRef(0)
+  const feedStatus = feed.state.status
+  useEffect(() => {
+    if (!feed.runId || (feedStatus !== "live" && feedStatus !== "finished")) return
+    const wait = Math.max(0, lastCasesPoll.current + FEED_CASES_POLL_MS - Date.now())
+    const timer = window.setTimeout(() => {
+      lastCasesPoll.current = Date.now()
+      pollQuietly()
+    }, wait)
+    return () => window.clearTimeout(timer)
+  }, [feed.runId, feed.revision, feedStatus, pollQuietly])
 
   useEffect(() => {
     const { runStarted, route, runResult, status, toolResults } = investigation
@@ -182,12 +232,14 @@ export function RadarReference() {
     [sandboxAnalytics, dateWindow],
   )
   const sandboxSummary = useMemo(() => (sandboxActivity ? summariseSandboxActivity(sandboxActivity) : null), [sandboxActivity])
-  // The mock decides each day's real Sandbox transactions when they are known.
-  const history = useMemo(() => {
-    const volumes = sandboxActivity ? new Map(sandboxActivity.map((day) => [day.date, day.transactionCount])) : undefined
-    return mockScenarioRecommendationHistory(scenarioId, dateWindow, volumes)
-  }, [scenarioId, dateWindow, sandboxActivity])
-  const historyTotal = history.data.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
+  // Each outbound payment decided by the scenario's deterministic rule (spec 0004).
+  const decisionsLoading = decisionsResult?.scenarioId !== scenarioId
+  const decisions = decisionsLoading ? null : decisionsResult?.decisions ?? null
+  const decisionSeries = useMemo(
+    () => (decisions ? sandboxDecisionSeries(decisions, dateWindow) : []),
+    [decisions, dateWindow],
+  )
+  const decisionTotal = decisionSeries.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
 
   // ---- Cases tab -----------------------------------------------------------
   // Saved cases when storage is on; this visit's runs as the fallback (AC-10).
@@ -221,7 +273,7 @@ export function RadarReference() {
       recommendation: item.recommendation,
       investigationStatus: item.investigation_status,
       evidenceCount: item.evidence_count,
-      mode: modeLabel(item.execution_mode, item.fallback_reason),
+      mode: caseModeLabel(item),
       href: `/transactions/${item.case_id}`,
       notSaved: false,
     }))
@@ -355,13 +407,20 @@ export function RadarReference() {
             </div>
 
             <RadarRecommendationChart
-              badge={history.sourceClass === "mock" ? "Mock data" : undefined}
+              badge="Sandbox"
               categoryLabel="Date"
-              data={history.data}
-              description={`${runsLabel(historyTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by final recommendation.`}
+              data={decisionSeries}
+              description={`${paymentsLabel(decisionTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by the scenario's deterministic recommendation.`}
               yAxisWidth={CHART_Y_AXIS_WIDTH}
-              emptyMessage="No history for this scenario and range."
+              emptyMessage={
+                decisionsLoading
+                  ? "Loading recommendations…"
+                  : decisions
+                    ? "No outbound payments for this scenario and range."
+                    : "Recommendations are unavailable. Start the local API with the Sandbox dataset configured."
+              }
               title="Recommendations over time"
+              unit={PAYMENT_UNIT}
             />
 
             <RadarScenarioActivityChart
@@ -379,7 +438,7 @@ export function RadarReference() {
             <footer className="panel-footnote">
               <p>
                 <span className="panel-footnote-label">About this data</span>
-                Sanitised Plaid Sandbox data, with mock recommendations and simulated live feed payments. Not production or model training data.
+                Sanitised Plaid Sandbox data and simulated live feed payments, each outbound payment decided by its scenario's deterministic rule. No model score decides anything. Not production or model training data.
               </p>
             </footer>
           </TabsPrimitive.Content>

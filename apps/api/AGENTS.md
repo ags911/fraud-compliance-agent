@@ -38,6 +38,10 @@ specific to `apps/api`.
 - Only an approved-mode run of Notebook 08 may write
   `docs/proposals/fast-path-model-release.candidate.json`. Synthetic and gated
   runs must write elsewhere.
+- Live feed payments are decided only by the rule table in
+  `server/sandbox_data/decisions.py` (spec 0004). A model score, when one is
+  approved, is display only evidence and must never change a route, a
+  recommendation, or whether a case is saved.
 - Every endpoint has a strictly typed Pydantic request and response model. Write
   the endpoint's tests (`pytest`, in `tests/`) before its logic, and keep them
   green.

@@ -54,7 +54,8 @@ below for why that SDK is documented separately.
   `GET /health`, `GET /scenarios`, `GET /demo/model-summary`,
   `POST /showcase/investigations` (SSE), `POST /run` (SSE),
   `POST /run/preset/{scenario_id}` (SSE), plus the internal (hidden from the
-  OpenAPI, `include_in_schema=False`) `GET /sandbox/scenarios/{scenario_id}/analytics`.
+  OpenAPI, `include_in_schema=False`) `GET /sandbox/scenarios/{scenario_id}/analytics`
+  and `GET /sandbox/scenarios/{scenario_id}/decisions` (spec 0004).
   Proposed internal routes (spec 0002, not built): `GET /cases`,
   `GET /cases/{case_id}`. Target/candidate routes (not
   built): `POST /risk/score`, `POST /transactions/{id}/process`,
@@ -188,6 +189,34 @@ to that browser, 30 days / 50 cases, behind `SHOWCASE_CASES_ENABLED`
 Session tab becomes Cases; case detail lives at `/transactions/:caseId`. It
 needs an ADR accepting `showcase-cases.v1` before it is a contract.
 
+#### Proposed FCA Handbook RAG evidence source (F4–F6, not built)
+
+The recruiter showcase should use a small, curated and dated corpus of FCA
+Handbook extracts. Retrieval is server-side, bounded to that corpus, and
+returns provision identifiers, source links, corpus version, and excerpts for
+an investigation to cite. The case record stores that retrieval bundle, not
+only a generated summary, so replay can reproduce the regulatory reference
+that was available at the time. The corpus is reference support only: it must
+be visibly labelled as not legal advice and cannot set policy, alter a
+deterministic decision, authorise an action, or replace human review.
+
+This is deliberately not a live FCA API or an MCP dependency. A direct source
+connector may be considered in F6 only after a separate decision covers source
+terms, ingestion and review, availability failures, freshness, caching,
+provision-level version capture, monitoring, and replay. MCP would be a
+protocol wrapper around an approved source, not the source itself. Until then,
+the accepted investigation tool allowlist remains unchanged.
+
+The proposed UI surface is the S04 case-detail page, not Radar's primary
+Scenario dashboard. It places a Regulatory references panel beside the facts,
+deterministic controls, agent evidence, and proposed route. Each entry renders
+a provision title and identifier, a short retrieved excerpt, case relevance,
+FCA source link, corpus version, and retrieval time. The investigation trace
+may render a matching retrieval event. The stored retrieval bundle is the
+replay source of truth. Radar's F6 Health tab may report corpus version, last
+review, and retrieval availability only; it must not render a generic Handbook
+chat, regulatory-coverage metric, or an “FCA compliant” claim.
+
 #### Implemented local deterministic simulation runtime
 
 The current local service now has a worker command, internal simulation-run
@@ -209,6 +238,22 @@ to a declared baseline; it must never silently rewrite the historical record.
 This local implementation needs a versioned API contract, an accepted
 persistence decision, and an operational worker deployment decision before it
 can be deployed or described as accepted runtime behaviour.
+
+**Feed decisions and feed cases (spec 0004, slices 1 and 2, implemented
+locally 2026-09-24).** At run start every outbound scheduled payment stores its
+scenario's deterministic route, recommendation and basis from the rule table in
+`apps/api/server/sandbox_data/decisions.py`, the only source of a feed
+decision (S01 PASS; S02 and S03 HOLD; S04 CHALLENGE and S05 fail safe HOLD,
+carried from the runtime's recorded runs with the investigation skipped). The
+worker reveals each payment in its own transaction; a revealed non PASS
+payment becomes one `origin = feed` case (`showcase_cases`), built through
+spec 0002's `build_case` and `EventValidator` and saved in that same
+transaction, with `case_status` `saved`, `invalid` or `storage_off` on the
+payment. Caps are per browser and per origin (20 feed, 50 showcase), trimmed
+in the insert's transaction. Migration `0006_feed_decisions.sql` adds the
+columns, including a null `model_score`: the Sparkov trained display only
+score (slice 3) waits for an ADR and never decides a route, a recommendation
+or whether a case is saved.
 
 This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
 authorises a database nor changes the accepted database-free public showcase

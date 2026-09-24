@@ -148,6 +148,18 @@ schedules. S06–S08 remain workflow cases, not fabricated transaction streams.
 This is still an assumed, internal Sandbox design. The API contract, reset
 lifecycle, worker deployment, and dashboard integration require ratification.
 
+**Spec [0004](../docs/specs/0004-score-route-feed-payments/index.md), slices 1
+and 2 implemented locally, 2026-09-24 (spec In Progress).** Feed payments are
+decided at run start by each scenario's deterministic rule; revealed non PASS
+payments become saved `Live feed` cases; Radar's "Recommendations over time"
+reads real decided counts (mock removed) and the Cases tab refreshes during a
+feed. Migration `0006_feed_decisions.sql` is live in Neon. Verified live
+against Neon and in the browser (`verify.md` fully ticked); fresh model review
+approved with nits, all fixed (`docs/reviews/2026-09-24-feature-overview-live-model-work.md`).
+Slice 3, the display only Sparkov model score, is blocked on an ADR approving
+the runtime score, its history features, the raw Sparkov source and the
+`xgboost` runtime dependency.
+
 ### F4 designed, not started: durable investigation cases
 
 **Spec [0002](../docs/specs/0002-durable-investigation-cases/index.md) —
@@ -157,6 +169,19 @@ criteria, three Tracer Bullet slices. Prerequisites before it is a runtime
 contract: an ADR accepting `showcase-cases.v1` and case persistence; any
 public enablement additionally needs an ADR revisiting ADR-016, a rate
 limit, an expiry sweep and a hosting/secrets plan.
+
+**Proposed regulatory-reference increment:** F4 may add a curated, dated FCA
+Handbook extract corpus and bounded RAG retrieval to support cited S04
+evidence. Each case would retain the corpus version, provision/source link,
+and retrieved excerpts so replay remains reproducible. It is not legal advice
+and cannot alter deterministic controls, authority, or human review. The
+current tool allowlist does not include it. A live FCA API or MCP connector is
+explicitly deferred to F6, where source terms, freshness, caching,
+availability, monitoring, and replay would need their own approved design.
+The agreed UI placement is an S04 case-detail Regulatory references panel and
+matching trace event, not a Radar chart or generic Handbook chat. F6's Radar
+Health tab may show corpus version, last review, and retrieval availability;
+it must not claim FCA compliance.
 
 **Dashboard implications for F5–F6** (agreed direction, not designed): Radar
 stays the overview and links into product routes. F5's review queue belongs

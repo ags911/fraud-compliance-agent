@@ -63,6 +63,7 @@ from server.models import (
     PresetRunRequest,
     RunRequest,
     SandboxScenarioAnalytics,
+    SandboxScenarioDecisions,
     SandboxSimulationRun,
     ScenarioNotFoundError,
     ScenarioSummary,
@@ -71,11 +72,13 @@ from server.records import read_record
 from server.sandbox_data.service import (
     SandboxDataUnavailable,
     ScenarioDatasetNotFound,
+    ScenarioNotDecided,
     ScenarioSimulationNotFound,
     SimulationBusy,
     SimulationRateLimited,
     cancel_sandbox_simulation,
     load_sandbox_analytics,
+    load_sandbox_decisions,
     load_sandbox_simulation_run,
     start_sandbox_simulation,
 )
@@ -563,6 +566,50 @@ def create_app() -> FastAPI:
             return SandboxScenarioAnalytics.model_validate(
                 load_sandbox_analytics(scenario_id, simulation_run_id, browser_id)
             )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/sandbox/scenarios/{scenario_id}/decisions",
+        include_in_schema=False,
+        response_model=SandboxScenarioDecisions,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def sandbox_scenario_decisions(
+        scenario_id: str, request: Request, simulation_run_id: str | None = None
+    ) -> SandboxScenarioDecisions:
+        """Return PASS, CHALLENGE and HOLD counts per day for one scenario (spec 0004).
+
+        Every imported outbound payment is decided by the scenario's
+        deterministic rule. With ``simulation_run_id``, that run's revealed
+        feed payments are added, for its own browser only; the same 404 rules
+        as the analytics overlay apply. S06 to S08 have no rule and are 404.
+        """
+        browser_id = (
+            _simulation_browser_id(request) if simulation_run_id is not None else None
+        )
+        try:
+            return SandboxScenarioDecisions.model_validate(
+                load_sandbox_decisions(scenario_id, simulation_run_id, browser_id)
+            )
+        except ScenarioNotDecided as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_decided"
+            ) from error
         except ScenarioSimulationNotFound as error:
             raise HTTPException(
                 status_code=404, detail="sandbox_simulation_not_found"

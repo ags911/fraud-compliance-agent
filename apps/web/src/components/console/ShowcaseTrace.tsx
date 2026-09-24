@@ -50,8 +50,11 @@ export function ShowcaseModeLabel({ runStarted }: { runStarted: ShowcaseRunStart
 /** Make a bypassed investigation explicit rather than silently showing nothing. */
 export function ShowcaseSkippedTrace({
   skipped,
+  message,
 }: {
   skipped: ShowcaseInvestigationSkippedEvent
+  /** Replaces the skip reason's standard wording, e.g. for a live feed payment. */
+  message?: string
 }) {
   return (
     <div
@@ -61,7 +64,7 @@ export function ShowcaseSkippedTrace({
       <SkipForward className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" size={18} strokeWidth={1.6} />
       <div>
         <strong className="payments-type-section-title">Investigation skipped</strong>
-        <p className="mt-1 text-sm text-muted-foreground">{SKIP_REASON_LABELS[skipped.reason]}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{message ?? SKIP_REASON_LABELS[skipped.reason]}</p>
       </div>
     </div>
   )
