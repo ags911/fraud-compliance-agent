@@ -1,11 +1,11 @@
 # 0002. Durable investigation cases (F4)
 
-**Date**: 2026-09-24
+**Date**: 2026-09-24 (updated 2026-09-24 to match the build)
 **Status**: In Progress
 
 ## Summary
 
-Every completed showcase run becomes a saved case you can reopen later, instead of vanishing when the tab closes. The API stores the run's own accepted events (the audit trail) plus one summary row, scoped to the browser that ran it, kept 30 days and capped at 50 per browser. Radar's Session tab becomes a Cases tab, and each case opens a detail page at `/transactions/<case id>` showing the outcome, the evidence, and every event. This runs locally and internally only; the public showcase stays database free until an ADR (a recorded architecture decision) says otherwise.
+Every completed showcase run becomes a saved case you can reopen later, instead of vanishing when the tab closes. The API stores the run's own accepted events (the audit trail) plus one summary row, scoped to the browser that ran it, kept 30 days and capped at 50 per browser. Radar's Session tab becomes a Cases tab, and each case opens in a drawer over that tab showing the outcome, the evidence, and every event; `/transactions/<case id>` shows the same case as a full page for deep links. This runs locally and internally only; the public showcase stays database free until an ADR (a recorded architecture decision) says otherwise.
 
 ## Requirements
 
@@ -23,7 +23,7 @@ Every completed showcase run becomes a saved case you can reopen later, instead 
 - **AC-6**: `GET /cases` returns only the calling browser's unexpired cases, newest first, 20 per page with a cursor for the next page, filterable by scenario and by recommendation, plus a totals block computed over all of that browser's retained cases, unaffected by the filters.
 - **AC-7**: `GET /cases/{case_id}` returns the same `404 case_not_found` for a case that does not exist, belongs to another browser, or has expired.
 - **AC-8**: An expired case is never returned; each new case write also deletes that browser's expired cases and any beyond its 50 newest.
-- **AC-9**: Radar's Session tab is renamed Cases and keeps its layout (stat cards, share bar, decisions table, collapsed breakdown), filled from `GET /cases`, with scenario and recommendation filters above the table and a "Show more" button that loads the next 20; the tab label count shows `totals.total`; the copy follows the Copy table below; each row opens `/transactions/<case id>` in the top window, not inside the Radar iframe.
+- **AC-9**: Radar's Session tab is renamed Cases and keeps its layout (stat cards, decisions table, collapsed breakdown; the unlabelled share bar is removed, since the stat cards already give the split), filled from `GET /cases`, with scenario and recommendation filters above the table and a "Show more" button that loads the next 20; the tab label count shows `totals.total`; the copy follows the Copy table below. A plain click on a row's Run ID opens that case in a right hand drawer (shadcn `Sheet`) over the Cases tab, so the table, filters, totals and scroll position stay behind it. The full case is fetched only when the drawer opens. Opening pushes `?case=<id>` onto the `/radar` URL (`history.pushState`), so refresh and a shared link reopen the drawer on the Cases tab; Escape, the Close button and browser Back close it, and focus returns to that row's Run ID link. On phones the drawer fills the screen. A modified click (new tab or window) still opens `/transactions/<case id>`, which stays as the deep link fallback.
 - **AC-10**: When case storage is unavailable (`GET /cases` returns `503` or fails, or there is no browser ID), the Cases tab falls back to this visit's runs with the note "Not saved: case history is off in this environment", and those rows do not link to a case page. When storage is on but a finished run is missing from the refreshed list, it appears as an unlinked row tagged "Not saved" and is left out of the totals.
 - **AC-11**: The case detail page shows an outcome summary header (scenario, final recommendation, deterministic route, investigation status, a Recorded or Live badge with provider and model for live runs, the fallback reason when a live request ran as recorded, started and completed times), then the Route, Evidence and Outcome stages, each expandable to its exact stored events with sequence number, event ID and recorded time.
 - **AC-12**: An incomplete investigation shows a failure banner stating the fail safe HOLD, the failure reason, that authority was not evaluated and that no action was simulated; it is never styled or worded as a completed investigation.
@@ -47,7 +47,7 @@ Reasoning and options: see [rationale.md](rationale.md).
 
 ## Feature design
 
-**Data model sketch** (new migration `0003_showcase_cases.sql`, Neon PostgreSQL):
+**Data model sketch** (new migration `0004_showcase_cases.sql`, Neon PostgreSQL; `0003` is the simulation runs migration from spec 0003):
 
 `showcase_cases`: one row per completed run, derived once from its events and never updated.
 
@@ -145,7 +145,7 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 | Case page | failure banner trigger | the stored `investigation_result` event (`investigation_status` = `incomplete`), not only the summary column |
 | Case page and Mode column | fallback reason | `fallback_reason` column (from `run_started`) |
 | Case page | event recorded times | `events[].recorded_at` |
-| Web, any request | browser ID | `localStorage` key `showcase-browser-id`, created once with `crypto.randomUUID()`; the Radar iframe is served from the same origin without a `sandbox` attribute, so it shares this storage and its `target="_top"` links work |
+| Web, any request | browser ID | `localStorage` key `showcase-browser-id`, created once with `crypto.randomUUID()`; the Radar iframe is served from the same origin without a `sandbox` attribute, so it shares this storage; its `?case=` URL is mirrored onto the top level `/radar` URL with `replaceState`, and its full page links use `target="_top"` |
 
 **Copy** (Radar's second tab; storage on / fallback):
 
@@ -173,11 +173,11 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 
 **Security model**:
 - No sign in. The browser ID is a scoping key, not authentication: whoever holds it sees those cases. Only lowercase version 4 UUIDs are accepted. It never feeds live admission or rate limiting, which keep using trusted ingress metadata only (caller supplied identity headers stay ignored there). This is acceptable only because every case is synthetic showcase data; F5 replaces it with real identity.
-- A case is private to its browser; there are no shareable links in F4.
+- A case is private to its browser. A `/radar?case=<id>` or `/transactions/<id>` link opens only in the browser that saved the case; anywhere else it shows "Case not found".
 - Stored content is exactly the contract events, which already exclude prompts, raw provider responses and reasoning. No new personal data is collected; the browser ID is random and tied to nothing.
 - Retention: 30 days and 50 cases per browser. This must be recorded in the data governance section of `context/architecture.md`.
 - No new rate limiter: the endpoints are internal and disabled in public. A limiter is a prerequisite for any public enablement (see Follow-up).
-- Logs record `case_persisted` and `case_persist_failed` with a failure class only, never payloads, case IDs or browser IDs.
+- No server logging yet: a failed save is caught and the stream continues unchanged, but nothing is logged. Logging is owed (see Follow-up); when added, it records `case_persisted` and `case_persist_failed` with a failure class only, never payloads, case IDs or browser IDs.
 
 **Configuration required**:
 - `SHOWCASE_CASES_ENABLED`: turns case storage and the `/cases` endpoints on; default false, and left unset in the public deployment.
@@ -196,25 +196,26 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 - Scoping: browser B requesting browser A's case, a random ID, and an expired case all receive the same `404 case_not_found`; verifies **AC-7**, **AC-8**.
 - Cap: a 51st case removes the oldest, including when two runs from one browser commit at once; verifies **AC-8**.
 - Disabled: with the flag off, no database connection is attempted and Radar falls back to session runs with the note; verifies **AC-10**, **AC-15**, **AC-3**.
-- Iframe link: clicking a case row in Radar navigates the whole window; verifies **AC-9**.
+- Drawer: clicking a Run ID opens the case drawer and adds `?case=`; Escape, Close and Back close it and return focus to the row; a shared `?case=` link reopens it; verifies **AC-9**.
 
 ## Build plan
 
 Build approach: none is recorded in the project, so this assumes thin end to end slices (Tracer Bullet): one stored case visible in the browser first, then the list, then the full detail page.
 
 **Slice 1: one case, stored and readable**
-1. [x] Draft `docs/contracts/showcase-cases.v1.schema.json` (status proposed, not accepted) for the list and detail responses and the header, with contract tests; satisfies **AC-6**, **AC-7**.
-2. [x] Add a rerunnable migration `0003_showcase_cases.sql` for both tables, and widen `apply_sandbox_migrations.py`'s file glob (today `*_sandbox_*.sql`) so it applies every numbered migration; satisfies **AC-1**, **AC-8**.
+1. [x] Draft `docs/proposals/schemas/showcase-cases.v0.proposed.schema.json` (proposed, not accepted; it moves to `docs/contracts/` when an ADR accepts it) for the list and detail responses and the header, with contract tests; satisfies **AC-6**, **AC-7**.
+2. [x] Add a rerunnable migration `0004_showcase_cases.sql` for both tables, and widen `apply_sandbox_migrations.py`'s file glob (today `*_sandbox_*.sql`) so it applies every numbered migration; satisfies **AC-1**, **AC-8**.
 3. [x] Add `SHOWCASE_CASES_ENABLED` and the event schema path to the API settings and `.env.example`, a lowercase version 4 UUID browser ID validator, and move `jsonschema` into runtime dependencies with the validator compiled at startup; satisfies **AC-3**, **AC-15**, **AC-16**.
 4. [x] Add a case repository beside `server/sandbox_data/` (psycopg): insert case plus events plus cleanup in one transaction under a per browser advisory lock, with 3 second connection and statement timeouts; read list, read one; satisfies **AC-1**, **AC-7**, **AC-8**.
-5. [x] In `main.py`, wrap the runtime's SSE output without changing the runtime: parse each `data:` frame, buffer the identity bearing events with their receive times, and on the `event: done` frame validate and commit through a shielded `asyncio.to_thread`, then yield the frame unchanged; log and roll back on any failure without altering the stream; store nothing when there is no `run_result`; satisfies **AC-1**, **AC-2**, **AC-3**, **AC-4**, **AC-5**, **AC-16**.
+5. [x] In `main.py`, wrap the runtime's SSE output without changing the runtime: parse each `data:` frame, buffer the identity bearing events with their receive times, and on the `event: done` frame validate and commit through a shielded `asyncio.to_thread`, then yield the frame unchanged; roll back on any failure without altering the stream (logging is owed, see Follow-up); store nothing when there is no `run_result`; satisfies **AC-1**, **AC-2**, **AC-3**, **AC-4**, **AC-5**, **AC-16**.
 6. [x] Add `GET /cases/{case_id}` (internal); satisfies **AC-7**.
 7. [x] Web: add `src/lib/showcase-browser-id.ts` (created only from the top level app, blocked when `localStorage` or `crypto.randomUUID` is unavailable) and send the header from `useShowcaseInvestigation`; satisfies **AC-17**.
 8. [x] Web: add the `/transactions/:caseId` route (ID format checked before any request) with a minimal case page (header and a plain event list) and its loading, not found and unavailable states; satisfies **AC-11**, **AC-14**.
 
 **Slice 2: the Cases list**
 9. [x] Add `GET /cases` with paging (`limit` plus 1, base64url cursor), filters, `totals`, the error order and the non echoing 422 handler; satisfies **AC-6**, **AC-8**.
-10. [x] Web: add `src/lib/showcase-cases.ts` (types and fetchers) and a hook; rename Radar's Session tab to Cases and fill it from `GET /cases` with the Copy table, filters, "Show more", the tab count, the local time column, the fallback reason in the Mode column, the saved check (refetch after each run) and `target="_top"` row links; satisfies **AC-9**, **AC-19**.
+10. [x] Web: add `src/lib/showcase-cases.ts` (types and fetchers) and a hook; rename Radar's Session tab to Cases and fill it from `GET /cases` with the Copy table, filters, "Show more", the tab count, the local time column, the fallback reason in the Mode column, the saved check (refetch after each run); satisfies **AC-9**, **AC-19**.
+10a. [x] Web: the case drawer (shadcn `Sheet`, the same Route, Evidence and Outcome stages as the case page, in Radar's own styles), `?case=<id>` history handling with focus return, and removal of the unlabelled share bar; satisfies **AC-9**, **AC-11**, **AC-13**.
 11. [x] Web: the storage unavailable fallback with the "Not saved" note, and unlinked "Not saved" rows outside the totals; satisfies **AC-10**.
 11a. [x] Web: show "Saved · Open case" or "Not saved" on `/transactions/investigation` after each run; satisfies **AC-18**.
 
@@ -242,13 +243,14 @@ Build approach: none is recorded in the project, so this assumes thin end to end
 - Expired rows for browsers that never return linger until a later write or a sweep.
 
 **Neutral**:
-- A new internal contract (`showcase-cases.v1`, proposed) and a third migration.
+- A new internal contract (`docs/proposals/schemas/showcase-cases.v0.proposed.schema.json`, proposed) and a fourth migration (`0004`).
 - The migration runner starts applying every numbered migration, not only Sandbox ones.
 
 ## Follow-up
 
 - [ ] Record F4 in `context/progress_tracker.md` (implementation plan status) and the case retention statement in `context/architecture.md`'s data governance rules, once built.
-- [ ] Write the ADR that accepts `showcase-cases.v1` and case persistence, and decide separately whether the public showcase may run a database (this reverses part of ADR-016).
+- [ ] Add server logging for case storage (`case_persisted`, `case_persist_failed` with a failure class only), owed since the build shipped without it.
+- [ ] Write the ADR that accepts the showcase cases contract (promoting it from `docs/proposals/schemas/` to `docs/contracts/showcase-cases.v1.schema.json`) and case persistence, and decide separately whether the public showcase may run a database (this reverses part of ADR-016).
 - [ ] Before any public enablement: a per browser and per client rate limit on `/cases`, a sweep for expired rows, and a hosting and secrets plan for the database.
 - [ ] F5 hook: the case page is where review decisions, claiming and the S06 stale version error ("This case was updated by someone else; reload before deciding") will live; `/reviews` hosts the queue. Real identity replaces the browser ID.
 - [ ] F6 hook: a Radar Health tab (data freshness, dataset versions, provider status) and a read only replay and compare view on the case page for S08, badged "Replay, no action taken"; replay must never write a second case for the same run.

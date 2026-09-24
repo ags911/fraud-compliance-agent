@@ -69,3 +69,12 @@ Option 2 is the only one that makes a case trustworthy (written by the server fr
 The anonymous browser ID in `localStorage` is the smallest scope that works without sign in and across the web and API origins; a third party cookie would silently fail in browsers that block them. It is honest only because the data is synthetic, and the spec says so. The 30 day, 50 case bounds keep storage predictable for an unauthenticated audience.
 
 Option 1 fails the audit purpose, Option 3 fails the durability purpose, and Option 4 couples storage to a contract that is meant to stay frozen. The main cost of Option 2, touching the investigation endpoint's implementation, is contained by committing only after `run_result`, rolling back on any failure, and proving stream equality in tests.
+
+## Changes after the build started (2026-09-24)
+
+- **Migration number**: `0004`, because spec 0003's simulation runs took `0003` first.
+- **Contract location**: kept under `docs/proposals/schemas/` as `v0.proposed` until an ADR accepts it, so an unaccepted schema never sits beside the accepted contracts.
+- **Drawer, not navigation**: the engineer chose a right hand drawer over the Cases tab instead of leaving Radar for a new page. It keeps the table and filters in view, feels like an operator console, and gives the future regulatory references panel a natural home. The full page stays as a deep link fallback. The drawer uses shadcn's `Sheet` (not the bottom sheet `Drawer`), themed with Radar's own styles.
+- **Share bar removed**: on the Cases tab it repeated the stat cards' split with no title or legend, so it read as a random line.
+- **Logging deferred**: the build ships without server logging for case storage; it is recorded as owed rather than dropped.
+
