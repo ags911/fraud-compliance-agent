@@ -167,7 +167,6 @@ export function RadarReference() {
     return mockScenarioRecommendationHistory(scenarioId, dateWindow, volumes)
   }, [scenarioId, dateWindow, sandboxActivity])
   const historyTotal = history.data.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
-  const rangeLabel = range === "all" ? "All Sandbox days" : `Last ${range} days`
 
   // ---- Session tab ---------------------------------------------------------
   const summary = useMemo(() => {
@@ -245,8 +244,7 @@ export function RadarReference() {
               <div>
                 <div className="section-heading">{scenarioId} · {scenarioLabel}</div>
                 <div className="section-sub">
-                  {rangeLabel}, {formatDateWindow(dateWindow)}
-                  {sandboxAnalytics ? <> · Dataset <span className="td-mono">{sandboxAnalytics.fixture_version}</span></> : null}
+                  {formatDateWindow(dateWindow)} · {countFormatter.format(windowDayCount(dateWindow))} days
                 </div>
               </div>
               <RadarRangeToggle label="Scenario date range" onChange={setRange} value={range} />
@@ -279,7 +277,7 @@ export function RadarReference() {
               badge={history.sourceClass === "mock" ? "Mock data" : undefined}
               categoryLabel="Date"
               data={history.data}
-              description={`${runsLabel(historyTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by final recommendation. Sandbox scenario history; not production or model-training data.`}
+              description={`${runsLabel(historyTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by final recommendation.`}
               yAxisWidth={CHART_Y_AXIS_WIDTH}
               emptyMessage="No history for this scenario and range."
               title="Recommendations over time"
@@ -288,11 +286,23 @@ export function RadarReference() {
             <RadarScenarioActivityChart
               badge="Sandbox"
               data={sandboxActivity}
-              description="Daily outbound spend from the sanitised Plaid Sandbox dataset, read from the prepared store. No live provider request is made from this page."
+              description="Daily outbound spend across the selected days, in pounds."
               title="Outbound activity"
               yAxisWidth={CHART_Y_AXIS_WIDTH}
               unavailableMessage={sandboxLoading ? "Loading Sandbox activity…" : "Sandbox activity is unavailable. Start the local API with the Sandbox dataset configured."}
             />
+
+            {/* The full explanation lives here once; each chart keeps only its
+                one-word source badge, so a chart on its own still says what it is. */}
+            <footer className="panel-footnote">
+              <p>
+                <span className="panel-footnote-label">About this data</span>
+                <strong>Mock data:</strong> the PASS / CHALLENGE / HOLD split is simulated over each day&apos;s real Sandbox transaction count, until Sandbox events are scored by the decision engine.{" "}
+                <strong>Sandbox:</strong> transactions, spend and active days are sanitised Plaid Sandbox data, read from the prepared store; no live provider request is made from this page.{" "}
+                Neither is production or model-training data.
+                {sandboxAnalytics ? <> Dataset <code>{sandboxAnalytics.fixture_version}</code>.</> : null}
+              </p>
+            </footer>
           </TabsPrimitive.Content>
 
           {/* ---------------- Session ---------------- */}

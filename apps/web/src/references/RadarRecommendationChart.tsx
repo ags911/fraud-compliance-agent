@@ -50,8 +50,8 @@ type RadarRecommendationChartProps = {
    * the card header, as RulesPerformanceChart does. */
   activeRange?: ScenarioRange
   onRangeChange?: (range: ScenarioRange) => void
-  /** Reserve this much y-axis width (no labels) so the plot lines up with a
-   * neighbouring chart that shows its y-axis numbers. Omit to use the full width. */
+  /** Show y-axis count labels at this width, matching a neighbouring chart's
+   * axis so the two plots line up. Omit to hide the axis and use the full width. */
   yAxisWidth?: number
   /** Rendered at the bottom of the card body, e.g. a run error. */
   children?: ReactNode
@@ -210,7 +210,16 @@ export function RadarRecommendationChart({
                   tickMargin={12}
                 />
                 {yAxisWidth ? (
-                  <YAxis axisLine={false} domain={[0, yTicks[yTicks.length - 1]]} tick={false} tickLine={false} ticks={yTicks} width={yAxisWidth} />
+                  <YAxis
+                    axisLine={false}
+                    domain={[0, yTicks[yTicks.length - 1]]}
+                    tick={{ fill: "var(--lch-text-tertiary)", fontSize: 11, fontFamily: "Inter, sans-serif" }}
+                    tickFormatter={(value: number) => countFormatter.format(value)}
+                    tickLine={false}
+                    tickMargin={10}
+                    ticks={yTicks}
+                    width={yAxisWidth}
+                  />
                 ) : (
                   <YAxis domain={[0, yTicks[yTicks.length - 1]]} hide ticks={yTicks} />
                 )}
