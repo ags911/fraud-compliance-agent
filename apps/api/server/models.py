@@ -157,11 +157,15 @@ class SandboxScenarioDecisions(StrictFiniteModel):
 
 
 class SandboxSimulationRun(StrictFiniteModel):
-    """Expose safe progress for one server-owned Sandbox simulation run."""
+    """Expose safe progress for one server-owned Sandbox simulation run.
+
+    A Mixed feed run (``MIX``, spec 0008) draws from S01 to S05 and has no
+    single fixture version; each of its payments records its own.
+    """
 
     run_id: str = Field(min_length=1, max_length=64)
-    scenario_id: str = Field(pattern=r"^S0[1-8]$")
-    fixture_version: str = Field(min_length=1, max_length=128)
+    scenario_id: str = Field(pattern=r"^(S0[1-8]|MIX)$")
+    fixture_version: str | None = Field(default=None, min_length=1, max_length=128)
     seed: str = Field(min_length=1, max_length=128)
     state: Literal["pending", "running", "completed", "failed", "cancelled"]
     scheduled_event_count: int = Field(ge=0)

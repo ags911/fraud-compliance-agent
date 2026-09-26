@@ -361,6 +361,10 @@ test.describe("Radar Cases tab", () => {
     await page.route("**/sandbox/scenarios/*/analytics", (route) =>
       route.fulfill({ status: 503, contentType: "application/json", body: "{}" }),
     )
+    // The feed starts by itself (spec 0005); never create a real run here.
+    await page.route("**/sandbox/scenarios/*/simulation-runs", (route) =>
+      route.fulfill({ status: 503, contentType: "application/json", body: "{}" }),
+    )
   })
 
   async function stubCaseList(page: Page, queries: string[] = []) {
@@ -373,7 +377,7 @@ test.describe("Radar Cases tab", () => {
   test("lists saved cases, keeps each Run ID a whole window deep link, and filters through the API", async ({ page }) => {
     const queries: string[] = []
     await stubCaseList(page, queries)
-    await page.goto("/references/radar-reference.html")
+    await page.goto("/references/radar-reference.html?scenario=S01")
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("Saved cases", { exact: true })).toBeVisible()
@@ -394,7 +398,7 @@ test.describe("Radar Cases tab", () => {
       detailRequests.push(route.request().url())
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(S04_DETAIL) })
     })
-    await page.goto("/references/radar-reference.html")
+    await page.goto("/references/radar-reference.html?scenario=S01")
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByRole("link", { name: S04_ID })).toBeVisible()
     expect(detailRequests).toHaveLength(0)
@@ -402,7 +406,7 @@ test.describe("Radar Cases tab", () => {
     await page.getByRole("link", { name: S04_ID }).click()
     const drawer = page.getByRole("dialog")
     await expect(drawer.getByRole("heading", { name: /S04/ })).toBeVisible()
-    await expect(page).toHaveURL(new RegExp(`\\?case=${S04_ID}$`))
+    await expect(page).toHaveURL(new RegExp(`[?&]case=${S04_ID}$`))
     expect(detailRequests.length).toBeGreaterThan(0)
     // The table stays mounted behind the drawer.
     await expect(page.locator("table").first()).toBeAttached()
@@ -433,13 +437,13 @@ test.describe("Radar Cases tab", () => {
     await page.route("**/cases/run_*", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(S05_DETAIL) }),
     )
-    await page.goto(`/references/radar-reference.html?case=${S05_ID}`)
+    await page.goto(`/references/radar-reference.html?scenario=S01&case=${S05_ID}`)
 
     const drawer = page.getByRole("dialog")
     await expect(drawer.getByTestId("case-failure-banner")).toContainText("Investigation incomplete: fail safe HOLD")
     await drawer.getByRole("button", { name: "Close" }).click()
     await expect(drawer).toHaveCount(0)
-    await expect(page).toHaveURL(/radar-reference\.html$/)
+    await expect(page).toHaveURL(/radar-reference\.html\?scenario=S01$/)
     // The modal hides the page from assistive tech while open, so the tab is checked after.
     await expect(page.getByRole("tab", { name: /^Cases/ })).toHaveAttribute("aria-selected", "true")
   })
@@ -455,7 +459,7 @@ test.describe("Radar Cases tab", () => {
     await page.route("**/cases/run_*", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FEED_DETAIL) }),
     )
-    await page.goto("/references/radar-reference.html")
+    await page.goto("/references/radar-reference.html?scenario=S01")
     await page.getByRole("tab", { name: /^Cases/ }).click()
 
     const feedRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: FEED_ID }) })
@@ -475,11 +479,11 @@ test.describe("Radar Cases tab", () => {
     await page.route(/\/cases(\?.*)?$/, (route) =>
       route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify(UNAVAILABLE) }),
     )
-    await page.goto("/references/radar-reference.html")
+    await page.goto("/references/radar-reference.html?scenario=S01")
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()
-    await expect(page.getByText(/Not saved: case history is off in this environment/)).toBeVisible()
+    await expect(page.getByText(/Saved cases are unavailable. Check the local API logs for storage status/)).toBeVisible()
     await expect(page.getByRole("combobox", { name: "Filter by recommendation" })).toHaveCount(0)
     await expect(page.locator("a.case-link")).toHaveCount(0)
   })

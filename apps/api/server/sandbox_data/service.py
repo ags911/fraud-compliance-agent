@@ -24,6 +24,10 @@ ENRICHMENT_VERSION = "sandbox-enrichment-v2"
 OVERLAY_VERSION = "s01-s08-overlay-v1"
 SOURCE_CLASS = "sanitised_sandbox"
 SCENARIO_IDS = tuple(f"S0{number}" for number in range(1, 9))
+# The Mixed feed (spec 0008): a run level identifier, not a dataset, whose
+# payments come from these payment scenarios, each with its own rule.
+MIXED_FEED_ID = "MIX"
+MIXED_FEED_SOURCES = ("S01", "S02", "S03", "S04", "S05")
 
 
 class SandboxDataUnavailable(RuntimeError):
@@ -51,9 +55,10 @@ class SimulationRateLimited(RuntimeError):
 
 
 # Spec 0003 limits: live runs across the site, starts per browser per rolling
-# minute, and how long a finished run is kept before the worker sweeps it.
+# minute (10 since spec 0005 starts a feed on load and on scenario change),
+# and how long a finished run is kept before the worker sweeps it.
 MAX_LIVE_SIMULATION_RUNS = 20
-MAX_SIMULATION_STARTS_PER_MINUTE = 3
+MAX_SIMULATION_STARTS_PER_MINUTE = 10
 SIMULATION_RETENTION = timedelta(days=7)
 
 
@@ -544,15 +549,25 @@ class PsycopgScenarioRepository:
         overshoot a limit: refuse when this browser started too many runs in the
         last minute or the site is at its live run cap, then cancel this
         browser's other live run (never another browser's) and insert.
+
+        A Mixed run (``MIX``, spec 0008) has no fixture version of its own;
+        each payment records its source scenario and that scenario's latest
+        fixture version, and is decided by that scenario's rule.
         """
-        if scenario_id not in SCENARIO_IDS or not run_id or not seed or not browser_id:
+        mixed = scenario_id == MIXED_FEED_ID
+        if (scenario_id not in SCENARIO_IDS and not mixed) or not run_id or not seed or not browser_id:
             raise ValueError("simulation run requires a scenario, run ID, seed and browser ID")
         try:
             with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
-                cursor.execute("SELECT fixture_version FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1", (scenario_id,))
-                dataset = cursor.fetchone()
-                if dataset is None:
-                    raise ScenarioDatasetNotFound(scenario_id)
+                # A Mixed run needs every source dataset; the run itself names none.
+                source_versions: dict[str, str] = {}
+                for source in MIXED_FEED_SOURCES if mixed else (scenario_id,):
+                    cursor.execute("SELECT fixture_version FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1", (source,))
+                    found = cursor.fetchone()
+                    if found is None:
+                        raise ScenarioDatasetNotFound(scenario_id)
+                    source_versions[source] = found["fixture_version"]
+                dataset = {"fixture_version": None if mixed else source_versions[scenario_id]}
                 cursor.execute("SELECT pg_advisory_xact_lock(hashtext('sandbox_simulation_start'))")
                 cursor.execute("""SELECT count(*) AS starts FROM sandbox_simulation_runs
                     WHERE browser_id = %s AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'""", (browser_id,))
@@ -568,19 +583,24 @@ class PsycopgScenarioRepository:
                 cursor.execute("""INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, browser_id)
                     VALUES (%s, %s, %s, %s, 'pending', %s, %s)""", (run_id, scenario_id, dataset["fixture_version"], seed, len(schedule), browser_id))
                 now = datetime.now(UTC)
-                # Every outbound payment is decided now, by the scenario's rule
-                # alone (spec 0004); the model score stays null until slice 3.
-                decision = feed_decision(scenario_id)
-
-                def decided(direction: str) -> tuple[str | None, str | None, str | None]:
+                # Every outbound payment is decided now, by its scenario's rule
+                # alone (spec 0004); a Mixed payment by its source scenario's
+                # (spec 0008). The model score stays null until slice 3.
+                def decided(source: str, direction: str) -> tuple[str | None, str | None, str | None]:
+                    decision = feed_decision(source)
                     if decision is None or direction != "outbound":
                         return (None, None, None)
                     return (decision.deterministic_route, decision.recommendation, decision.recommendation_basis)
 
+                def lineage(item: Any) -> tuple[str | None, str | None]:
+                    if not mixed:
+                        return (None, None)
+                    return (item.source_scenario_id, source_versions[item.source_scenario_id])
+
                 # One batched insert: a feed schedules hundreds of events.
-                cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, deterministic_route, recommendation, recommendation_basis)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", [
-                    (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel, *decided(item.event.direction))
+                cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", [
+                    (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel, *lineage(item), *decided(item.source_scenario_id or scenario_id, item.event.direction))
                     for item in schedule
                 ])
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
@@ -601,7 +621,26 @@ class PsycopgScenarioRepository:
             raise ScenarioSimulationNotFound(run_id)
         cursor.execute("SELECT MIN(due_at) AS next_due_at FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NULL", (run_id,))
         next_due = cursor.fetchone()["next_due_at"]
-        return {"run_id": run["run_id"], "scenario_id": run["scenario_id"], "fixture_version": run["fixture_version"], "seed": run["seed"], "state": run["state"], "scheduled_event_count": run["scheduled_event_count"], "appended_event_count": run["appended_event_count"], "next_due_at": next_due.isoformat() if next_due else None}
+        routing: dict[str, dict[str, object]] = {
+            outcome: {"count": 0, "recent": []} for outcome in ("PASS", "CHALLENGE", "HOLD")
+        }
+        if int(run["appended_event_count"]) > 0:
+            cursor.execute(
+                """SELECT event_id, sequence, recommendation
+                    FROM sandbox_simulation_events
+                    WHERE run_id = %s AND appended_at IS NOT NULL
+                      AND recommendation IN ('PASS', 'CHALLENGE', 'HOLD')
+                    ORDER BY sequence DESC""",
+                (run_id,),
+            )
+            for event in cursor.fetchall():
+                outcome = str(event["recommendation"])
+                lane = routing[outcome]
+                lane["count"] = int(lane["count"]) + 1
+                recent = lane["recent"]
+                if isinstance(recent, list) and len(recent) < 18:
+                    recent.append({"event_id": event["event_id"], "sequence": event["sequence"], "recommendation": outcome})
+        return {"run_id": run["run_id"], "scenario_id": run["scenario_id"], "fixture_version": run["fixture_version"], "seed": run["seed"], "state": run["state"], "scheduled_event_count": run["scheduled_event_count"], "appended_event_count": run["appended_event_count"], "next_due_at": next_due.isoformat() if next_due else None, "routing_snapshot": {"by_recommendation": routing}}
 
     def read_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
         """Read safe state for one of this browser's simulation runs."""
@@ -694,7 +733,8 @@ class PsycopgScenarioRepository:
         # The run row is locked too, so a Stop waits for this payment and then
         # reports its true count; nothing is revealed after it.
         cursor.execute("""SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
-                event.model_score, event.model_version, event.case_id, run.scenario_id, run.browser_id
+                event.model_score, event.model_version, event.case_id,
+                COALESCE(event.source_scenario_id, run.scenario_id) AS scenario_id, run.browser_id
             FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
             WHERE event.run_id = %s AND event.sequence = %s AND event.appended_at IS NULL
               AND run.state IN ('pending', 'running')
@@ -750,7 +790,9 @@ class PsycopgScenarioRepository:
         """Raise ScenarioSimulationNotFound unless the run is this browser's, on this dataset.
 
         Another browser's run, another scenario's, or one on an older import
-        all read as the same missing run, so a run ID reveals nothing.
+        all read as the same missing run, so a run ID reveals nothing. A Mixed
+        run (spec 0008) belongs to each of its source scenarios' datasets; the
+        overlay queries then take only payments from this dataset.
         """
         cursor.execute(
             """SELECT scenario_id, fixture_version FROM sandbox_simulation_runs
@@ -758,6 +800,10 @@ class PsycopgScenarioRepository:
             (simulation_run_id, browser_id),
         )
         run = cursor.fetchone()
+        if run is not None and run["scenario_id"] == MIXED_FEED_ID:
+            if dataset["scenario_id"] in MIXED_FEED_SOURCES:
+                return
+            raise ScenarioSimulationNotFound(simulation_run_id)
         if (
             run is None
             or run["scenario_id"] != dataset["scenario_id"]
@@ -800,9 +846,11 @@ class PsycopgScenarioRepository:
                 if simulation_run_id is not None:
                     self._require_owned_run(cursor, simulation_run_id, browser_id, dataset)
                     cursor.execute(
+                        # A Mixed run's payments from other scenarios are left out.
                         """SELECT event_date, amount_minor, direction, category_bucket
-                    FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NOT NULL""",
-                        (simulation_run_id,),
+                    FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NOT NULL
+                      AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))""",
+                        (simulation_run_id, dataset["scenario_id"], dataset["fixture_version"]),
                     )
                     aggregates = _overlay_shown_events(aggregates, cursor.fetchall())
         except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
@@ -887,8 +935,9 @@ class PsycopgScenarioRepository:
                     FROM sandbox_simulation_events
                     WHERE run_id = %s AND appended_at IS NOT NULL AND direction = 'outbound'
                       AND recommendation IS NOT NULL
+                      AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))
                     GROUP BY event_date, recommendation""",
-                        (simulation_run_id,),
+                        (simulation_run_id, dataset["scenario_id"], dataset["fixture_version"]),
                     )
                     revealed = cursor.fetchall()
         except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
@@ -1020,10 +1069,25 @@ def start_sandbox_simulation(scenario_id: str, browser_id: str) -> dict[str, obj
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     repository = PsycopgScenarioRepository(database_url)
-    analytics = repository.read_analytics(scenario_id)
-    from server.sandbox_data.simulation import build_scenario_schedule
+    from server.sandbox_data.simulation import (
+        build_mixed_schedule,
+        build_scenario_schedule,
+    )
 
     run_id = str(uuid.uuid4())
+    if scenario_id == MIXED_FEED_ID:
+        # Each source's payments land on that source dataset's latest day.
+        latest_days: dict[str, date] = {}
+        for source in MIXED_FEED_SOURCES:
+            try:
+                source_analytics = repository.read_analytics(source)
+            except ScenarioDatasetNotFound as error:
+                raise ScenarioDatasetNotFound(scenario_id) from error
+            latest_days[source] = date.fromisoformat(str(source_analytics["time_boundary"]["end_date"]))
+        return repository.create_simulation_run(
+            scenario_id, run_id, "sandbox-simulation-v1", build_mixed_schedule(latest_days, run_id), browser_id
+        )
+    analytics = repository.read_analytics(scenario_id)
     # Feed payments land on the dataset's latest day, inside its time boundary.
     latest_day = date.fromisoformat(str(analytics["time_boundary"]["end_date"]))
     schedule = build_scenario_schedule(scenario_id, latest_day, run_id)

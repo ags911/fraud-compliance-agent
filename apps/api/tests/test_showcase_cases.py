@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+import psycopg
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
@@ -28,6 +29,7 @@ from server.showcase_cases.capture import (
 from server.showcase_cases.repository import (
     InvalidCursor,
     _summary,
+    case_storage_diagnostic,
     decode_cursor,
     empty_totals,
     encode_cursor,
@@ -177,6 +179,13 @@ def test_no_browser_id_or_no_recorder_stores_nothing(validator: EventValidator) 
     assert _run(frames, CaseRecorder(store, validator), None) == frames
     assert _run(frames, None, BROWSER_ID) == frames
     assert store.saved == []
+
+
+def test_case_storage_diagnostic_redacts_database_connection_details() -> None:
+    """Database connection failures become one safe local diagnostic category."""
+    assert case_storage_diagnostic(psycopg.OperationalError("connection reset")) == (
+        "database_connection_failed"
+    )
 
 
 def test_a_storage_failure_never_changes_the_stream(validator: EventValidator) -> None:

@@ -5,7 +5,7 @@ import binascii
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 import psycopg
 from psycopg import sql
@@ -23,6 +23,12 @@ _TIMEOUT_SECONDS = 3
 _SCENARIOS = tuple(f"S0{number}" for number in range(1, 9))
 _RECOMMENDATIONS = ("PASS", "CHALLENGE", "HOLD")
 _CURSOR = re.compile(r"^[A-Za-z0-9_-]+$")
+CaseStorageDiagnostic = Literal[
+    "database_connection_failed",
+    "case_schema_unavailable",
+    "database_query_timed_out",
+    "case_storage_failed",
+]
 
 _SUMMARY_COLUMNS = (
     "case_id",
@@ -66,7 +72,20 @@ _SELECT_ONE_CASE = sql.SQL(
 
 
 class CasesUnavailable(RuntimeError):
-    """Signal that the case store is disabled, unreachable, or failing."""
+    """Carry a safe local diagnostic category for a failed case-store read.
+
+    Args:
+        diagnostic: A fixed category suitable for a local API log. It excludes
+            database URLs, credentials, hosts, SQL text, and request data.
+
+    Side effects:
+        Carries the category to the route handler; it does not log or expose
+        database implementation details by itself.
+    """
+
+    def __init__(self, diagnostic: CaseStorageDiagnostic) -> None:
+        super().__init__(diagnostic)
+        self.diagnostic = diagnostic
 
 
 class CaseNotFound(LookupError):
@@ -75,6 +94,30 @@ class CaseNotFound(LookupError):
 
 class InvalidCursor(ValueError):
     """Signal a paging cursor that does not decode to a valid position."""
+
+
+def case_storage_diagnostic(error: psycopg.Error) -> CaseStorageDiagnostic:
+    """Classify a Psycopg error into a fixed, non-sensitive local diagnostic.
+
+    Args:
+        error: The database-driver exception raised while reading showcase cases.
+
+    Returns:
+        One fixed category for API logs; database connection strings, hostnames,
+        SQL text, and raw driver messages are deliberately excluded.
+
+    Side effects:
+        None.
+    """
+    # SQLSTATE identifies schema and server-side timeout failures without
+    # serialising the driver error to a browser response.
+    if error.sqlstate in {"42P01", "42703"}:
+        return "case_schema_unavailable"
+    if error.sqlstate == "57014":
+        return "database_query_timed_out"
+    if isinstance(error, psycopg.OperationalError):
+        return "database_connection_failed"
+    return "case_storage_failed"
 
 
 @dataclass(frozen=True)
@@ -300,7 +343,7 @@ class PsycopgCaseRepository:
                 )
                 groups = db.fetchall()
         except psycopg.Error as error:
-            raise CasesUnavailable("cases are unavailable") from error
+            raise CasesUnavailable(case_storage_diagnostic(error)) from error
 
         totals = empty_totals()
         for group in groups:
@@ -352,7 +395,7 @@ class PsycopgCaseRepository:
                 )
                 events = db.fetchall()
         except psycopg.Error as error:
-            raise CasesUnavailable("cases are unavailable") from error
+            raise CasesUnavailable(case_storage_diagnostic(error)) from error
         return {
             "contract_version": CONTRACT_VERSION,
             "case": _summary(row),

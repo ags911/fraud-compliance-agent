@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { Tabs as TabsPrimitive } from "radix-ui"
+import { CircleHelp } from "lucide-react"
 
-import { NetworkMark } from "@/components/averlynx-logo"
+import { AverlynxRouteMark } from "@/components/averlynx-logo"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchDemoModelSummary, type DemoModelSummary } from "@/lib/demo-model-summary"
 import {
-  fetchSandboxScenarioAnalytics,
   sandboxDailyActivitySeries,
   summariseSandboxActivity,
   type SandboxScenarioAnalytics,
 } from "@/lib/sandbox-scenario-analytics"
 import {
-  fetchSandboxScenarioDecisions,
   sandboxDecisionSeries,
   type SandboxScenarioDecisions,
 } from "@/lib/sandbox-scenario-decisions"
@@ -24,11 +23,19 @@ import {
   type ScenarioRange,
 } from "@/lib/scenario-date-window"
 import type { ShowcaseCaseFilters, ShowcaseCaseSummary } from "@/lib/showcase-cases"
+import {
+  fetchScenarioAnalytics,
+  fetchScenarioDecisions,
+  MIXED_FEED_DETAIL,
+  MIXED_FEED_ID,
+  MIXED_FEED_LABEL,
+} from "@/lib/sandbox-mixed"
 import { useRadarCaseParam } from "@/lib/useRadarCaseParam"
 import { useShowcaseCase } from "@/lib/useShowcaseCase"
 import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
+import { useRadarTour } from "@/lib/useRadarTour"
 import { FEED_SOURCE_LABEL } from "@/lib/showcase-labels"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
@@ -47,6 +54,18 @@ const scenarios: ReadonlyArray<{ id: ShowcaseScenarioId; label: string }> = [
   { id: "S04", label: "Ambiguous contextual case" },
   { id: "S05", label: "Investigation failure path" },
 ]
+
+// The picker's choice: one scenario, or the Mixed feed of S01 to S05 (spec 0008).
+type ScenarioChoice = ShowcaseScenarioId | typeof MIXED_FEED_ID
+
+// Radar opens on the Mixed feed; ?scenario=S01 (any picker scenario) opens
+// that scenario instead. Anything else falls back to Mixed.
+function initialScenario(): ScenarioChoice {
+  const requested = new URLSearchParams(window.location.search).get("scenario")
+  return scenarios.find((scenario) => scenario.id === requested)?.id ?? MIXED_FEED_ID
+}
+
+const RUN_NEEDS_ONE_SCENARIO = "Pick one scenario to run the showcase"
 
 type DashboardTab = "scenario" | "cases" | "model"
 
@@ -81,8 +100,8 @@ function caseModeLabel(item: ShowcaseCaseSummary): string {
 
 // The Sandbox result is stored with the scenario it belongs to, so a
 // scenario switch reads as "loading" until its own response arrives.
-type SandboxResult = { scenarioId: ShowcaseScenarioId; analytics: SandboxScenarioAnalytics | null }
-type DecisionsResult = { scenarioId: ShowcaseScenarioId; decisions: SandboxScenarioDecisions | null }
+type SandboxResult = { scenarioId: ScenarioChoice; analytics: SandboxScenarioAnalytics | null }
+type DecisionsResult = { scenarioId: ScenarioChoice; decisions: SandboxScenarioDecisions | null }
 
 // While the Cases tab is open during a feed, refetch cases at most this often.
 const FEED_CASES_POLL_MS = 3000
@@ -116,7 +135,8 @@ export function RadarReference() {
   const openCase = useShowcaseCase(caseParam.caseId ?? undefined, { enabled: caseParam.caseId !== null })
   // A shared ?case= link opens on the Cases tab, where the drawer belongs.
   const [tab, setTab] = useState<DashboardTab>(() => (caseParam.caseId ? "cases" : "scenario"))
-  const [scenarioId, setScenarioId] = useState<ShowcaseScenarioId>("S01")
+  const [scenarioId, setScenarioId] = useState<ScenarioChoice>(initialScenario)
+  const mixed = scenarioId === MIXED_FEED_ID
   const [range, setRange] = useState<ScenarioRange>(30)
   const [runs, setRuns] = useState<SessionRun[]>([])
   const [benchmark, setBenchmark] = useState<DemoModelSummary | null>(null)
@@ -129,6 +149,7 @@ export function RadarReference() {
   // The live feed's payments are added to the imported base for this view.
   const feed = useSandboxFeed(scenarioId)
   const { trackRun, pollQuietly } = cases
+  const tour = useRadarTour()
 
   useEffect(() => {
     let active = true
@@ -147,7 +168,7 @@ export function RadarReference() {
     let active = true
     // Refetched as each feed payment lands (feed.revision), keeping the last
     // figures on screen until the new ones arrive.
-    fetchSandboxScenarioAnalytics(scenarioId, feed.runId).then(
+    fetchScenarioAnalytics(scenarioId, feed.runId).then(
       (analytics) => {
         if (active) setSandboxResult({ scenarioId, analytics })
       },
@@ -163,7 +184,7 @@ export function RadarReference() {
   useEffect(() => {
     let active = true
     // Decided counts follow the same feed revisions as the activity figures.
-    fetchSandboxScenarioDecisions(scenarioId, feed.runId).then(
+    fetchScenarioDecisions(scenarioId, feed.runId).then(
       (decisions) => {
         if (active) setDecisionsResult({ scenarioId, decisions })
       },
@@ -218,7 +239,8 @@ export function RadarReference() {
     trackRun(runStarted.run_id)
   }, [investigation, trackRun])
 
-  const scenarioLabel = scenarios.find((scenario) => scenario.id === scenarioId)?.label ?? ""
+  const scenarioLabel = mixed ? MIXED_FEED_DETAIL : scenarios.find((scenario) => scenario.id === scenarioId)?.label ?? ""
+  const scenarioHeading = mixed ? `${MIXED_FEED_LABEL} · ${MIXED_FEED_DETAIL}` : `${scenarioId} · ${scenarioLabel}`
 
   // ---- Scenario tab --------------------------------------------------------
   const sandboxLoading = sandboxResult?.scenarioId !== scenarioId
@@ -319,6 +341,8 @@ export function RadarReference() {
   const xgboost = benchmark?.model_results.find((model) => model.model_id === "xgboost_candidate")
 
   function runShowcase() {
+    // An investigation needs one scenario; the Mixed feed spans five.
+    if (scenarioId === MIXED_FEED_ID) return
     // The result only appears on the Cases tab, so take the viewer there.
     setTab("cases")
     void investigation.start(scenarioId, "recorded")
@@ -326,26 +350,50 @@ export function RadarReference() {
 
   const running = investigation.status === "running"
 
+  function startTour() {
+    // The tour's later steps live on the Scenario tab (spec 0007).
+    setTab("scenario")
+    window.requestAnimationFrame(() => tour.start())
+  }
+
   return (
     <main className="main">
       <div className="topbar">
         <div className="topbar-inner">
           <div className="page-title">
-            <NetworkMark className="size-4 shrink-0" />
+            <AverlynxRouteMark className="size-4 shrink-0" />
             <span className="title-module">Fraud Compliance Agent</span>
           </div>
           <div className="topbar-actions">
-            <Select value={scenarioId} onValueChange={(value) => setScenarioId(value as ShowcaseScenarioId)}>
-              <SelectTrigger size="sm" className="w-60 text-xs" aria-label="Synthetic showcase scenario">
+            <Select value={scenarioId} onValueChange={(value) => setScenarioId(value as ScenarioChoice)}>
+              <SelectTrigger id="radar-scenario-trigger" size="sm" className="w-60 text-xs" aria-label="Synthetic showcase scenario">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent align="end">
+                <SelectItem value={MIXED_FEED_ID}>{MIXED_FEED_LABEL} · {MIXED_FEED_DETAIL}</SelectItem>
                 {scenarios.map((scenario) => <SelectItem key={scenario.id} value={scenario.id}>{scenario.id} · {scenario.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <RadarLiveSwitch onStart={feed.start} onStop={feed.stop} state={feed.state} />
-            <Button size="sm" onClick={runShowcase} disabled={running}>
-              {running ? "Running…" : "Run showcase"}
+            <Button
+              disabled={mixed && !running}
+              id="radar-run-showcase"
+              onClick={running ? investigation.cancel : runShowcase}
+              size="sm"
+              title={mixed && !running ? RUN_NEEDS_ONE_SCENARIO : undefined}
+              variant={running ? "outline" : "default"}
+            >
+              {running ? "Stop showcase" : "Run showcase"}
+            </Button>
+            <Button
+              aria-label="How this dashboard works"
+              className="radar-help-button"
+              onClick={startTour}
+              size="icon-sm"
+              title="How this dashboard works"
+              variant="ghost"
+            >
+              <CircleHelp aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -363,7 +411,7 @@ export function RadarReference() {
         <div className="tabs">
           <TabsPrimitive.List aria-label="Dashboard sections" className="tabs-list">
             <TabsPrimitive.Trigger className="tab" value="scenario">Scenario</TabsPrimitive.Trigger>
-            <TabsPrimitive.Trigger className="tab" value="cases">
+            <TabsPrimitive.Trigger className="tab" id="radar-cases-tab" value="cases">
               Cases{casesTabCount ? <span className="tab-count">{casesTabCount}</span> : null}
             </TabsPrimitive.Trigger>
             <TabsPrimitive.Trigger className="tab" value="model">Model</TabsPrimitive.Trigger>
@@ -375,7 +423,7 @@ export function RadarReference() {
           <TabsPrimitive.Content className="tab-panel" value="scenario">
             <div className="panel-toolbar">
               <div>
-                <div className="section-heading">{scenarioId} · {scenarioLabel}</div>
+                <div className="section-heading">{scenarioHeading}</div>
                 <div className="section-sub">
                   {formatDateWindow(dateWindow)} · {countFormatter.format(windowDayCount(dateWindow))} days
                 </div>
@@ -383,7 +431,7 @@ export function RadarReference() {
               <RadarRangeToggle label="Scenario date range" onChange={setRange} value={range} />
             </div>
 
-            <div className="radar-summary-grid" aria-label={`${scenarioId} Sandbox activity summary`}>
+            <div className="radar-summary-grid" id="radar-summary" aria-label={`${mixed ? MIXED_FEED_LABEL : scenarioId} Sandbox activity summary`}>
               <MetricCard
                 label="Transactions"
                 value={sandboxSummary ? countFormatter.format(sandboxSummary.transactionCount) : "–"}
@@ -406,22 +454,25 @@ export function RadarReference() {
               />
             </div>
 
-            <RadarRecommendationChart
-              badge="Sandbox"
-              categoryLabel="Date"
-              data={decisionSeries}
-              description={`${paymentsLabel(decisionTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by the scenario's deterministic recommendation.`}
-              yAxisWidth={CHART_Y_AXIS_WIDTH}
-              emptyMessage={
-                decisionsLoading
-                  ? "Loading recommendations…"
-                  : decisions
-                    ? "No outbound payments for this scenario and range."
-                    : "Recommendations are unavailable. Start the local API with the Sandbox dataset configured."
-              }
-              title="Recommendations over time"
-              unit={PAYMENT_UNIT}
-            />
+            {/* A stable target for the guided tour (spec 0007). */}
+            <div id="radar-recommendations">
+              <RadarRecommendationChart
+                badge="Sandbox"
+                categoryLabel="Date"
+                data={decisionSeries}
+                description={`${paymentsLabel(decisionTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by ${mixed ? "each payment's own scenario rule, S01 to S05 combined" : "the scenario's deterministic recommendation"}.`}
+                yAxisWidth={CHART_Y_AXIS_WIDTH}
+                emptyMessage={
+                  decisionsLoading
+                    ? "Loading recommendations…"
+                    : decisions
+                      ? "No outbound payments for this scenario and range."
+                      : "Recommendations are unavailable. Start the local API with the Sandbox dataset configured."
+                }
+                title="Recommendations over time"
+                unit={PAYMENT_UNIT}
+              />
+            </div>
 
             <RadarScenarioActivityChart
               badge="Sandbox"
@@ -454,12 +505,16 @@ export function RadarReference() {
               onFiltersChange={setCaseFilters}
               onOpenCase={caseParam.openCase}
               onRun={runShowcase}
+              onStop={investigation.cancel}
               onShowMore={cases.loadMore}
               rows={caseRows}
               runLabel={`${scenarioId} · ${scenarioLabel}`}
+              runUnavailable={mixed ? RUN_NEEDS_ONE_SCENARIO : null}
               running={running}
               scenarioOptions={scenarios}
               summary={casesSummary}
+              feedRun={feed.state.status === "live" || feed.state.status === "finished" ? feed.state.run : null}
+              feedStatus={feed.state.status}
             />
             <RadarCaseDrawer
               caseId={caseParam.caseId}

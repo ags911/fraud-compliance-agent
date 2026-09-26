@@ -10,18 +10,28 @@ import { showcaseBrowserHeaders } from "@/lib/showcase-browser-id"
 export type SandboxSimulationRun = {
   run_id: string
   scenario_id: string
-  fixture_version: string
+  /** Null for a Mixed feed run (spec 0008), whose payments each name their own. */
+  fixture_version: string | null
   seed: string
   state: "pending" | "running" | "completed" | "failed" | "cancelled"
   scheduled_event_count: number
   appended_event_count: number
   next_due_at: string | null
+  routing_snapshot?: {
+    by_recommendation: Record<"PASS" | "CHALLENGE" | "HOLD", {
+      count: number
+      recent: Array<{ event_id: string; sequence: number; recommendation: "PASS" | "CHALLENGE" | "HOLD" }>
+    }>
+  }
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8010"
 
-/** Scenarios with a payment schedule; S06 to S08 are workflow scenarios. */
-export const FEED_SCENARIOS: readonly string[] = ["S01", "S02", "S03", "S04", "S05"]
+/**
+ * Scenarios with a payment schedule, plus the Mixed feed (`MIX`, spec 0008)
+ * that interleaves them. S06 to S08 are workflow scenarios.
+ */
+export const FEED_SCENARIOS: readonly string[] = ["MIX", "S01", "S02", "S03", "S04", "S05"]
 
 export function isFinishedRun(run: SandboxSimulationRun): boolean {
   return run.state === "completed" || run.state === "failed" || run.state === "cancelled"
@@ -43,10 +53,10 @@ export function feedHeaders(): Record<string, string> | null {
   return Object.keys(headers).length ? headers : null
 }
 
-async function postRun(path: string): Promise<SandboxSimulationRun> {
+async function postRun(path: string, { keepalive = false }: { keepalive?: boolean } = {}): Promise<SandboxSimulationRun> {
   const headers = feedHeaders()
   if (!headers) throw new SandboxFeedError("unavailable")
-  const response = await fetch(`${API_BASE_URL}${path}`, { method: "POST", headers })
+  const response = await fetch(`${API_BASE_URL}${path}`, { method: "POST", headers, keepalive })
   // Both limits (site cap, starts per minute) read the same to a viewer: busy.
   if (response.status === 429) throw new SandboxFeedError("busy")
   if (!response.ok) throw new SandboxFeedError("unavailable")
@@ -58,9 +68,13 @@ export function startSandboxSimulation(scenarioId: string): Promise<SandboxSimul
   return postRun(`/sandbox/scenarios/${encodeURIComponent(scenarioId)}/simulation-runs`)
 }
 
-/** Stop a feed run; payments already added stay on the dashboard. */
-export function cancelSandboxSimulation(runId: string): Promise<SandboxSimulationRun> {
-  return postRun(`/sandbox/simulation-runs/${encodeURIComponent(runId)}/cancel`)
+/**
+ * Stop a feed run; payments already added stay on the dashboard. With
+ * `keepalive`, the request outlives the page, for a tab that is closing
+ * (spec 0009).
+ */
+export function cancelSandboxSimulation(runId: string, options: { keepalive?: boolean } = {}): Promise<SandboxSimulationRun> {
+  return postRun(`/sandbox/simulation-runs/${encodeURIComponent(runId)}/cancel`, options)
 }
 
 const RECONNECT_MS = 1000

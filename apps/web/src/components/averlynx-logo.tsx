@@ -84,6 +84,30 @@ export function NetworkMark({ className }: { className?: string }) {
   )
 }
 
+/**
+ * Compact routing mark: an outlined A with a single decision point.
+ * Designed to remain legible in Radar's 16px top-bar slot.
+ */
+export function AverlynxRouteMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={cn("size-5", className)}
+      aria-hidden="true"
+    >
+      <path
+        d="M4.5 19 12 4.5 19.5 19"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="14" r="2.4" className="fill-[#57e0c2]" />
+    </svg>
+  )
+}
+
 /** Mark + wordmark lockup — matches work/payments-design-concept.html's
  * .fc-sidebar-brand exactly: 16px/600 Satoshi, -0.01em tracking, #18181b. */
 export function AverlynxBrand({ className }: { className?: string }) {

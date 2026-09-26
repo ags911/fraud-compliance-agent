@@ -7,6 +7,8 @@ import type { ShowcaseCaseFilters } from "@/lib/showcase-cases"
 import { RadarMetricCard as MetricCard } from "./RadarMetricCard"
 import { recommendationPillClass } from "./radar-pills"
 import { RadarRecommendationChart, type RadarRecommendationDatum } from "./RadarRecommendationChart"
+import { RadarDecisionRouting } from "./RadarDecisionRouting"
+import type { SandboxSimulationRun } from "@/lib/sandbox-simulation"
 
 /** One table row, from a saved case or (fallback / not saved) a session run. */
 export type RadarCaseRow = {
@@ -46,11 +48,17 @@ type RadarCasesPanelProps = {
   onShowMore: () => void
   scenarioOptions: ReadonlyArray<{ id: string; label: string }>
   runLabel: string
+  /** Why Run is unavailable (the Mixed feed spans five scenarios), or null. */
+  runUnavailable: string | null
   running: boolean
   onRun: () => void
+  /** Stops the showcase run in progress; the run button becomes Stop meanwhile. */
+  onStop: () => void
   error: string | null
   /** Open a saved case in the drawer instead of navigating away. */
   onOpenCase: (caseId: string) => void
+  feedRun: SandboxSimulationRun | null
+  feedStatus: "idle" | "starting" | "live" | "finished" | "busy" | "unavailable" | "unsupported"
 }
 
 const recommendationColors = {
@@ -76,7 +84,7 @@ const COPY = {
   fallback: {
     heading: "This visit's runs",
     description:
-      "Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown.",
+      "Saved cases are unavailable. Check the local API logs for storage status. Only this visit's runs appear here. No payments are executed and no runtime model score is shown.",
     emptyTitle: "No showcase runs yet",
     emptyEnding: "Runs stay in this browser session only.",
     tableTitle: "This visit's decisions",
@@ -110,14 +118,24 @@ export function RadarCasesPanel(props: RadarCasesPanelProps) {
 
       {error ? <p className="status-error">{error}</p> : null}
 
+      <RadarDecisionRouting run={props.feedRun} status={props.feedStatus} />
+
       {summary.total === 0 && rows.length === 0 && !hasActiveFilters(props.filters) ? (
         <section className="empty-card">
           <div className="card-title">{props.running ? "Running your first showcase…" : copy.emptyTitle}</div>
           <p className="card-copy">
-            Run {props.runLabel} to see its deterministic route, final recommendation and evidence here. {copy.emptyEnding}
+            {props.runUnavailable
+              ? `${props.runUnavailable} and see its deterministic route, final recommendation and evidence here.`
+              : `Run ${props.runLabel} to see its deterministic route, final recommendation and evidence here.`} {copy.emptyEnding}
           </p>
-          <Button size="sm" onClick={props.onRun} disabled={props.running}>
-            {props.running ? "Running…" : `Run ${props.runLabel.split(" · ")[0]}`}
+          <Button
+            disabled={Boolean(props.runUnavailable) && !props.running}
+            onClick={props.running ? props.onStop : props.onRun}
+            size="sm"
+            title={props.running ? undefined : props.runUnavailable ?? undefined}
+            variant={props.running ? "outline" : "default"}
+          >
+            {props.running ? "Stop showcase" : props.runUnavailable ? "Run showcase" : `Run ${props.runLabel.split(" · ")[0]}`}
           </Button>
         </section>
       ) : (

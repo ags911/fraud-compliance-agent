@@ -4,7 +4,11 @@ import hashlib
 from dataclasses import dataclass
 from datetime import date
 
-from server.sandbox_data.service import SanitisedEvent
+from server.sandbox_data.service import (
+    MIXED_FEED_ID,
+    MIXED_FEED_SOURCES,
+    SanitisedEvent,
+)
 
 # A continuous feed: one payment every few seconds for a bounded run, so a run
 # is still a fixed, predeclared, idempotent schedule (spec 0003).
@@ -32,11 +36,15 @@ class ScheduledSimulationEvent:
         sequence: One based immutable order within a simulation run.
         delay_seconds: Offset from a run start used only to pace the display.
         event: Sanitised event that will be shown for the selected scenario.
+        source_scenario_id: For a Mixed run (spec 0008), the scenario whose
+            shape and decision this payment carries; None for a single
+            scenario run, whose scenario is the run's own.
     """
 
     sequence: int
     delay_seconds: int
     event: SanitisedEvent
+    source_scenario_id: str | None = None
 
 
 def _unit(seed: str, scenario_id: str, sequence: int) -> float:
@@ -90,5 +98,64 @@ def build_scenario_schedule(
         )
         schedule.append(
             ScheduledSimulationEvent(sequence, (sequence - 1) * interval_seconds, event)
+        )
+    return tuple(schedule)
+
+
+def build_mixed_schedule(
+    latest_days: dict[str, date],
+    run_id: str,
+    *,
+    seed: str = "sandbox-simulation-v1",
+    event_count: int = FEED_EVENT_COUNT,
+    interval_seconds: int = FEED_INTERVAL_SECONDS,
+) -> tuple[ScheduledSimulationEvent, ...]:
+    """Return the Mixed feed: S01 to S05 payments interleaved in seeded blocks.
+
+    Each block of five positions holds one payment from each source scenario,
+    in an order fixed by the seed and block number, so the mix is even and
+    repeatable. Each payment is the one ``build_scenario_schedule`` would give
+    its scenario at that position, on that scenario's latest day.
+
+    Args:
+        latest_days: Each source scenario's latest imported day.
+        run_id: Opaque run identifier used only to make each event unique.
+        seed: Fixed seed for the block order and amount variation.
+        event_count: How many payments the bounded run schedules.
+        interval_seconds: Seconds between consecutive payments.
+
+    Returns:
+        Ordered, deterministic events, each naming its source scenario.
+
+    Raises:
+        KeyError: If a source scenario has no latest day.
+    """
+    sources = MIXED_FEED_SOURCES
+    by_source = {
+        source: build_scenario_schedule(
+            source,
+            latest_days[source],
+            run_id,
+            seed=seed,
+            event_count=event_count,
+            interval_seconds=interval_seconds,
+        )
+        for source in sources
+    }
+    schedule: list[ScheduledSimulationEvent] = []
+    for sequence in range(1, event_count + 1):
+        block, slot = divmod(sequence - 1, len(sources))
+        order = sorted(
+            sources,
+            key=lambda scenario: hashlib.sha256(
+                f"{seed}:{MIXED_FEED_ID}:{block}:{scenario}".encode()
+            ).digest(),
+        )
+        source = order[slot]
+        item = by_source[source][sequence - 1]
+        schedule.append(
+            ScheduledSimulationEvent(
+                sequence, item.delay_seconds, item.event, source_scenario_id=source
+            )
         )
     return tuple(schedule)

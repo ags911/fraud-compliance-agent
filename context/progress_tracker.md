@@ -192,6 +192,31 @@ single "Run showcase" button does not fit S06–S08; their actions belong on the
 case page and review queue, and the selector would group Decisions (S01–S05)
 and Operations (S06–S08). Radar's Model tab overlaps the planned `/insights`.
 
+## To do
+
+Small, agreed follow ups that belong to no active spec yet. Tick an item, or
+move it into a spec, when it is picked up.
+
+**Radar guided tour** ([spec 0007](../docs/specs/0007-radar-guided-tour.md), built
+locally 2026-09-24 with six steps covering only what Radar has today). Add a step
+only when its surface ships, and split the tour per tab if it grows past about
+seven steps:
+- [ ] F5 human review: point at the review queue (`/reviews`) or the case
+  actions once they exist. Radar and the case page have no decision buttons yet.
+- [ ] F6: a step for Radar's Health tab once it exists.
+- [ ] S06 to S08: when the scenario picker groups Decisions and Operations
+  scenarios, give Operations scenarios their own steps in place of the live
+  feed and Run showcase steps, which do not apply to them.
+
+**Mixed feed and feed lifecycle** (specs [0008](../docs/specs/0008-mixed-feed.md)
+and [0009](../docs/specs/0009-visible-feed-lifecycle.md), 2026-09-25). A
+scenario's feed routes every payment to one outcome, because `feed_decision()` is
+per scenario (S01 PASS, S02/S03 HOLD, S04 CHALLENGE, S05 HOLD). Radar therefore
+opens on a Mixed feed (`MIX`) that interleaves S01 to S05 payments, each carrying
+its source scenario, fixture version, and that scenario's decision. The auto-start
+waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
+with `keepalive`.
+
 ## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
 
 Status legend from `docs/adr/README.md`: "`Proposed` means reviewable but

@@ -7,6 +7,10 @@
 
 Radar's Live switch plays a feed of simulated payments into one scenario's charts, so the dashboard visibly counts up during a demo. Each run is a fixed, repeatable schedule of 200 payments, one every 3 seconds, laid over the imported Sandbox data without ever changing it, so every run starts from the same figures. Runs belong to the browser that started them (like saved cases), with limits so a hosted demo cannot be overloaded. The core feed is built; ownership, limits, a clean up sweep, a header carrying stream and retiring an older write path are the remaining build work.
 
+## Amendment (2026-09-24, spec 0005)
+
+Radar now starts a feed by itself when the page loads and on each scenario change, unless this browser switched Live off earlier (spec 0005). A start is still a deliberate request from the browser that owns the run, through the same endpoint, limits and ownership rules; nothing starts a run on the server's own initiative. Because browsing scenarios now starts runs, the per browser limit rises from 3 to 10 starts per rolling minute (AC-11). The site cap of 20 live runs is unchanged.
+
 ## Requirements
 
 **User stories**:
@@ -25,7 +29,7 @@ Radar's Live switch plays a feed of simulated payments into one scenario's chart
 - **AC-8**: Radar's Live switch, beside the scenario selector, starts, follows and stops a feed for the selected scenario; the figures count up from the base as payments land; changing scenario stops the feed; it says when the worker is not running.
 - **AC-9**: Every run belongs to the browser that started it (the `X-Showcase-Browser-Id` header, a lowercase version 4 UUID). Start, status, cancel, the progress stream and run analytics all require that header and only act on that browser's runs; a missing or malformed header returns 400.
 - **AC-10**: A browser has at most one live run: starting a run cancels that browser's other live run, and never another browser's.
-- **AC-11**: At most 20 runs are live across the site, and a browser may start at most 3 runs per rolling minute; over either limit, start returns 429 with a stable code and Radar says the feed is busy, and no run is created.
+- **AC-11**: At most 20 runs are live across the site, and a browser may start at most 10 runs per rolling minute (3 until the spec 0005 amendment); over either limit, start returns 429 with a stable code and Radar says the feed is busy, and no run is created.
 - **AC-12**: Finished runs (completed, cancelled or failed) older than 7 days are deleted with their events by the worker; live runs are never swept.
 - **AC-13**: The progress stream is read with `fetch` (not EventSource), so the browser ID travels in the header and never in a URL; the client reconnects while the run is live.
 - **AC-14**: The older manual append path (`scripts/append_sandbox_simulated_event.py` and its service code) is removed; nothing in the app writes simulated payments into an imported dataset. The `sandbox_simulated_event_appends` table stays as history.
@@ -109,7 +113,7 @@ Run state is `run_id`, `scenario_id`, `fixture_version`, `seed`, `state`, `sched
 **Configuration required**:
 - `SIMULATION_WORKER_ENABLED`: runs the worker inside the API; default false, so a deployment starts no worker unless asked.
 - `DATABASE_URL`: existing; the feed needs it.
-- Limits are code constants, not settings: 20 live runs, 3 starts per minute, 7 day retention, 3 second pace, 200 payments.
+- Limits are code constants, not settings: 20 live runs, 10 starts per minute, 7 day retention, 3 second pace, 200 payments.
 
 **Critical test scenarios**:
 - Happy path: start S02 with a browser ID, the worker shows payments, analytics with the run count up from the base, Stop freezes the count; verifies **AC-2**, **AC-6**, **AC-7**, **AC-8**.

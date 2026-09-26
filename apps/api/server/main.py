@@ -19,6 +19,7 @@ The live demo pipeline needs vendor/arbiris-sdk (a private git submodule) and
 
 import asyncio
 import json
+import logging
 import math
 import os
 import re
@@ -101,6 +102,8 @@ from server.showcase_investigation.models import (
     ShowcaseInvestigationRequest,
 )
 from server.showcase_investigation.runtime import ShowcaseRuntime
+
+logger = logging.getLogger(__name__)
 
 
 def _allowed_origins() -> list[str]:
@@ -385,6 +388,8 @@ async def _stream_bounded_run(
 
 
 _CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+
+
 def _simulation_browser_id(request: Request) -> str:
     """Return the caller's showcase browser ID, or raise a non echoing 400.
 
@@ -405,6 +410,27 @@ def _case_error(status_code: int, code: str, message: str) -> HTTPException:
     """Build a case route error in the showcase ``{code, message}`` shape."""
     return HTTPException(
         status_code=status_code, detail={"code": code, "message": message}
+    )
+
+
+def _case_store_unavailable(diagnostic: str) -> HTTPException:
+    """Log a safe local reason for unavailable case storage and redact it from clients.
+
+    Args:
+        diagnostic: A fixed category from configuration or repository code. It
+            must never contain database URLs, credentials, hosts, SQL, or request data.
+
+    Returns:
+        The stable 503 error envelope consumed by the browser.
+
+    Side effects:
+        Writes one warning to the local API log for developer troubleshooting.
+    """
+    logger.warning("Case storage unavailable: %s", diagnostic)
+    return _case_error(
+        503,
+        "cases_unavailable",
+        "Saved cases are unavailable. Check the local API logs for storage status.",
     )
 
 
@@ -648,9 +674,7 @@ def create_app() -> FastAPI:
         echoes request input.
         """
         if case_repository is None:
-            raise _case_error(
-                503, "cases_unavailable", "Case history is off in this environment."
-            )
+            raise _case_store_unavailable("case_storage_disabled")
         browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         if browser_id is None:
             raise _case_error(
@@ -685,9 +709,7 @@ def create_app() -> FastAPI:
                 400, "invalid_cursor", "The page cursor is not valid."
             ) from error
         except CasesUnavailable as error:
-            raise _case_error(
-                503, "cases_unavailable", "Case history is unavailable."
-            ) from error
+            raise _case_store_unavailable(error.diagnostic) from error
         return CaseListResponse.model_validate(
             {
                 "contract_version": "1.0",
@@ -716,9 +738,7 @@ def create_app() -> FastAPI:
         has a malformed ID is the same 404, so IDs reveal nothing.
         """
         if case_repository is None:
-            raise _case_error(
-                503, "cases_unavailable", "Case history is off in this environment."
-            )
+            raise _case_store_unavailable("case_storage_disabled")
         browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         if browser_id is None:
             raise _case_error(
@@ -734,9 +754,7 @@ def create_app() -> FastAPI:
         except CaseNotFound as error:
             raise not_found from error
         except CasesUnavailable as error:
-            raise _case_error(
-                503, "cases_unavailable", "Case history is unavailable."
-            ) from error
+            raise _case_store_unavailable(error.diagnostic) from error
 
     @app.post(
         "/sandbox/scenarios/{scenario_id}/simulation-runs",

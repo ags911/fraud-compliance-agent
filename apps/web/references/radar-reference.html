@@ -189,7 +189,14 @@
   .case-filters{ display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
   .case-filters [data-slot="select-trigger"]{ height:30px; padding:0 0.625rem; border-radius:9999px; }
   .table-card-footer{ display:flex; justify-content:center; padding: var(--card-pad-y) var(--card-pad-x); border-top:1px solid var(--lch-border-soft); }
-  .table-card-footer .show-more{ border-radius:9999px; }
+  /* This page resets padding globally, so the shadcn utility padding on the
+     outline button cannot win here. Give the paging control the same compact
+     pill dimensions as the top-bar actions and empty-state CTA. */
+  .table-card-footer .show-more{
+    display:inline-flex; align-items:center; justify-content:center;
+    height:32px; padding:0 0.875rem; border-radius:var(--radius-pill);
+    line-height:1;
+  }
   .radar-collapsible{ background: var(--lch-bg-panel); border:1px solid var(--lch-border-soft); border-radius: var(--radius-md); overflow:hidden; }
   .radar-collapsible > summary{ padding: var(--card-pad-y) var(--card-pad-x); color: var(--lch-text-primary); cursor:pointer; font-size:12.5px; font-weight:600; }
   .radar-collapsible > summary:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:-2px; }
@@ -261,6 +268,28 @@
   .empty-table{ padding:28px 16px; color:var(--lch-text-secondary); text-align:center; }
   .radar-chart-card{ margin-bottom:10px; }
   .radar-chart-empty{ display:flex; align-items:center; justify-content:center; height:160px; color:var(--lch-text-secondary); font-size:12.5px; }
+  /* Decision routing (spec 0006): an EvilCharts Sankey
+     (src/components/evilcharts), node labels inside, in a .dark scope.
+     Every outcome is drawn, at zero too (see routing-summary.ts). */
+  .radar-routing{ position:relative; overflow:hidden; border:1px solid var(--lch-border-soft); border-radius:var(--radius-md); background:var(--lch-bg-panel); }
+  .radar-routing-header{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:10px 16px; padding:var(--card-pad-y) var(--card-pad-x); border-bottom:1px solid var(--lch-border-soft); }
+  /* The copy keeps a readable width; on a narrow screen the pills wrap below it. */
+  .radar-routing-header > div:first-child{ flex:1 1 260px; }
+  .radar-routing-header .card-copy{ margin-top:4px; }
+  .radar-routing-pills{ display:flex; flex-shrink:0; align-items:center; gap:6px; }
+  /* Display only disclosure (spec 0006 AC 9): hides the moving board without
+     stopping the feed. A pill like Radar's other buttons, 24px tall to meet
+     the minimum target size. */
+  .radar-routing-toggle{ min-height:24px; padding:0 10px; border:1px solid var(--lch-border); border-radius:var(--radius-pill); background:var(--lch-bg-pill); color:var(--lch-text-secondary); cursor:pointer; font:inherit; font-size:11.5px; font-weight:500; }
+  .radar-routing-toggle:hover{ color:var(--lch-text-primary); }
+  .radar-routing-toggle:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:2px; }
+  .radar-routing-body.is-collapsed .radar-routing-footer{ margin-top:0; }
+  .radar-routing-empty{ padding:var(--card-pad-y) var(--card-pad-x); color:var(--lch-text-secondary); font-size:12.5px; }
+  .radar-routing-body{ padding:14px var(--card-pad-x) 12px; }
+  .radar-routing-chart{ height:220px; }
+  .radar-routing-footer{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; margin-top:10px; color:var(--lch-text-secondary); font-size:11.5px; font-variant-numeric:tabular-nums; }
+  .radar-routing-footer strong{ color:var(--lch-text-primary); font-weight:500; }
+  .radar-routing-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   /* Current session recommendations -- the Rules Performance card's
      structure (header, distribution bar, legend toggles, stacked chart,
      data disclosure; src/components/rules-performance-chart.tsx) in this
@@ -432,17 +461,58 @@
   /* ---------------- Live switch (spec 0003) ---------------- */
   .live-switch{ display:flex; align-items:center; gap:8px; height:32px; padding:0 4px; }
   .live-switch-label{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:500; color: var(--lch-text-secondary); cursor:pointer; }
-  .live-switch[data-state="live"] .live-switch-label{ color: var(--lch-text-primary); }
+  .live-switch[data-tone="live"] .live-switch-label{ color: var(--lch-text-primary); }
   .live-switch[data-state="unsupported"] .live-switch-label{ cursor:not-allowed; opacity:0.5; }
   .live-switch [data-slot="switch-thumb"][data-state="unchecked"]{ background: var(--lch-text-secondary); }
   .live-dot{ width:6px; height:6px; border-radius:50%; background: var(--lch-text-tertiary); }
-  .live-switch[data-state="live"] .live-dot{ background: var(--sev-low); animation: pill-pulse 1.6s ease-in-out infinite; }
-  .live-switch[data-state="unavailable"] .live-dot{ background: var(--sev-high); }
-  .live-switch[data-state="busy"] .live-dot{ background: var(--sev-moderate); }
+  /* data-tone, not data-state: a quiet automatic failure reads as history (spec 0005). */
+  .live-switch[data-tone="live"] .live-dot{ background: var(--sev-low); animation: pill-pulse 1.6s ease-in-out infinite; }
+  .live-switch[data-tone="unavailable"] .live-dot{ background: var(--sev-high); }
+  .live-switch[data-tone="busy"] .live-dot{ background: var(--sev-moderate); }
   /* A fixed minimum width, so the top bar does not shift as the count changes. */
   .live-status{ min-width:72px; font-size:11.5px; color: var(--lch-text-tertiary); font-variant-numeric: tabular-nums; white-space:nowrap; }
   .live-status:empty{ min-width:0; }
-  @media (prefers-reduced-motion: reduce){ .live-switch[data-state="live"] .live-dot{ animation:none; } }
+  @media (prefers-reduced-motion: reduce){ .live-switch[data-tone="live"] .live-dot{ animation:none; } }
+  /* The switch's tooltip: the page's padding reset would strip Tailwind's. */
+  .live-switch-hint{ padding: 7px 10px; font-size:12px; line-height:1.5; }
+
+  /* ---------------- Guided tour (spec 0007) ----------------
+     driver.js, restyled in this page's palette. The help icon is a square
+     ghost button, not a pill. */
+  .topbar-actions .radar-help-button{ width:32px; padding:0; border-radius:9999px; color: var(--lch-text-secondary); }
+  .topbar-actions .radar-help-button:hover{ color: var(--lch-text-primary); }
+  /* As on Overview: the mask sits below Radix menus (z-index 50), and their
+     portalled content takes clicks, so the scenario picker works in step 1. */
+  .driver-overlay{ z-index:40 !important; }
+  .driver-active [data-radix-popper-content-wrapper],
+  .driver-active [data-radix-popper-content-wrapper] *,
+  .driver-active [data-slot="select-content"],
+  .driver-active [data-slot="select-content"] *{ pointer-events:auto; }
+  .driver-active:has([data-slot="select-content"]) .driver-popover.radar-tour{ visibility:hidden; }
+  .driver-popover.radar-tour{
+    max-width:300px; padding:14px 16px; border:1px solid var(--lch-border); border-radius: var(--radius-md);
+    background: var(--lch-bg-pill); color: var(--lch-text-primary); font-family: inherit;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+  .radar-tour .driver-popover-title{ font-family: inherit; font-size:13.5px; font-weight:600; color: var(--lch-text-primary); }
+  .radar-tour .driver-popover-description{ margin-top:6px; font-family: inherit; font-size:12.5px; line-height:1.55; color: var(--lch-text-secondary); }
+  .radar-tour .driver-popover-footer{ margin-top:14px; }
+  .radar-tour .driver-popover-progress-text{ font-size:11.5px; color: var(--lch-text-secondary); }
+  .radar-tour .driver-popover-close-btn{ color: var(--lch-text-secondary); }
+  .radar-tour .driver-popover-close-btn:hover{ color: var(--lch-text-primary); }
+  .radar-tour .driver-popover-footer button{
+    height:28px; padding:0 12px; border:1px solid var(--radar-accent); border-radius:9999px;
+    background: var(--radar-accent); color: var(--radar-accent-foreground);
+    font-family: inherit; font-size:12px; font-weight:600; text-shadow:none;
+  }
+  .radar-tour .driver-popover-footer button:focus-visible{ outline:2px solid var(--radar-accent); outline-offset:2px; }
+  /* Back is the secondary action, and there is nothing to go back to on step 1. */
+  .radar-tour .driver-popover-footer .driver-popover-prev-btn{ border-color: var(--lch-border); background: transparent; color: var(--lch-text-primary); }
+  .radar-tour .driver-popover-footer .driver-popover-prev-btn.driver-popover-btn-disabled{ visibility:hidden; }
+  .radar-tour .driver-popover-arrow-side-left.driver-popover-arrow{ border-left-color: var(--lch-bg-pill); }
+  .radar-tour .driver-popover-arrow-side-right.driver-popover-arrow{ border-right-color: var(--lch-bg-pill); }
+  .radar-tour .driver-popover-arrow-side-top.driver-popover-arrow{ border-top-color: var(--lch-bg-pill); }
+  .radar-tour .driver-popover-arrow-side-bottom.driver-popover-arrow{ border-bottom-color: var(--lch-bg-pill); }
 
   /* ---------------- Case drawer (spec 0002) ----------------
      shadcn's Sheet, retokened for this page: panel background, the page's
@@ -501,8 +571,10 @@
   @media (max-width: 700px){
     .topbar{ padding:14px 0; }
     .topbar-inner{ align-items:flex-start; flex-wrap:wrap; padding:0 16px; }
-    .topbar-actions{ width:100%; }
-    .topbar-actions [data-slot="select-trigger"]{ flex:1; min-width:0; }
+    /* Wrap rather than squeeze: the picker keeps a readable width and the
+       Live status its words; Run showcase drops to a second row if needed. */
+    .topbar-actions{ width:100%; flex-wrap:wrap; }
+    .topbar-actions [data-slot="select-trigger"]{ flex:1 1 150px; min-width:0; }
     .tabs{ margin-top:10px; padding:0 16px; overflow-x:auto; }
     .body-grid{ gap:24px; padding:20px 16px; }
     .section-sub{ overflow-wrap:anywhere; }

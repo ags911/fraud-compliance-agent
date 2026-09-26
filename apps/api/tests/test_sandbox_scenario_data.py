@@ -10,6 +10,7 @@ from scripts.import_plaid_sandbox_history import sanitise_history
 from server import main
 from server.main import create_app
 from server.sandbox_data.service import (
+    PsycopgScenarioRepository,
     SanitisedEvent,
     _overlay_shown_events,
     build_dataset,
@@ -177,7 +178,9 @@ def test_transaction_schedules_are_deterministic_and_skip_workflow_scenarios() -
     assert [item.sequence for item in schedule[:3]] == [1, 2, 3]
     assert [item.delay_seconds for item in schedule[:3]] == [0, 3, 6]
     assert schedule[-1].delay_seconds == (FEED_EVENT_COUNT - 1) * FEED_INTERVAL_SECONDS
-    assert all(item.event.event_id.startswith("simulation_run-test_") for item in schedule)
+    assert all(
+        item.event.event_id.startswith("simulation_run-test_") for item in schedule
+    )
     assert all(item.event.event_date == date(2026, 9, 24) for item in schedule)
     assert build_scenario_schedule("S06", date(2026, 9, 24), "run-test") == ()
 
@@ -197,14 +200,39 @@ def test_feed_amounts_vary_but_repeat_for_the_same_position() -> None:
 def test_shown_feed_events_are_added_to_the_base_aggregates_only() -> None:
     """Overlay counts, outbound amounts and categories without changing the base."""
     base = [
-        {"aggregate_date": date(2026, 9, 22), "transaction_count": 2, "outbound_amount_minor": 500, "category_counts": {"grocery": 2}},
-        {"aggregate_date": date(2026, 9, 23), "transaction_count": 1, "outbound_amount_minor": 100, "category_counts": {"grocery": 1}},
+        {
+            "aggregate_date": date(2026, 9, 22),
+            "transaction_count": 2,
+            "outbound_amount_minor": 500,
+            "category_counts": {"grocery": 2},
+        },
+        {
+            "aggregate_date": date(2026, 9, 23),
+            "transaction_count": 1,
+            "outbound_amount_minor": 100,
+            "category_counts": {"grocery": 1},
+        },
     ]
     shown = [
-        {"event_date": date(2026, 9, 23), "amount_minor": 140000, "direction": "outbound", "category_bucket": "high_velocity"},
-        {"event_date": date(2026, 9, 23), "amount_minor": 140000, "direction": "outbound", "category_bucket": "high_velocity"},
+        {
+            "event_date": date(2026, 9, 23),
+            "amount_minor": 140000,
+            "direction": "outbound",
+            "category_bucket": "high_velocity",
+        },
+        {
+            "event_date": date(2026, 9, 23),
+            "amount_minor": 140000,
+            "direction": "outbound",
+            "category_bucket": "high_velocity",
+        },
         # Outside the dataset boundary: never invented into a new day.
-        {"event_date": date(2026, 9, 30), "amount_minor": 1, "direction": "outbound", "category_bucket": "grocery"},
+        {
+            "event_date": date(2026, 9, 30),
+            "amount_minor": 1,
+            "direction": "outbound",
+            "category_bucket": "grocery",
+        },
     ]
 
     overlaid = _overlay_shown_events(base, shown)
@@ -259,9 +287,9 @@ def test_run_analytics_need_a_browser_id_but_the_base_does_not(monkeypatch) -> N
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id, simulation_run_id=None, browser_id=None: (_ for _ in ()).throw(
-            main.SandboxDataUnavailable()
-        ),
+        lambda scenario_id, simulation_run_id=None, browser_id=None: (
+            _ for _ in ()
+        ).throw(main.SandboxDataUnavailable()),
     )
     client = TestClient(create_app())
 
@@ -374,7 +402,9 @@ def test_simulation_event_stream_is_404_for_another_browsers_run(monkeypatch) ->
     monkeypatch.setattr(
         main,
         "load_sandbox_simulation_run",
-        lambda run_id, browser_id: (_ for _ in ()).throw(main.ScenarioSimulationNotFound(run_id)),
+        lambda run_id, browser_id: (_ for _ in ()).throw(
+            main.ScenarioSimulationNotFound(run_id)
+        ),
     )
 
     response = TestClient(create_app()).get(
@@ -393,7 +423,9 @@ def test_simulation_status_endpoint_redacts_store_unavailability(monkeypatch) ->
         lambda run_id, browser_id: (_ for _ in ()).throw(main.SandboxDataUnavailable()),
     )
 
-    response = TestClient(create_app()).get("/sandbox/simulation-runs/run-test", headers=OWNER)
+    response = TestClient(create_app()).get(
+        "/sandbox/simulation-runs/run-test", headers=OWNER
+    )
 
     assert response.status_code == 503
     assert response.json() == {"detail": "sandbox_scenario_data_unavailable"}
@@ -443,7 +475,9 @@ def test_analytics_endpoint_returns_only_sanitised_aggregates(
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id, simulation_run_id=None, browser_id=None: dataset.to_analytics_response(),
+        lambda scenario_id, simulation_run_id=None, browser_id=None: (
+            dataset.to_analytics_response()
+        ),
     )
 
     response = TestClient(create_app()).get("/sandbox/scenarios/S04/analytics")
@@ -474,9 +508,9 @@ def test_analytics_endpoint_redacts_database_unavailability(monkeypatch) -> None
     monkeypatch.setattr(
         main,
         "load_sandbox_analytics",
-        lambda scenario_id, simulation_run_id=None, browser_id=None: (_ for _ in ()).throw(
-            main.SandboxDataUnavailable()
-        ),
+        lambda scenario_id, simulation_run_id=None, browser_id=None: (
+            _ for _ in ()
+        ).throw(main.SandboxDataUnavailable()),
     )
 
     response = TestClient(create_app()).get("/sandbox/scenarios/S04/analytics")
@@ -501,11 +535,15 @@ def test_in_process_worker_advances_until_stopped(monkeypatch) -> None:
 
     swept = []
     monkeypatch.setattr(worker, "advance_sandbox_simulation_events", advance)
-    monkeypatch.setattr(worker, "sweep_sandbox_simulation_runs", lambda: swept.append(1) or 0)
+    monkeypatch.setattr(
+        worker, "sweep_sandbox_simulation_runs", lambda: swept.append(1) or 0
+    )
 
     async def scenario() -> None:
         stop = asyncio.Event()
-        task = asyncio.create_task(worker.run_simulation_worker(stop, poll_seconds=0.01))
+        task = asyncio.create_task(
+            worker.run_simulation_worker(stop, poll_seconds=0.01)
+        )
         await asyncio.sleep(0.08)
         stop.set()
         await asyncio.wait_for(task, timeout=1)
@@ -535,3 +573,163 @@ def test_api_starts_no_worker_unless_enabled(monkeypatch) -> None:
     with TestClient(create_app()):
         pass
     assert started == [1]
+
+
+def test_feed_limits_allow_browsing_scenarios_with_the_feed_on() -> None:
+    """Spec 0005 AC-8: 10 starts a minute per browser; the site cap stays 20."""
+    from server.sandbox_data import service
+
+    assert service.MAX_SIMULATION_STARTS_PER_MINUTE == 10
+    assert service.MAX_LIVE_SIMULATION_RUNS == 20
+
+
+# ---- Live decision routing snapshot (spec 0006) ------------------------------
+
+
+class _QueuedCursor:
+    """Answer each query from a queue, standing in for the database cursor."""
+
+    def __init__(self, run: dict, events: list[dict]) -> None:
+        self._one = [run, {"next_due_at": None}]
+        self._events = events
+        self.queries: list[str] = []
+
+    def execute(self, query: str, params: tuple) -> None:
+        self.queries.append(query)
+
+    def fetchone(self) -> dict:
+        return self._one.pop(0)
+
+    def fetchall(self) -> list[dict]:
+        return self._events
+
+
+def _routing(pass_count: int = 0, challenge: int = 0, hold: int = 0) -> dict:
+    def lane(outcome: str, count: int) -> dict:
+        return {
+            "count": count,
+            "recent": [
+                {
+                    "event_id": f"evt-{outcome}-{index}",
+                    "sequence": 100 - index,
+                    "recommendation": outcome,
+                }
+                for index in range(min(count, 18))
+            ],
+        }
+
+    return {
+        "by_recommendation": {
+            "PASS": lane("PASS", pass_count),
+            "CHALLENGE": lane("CHALLENGE", challenge),
+            "HOLD": lane("HOLD", hold),
+        }
+    }
+
+
+def test_routing_snapshot_counts_every_payment_but_lists_only_the_newest_18() -> None:
+    """covers: AC 3, AC 5. Counts are never truncated; each lane lists its newest 18."""
+    revealed = [
+        (sequence, "HOLD" if sequence % 5 else "PASS") for sequence in range(30, 0, -1)
+    ]
+    events = [
+        {"event_id": f"evt-{sequence}", "sequence": sequence, "recommendation": outcome}
+        for sequence, outcome in revealed
+    ]
+    run = {
+        **_run("run-test", "running", len(events)),
+        "created_at": None,
+        "started_at": None,
+        "completed_at": None,
+        "failure_reason": None,
+    }
+    cursor = _QueuedCursor(run, events)
+
+    snapshot = PsycopgScenarioRepository.read_simulation_run_cursor(
+        cursor, "run-test", BROWSER
+    )["routing_snapshot"]["by_recommendation"]
+
+    assert {outcome: lane["count"] for outcome, lane in snapshot.items()} == {
+        "PASS": 6,
+        "CHALLENGE": 0,
+        "HOLD": 24,
+    }
+    assert len(snapshot["HOLD"]["recent"]) == 18
+    assert [item["sequence"] for item in snapshot["HOLD"]["recent"]][:3] == [29, 28, 27]
+    assert all(item["recommendation"] == "HOLD" for item in snapshot["HOLD"]["recent"])
+    assert snapshot["CHALLENGE"] == {"count": 0, "recent": []}
+    # Opaque items only: no amount, payee, score or basis leaves the store.
+    assert set(snapshot["PASS"]["recent"][0]) == {
+        "event_id",
+        "sequence",
+        "recommendation",
+    }
+    # The read is one ordered query over this run's revealed payments.
+    assert any(
+        "appended_at IS NOT NULL" in query and "ORDER BY sequence DESC" in query
+        for query in cursor.queries
+    )
+
+
+def test_routing_snapshot_is_empty_before_any_payment_without_a_query() -> None:
+    """covers: AC 5. Every outcome is present at zero before the first payment."""
+    run = {
+        **_run("run-test", "pending", 0),
+        "created_at": None,
+        "started_at": None,
+        "completed_at": None,
+        "failure_reason": None,
+    }
+    cursor = _QueuedCursor(run, [])
+
+    snapshot = PsycopgScenarioRepository.read_simulation_run_cursor(
+        cursor, "run-test", BROWSER
+    )["routing_snapshot"]
+
+    assert snapshot == {
+        "by_recommendation": {
+            outcome: {"count": 0, "recent": []}
+            for outcome in ("PASS", "CHALLENGE", "HOLD")
+        }
+    }
+    assert len(cursor.queries) == 2
+
+
+def test_simulation_event_stream_carries_the_routing_snapshot(monkeypatch) -> None:
+    """covers: AC 5. Each simulation_state frame includes the run's snapshot."""
+    monkeypatch.setattr(
+        main,
+        "load_sandbox_simulation_run",
+        lambda run_id, browser_id: {
+            **_run(run_id, "completed", 3),
+            "routing_snapshot": _routing(1, 0, 2),
+        },
+    )
+
+    response = TestClient(create_app()).get(
+        "/sandbox/simulation-runs/run-test/events", headers=OWNER
+    )
+
+    frame = json.loads(
+        response.text.split("\n\n")[0].split("\n")[1].removeprefix("data: ")
+    )
+    assert frame["routing_snapshot"] == _routing(1, 0, 2)
+
+
+def test_cancelling_a_run_keeps_its_routing_snapshot(monkeypatch) -> None:
+    """covers: AC 7. A stopped run keeps its last snapshot, so its board does not reset to zero."""
+    monkeypatch.setattr(
+        main,
+        "cancel_sandbox_simulation",
+        lambda run_id, browser_id: {
+            **_run(run_id, "cancelled", 9),
+            "routing_snapshot": _routing(3, 2, 4),
+        },
+    )
+
+    response = TestClient(create_app()).post(
+        "/sandbox/simulation-runs/run-test/cancel", headers=OWNER
+    )
+
+    assert response.status_code == 200
+    assert response.json().get("routing_snapshot") == _routing(3, 2, 4)

@@ -85,7 +85,7 @@ export async function fetchShowcaseCase(caseId: string, signal?: AbortSignal): P
 
   let response: Response
   try {
-    response = await fetch(`${API_BASE_URL}/cases/${encodeURIComponent(caseId)}`, { headers, signal })
+    response = await fetchCaseResource(`${API_BASE_URL}/cases/${encodeURIComponent(caseId)}`, headers, signal)
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error
     return { status: "unavailable" }
@@ -127,6 +127,38 @@ export type ShowcaseCaseFilters = {
 /** How a list read ended: a page, or case history unavailable (AC-10 fallback). */
 export type ShowcaseCaseListResult = { status: "ok"; page: ShowcaseCasePage } | { status: "unavailable" }
 
+const CASES_REQUEST_TIMEOUT_MS = 5_000
+
+class CasesRequestTimedOut extends Error {
+  constructor() {
+    super("Saved cases request timed out")
+  }
+}
+
+/**
+ * Fetch a case resource with a bounded wait so a stalled local database never
+ * leaves a case surface in its loading state indefinitely.
+ */
+async function fetchCaseResource(url: string, headers: HeadersInit, signal?: AbortSignal): Promise<Response> {
+  const controller = new AbortController()
+  let timedOut = false
+  const timeout = window.setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, CASES_REQUEST_TIMEOUT_MS)
+  const abort = () => controller.abort()
+  signal?.addEventListener("abort", abort, { once: true })
+  try {
+    return await fetch(url, { headers, signal: controller.signal })
+  } catch (error) {
+    if (timedOut) throw new CasesRequestTimedOut()
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
+    signal?.removeEventListener("abort", abort)
+  }
+}
+
 /**
  * Read one newest first page of this browser's cases.
  *
@@ -146,7 +178,7 @@ export async function fetchShowcaseCases(
   if (cursor) params.set("cursor", cursor)
   const query = params.toString()
   try {
-    const response = await fetch(`${API_BASE_URL}/cases${query ? `?${query}` : ""}`, { headers, signal })
+    const response = await fetchCaseResource(`${API_BASE_URL}/cases${query ? `?${query}` : ""}`, headers, signal)
     if (!response.ok) return { status: "unavailable" }
     return { status: "ok", page: (await response.json()) as ShowcaseCasePage }
   } catch (error) {
