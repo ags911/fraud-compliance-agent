@@ -69,7 +69,7 @@ No database change. The internal stream gains `routing_decision` frames and a `r
 
 `unavailable` becomes `idle`, `live`, or `finished` from the existing feed state. A new decision record creates an entering token, then a settled token in exactly one lane. A lane removes its oldest settled token when its visible collection exceeds 18.
 
-The display preference is separate from the feed state: `shown` (default) and `hidden`, switched only by the disclosure button. It is stored in `localStorage` under `radar-routing-board-hidden` (value `"1"` when hidden, removed when shown). Every read and write is wrapped in `try`/`catch` (private windows and blocked storage throw), and any failure or unknown value means `shown`. Nothing else reads or writes that key.
+The display preference is separate from the feed state: `shown` (default) and `hidden`, switched only by the disclosure button. It is stored in `localStorage` under `console-routing-board-hidden`, value `"1"` when hidden and removed when shown (the key was `radar-routing-board-hidden` before the 2026-09-27 Risk Console rename). Every read and write is wrapped in `try`/`catch` (private windows and blocked storage throw), and any failure or unknown value means `shown`. Nothing else reads or writes that key.
 
 **API surface**:
 
@@ -100,7 +100,7 @@ Each `simulation_state` frame adds this field:
 | Lane count | all revealed payments in that outcome | `routing_snapshot.*.count` from the stream |
 | Visible token order | newest first | `sequence` on the decision item or snapshot |
 | Motion preference | animated or reduced motion | operating system reduced motion preference through Motion |
-| Board shown or hidden | chart and count list, or the footer line only | browser `localStorage` key `radar-routing-board-hidden`, default shown |
+| Board shown or hidden | chart and count list, or the footer line only | browser `localStorage` key `console-routing-board-hidden`, default shown |
 
 **Key invariants**:
 
@@ -131,18 +131,18 @@ None.
 
 The board is a one level Sankey from the EvilCharts registry (`@evilcharts/recharts-sankey-chart`, copied into `src/components/evilcharts/` by the shadcn CLI and built on the installed Recharts and Motion, so no new package). A Feed node flows into PASS, CHALLENGE, and HOLD nodes in that fixed order (`sort={false}`). Each node's label and count sit inside it. All three outcomes are drawn from the start, at zero before any payment, and outside workflow scenarios the chart shows even without a run. Each label shows its real snapshot count. Band sizes follow the counts, with a floor of 18% of the total (or 1 before any payment) so an empty or small outcome stays visible and labelled, so small outcomes are drawn larger than their exact share.
 
-The chart is read only: nodes are not clickable, there is no tooltip, and its SVG takes no keyboard focus (the chart is hidden from assistive technology, so the count list carries the numbers). The chart area is 220 pixels tall, with `nodePadding` 42 and `minNodeHeight` 44, so every node fits its two line label and count (a zero included) and neighbouring nodes keep at least 8 pixels between them even when one outcome dominates. A lane whose outcome is at zero is drawn faint, so its floor width does not read as real flow. It renders in a `.dark` scope with the page's `--sev-*` outcome colours, because the Radar page is dark without a `.dark` class. The footer shows the newest decision ("Last routed #48 → CHALLENGE"). Screen readers get a list of all three counts, including zero, and a polite announcement when routing starts and finishes, not one per payment.
+The chart is read only: nodes are not clickable, there is no tooltip, and its SVG takes no keyboard focus (the chart is hidden from assistive technology, so the count list carries the numbers). The chart area is 220 pixels tall, with `nodePadding` 42 and `minNodeHeight` 44, so every node fits its two line label and count (a zero included) and neighbouring nodes keep at least 8 pixels between them even when one outcome dominates. A lane whose outcome is at zero is drawn faint, so its floor width does not read as real flow. It renders in a `.dark` scope with the page's `--sev-*` outcome colours, because the Risk Console page is dark without a `.dark` class. The footer shows the newest decision ("Last routed #48 → CHALLENGE"). Screen readers get a list of all three counts, including zero, and a polite announcement when routing starts and finishes, not one per payment.
 
 The newest payment shows as a short, outcome coloured sweep that travels from Feed along its own lane to the outcome node (about a fifth of the lane long, 0.9 to 1.6 seconds by lane length). The sweep is clipped to the curved lane, and only the lane animates: nodes never glow or pulse. Under reduced motion the lane tints in place with no travel. The chart redraws with the new counts on each `simulation_state` frame. The stream's `routing_decision` frames (**AC 4**) are still unbuilt, and the board does not need them.
 
-A "Hide board" / "Show board" text button sits in the header beside the Synthetic and Read only pills (AC 9), styled like Radar's other pill buttons. It appears only while the chart would be drawn, not in a quiet state. It exists because the feed animates about every three seconds for a whole run beside the Cases table: a viewer needs a way to stop that motion (WCAG 2.2.2, Pause, Stop, Hide) and reclaim the space without cancelling the feed, which the Live switch would do.
+A "Hide board" / "Show board" text button sits in the header beside the Synthetic and Read only pills (AC 9), styled like the console's other pill buttons. It appears only while the chart would be drawn, not in a quiet state. It exists because the feed animates about every three seconds for a whole run beside the Cases table: a viewer needs a way to stop that motion (WCAG 2.2.2, Pause, Stop, Hide) and reclaim the space without cancelling the feed, which the Live switch would do.
 
 ## Build plan
 
 1. Extend the internal simulation stream model, repository read, replay cursor, and stream tests with decision frames and the bounded routing snapshot, satisfies **AC 4** and **AC 5**.
 2. Add a typed presentational routing board and a small feed token derivation helper, satisfies **AC 1**, **AC 2**, and **AC 3**.
 3. Place the board above the Cases table and wire it to the existing selected feed state without any extra request, satisfies **AC 1**, **AC 6**, and **AC 7**.
-4. Add Motion transitions and reduced motion handling, then style the desktop and narrow layouts in Radar's existing visual system, satisfies **AC 2** and **AC 8**.
+4. Add Motion transitions and reduced motion handling, then style the desktop and narrow layouts in the Risk Console's existing visual system, satisfies **AC 2** and **AC 8**.
 5. Add the header disclosure with its guarded `localStorage` preference, and update the board test that asserted no buttons to allow exactly this one, satisfies **AC 6** and **AC 9**.
 6. Add focused API and Playwright coverage for replay, snapshots, token retention, quiet states, and narrow viewport rendering, satisfies **AC 1** through **AC 9**.
 

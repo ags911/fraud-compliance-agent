@@ -2,7 +2,7 @@
 _Steps derived from spec 0004 acceptance criteria (slices 1 and 2; slice 3, AC-11 to AC-15, waits for its ADR). `/check verify` runs these; `/test` locks the durable ones._
 
 ## UI / manual
-Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler, then open `/radar`.
+Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler, then open the Risk Console at `/` (`/radar` before 2026-09-27; it still falls back to `/`).
 
 - [x] Start an S02 feed → "Recommendations over time" shows a `Sandbox` badge (no `Mock data`), and its HOLD count rises as payments land → AC-8
 - [x] Open the Cases tab while that feed runs → new HOLD rows with Mode `Live feed` appear within about 3 seconds of each payment; an open drawer is not disturbed; one more refresh follows when the feed ends → AC-9

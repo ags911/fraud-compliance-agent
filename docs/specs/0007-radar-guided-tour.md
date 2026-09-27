@@ -5,7 +5,9 @@
 
 ## Summary
 
-Radar (`/radar`) gets an opt in spotlight tour, built the same way as the Overview tour (`useOverviewTour.ts`, driver.js). A help icon in the top bar starts it; it never starts by itself. Six steps cover only what Radar has today: the scenario picker, the live feed switch, Run showcase, the Cases tab, the scenario figures and the recommendations chart. Steps for later stages (F5 human review, F6 Health tab, the S06 to S08 Operations group) are added only when those surfaces ship.
+> **Updated 2026-09-27, Risk Console consolidation.** Radar is now the Risk Console at `/`. The Overview page and `useOverviewTour.ts` were removed, so this tour is the only one. Its hook is `src/lib/useConsoleTour.ts`, its targets use the `console-` prefix, its popover styles are `.driver-popover.console-tour` in `apps/web/index.html`, and its tests are `tests/console-tour.spec.ts`. The spec keeps its original title and file name as its identity; the build plan below is the historical record.
+
+The Risk Console (`/`, Radar at `/radar` when written) gets an opt in spotlight tour, built the same way as the Overview tour (`useOverviewTour.ts`, driver.js). A help icon in the top bar starts it; it never starts by itself. Six steps cover only what the console has today: the scenario picker, the live feed switch, Run showcase, the Cases tab, the scenario figures and the recommendations chart. Steps for later stages (F5 human review, F6 Health tab, the S06 to S08 Operations group) are added only when those surfaces ship.
 
 ## Requirements
 
@@ -14,12 +16,12 @@ Radar (`/radar`) gets an opt in spotlight tour, built the same way as the Overvi
 - As a returning viewer, I want the tour to stay out of my way until I ask for it.
 
 **Acceptance criteria**:
-- **AC-1**: The tour never starts by itself. A help icon button in the top bar ("How this dashboard works") starts it at step 1, from any tab; if another tab is open, Radar switches to the Scenario tab first.
+- **AC-1**: The tour never starts by itself. A help icon button in the top bar ("How this dashboard works") starts it at step 1, from any tab; if another tab is open, the console switches to the Scenario tab first.
 - **AC-2**: Six steps, in this order, each highlighting its target: the scenario picker, the Live switch, Run showcase, the Cases tab, the scenario figures (stat cards), and "Recommendations over time". Progress reads "Step n of 6"; Next and Back move between steps; step 1 has no Back; the last step's button reads "Finish".
 - **AC-3**: The copy describes only what exists: the data is synthetic Sandbox data, the feed adds simulated payments, decisions come from the scenario's deterministic rule, no model score decides anything, and cases are read only. No step mentions a planned feature.
 - **AC-4**: Escape, the close button and clicking the mask end the tour; the rest of the page is masked while the highlighted control stays usable; animation is off when the viewer prefers reduced motion.
-- **AC-5**: The popover uses Radar's own dark palette and passes an automated accessibility check (axe, WCAG 2.1 A and AA).
-- **AC-6**: The Overview, decision workspace and investigation tours are unchanged.
+- **AC-5**: The popover uses the console's own dark palette and passes an automated accessibility check (axe, WCAG 2.1 A and AA).
+- **AC-6** (retired 2026-09-27: the Overview, decision workspace and investigation pages and their tours were removed): The Overview, decision workspace and investigation tours are unchanged.
 
 ## Decision
 
@@ -29,9 +31,9 @@ A new `useRadarTour` hook mirrors the Overview tour's driver.js options (mask, k
 
 **Entry point**: an icon button (lucide `CircleHelp`) at the end of the top bar actions, labelled "How this dashboard works".
 
-**Targets**: stable ids added to Radar's existing elements: `#radar-scenario-trigger`, `#radar-live-switch`, `#radar-run-showcase`, `#radar-cases-tab`, `#radar-summary`, `#radar-recommendations` (a wrapper around the chart card).
+**Targets**: stable ids on the console's existing elements: `#console-scenario-trigger`, `#console-live-switch`, `#console-run-showcase`, `#console-cases-tab`, `#console-summary`, `#console-recommendations` (a wrapper around the chart card).
 
-**Styling**: `.driver-popover.radar-tour` rules in `radar-reference.html`, from Radar's tokens; the mask sits below Radix menus so the open scenario picker stays clickable, as on Overview.
+**Styling**: `.driver-popover.console-tour` rules in `apps/web/index.html`, from the console's tokens; the mask sits below Radix menus so the open scenario picker stays clickable.
 
 **Key invariants**:
 - Opt in only; no welcome prompt and no stored "seen" flag.
@@ -44,7 +46,7 @@ A new `useRadarTour` hook mirrors the Overview tour's driver.js options (mask, k
 1. Target ids on Radar's elements and the help button in the top bar, satisfies **AC-1**
 2. `src/lib/useRadarTour.ts` with the six steps and copy, satisfies **AC-2**, **AC-3**, **AC-4**
 3. Popover styles in `radar-reference.html`, satisfies **AC-5**
-4. Playwright `tests/radar-tour.spec.ts`, satisfies **AC-1** to **AC-6**
+4. Playwright `tests/radar-tour.spec.ts`, satisfies **AC-1** to **AC-6** (AC-6 since retired)
 
 ## Consequences
 

@@ -1,11 +1,13 @@
 # 0002. Durable investigation cases (F4)
 
-**Date**: 2026-09-24 (updated 2026-09-24 to match the build)
+**Date**: 2026-09-24 (updated 2026-09-24 to match the build; paths updated 2026-09-27)
 **Status**: In Progress
 
 ## Summary
 
-Every completed showcase run becomes a saved case you can reopen later, instead of vanishing when the tab closes. The API stores the run's own accepted events (the audit trail) plus one summary row, scoped to the browser that ran it, kept 30 days and capped at 50 per browser. Radar's Session tab becomes a Cases tab, and each case opens in a drawer over that tab showing the outcome, the evidence, and every event; `/transactions/<case id>` shows the same case as a full page for deep links. This runs locally and internally only; the public showcase stays database free until an ADR (a recorded architecture decision) says otherwise.
+> **Updated 2026-09-27, Risk Console consolidation.** Radar is now the Risk Console, the only web page, served at `/` with no router. The full case page (`/transactions/<case id>`) and the investigation page (`/transactions/investigation`) were removed: the case drawer is the only case view, and `/?case=<id>` is its deep link. Requirements below are updated to match; completed build steps, `rationale.md` and ticked `verify.md` steps are kept as the historical record.
+
+Every completed showcase run becomes a saved case you can reopen later, instead of vanishing when the tab closes. The API stores the run's own accepted events (the audit trail) plus one summary row, scoped to the browser that ran it, kept 30 days and capped at 50 per browser. The Risk Console's Session tab becomes a Cases tab, and each case opens in a drawer over that tab showing the outcome, the evidence, and every event; `/?case=<case id>` reopens it for deep links. This runs locally and internally only; the public showcase stays database free until an ADR (a recorded architecture decision) says otherwise.
 
 ## Requirements
 
@@ -23,17 +25,17 @@ Every completed showcase run becomes a saved case you can reopen later, instead 
 - **AC-6**: `GET /cases` returns only the calling browser's unexpired cases, newest first, 20 per page with a cursor for the next page, filterable by scenario and by recommendation, plus a totals block computed over all of that browser's retained cases, unaffected by the filters.
 - **AC-7**: `GET /cases/{case_id}` returns the same `404 case_not_found` for a case that does not exist, belongs to another browser, or has expired.
 - **AC-8**: An expired case is never returned; each new case write also deletes that browser's expired cases and any beyond its 50 newest.
-- **AC-9**: Radar's Session tab is renamed Cases and keeps its layout (stat cards, decisions table, collapsed breakdown; the unlabelled share bar is removed, since the stat cards already give the split), filled from `GET /cases`, with scenario and recommendation filters above the table and a "Show more" button that loads the next 20; the tab label count shows `totals.total`; the copy follows the Copy table below. A plain click on a row's Run ID opens that case in a right hand drawer (shadcn `Sheet`) over the Cases tab, so the table, filters, totals and scroll position stay behind it. The full case is fetched only when the drawer opens. Opening pushes `?case=<id>` onto the `/radar` URL (`history.pushState`), so refresh and a shared link reopen the drawer on the Cases tab; Escape, the Close button and browser Back close it, and focus returns to that row's Run ID link. On phones the drawer fills the screen. A modified click (new tab or window) still opens `/transactions/<case id>`, which stays as the deep link fallback.
+- **AC-9**: The Risk Console's Session tab is renamed Cases and keeps its layout (stat cards, decisions table, collapsed breakdown; the unlabelled share bar is removed, since the stat cards already give the split), filled from `GET /cases`, with scenario and recommendation filters above the table and a "Show more" button that loads the next 20; the tab label count shows `totals.total`; the copy follows the Copy table below. A plain click on a row's Run ID opens that case in a right hand drawer (shadcn `Sheet`) over the Cases tab, so the table, filters, totals and scroll position stay behind it. The full case is fetched only when the drawer opens. Opening pushes `?case=<id>` onto the console URL (`/?case=<id>`, `history.pushState`), so refresh and a shared link reopen the drawer on the Cases tab; Escape, the Close button and browser Back close it, and focus returns to that row's Run ID link. On phones the drawer fills the screen. A modified click (new tab or window) opens `/?case=<case id>`, which reopens the drawer there.
 - **AC-10**: When case storage is unavailable (`GET /cases` returns `503` or fails, or there is no browser ID), the Cases tab falls back to this visit's runs with the note "Not saved: case history is off in this environment", and those rows do not link to a case page. When storage is on but a finished run is missing from the refreshed list, it appears as an unlinked row tagged "Not saved" and is left out of the totals.
-- **AC-11**: The case detail page shows an outcome summary header (scenario, final recommendation, deterministic route, investigation status, a Recorded or Live badge with provider and model for live runs, the fallback reason when a live request ran as recorded, started and completed times), then the Route, Evidence and Outcome stages, each expandable to its exact stored events with sequence number, event ID and recorded time.
+- **AC-11**: The case drawer shows an outcome summary header (scenario, final recommendation, deterministic route, investigation status, a Recorded or Live badge with provider and model for live runs, the fallback reason when a live request ran as recorded, started and completed times), then the Route, Evidence and Outcome stages, each expandable to its exact stored events with sequence number, event ID and recorded time.
 - **AC-12**: An incomplete investigation shows a failure banner stating the fail safe HOLD, the failure reason, that authority was not evaluated and that no action was simulated; it is never styled or worded as a completed investigation.
 - **AC-13**: The Evidence stage lists every evidence item with its category, displayed value, source class and fixture version, and every claim shows the evidence IDs it cites, each linked to that evidence item.
-- **AC-14**: The case detail page has distinct loading, not found (one message for missing, other browser and expired), storage unavailable, and error with retry states, plus a "Back to Radar" link.
+- **AC-14**: The case drawer has distinct loading, not found (one message for missing, other browser and expired), storage unavailable, and error with retry states. (The case page's "Back to Radar" link was retired with the page on 2026-09-27.)
 - **AC-15**: With `SHOWCASE_CASES_ENABLED` unset or false, the API makes no database connection for cases and every existing endpoint behaves as before; this is the public deployment's configuration.
 - **AC-16**: Every stored event is validated against the v1 event schema before commit; a failure takes the AC-4 path.
 - **AC-17**: The web app creates one random browser ID, keeps it in `localStorage`, and sends it on runs and case reads; if storage is blocked or `crypto.randomUUID` is unavailable (outside a secure context), no ID is sent and the AC-10 fallback applies.
-- **AC-18**: When a run finishes on `/transactions/investigation` (where live runs start), the page shows "Saved · Open case" linking to its case page, or "Not saved", using the same check as AC-10.
-- **AC-19**: The Mode column and the case page show the fallback reason whenever a live request ran as recorded, so recorded and live stay visibly distinct.
+- **AC-18** (retired 2026-09-27: the investigation page was removed; the Cases tab's saved check under AC-10 remains): When a run finishes on `/transactions/investigation` (where live runs start), the page shows "Saved · Open case" linking to its case page, or "Not saved", using the same check as AC-10.
+- **AC-19**: The Mode column and the case drawer show the fallback reason whenever a live request ran as recorded, so recorded and live stay visibly distinct.
 
 ## Decision
 
@@ -112,7 +114,7 @@ Paging: order by (`completed_at` desc, `case_id` desc); fetch `limit` plus 1 row
 
 Errors: checked in this order, first failure wins: storage disabled or unreachable (503 `cases_unavailable`), then a missing or malformed header (400 `invalid_browser_id`), then parameters (400 `invalid_cursor`, 422 `invalid_parameters`). Bodies use the showcase shape `{"detail": {"code": ..., "message": ...}}`, and a `/cases` exception handler replaces FastAPI's default 422 body so request input is never echoed back.
 
-New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments shell; `/transactions` itself stays a planned page. The page accepts only IDs matching `^run_[a-z0-9_]{3,64}$` and shows not found without a request otherwise. The existing `/transactions/new` and `/transactions/investigation` routes are declared first, so they keep their pages.
+Web deep link: `/?case=<case id>` on the Risk Console (originally a `/transactions/:caseId` route, removed 2026-09-27). The drawer accepts only IDs matching `^run_[a-z0-9_]{3,64}$` and shows not found without a request otherwise.
 
 **Value sourcing**:
 
@@ -128,13 +130,13 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 | `GET /cases` | this browser's cases | `browser_id` column = header value, `expires_at` > now |
 | `GET /cases` | page order and next page | (`completed_at` desc, `case_id` desc); `next_cursor` from the last row |
 | `GET /cases` | `totals` | aggregate over all this browser's unexpired rows, ignoring filters |
-| Radar Cases tab | stat cards and breakdown | `totals` (Runs completed = `total`; PASS, CHALLENGE, HOLD = `by_recommendation`; PASS detail = `deterministic_passes`; HOLD detail = `fail_safe_holds`; Runs detail = `completed_investigations`; breakdown chart = `by_scenario`) |
-| Radar Cases tab | tab count badge | `totals.total` (fallback mode: this visit's run count) |
-| Radar Cases tab | table rows and paging | `items[]`, then `next_cursor` for "Show more" |
-| Radar Cases tab | "Time" column | `completed_at`, shown in the browser's local time |
-| Radar Cases tab | saved or not saved after a run | after `done`, refetch the first page of `GET /cases`: the run's `case_id` present means saved; absent means an unlinked "Not saved" row outside the totals; `503` or failure means the environment wide fallback (AC-10) |
-| Investigation page | saved state after a run | the same refetch as the Radar Cases tab (AC-18) |
-| Radar Cases tab | fallback rows | the current in memory session runs (today's behaviour) |
+| Cases tab | stat cards and breakdown | `totals` (Runs completed = `total`; PASS, CHALLENGE, HOLD = `by_recommendation`; PASS detail = `deterministic_passes`; HOLD detail = `fail_safe_holds`; Runs detail = `completed_investigations`; breakdown chart = `by_scenario`) |
+| Cases tab | tab count badge | `totals.total` (fallback mode: this visit's run count) |
+| Cases tab | table rows and paging | `items[]`, then `next_cursor` for "Show more" |
+| Cases tab | "Time" column | `completed_at`, shown in the browser's local time |
+| Cases tab | saved or not saved after a run | after `done`, refetch the first page of `GET /cases`: the run's `case_id` present means saved; absent means an unlinked "Not saved" row outside the totals; `503` or failure means the environment wide fallback (AC-10) |
+| Investigation page (retired 2026-09-27) | saved state after a run | the same refetch as the Cases tab (AC-18) |
+| Cases tab | fallback rows | the current in memory session runs (today's behaviour) |
 | Case page | header fields | `case` summary row |
 | Case page | Route stage | stored `run_started`, `route_resolved`, `investigation_skipped` events |
 | Case page | Evidence stage | stored `tool_call` and `tool_result` events (evidence items), `investigation_result.claims[].evidence_ids` |
@@ -145,9 +147,9 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 | Case page | failure banner trigger | the stored `investigation_result` event (`investigation_status` = `incomplete`), not only the summary column |
 | Case page and Mode column | fallback reason | `fallback_reason` column (from `run_started`) |
 | Case page | event recorded times | `events[].recorded_at` |
-| Web, any request | browser ID | `localStorage` key `showcase-browser-id`, created once with `crypto.randomUUID()`; the Radar iframe is served from the same origin without a `sandbox` attribute, so it shares this storage; its `?case=` URL is mirrored onto the top level `/radar` URL with `replaceState`, and its full page links use `target="_top"` |
+| Web, any request | browser ID | `localStorage` key `showcase-browser-id`, created once with `crypto.randomUUID()`; the Risk Console is the top level page (no iframe since 2026-09-27), so it reads this storage directly |
 
-**Copy** (Radar's second tab; storage on / fallback):
+**Copy** (the Risk Console's second tab; storage on / fallback):
 
 | Where | Today | Cases (storage on) | Fallback (storage off) |
 |---|---|---|---|
@@ -173,7 +175,7 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 
 **Security model**:
 - No sign in. The browser ID is a scoping key, not authentication: whoever holds it sees those cases. Only lowercase version 4 UUIDs are accepted. It never feeds live admission or rate limiting, which keep using trusted ingress metadata only (caller supplied identity headers stay ignored there). This is acceptable only because every case is synthetic showcase data; F5 replaces it with real identity.
-- A case is private to its browser. A `/radar?case=<id>` or `/transactions/<id>` link opens only in the browser that saved the case; anywhere else it shows "Case not found".
+- A case is private to its browser. A `/?case=<id>` link opens only in the browser that saved the case; anywhere else it shows "Case not found".
 - Stored content is exactly the contract events, which already exclude prompts, raw provider responses and reasoning. No new personal data is collected; the browser ID is random and tied to nothing.
 - Retention: 30 days and 50 cases per browser. This must be recorded in the data governance section of `context/architecture.md`.
 - No new rate limiter: the endpoints are internal and disabled in public. A limiter is a prerequisite for any public enablement (see Follow-up).
@@ -191,11 +193,11 @@ New web route: `/transactions/:caseId` in `ProductApp.tsx`, inside the Payments 
 - No result: a run that raises before `run_result` stores nothing, while a live timeout run is stored as incomplete; verifies **AC-5**, **AC-12**.
 - Slow database: a commit over 3 seconds leaves nothing stored and `done` still arrives; verifies **AC-4**.
 - Paging: 21 cases give a full first page, a `next_cursor`, and one row on the second page; a garbled cursor returns 400; verifies **AC-6**.
-- Fallback reason: a live request that ran as recorded shows its reason in the Mode column and on the case page; verifies **AC-19**.
+- Fallback reason: a live request that ran as recorded shows its reason in the Mode column and in the case drawer; verifies **AC-19**.
 - Failure path: an S05 run shows the failure banner with the fail safe HOLD and failure reason, and no completed styling; verifies **AC-12**.
 - Scoping: browser B requesting browser A's case, a random ID, and an expired case all receive the same `404 case_not_found`; verifies **AC-7**, **AC-8**.
 - Cap: a 51st case removes the oldest, including when two runs from one browser commit at once; verifies **AC-8**.
-- Disabled: with the flag off, no database connection is attempted and Radar falls back to session runs with the note; verifies **AC-10**, **AC-15**, **AC-3**.
+- Disabled: with the flag off, no database connection is attempted and the Cases tab falls back to session runs with the note; verifies **AC-10**, **AC-15**, **AC-3**.
 - Drawer: clicking a Run ID opens the case drawer and adds `?case=`; Escape, Close and Back close it and return focus to the row; a shared `?case=` link reopens it; verifies **AC-9**.
 
 ## Build plan
@@ -252,7 +254,7 @@ Build approach: none is recorded in the project, so this assumes thin end to end
 - [ ] Add server logging for case storage (`case_persisted`, `case_persist_failed` with a failure class only), owed since the build shipped without it.
 - [ ] Write the ADR that accepts the showcase cases contract (promoting it from `docs/proposals/schemas/` to `docs/contracts/showcase-cases.v1.schema.json`) and case persistence, and decide separately whether the public showcase may run a database (this reverses part of ADR-016).
 - [ ] Before any public enablement: a per browser and per client rate limit on `/cases`, a sweep for expired rows, and a hosting and secrets plan for the database.
-- [ ] F5 hook: the case page is where review decisions, claiming and the S06 stale version error ("This case was updated by someone else; reload before deciding") will live; `/reviews` hosts the queue. Real identity replaces the browser ID.
-- [ ] F6 hook: a Radar Health tab (data freshness, dataset versions, provider status) and a read only replay and compare view on the case page for S08, badged "Replay, no action taken"; replay must never write a second case for the same run.
-- [ ] Decide whether `/transactions` (still a planned page) becomes the full case list outside Radar.
+- [ ] F5 hook: the case drawer (or a future case page) is where review decisions, claiming and the S06 stale version error ("This case was updated by someone else; reload before deciding") will live; `/reviews` hosts the queue. Real identity replaces the browser ID.
+- [ ] F6 hook: a Risk Console Health tab (data freshness, dataset versions, provider status) and a read only replay and compare view in the case drawer for S08, badged "Replay, no action taken"; replay must never write a second case for the same run.
+- [ ] Decide whether a full case list page is needed outside the Risk Console's Cases tab.
 - [ ] A 30 day sweep script, if lingering expired rows matter before public enablement.

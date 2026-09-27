@@ -1,13 +1,13 @@
-# Verify: Radar live feed on by default · spec 0005 · updated 2026-09-24
+# Verify: Radar live feed on by default · spec 0005 · updated 2026-09-27 for the Risk Console
 _Steps derived from spec 0005 acceptance criteria (second amendment) and its Value sourcing table. `/check verify` runs these; `/test` locks the durable ones._
 
 ## UI / manual
-Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler. Clear this site's `radar-live-feed` storage key first, then open `/radar`.
+Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler. Clear this site's `console-live-feed` storage key first, then open the Risk Console at `/`.
 
-- [ ] Load `/radar` → the Live switch turns on by itself and the status counts "n / 200" as payments land; the charts count up; exactly one start request is sent (DevTools, Network) → AC-1
+- [ ] Load `/` → the Live switch turns on by itself and the status counts "n / 200" as payments land; the charts count up; exactly one start request is sent (DevTools, Network) → AC-1
 - [ ] Hover the status, then Tab to the switch → the tooltip opens both ways and explains the live state, including that saved cases appear in the Cases tab → AC-3
 - [ ] Change scenario to S02 → one new start for S02, the old run is cancelled, the switch stays on → AC-1
-- [ ] Switch Live off, then reload → the switch stays off, the status reads "Showing history", no start request is sent; `localStorage["radar-live-feed"]` is `off` → AC-2
+- [ ] Switch Live off, then reload → the switch stays off, the status reads "Showing history", no start request is sent; `localStorage["console-live-feed"]` is `off` → AC-2
 - [ ] Switch Live on again → a fresh run starts from the imported history and the storage key is removed → AC-2
 - [ ] Stop the API, reload with Live on by default → the switch is off, the status reads "Showing history" with a grey dot, and the tooltip says the feed isn't available here → AC-4
 - [ ] With the API still stopped, switch Live on yourself → "Unavailable" with a red dot and the fix in the tooltip → AC-4

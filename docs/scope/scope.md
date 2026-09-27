@@ -16,7 +16,7 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 ## Slice 1: Live decision routing
 
 ### 1. Live decision routing · in-progress
-Show individual synthetic feed payments moving from a fixed input stream to their deterministic PASS, CHALLENGE, or HOLD lane on Radar's Cases tab.
+Show individual synthetic feed payments moving from a fixed input stream to their deterministic PASS, CHALLENGE, or HOLD lane on the Risk Console's Cases tab.
 **Done when:** the owned live stream replays safe per payment outcomes, the board shows the newest 18 tokens per lane with accurate totals, and quiet plus reduced motion states are clear.
 - [x] Design it (spec): [0006](../specs/0006-live-decision-routing.md)
 - [ ] Build it: /develop live decision routing
@@ -28,7 +28,7 @@ Show individual synthetic feed payments moving from a fixed input stream to thei
 - [ ] Test it: /test live decision routing
 
 ### 2. Mixed feed · in-progress
-Radar opens on a feed that interleaves S01 to S05 payments. Each payment keeps its own scenario's accepted decision, so the routing board shows a real three-way split. Single-scenario feeds say why they fill one lane.
+The Risk Console opens on a feed that interleaves S01 to S05 payments. Each payment keeps its own scenario's accepted decision, so the routing board shows a real three-way split. Single-scenario feeds say why they fill one lane.
 **Done when:** Mixed is the default that auto-starts, every Mixed payment records its source dataset and decision, the Scenario tab combines S01 to S05, and single-scenario boards explain their one lane.
 - [x] Design it (spec): [0008](../specs/0008-mixed-feed.md)
 - [x] Build it: /develop mixed feed

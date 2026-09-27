@@ -5,6 +5,8 @@
 
 ## Summary
 
+> **Updated 2026-09-27, Risk Console consolidation.** Radar is now the Risk Console at `/`, and its files moved from `src/references/Radar*` to `src/console/Console*` (`RadarLiveSwitch.tsx` is `ConsoleLiveSwitch.tsx`, `RadarReference.tsx` is `RiskConsole.tsx`). The remembered off key is now `console-live-feed`. The spec keeps its original title and folder name as its identity; completed build steps are the historical record.
+
 Radar's live feed starts by itself when the page loads and on each scenario change, so the Scenario tab looks like a realtime dashboard from the first moment. The top bar Live switch is the only control and the only status: a short word beside it says what the figures are ("Showing history", "25 / 200", "Finished · 200") and a tooltip on it explains more, including the fix when something fails. Switching Live off is remembered for this browser. The history cards and charts stay exactly as specs 0003 and 0004 define them, and the decisions API is unchanged from spec 0004.
 
 ## Amendments
@@ -60,7 +62,7 @@ Context, options and reasoning: see [rationale.md](rationale.md). The two amendm
 | `unavailable`, asked for | Unavailable | red | "The live feed needs the API with the Sandbox store configured, and site data allowed in this browser." |
 | `unsupported` | (none) | grey, switch disabled | unchanged (AC-7) |
 
-**Remembered off**: `localStorage` key `radar-live-feed`, value `off`, written when the viewer switches off and removed when they switch on; every read and write is wrapped so blocked storage falls back to on.
+**Remembered off**: `localStorage` key `console-live-feed` (`radar-live-feed` before 2026-09-27), value `off`, written when the viewer switches off and removed when they switch on; every read and write is wrapped so blocked storage falls back to on.
 
 **Automatic start**: one effect keyed on the scenario; a ref remembers the last scenario it started so React's development double run doesn't start twice. A scenario change still stops the old run first (unchanged); the server also cancels the browser's other live run when a new one starts (spec 0003 AC-10).
 
@@ -68,7 +70,7 @@ Context, options and reasoning: see [rationale.md](rationale.md). The two amendm
 
 | Action | Value produced / displayed | Source |
 |---|---|---|
-| Automatic start | whether to start | `FEED_SCENARIOS` includes the scenario, and `radar-live-feed` is not `off` |
+| Automatic start | whether to start | `FEED_SCENARIOS` includes the scenario, and `console-live-feed` is not `off` |
 | Status word and tooltip | which state | `SandboxFeedState.status`, `waitingForWorker`, and `auto` on busy or unavailable |
 | Status "n / m" | progress | run `appended_event_count` and `scheduled_event_count` (spec 0003 progress stream, unchanged) |
 | Finished or stopped | label | run `state` (`completed` versus `cancelled` or `failed`) |
