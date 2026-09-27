@@ -43,13 +43,13 @@ def _find_repository_root(start: Path) -> Path:
         start: This file's resolved directory.
 
     Returns:
-        The monorepo root, identified by `docs/project-context.md`.
+        The monorepo root, identified by `context/project_overview.md`.
 
     Raises:
         RuntimeError: If run outside the repository.
     """
     for candidate in (start, *start.parents):
-        if (candidate / "docs" / "project-context.md").is_file():
+        if (candidate / "context" / "project_overview.md").is_file():
             return candidate
     raise RuntimeError(
         "Run this script from inside the fraud-compliance-agent repository."

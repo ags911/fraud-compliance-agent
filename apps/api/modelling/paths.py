@@ -13,7 +13,7 @@ from pathlib import Path
 # The marker is a file that exists only at the monorepo root. A scoped
 # `AGENTS.md` once stopped this walk inside `apps/api`, which resolved every
 # later path against the wrong directory.
-ROOT_MARKER = Path("docs") / "project-context.md"
+ROOT_MARKER = Path("context") / "project_overview.md"
 UNAVAILABLE_REVISION = "uncommitted-or-unavailable"
 
 

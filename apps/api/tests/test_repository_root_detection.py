@@ -16,8 +16,8 @@ from modelling.paths import UNAVAILABLE_REVISION, find_repository_root, git_revi
 def monorepo(tmp_path):
     """Build a tiny tree with a root marker and a scoped AGENTS.md in a sub-app."""
     root = tmp_path / "repo"
-    (root / "docs").mkdir(parents=True)
-    (root / "docs" / "project-context.md").write_text("context\n", encoding="utf-8")
+    (root / "context").mkdir(parents=True)
+    (root / "context" / "project_overview.md").write_text("context\n", encoding="utf-8")
     (root / "notebooks").mkdir()
     api = root / "apps" / "api"
     api.mkdir(parents=True)
