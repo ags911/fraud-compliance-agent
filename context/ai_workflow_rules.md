@@ -58,8 +58,8 @@ preferences:
   requirement in its row is met; a ◐ (F-stage) means repository-backed
   preparation that hasn't passed its gate — "a proposal alone can justify ◐
   only when its boundary and next gate are explicit; it can never justify
-  ✓." `apps/api/tests/test_plan_status.py` fails when a screen ticked as
-  built has no route in the app.
+  ✓." The MVP 1–3 screen tables are retired (2026-09-27, the Risk Console is
+  the only page), so their ticks are a dated record, not current routes.
 - **Never assume legacy A–F maps to target S01–S08.** Document any mapping
   explicitly before reusing a legacy scenario; a passing legacy
   characterisation test "never approves a risk rule or target scenario

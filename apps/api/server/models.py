@@ -156,6 +156,27 @@ class SandboxScenarioDecisions(StrictFiniteModel):
     totals: SandboxDecisionCounts
 
 
+class SandboxRoutedPayment(StrictFiniteModel):
+    """One revealed payment on the routing board: opaque ID and outcome only."""
+
+    event_id: str = Field(min_length=1, max_length=128)
+    sequence: int = Field(gt=0)
+    recommendation: Literal["PASS", "CHALLENGE", "HOLD"]
+
+
+class SandboxRoutingLane(StrictFiniteModel):
+    """Every payment routed to one outcome, listing only the newest 18."""
+
+    count: int = Field(ge=0)
+    recent: list[SandboxRoutedPayment] = Field(max_length=18)
+
+
+class SandboxRoutingSnapshot(StrictFiniteModel):
+    """A run's revealed payments grouped by recommendation (spec 0006)."""
+
+    by_recommendation: dict[Literal["PASS", "CHALLENGE", "HOLD"], SandboxRoutingLane]
+
+
 class SandboxSimulationRun(StrictFiniteModel):
     """Expose safe progress for one server-owned Sandbox simulation run.
 
@@ -171,6 +192,8 @@ class SandboxSimulationRun(StrictFiniteModel):
     scheduled_event_count: int = Field(ge=0)
     appended_event_count: int = Field(ge=0)
     next_due_at: str | None = None
+    # Kept after a cancel, so a stopped run's board does not reset to zero.
+    routing_snapshot: SandboxRoutingSnapshot | None = None
 
 
 class HistoryPoint(StrictFiniteModel):
