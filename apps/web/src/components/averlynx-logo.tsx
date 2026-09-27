@@ -163,7 +163,7 @@ export function AverlynxLynxGateMark({ className }: { className?: string }) {
 export function AverlynxSlicedAMark({ className }: { className?: string }) {
   return (
     <img
-      src="/averlynx-sliced-a@2x.png"
+      src="/averlynx-sliced-a-64.png"
       alt=""
       className={cn("size-5", className)}
       aria-hidden="true"
