@@ -1,6 +1,6 @@
 # Verify: durable investigation cases · spec 0002 · updated 2026-09-27
 
-_Last run 2026-09-27 with `/check verify`: FAIL, 2 steps failing (left unticked)._
+_Last run 2026-09-27 with `/check verify`: PASS, all 40 steps. The two first run failures (malformed `?case=` link, storage off note) were fixed in `9accffa` and rerun against the real app._
 
 _Steps derived from spec 0002 acceptance criteria. `/check verify` runs these; `/test` locks the durable ones._
 
@@ -23,7 +23,7 @@ Setup for the storage on steps: an API with `DATABASE_URL` (migration `0004_show
 - [x] Save 51 cases for one `$BID` → exactly 50 remain, the oldest removed; deleting a case removes its events → AC-8
 
 ### UI / manual
-- [ ] Visit `/?case=not-a-case` → the drawer shows "Case not found", with no `/cases/…` request in the network panel → AC-14
+- [x] Visit `/?case=not-a-case` → the drawer shows "Case not found", with no `/cases/…` request in the network panel → AC-14
 - [x] Visit `/?case=<run_id>` with storage off → the drawer shows "Case history is off" → AC-14
 - [x] With storage on, run S04 from the Risk Console, then open its case → the drawer header shows S04 and CHALLENGE, the Recorded badge, started and completed times, and 8 stored events in total → AC-11
 - [x] Force a 500 from `/cases/<id>` → the drawer shows "The case couldn't be loaded" plus "Try again", which reloads the case → AC-14
@@ -54,7 +54,7 @@ Setup for the storage on steps: an API with `DATABASE_URL` (migration `0004_show
 - [x] Mode column shows `recorded (live off)` style wording when a live request ran as recorded → AC-19
 
 ### UI / manual (storage off)
-- [ ] Cases tab heading "This visit's runs" with the "Not saved: case history is off in this environment" description, table "This visit's decisions", no filters, no links → AC-10
+- [x] Cases tab heading "This visit's runs" with the "Not saved: case history is off in this environment" description, table "This visit's decisions", no filters, no links → AC-10
 
 ## Slice 3 (built)
 
