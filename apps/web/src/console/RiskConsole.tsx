@@ -3,7 +3,7 @@ import { format } from "date-fns"
 import { Tabs as TabsPrimitive } from "radix-ui"
 import { CircleHelp } from "lucide-react"
 
-import { AverlynxLynxGateMark } from "@/components/averlynx-logo"
+import { AverlynxSlicedAMark } from "@/components/averlynx-logo"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchDemoModelSummary, type DemoModelSummary } from "@/lib/demo-model-summary"
@@ -356,7 +356,7 @@ export function RiskConsole() {
       <div className="topbar">
         <div className="topbar-inner">
           <div className="page-title">
-            <AverlynxLynxGateMark className="size-4 shrink-0" />
+            <AverlynxSlicedAMark className="size-4 shrink-0" />
             <span className="title-module">Fraud Compliance Agent</span>
           </div>
           <div className="topbar-actions">
