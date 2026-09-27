@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from typing import Protocol
@@ -15,9 +16,30 @@ from server.showcase_cases.capture import (
     EventValidator,
     build_case,
 )
+from server.showcase_cases.repository import CasesUnavailable, case_storage_diagnostic
 
 _DATA_PREFIX = "data: "
 _DONE_PREFIX = "event: done"
+
+logger = logging.getLogger(__name__)
+
+
+def _failure_class(error: Exception) -> str:
+    """Map a failed case save to a fixed, non-sensitive category for the log.
+
+    Args:
+        error: The exception the store raised while saving a case.
+
+    Returns:
+        One fixed category; the error's own message is never used.
+    """
+    if isinstance(error, CasesUnavailable):
+        return error.diagnostic
+    if isinstance(error, psycopg.Error):
+        return case_storage_diagnostic(error)
+    if isinstance(error, OSError):
+        return "database_connection_failed"
+    return "case_storage_failed"
 
 
 class CaseStore(Protocol):
@@ -58,19 +80,25 @@ class CaseRecorder:
             record = build_case(events, self._validator)
         except (CaseCaptureError, KeyError, TypeError, ValueError):
             # No run_result (the run raised or was cut short) or an event that
-            # does not match the contract: nothing is stored.
+            # does not match the contract: nothing is stored. This is expected
+            # for cut short runs, so it is not a warning.
+            logger.info("case_persist_failed failure_class=case_not_formed")
             return False
         try:
             await asyncio.shield(
                 asyncio.to_thread(self._store.save_case, record, browser_id)
             )
-        except (psycopg.Error, OSError, RuntimeError):
+        except (psycopg.Error, OSError, RuntimeError) as error:
             # Storage must never break or alter the investigation stream: a
             # database error, a network failure or timeout (OSError), or a
             # store that is unavailable (RuntimeError) all mean "not saved".
-            # Server side logging is a separate, still open decision (spec 0002
-            # follow-up), so the failure is surfaced only as "Not saved".
+            # Only a fixed failure class is logged: never the driver message,
+            # which can carry hosts or SQL, nor a case or browser ID.
+            logger.warning(
+                "case_persist_failed failure_class=%s", _failure_class(error)
+            )
             return False
+        logger.info("case_persisted")
         return True
 
 

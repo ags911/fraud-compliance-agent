@@ -8,6 +8,7 @@ captured case are both checked from what the API actually emits.
 import asyncio
 import base64
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -194,6 +195,71 @@ def test_a_storage_failure_never_changes_the_stream(validator: EventValidator) -
     output = _run(frames, CaseRecorder(MemoryStore(fail=True), validator), BROWSER_ID)
 
     assert output == frames
+
+
+class ConnectionFailingStore(MemoryStore):
+    """Raise a driver error whose message carries connection details."""
+
+    def save_case(self, record: CaseRecord, browser_id: str) -> None:
+        raise psycopg.OperationalError("connection to secret-db.example failed")
+
+
+def _case_logs(caplog: pytest.LogCaptureFixture) -> list[logging.LogRecord]:
+    return [r for r in caplog.records if r.name == "server.showcase_cases.stream"]
+
+
+def test_a_saved_case_is_logged_without_identifiers(
+    validator: EventValidator, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A committed case logs case_persisted and never a browser or case ID."""
+    caplog.set_level(logging.INFO)
+    store = MemoryStore()
+    _run(_frames("S04"), CaseRecorder(store, validator), BROWSER_ID)
+
+    [record] = _case_logs(caplog)
+    assert record.getMessage() == "case_persisted"
+    assert record.levelno == logging.INFO
+    assert store.saved[0][0].case_id not in caplog.text
+    assert BROWSER_ID not in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("store", "failure_class"),
+    [
+        (MemoryStore(fail=True), "case_storage_failed"),
+        (ConnectionFailingStore(), "database_connection_failed"),
+    ],
+)
+def test_a_storage_failure_logs_only_its_failure_class(
+    validator: EventValidator,
+    caplog: pytest.LogCaptureFixture,
+    store: MemoryStore,
+    failure_class: str,
+) -> None:
+    """A failed save logs a fixed failure class, never the driver message."""
+    caplog.set_level(logging.INFO)
+    _run(_frames("S04"), CaseRecorder(store, validator), BROWSER_ID)
+
+    [record] = _case_logs(caplog)
+    assert record.getMessage() == (
+        f"case_persist_failed failure_class={failure_class}"
+    )
+    assert record.levelno == logging.WARNING
+    assert "secret-db" not in caplog.text
+    assert BROWSER_ID not in caplog.text
+
+
+def test_a_run_that_forms_no_case_logs_quietly(
+    validator: EventValidator, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A run cut short is expected, so it logs at info, not as a warning."""
+    caplog.set_level(logging.INFO)
+    truncated = [f for f in _frames("S04") if '"event":"run_result"' not in f]
+    _run(truncated, CaseRecorder(MemoryStore(), validator), BROWSER_ID)
+
+    [record] = _case_logs(caplog)
+    assert record.getMessage() == "case_persist_failed failure_class=case_not_formed"
+    assert record.levelno == logging.INFO
 
 
 def test_a_run_without_run_result_is_not_stored(validator: EventValidator) -> None:
@@ -676,3 +742,17 @@ def test_list_error_order_puts_storage_and_key_before_parameters(
     disabled = TestClient(create_app()).get("/cases", params={"limit": "ten"})
     assert disabled.status_code == 503
     assert disabled.json()["detail"]["code"] == "cases_unavailable"
+
+
+def test_the_api_shows_server_info_logs_once(monkeypatch) -> None:
+    """Uvicorn configures only its own loggers, so the app adds one for ``server``."""
+    server_logger = logging.getLogger("server")
+    monkeypatch.setattr(server_logger, "handlers", [])
+    monkeypatch.setattr(server_logger, "level", logging.NOTSET)
+    monkeypatch.delenv("API_LOG_LEVEL", raising=False)
+
+    create_app()
+    create_app()
+
+    assert server_logger.level == logging.INFO
+    assert len(server_logger.handlers) == 1

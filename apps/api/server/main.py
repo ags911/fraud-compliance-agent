@@ -167,6 +167,22 @@ def _positive_float_env(name: str, default: float) -> float:
     return value
 
 
+def _configure_server_logging() -> None:
+    """Show the ``server`` package's logs, which uvicorn does not configure.
+
+    Side effects:
+        Sets the ``server`` logger's level from ``API_LOG_LEVEL`` (default
+        ``INFO``) and adds one stderr handler, only if it has none yet, so
+        repeated app creation never duplicates log lines.
+    """
+    server_logger = logging.getLogger("server")
+    server_logger.setLevel(os.getenv("API_LOG_LEVEL", "INFO").strip().upper())
+    if not server_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s %(message)s"))
+        server_logger.addHandler(handler)
+
+
 def _boolean_env(name: str, default: bool) -> bool:
     """Read an explicit boolean deployment safeguard.
 
@@ -444,6 +460,7 @@ def create_app() -> FastAPI:
         Registers CORS middleware and route handlers. It does not contact a
         provider, load a model, or authorise a payment action during creation.
     """
+    _configure_server_logging()
     # These process-local guards are suitable for the single-container public
     # showcase. They are not a substitute for production admission control.
     run_slots = asyncio.Semaphore(_positive_int_env("DEMO_MAX_CONCURRENT_RUNS", 2))

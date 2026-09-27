@@ -179,7 +179,7 @@ Web deep link: `/?case=<case id>` on the Risk Console (originally a `/transactio
 - Stored content is exactly the contract events, which already exclude prompts, raw provider responses and reasoning. No new personal data is collected; the browser ID is random and tied to nothing.
 - Retention: 30 days and 50 cases per browser. This must be recorded in the data governance section of `context/architecture.md`.
 - No new rate limiter: the endpoints are internal and disabled in public. A limiter is a prerequisite for any public enablement (see Follow-up).
-- No server logging yet: a failed save is caught and the stream continues unchanged, but nothing is logged. Logging is owed (see Follow-up); when added, it records `case_persisted` and `case_persist_failed` with a failure class only, never payloads, case IDs or browser IDs.
+- Server logging (added 2026-09-27): a saved case logs `case_persisted`; a failed save logs `case_persist_failed failure_class=<category>` as a warning, and a run that forms no case logs it at info with `case_not_formed`. Only a fixed category is logged, never payloads, driver messages, case IDs or browser IDs. The API shows `server` logs at `API_LOG_LEVEL` (default `INFO`).
 
 **Configuration required**:
 - `SHOWCASE_CASES_ENABLED`: turns case storage and the `/cases` endpoints on; default false, and left unset in the public deployment.
@@ -251,7 +251,7 @@ Build approach: none is recorded in the project, so this assumes thin end to end
 ## Follow-up
 
 - [ ] Record F4 in `context/progress_tracker.md` (implementation plan status) and the case retention statement in `context/architecture.md`'s data governance rules, once built.
-- [ ] Add server logging for case storage (`case_persisted`, `case_persist_failed` with a failure class only), owed since the build shipped without it.
+- [x] Add server logging for case storage (`case_persisted`, `case_persist_failed` with a failure class only), owed since the build shipped without it.
 - [ ] Write the ADR that accepts the showcase cases contract (promoting it from `docs/proposals/schemas/` to `docs/contracts/showcase-cases.v1.schema.json`) and case persistence, and decide separately whether the public showcase may run a database (this reverses part of ADR-016).
 - [ ] Before any public enablement: a per browser and per client rate limit on `/cases`, a sweep for expired rows, and a hosting and secrets plan for the database.
 - [ ] F5 hook: the case drawer (or a future case page) is where review decisions, claiming and the S06 stale version error ("This case was updated by someone else; reload before deciding") will live; `/reviews` hosts the queue. Real identity replaces the browser ID.
