@@ -96,7 +96,7 @@ default).
 | ✓ | F2 — Current API integration foundation | MVP 2 |
 | ◐ | F3 — Fast-path operations foundation | Deferred extension 1 |
 | ◐ | F3a — Approved source-to-score foundation | Deferred extension 1 |
-| — | F4 — Investigation foundation | Deferred extension 2 |
+| ◐ | F4 — Investigation foundation | Deferred extension 2 |
 | — | F5 — Human-review foundation | Deferred extension 2 |
 | — | F6 — Monitoring/integration-health/replay/hardening | Deferred extension 3 |
 
@@ -173,13 +173,16 @@ Slice 3, the display only Sparkov model score, is blocked on an ADR approving
 the runtime score, its history features, the raw Sparkov source and the
 `xgboost` runtime dependency.
 
-### F4 designed, not started: durable investigation cases
+### F4 built locally: durable investigation cases
 
 **Spec [0002](../docs/specs/0002-durable-investigation-cases/index.md) —
-Proposed (accepted by the engineer as a design on 2026-09-24).** Scope is F4
+Accepted as a feature on 2026-09-27** (built locally; `/check verify` passed
+all 40 steps against a local API and Neon). The public showcase stays database
+free. Scope is F4
 only, narrowed to a durable record of completed runs; 19 acceptance
 criteria, three Tracer Bullet slices. Prerequisites before it is a runtime
-contract: an ADR accepting `showcase-cases.v1` and case persistence; any
+contract: ADR-020 (Proposed 2026-09-27) accepting `showcase-cases.v1` and case
+persistence; any
 public enablement additionally needs an ADR revisiting ADR-016, a rate
 limit, an expiry sweep and a hosting/secrets plan.
 

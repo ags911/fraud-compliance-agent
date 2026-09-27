@@ -45,10 +45,18 @@ specific to `apps/api`.
 - Every endpoint has a strictly typed Pydantic request and response model. Write
   the endpoint's tests (`pytest`, in `tests/`) before its logic, and keep them
   green.
-- The API has no database today (the showcase is database-free), so there is no
-  repository layer. When persistence is added, all database access goes through
-  a repository, route handlers never contain raw SQL, and queries are
-  parameterised.
+- The public showcase is database free. Local and internal persistence (cases,
+  spec 0002; the live feed, specs 0003 and 0004) uses PostgreSQL behind
+  `DATABASE_URL`, with cases also behind `SHOWCASE_CASES_ENABLED`. All database
+  access goes through a repository (`server/showcase_cases/repository.py`,
+  `server/sandbox_data/service.py`), route handlers never contain raw SQL, and
+  queries are parameterised.
+- Migrations live in `migrations/`. `scripts/apply_sandbox_migrations.py`
+  applies every numbered file on every run and records nothing, so each
+  migration must be rerunnable.
+- Log with `logging.getLogger(__name__)`; `create_app()` shows the `server`
+  logger at `API_LOG_LEVEL` (default `INFO`). Log fixed categories only: never
+  payloads, driver messages, or browser, run or case IDs.
 - Security review is automated first: `make api-lint` runs Ruff's security
   rules (`S`) on `server/` with no exceptions, and the developer-only notebooks
   and scripts have a short, justified ignore list in `pyproject.toml`. Fix a

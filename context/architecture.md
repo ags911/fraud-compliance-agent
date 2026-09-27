@@ -54,8 +54,8 @@ below for why that SDK is documented separately.
   `POST /run/preset/{scenario_id}` (SSE), plus the internal (hidden from the
   OpenAPI, `include_in_schema=False`) `GET /sandbox/scenarios/{scenario_id}/analytics`
   and `GET /sandbox/scenarios/{scenario_id}/decisions` (spec 0004).
-  Proposed internal routes (spec 0002, not built): `GET /cases`,
-  `GET /cases/{case_id}`. Target/candidate routes (not
+  Internal case routes (spec 0002, built and verified locally; contract
+  Proposed in ADR-020): `GET /cases`, `GET /cases/{case_id}`. Target/candidate routes (not
   built): `POST /risk/score`, `POST /transactions/{id}/process`,
   `GET /transactions/{id}`, `GET /reviews`, `GET /reviews/{id}`,
   `POST /reviews/{id}/decision`, `GET /monitoring/model-health`,
@@ -172,7 +172,7 @@ transaction-shaped deterministic overlay; S06–S08 retain the baseline until a
 controlled scenario-local append is supplied. Aggregation grain and retention
 still require explicit approval.
 
-#### Proposed durable investigation cases (spec 0002 — **Proposed**, not built)
+#### Durable investigation cases (spec 0002: feature **Accepted** 2026-09-27, local only; contract **Proposed** in ADR-020)
 
 [`docs/specs/0002-durable-investigation-cases/`](../docs/specs/0002-durable-investigation-cases/index.md)
 designs F4 as a durable **record** of completed runs (not durable
@@ -482,9 +482,9 @@ locally trained artifact is a runtime model by default." Promotion needs an
 approved target, data basis, evaluation criteria, release record, rollback
 approach, and the corresponding contract/policy version.
 
-**Proposed case retention** (spec 0002, not policy until built and
-ratified): showcase cases kept 30 days and at most 50 per anonymous browser
-ID; synthetic data only; stored content is the contract events (no prompts,
+**Case retention** (spec 0002, built locally; not policy until ADR-020 is
+accepted): cases kept 30 days and at most 50 showcase and 20 feed cases per
+anonymous browser ID; synthetic data only; stored content is the contract events (no prompts,
 raw provider responses or reasoning).
 
 **Accepted Plaid Sandbox boundary** (the one rule in this doc marked
