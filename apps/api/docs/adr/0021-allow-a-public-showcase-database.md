@@ -100,6 +100,14 @@ built and verified.
 
 Guards required before enablement:
 
+- **A real client identity.** The investigation route keys its admission
+  limit on `request.client.host`, and nothing tells uvicorn to trust the
+  Azure ingress's forwarded headers (no `--forwarded-allow-ips`). In
+  Container Apps that host is likely the ingress proxy, so every visitor may
+  share one key. Before any per client guard counts, derive the client
+  identity from the address the ingress records, trusting only the ingress
+  hop so a client cannot spoof it, and confirm it in staging. This also
+  affects the live investigation limit already deployed.
 - **Per client start limit.** Feed starts are also limited per server
   derived client identity (the key the investigation admission already
   uses), not only per browser ID. The client identity is held in memory and
@@ -165,8 +173,10 @@ Before enablement:
   scales to zero, so feeds advance only while a replica is warm (an open
   stream keeps it warm). Is that acceptable, or should the worker run as a
   separate scheduled job?
-- **Ceiling values.** What row ceilings and per client limits should the
-  first release use?
+- **Ceiling values** (answered by the owner on 2026-09-27). Per client: 20
+  feed starts and 60 case reads per minute; the per browser start limit
+  stays 10. Row ceilings: 20,000 cases, 2,000 feed runs, 400,000 feed
+  events. All are settings, so they can change without a code change.
 
 ## Acceptance record
 
