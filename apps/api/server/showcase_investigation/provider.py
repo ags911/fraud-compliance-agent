@@ -169,9 +169,15 @@ class GroqInvestigationProvider:
                 "role": "system",
                 "content": (
                     "Assess a synthetic payment-risk showcase using only supplied "
-                    "evidence. Return JSON fields recommendation, summary, claims, "
-                    "and uncertainties. Each claim must contain claim_id, text, and "
-                    "evidence_ids copied from supplied evidence. Do not include "
+                    "evidence. Return JSON only with the fields recommendation, "
+                    "summary, claims, and uncertainties. recommendation must be "
+                    "exactly one of PASS, CHALLENGE, or HOLD in upper case. "
+                    "summary is one short sentence. claims is a non-empty list; "
+                    "each claim has claim_id, text, and evidence_ids. claim_id "
+                    "must start with claim_ followed by lower-case words joined "
+                    "by underscores, for example claim_recent_payee. evidence_ids "
+                    "must be copied unchanged from the supplied evidence. "
+                    "uncertainties is a list of short strings. Do not include "
                     "reasoning, authority, scores, thresholds, or payment actions."
                 ),
             },

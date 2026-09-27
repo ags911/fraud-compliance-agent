@@ -68,7 +68,7 @@ function isEvidenceItem(value: unknown): value is ShowcaseEvidenceItem {
     typeof value.category === 'string' &&
     EVIDENCE_CATEGORIES.has(value.category) &&
     isStringWithin(value.display_value, 1, 160) &&
-    value.source_class === 'synthetic_fixture' &&
+    (value.source_class === 'synthetic_fixture' || value.source_class === 'plaid_sandbox_derived') &&
     isStringWithin(value.fixture_version, 1, 64)
   )
 }

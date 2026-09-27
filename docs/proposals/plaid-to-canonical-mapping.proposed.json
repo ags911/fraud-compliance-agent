@@ -2,7 +2,7 @@
   "artifact": "plaid-to-canonical-mapping",
   "version": "0.2-proposed",
   "status": "accepted_for_sandbox_analysis_only",
-  "approval_scope": "Approved on 2026-09-18 for local, zero-retention Plaid Sandbox schema and aggregate data-quality analysis only. This does not accept a canonical contract, feature set, model dataset, runtime connector, direction policy, money normalisation, or payment action.",
+  "approval_scope": "Approved on 2026-09-18 for local, zero-retention Plaid Sandbox schema and aggregate data-quality analysis only. This does not accept a canonical contract, feature set, model dataset, runtime connector, direction policy, money normalisation, or payment action. ADR-018 (2026-09-22) separately accepts a money-normalisation rule and a direction policy, but only for deriving S01/S02/S04 showcase-fixture facts; it does not widen this scope to a canonical contract, feature set, model dataset, or runtime connector.",
   "evidence": [
     "docs/proposals/plaid-source-inventory.observation.json",
     "docs/proposals/plaid-lifecycle-probes.observation.json",

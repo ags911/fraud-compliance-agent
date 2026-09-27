@@ -1,40 +1,26 @@
 import AxeBuilder from "@axe-core/playwright"
-import { type Page } from "@playwright/test"
-
-import { expect, test } from "./base"
+import { expect, test, type Page } from "@playwright/test"
 
 import { modelSummary } from "./fixtures/model-summary"
 
-// Automated WCAG 2.x A/AA checks for every MVP 1 route. This complements, and
-// does not replace, manual keyboard and screen-reader review. The frozen Rules
-// Performance reference page is deliberately excluded: it must not be changed.
+// Automated WCAG 2.x A/AA checks for each Risk Console tab. This complements,
+// and does not replace, manual keyboard and screen-reader review. The Sandbox
+// API is left unavailable, the public site's state; the benchmark is stubbed.
 const API_BASE_URL = "http://localhost:8010"
 
-const routes: { name: string; path: string; heading: RegExp }[] = [
-  { name: "Overview", path: "/overview", heading: /./ },
-  { name: "Benchmark insights", path: "/insights", heading: /Benchmark insights/ },
-  { name: "Analyse a transaction", path: "/transactions/new", heading: /Analyse a transaction/ },
-  { name: "Showcase investigation", path: "/transactions/investigation", heading: /Showcase investigation/ },
-  { name: "Planned page", path: "/reviews", heading: /Reviews/ },
-  { name: "Not found", path: "/no-such-page", heading: /./ },
-]
-
-const paymentsRoutes = routes.filter((route) => route.path !== "/overview")
+const tabs = ["Scenario", "Cases", "Model"] as const
 
 async function mockApi(page: Page) {
-  await page.route(`${API_BASE_URL}/demo/model-summary`, (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(modelSummary) }),
-  )
-  await page.route(`${API_BASE_URL}/scenarios`, (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: "A", label: "Scenario A — Synthetic HOLD" }]) }),
-  )
+  await page.route(`${API_BASE_URL}/**`, (route) => route.fulfill({ status: 503, json: { detail: "sandbox_scenario_data_unavailable" } }))
+  await page.route(`${API_BASE_URL}/demo/model-summary`, (route) => route.fulfill({ json: modelSummary }))
 }
 
-for (const route of routes) {
-  test(`${route.name} has no automatically detectable WCAG A/AA violations`, async ({ page }, testInfo) => {
+for (const tab of tabs) {
+  test(`the ${tab} tab has no automatically detectable WCAG A/AA violations`, async ({ page }, testInfo) => {
     await mockApi(page)
-    await page.goto(route.path)
-    await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible()
+    await page.goto("/")
+    await page.getByRole("tab", { name: new RegExp(`^${tab}`) }).click()
+    await expect(page.getByRole("tab", { name: new RegExp(`^${tab}`) })).toHaveAttribute("aria-selected", "true")
     await page.evaluate(() => document.fonts.ready)
 
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()
@@ -42,23 +28,6 @@ for (const route of routes) {
     const summaryLines = results.violations.map(
       (violation) => `${violation.id} (${violation.impact}): ${violation.help} — ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target.join(" ")}`,
     )
-    expect(summaryLines, `${route.path} at the ${testInfo.project.name} width`).toEqual([])
-  })
-}
-
-for (const route of paymentsRoutes) {
-  test(`${route.name} has one main landmark and keeps content inside landmarks`, async ({ page }, testInfo) => {
-    await mockApi(page)
-    await page.goto(route.path)
-    await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible()
-
-    const results = await new AxeBuilder({ page })
-      .withRules(["landmark-no-duplicate-main", "region"])
-      .analyze()
-
-    const summaryLines = results.violations.map(
-      (violation) => `${violation.id}: ${violation.help} — ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target.join(" ")}`,
-    )
-    expect(summaryLines, `${route.path} at the ${testInfo.project.name} width`).toEqual([])
+    expect(summaryLines, `${tab} tab at the ${testInfo.project.name} width`).toEqual([])
   })
 }

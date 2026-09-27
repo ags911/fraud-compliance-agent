@@ -45,8 +45,8 @@ export interface ShowcaseEvidenceItem {
   evidence_id: string
   category: ShowcaseEvidenceCategory
   display_value: string
-  /** The contract pins this to synthetic fixture data; never provider output. */
-  source_class: 'synthetic_fixture'
+  /** Both values are accepted, non-live fixture provenance; neither is a live provider call. */
+  source_class: 'synthetic_fixture' | 'plaid_sandbox_derived'
   fixture_version: string
 }
 

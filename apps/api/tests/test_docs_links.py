@@ -1,7 +1,10 @@
 """Every relative Markdown link in the repository must resolve.
 
 Renaming or moving a document silently breaks links to it; this test turns that
-into a failure. External links and vendored or generated trees are skipped.
+into a failure. External links, vendored or generated trees, and the archived
+(`docs/archive/`) historical record are skipped: archived documents are frozen
+snapshots superseded by `context/`, and their cross-references to sibling
+artifacts (contracts, notebooks, diagrams) are not kept live once archived.
 """
 
 import re
@@ -15,7 +18,14 @@ LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 FENCE = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)
 INLINE_CODE = re.compile(r"`[^`\n]*`")
 HEADING = re.compile(r"^#{1,6}\s+(.*?)\s*#*\s*$", re.MULTILINE)
-SKIPPED_PARTS = {"node_modules", "vendor", "dist", "playwright-report", "test-results"}
+SKIPPED_PARTS = {
+    "node_modules",
+    "vendor",
+    "dist",
+    "playwright-report",
+    "test-results",
+    "archive",
+}
 
 
 def _slug(heading: str) -> str:
@@ -81,9 +91,9 @@ def test_the_scan_covers_the_project_documents(repository_root) -> None:
 
     assert {
         "README.md",
-        "docs/README.md",
-        "docs/project-context.md",
-        "docs/product/prd.md",
+        "context/project_overview.md",
+        "context/architecture.md",
+        "context/progress_tracker.md",
     } <= names
     assert not any(name.startswith("apps/api/vendor/") for name in names)
 

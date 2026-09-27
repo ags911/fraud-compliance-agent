@@ -1,0 +1,571 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Fraud Compliance Agent Sandbox simulation API (proposed)",
+    "version": "0.1",
+    "description": "Proposed contract for the deterministic live feed (specs 0003, 0005, 0006 and 0008), describing the routes as built on 2026-09-27. Not accepted: it may move to docs/contracts/ as sandbox-simulation.v1 only through an ADR (ADR-021 requires it before public use). The routes are internal today (include_in_schema=False).",
+    "x-contract-version": "0.1",
+    "x-approval-status": "proposed",
+    "x-runtime-consumption": "internal-only",
+    "x-scope": "Synthetic, browser scoped live feed runs over sanitised Plaid Sandbox datasets. A run reveals scheduled synthetic payments; it never executes, approves or releases a payment.",
+    "x-prohibitions": [
+      "No real payment approval, release or execution",
+      "No provider identifiers, payloads or transaction rows in any response",
+      "No browser supplied event content, schedule, amount or decision",
+      "No numeric fraud model score or threshold decides a route",
+      "The browser ID never appears in a URL, a response body or a log"
+    ],
+    "x-limits": {
+      "scheduled_payments_per_run": 200,
+      "seconds_between_payments": 3,
+      "live_runs_per_browser": 1,
+      "live_runs_per_site": 20,
+      "starts_per_browser_per_rolling_minute": 10,
+      "finished_run_retention_days": 7,
+      "stream_seconds_before_client_reconnects": 660,
+      "recent_routed_payments_per_outcome": 18
+    }
+  },
+  "paths": {
+    "/sandbox/scenarios/{scenario_id}/simulation-runs": {
+      "post": {
+        "operationId": "startSimulationRun",
+        "summary": "Start this browser's feed run for one scenario or the Mixed feed",
+        "description": "Cancels this browser's other live run (never another browser's), then creates a run with a fixed schedule. S01 to S05 get 200 payments; MIX gets 200 payments in 40 blocks of one per S01 to S05; S06 to S08 are workflow scenarios and get 0. The request has no body.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartScenarioId"
+          },
+          {
+            "$ref": "#/components/parameters/BrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The new run's safe state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "description": "Unknown scenario, or a scenario (or, for MIX, any source scenario) with no imported dataset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "detail": "sandbox_scenario_not_found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The site is at its live run cap (simulation_busy) or this browser started too many runs this minute (simulation_rate_limited). No run is created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "detail": "simulation_busy"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    },
+    "/sandbox/simulation-runs/{run_id}": {
+      "get": {
+        "operationId": "readSimulationRun",
+        "summary": "Read one of this browser's runs",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RunId"
+          },
+          {
+            "$ref": "#/components/parameters/BrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The run's safe state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "$ref": "#/components/responses/RunNotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    },
+    "/sandbox/simulation-runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancelSimulationRun",
+        "summary": "Stop one of this browser's runs; payments already shown stay shown",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RunId"
+          },
+          {
+            "$ref": "#/components/parameters/BrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The run's state after cancelling, including its last routing snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "$ref": "#/components/responses/RunNotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    },
+    "/sandbox/simulation-runs/{run_id}/events": {
+      "get": {
+        "operationId": "streamSimulationRun",
+        "summary": "Follow one of this browser's runs as server sent events",
+        "description": "Read with fetch, not EventSource, so the browser ID travels in a header. Ownership is checked before streaming. The server checks the run every second and sends a simulation_state frame only when the state changed. The stream ends, with no terminal done frame, when the run is completed, failed or cancelled, when the client disconnects, when the store becomes unavailable, or after 660 seconds; the client reconnects while the run is live.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RunId"
+          },
+          {
+            "$ref": "#/components/parameters/BrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A text/event-stream of frames shaped `event: simulation_state` then `data: <SimulationRun JSON>`.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-frame-event": "simulation_state",
+                "x-frame-data-schema": {
+                  "$ref": "#/components/schemas/SimulationRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "$ref": "#/components/responses/RunNotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    },
+    "/sandbox/scenarios/{scenario_id}/analytics": {
+      "get": {
+        "operationId": "readScenarioAnalyticsWithRun",
+        "summary": "Scenario analytics, optionally with one run's shown payments laid over the base",
+        "description": "The response body is the accepted sandbox-scenario-analytics.v1 contract, unchanged. This proposal only adds the rules for simulation_run_id: with it, the browser ID header is required and the response is the imported base plus that run's shown payments for this scenario (for a MIX run, only payments whose source is this scenario and fixture version). Without it, no header is needed and the base is returned.",
+        "parameters": [
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^S0[1-8]$"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/SimulationRunIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/OptionalBrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics per the accepted contract.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../../contracts/sandbox-scenario-analytics.v1.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "description": "sandbox_scenario_not_found for an unknown scenario; sandbox_simulation_not_found for a run of another browser, another scenario, an older import, or a workflow scenario.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    },
+    "/sandbox/scenarios/{scenario_id}/decisions": {
+      "get": {
+        "operationId": "readScenarioDecisionsWithRun",
+        "summary": "Decided outbound payments per day, optionally with one run's shown payments",
+        "description": "The response body is the spec 0004 decisions shape (contract version \"0\", not accepted; not changed by this proposal). The simulation_run_id rules are the same as for analytics. S06 to S08 have no feed decisions and return 404 sandbox_scenario_not_decided.",
+        "parameters": [
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^S0[1-8]$"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/SimulationRunIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/OptionalBrowserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Decisions per the spec 0004 shape."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidBrowserId"
+          },
+          "404": {
+            "description": "sandbox_scenario_not_found, sandbox_scenario_not_decided (a workflow scenario), or sandbox_simulation_not_found for a run this browser does not own.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/StoreUnavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "StartScenarioId": {
+        "name": "scenario_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^(S0[1-8]|MIX)$"
+        }
+      },
+      "RunId": {
+        "name": "run_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "BrowserId": {
+        "name": "X-Showcase-Browser-Id",
+        "in": "header",
+        "required": true,
+        "description": "A random lowercase version 4 UUID the browser keeps in localStorage. A scoping key, not authentication. Missing or malformed returns 400 invalid_browser_id, and the bad value is never echoed.",
+        "schema": {
+          "$ref": "#/components/schemas/BrowserId"
+        }
+      },
+      "OptionalBrowserId": {
+        "name": "X-Showcase-Browser-Id",
+        "in": "header",
+        "required": false,
+        "description": "Required when simulation_run_id is present.",
+        "schema": {
+          "$ref": "#/components/schemas/BrowserId"
+        }
+      },
+      "SimulationRunIdQuery": {
+        "name": "simulation_run_id",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    },
+    "responses": {
+      "InvalidBrowserId": {
+        "description": "Missing or malformed browser ID.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "invalid_browser_id"
+            }
+          }
+        }
+      },
+      "RunNotFound": {
+        "description": "The run does not exist or belongs to another browser; both read the same.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "sandbox_simulation_not_found"
+            }
+          }
+        }
+      },
+      "StoreUnavailable": {
+        "description": "The database is not configured or unreachable; details are redacted.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "sandbox_scenario_data_unavailable"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "BrowserId": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "enum": [
+              "invalid_browser_id",
+              "sandbox_scenario_not_found",
+              "sandbox_scenario_not_decided",
+              "sandbox_simulation_not_found",
+              "simulation_busy",
+              "simulation_rate_limited",
+              "sandbox_scenario_data_unavailable"
+            ]
+          }
+        }
+      },
+      "SimulationRun": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "run_id",
+          "scenario_id",
+          "fixture_version",
+          "seed",
+          "state",
+          "scheduled_event_count",
+          "appended_event_count",
+          "next_due_at",
+          "routing_snapshot"
+        ],
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "scenario_id": {
+            "type": "string",
+            "pattern": "^(S0[1-8]|MIX)$"
+          },
+          "fixture_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "The dataset the run overlays; null for a MIX run, whose payments each record their own source."
+          },
+          "seed": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "scheduled_event_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "appended_event_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Payments shown so far; never more than scheduled_event_count."
+          },
+          "next_due_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "routing_snapshot": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RoutingSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "RoutingSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "by_recommendation"
+        ],
+        "description": "One consistent read of the run's shown payments by outcome (spec 0006 AC 5). Kept after a cancel.",
+        "properties": {
+          "by_recommendation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "PASS",
+              "CHALLENGE",
+              "HOLD"
+            ],
+            "properties": {
+              "PASS": {
+                "$ref": "#/components/schemas/RoutingLane"
+              },
+              "CHALLENGE": {
+                "$ref": "#/components/schemas/RoutingLane"
+              },
+              "HOLD": {
+                "$ref": "#/components/schemas/RoutingLane"
+              }
+            }
+          }
+        }
+      },
+      "RoutingLane": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "count",
+          "recent"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every shown payment in this outcome; never truncated."
+          },
+          "recent": {
+            "type": "array",
+            "maxItems": 18,
+            "items": {
+              "$ref": "#/components/schemas/RoutedPayment"
+            },
+            "description": "Newest first, by descending sequence."
+          }
+        }
+      },
+      "RoutedPayment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "sequence",
+          "recommendation"
+        ],
+        "description": "Opaque: no amount, payee, score or basis.",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "recommendation": {
+            "enum": [
+              "PASS",
+              "CHALLENGE",
+              "HOLD"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

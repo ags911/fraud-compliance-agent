@@ -1,0 +1,21 @@
+{
+  "artifact": "plaid-showcase-account-activity-derivation",
+  "authorised_by": "ADR-018",
+  "derivation_rule": "payee-history proxy per ADR-018: a pseudonymised counterparty identifier repeating more than once in the pulled window",
+  "derived_fact": {
+    "distinct_payee_count": 2,
+    "repeat_payee_observed": true,
+    "transaction_count_30d": 4
+  },
+  "limitations": [
+    "This Sandbox item's transaction history was authored by this script, not observed independently; it is a scripted test case.",
+    "No raw transaction, merchant name, or account identifier is retained past this reduction.",
+    "This record informs a fixture value; it does not itself grant runtime consumption."
+  ],
+  "report_sha256": "01d4cef3219c7e23ce099303e4d268f145f56f610b609f533692bdb9af056264",
+  "run_at": "2026-09-22T01:53:40.188610+00:00",
+  "scenario_id": "S04",
+  "source_system": "plaid_sandbox",
+  "status": "scripted_sandbox_test_case",
+  "tool_name": "get_account_activity_evidence"
+}

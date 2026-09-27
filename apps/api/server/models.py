@@ -97,6 +97,105 @@ class DemoModelSummary(BaseModel):
     report_sha256: str
 
 
+class SandboxTimeBoundary(StrictFiniteModel):
+    """Describe the declared date boundary for one sanitised scenario dataset."""
+
+    start_date: str
+    end_date: str
+    event_time_precision: Literal["date", "minute", "second"]
+
+
+class SandboxDailyAggregate(StrictFiniteModel):
+    """Expose one dashboard safe, scenario scoped daily aggregate."""
+
+    date: str
+    transaction_count: int = Field(ge=0)
+    outbound_amount_minor: int = Field(ge=0)
+    category_counts: dict[str, int]
+
+
+class SandboxScenarioAnalytics(StrictFiniteModel):
+    """Expose read only, sanitised scenario data for a dashboard chart."""
+
+    contract_version: Literal["1.0"]
+    scenario_id: str = Field(pattern=r"^S0[1-8]$")
+    fixture_version: str = Field(min_length=1, max_length=128)
+    source_class: Literal["sanitised_sandbox"]
+    enrichment_version: Literal["s04-enrichment-v1", "sandbox-enrichment-v2"]
+    baseline_version: str = Field(min_length=1, max_length=128)
+    overlay_version: str = Field(min_length=1, max_length=128)
+    time_boundary: SandboxTimeBoundary
+    daily_aggregates: list[SandboxDailyAggregate]
+
+
+class SandboxDecisionCounts(StrictFiniteModel):
+    """How many outbound payments ended in each recommendation."""
+
+    PASS: int = Field(ge=0)
+    CHALLENGE: int = Field(ge=0)
+    HOLD: int = Field(ge=0)
+
+
+class SandboxDecisionDay(SandboxDecisionCounts):
+    """One calendar day of decided outbound payments."""
+
+    date: str
+
+
+class SandboxScenarioDecisions(StrictFiniteModel):
+    """Decided outbound payments per day for one scenario (spec 0004, internal).
+
+    Each payment is decided by the scenario's deterministic rule alone; no model
+    score contributes. Contract version "0": not an accepted contract.
+    """
+
+    contract_version: Literal["0"]
+    scenario_id: str = Field(pattern=r"^S0[1-5]$")
+    fixture_version: str = Field(min_length=1, max_length=128)
+    days: list[SandboxDecisionDay]
+    totals: SandboxDecisionCounts
+
+
+class SandboxRoutedPayment(StrictFiniteModel):
+    """One revealed payment on the routing board: opaque ID and outcome only."""
+
+    event_id: str = Field(min_length=1, max_length=128)
+    sequence: int = Field(gt=0)
+    recommendation: Literal["PASS", "CHALLENGE", "HOLD"]
+
+
+class SandboxRoutingLane(StrictFiniteModel):
+    """Every payment routed to one outcome, listing only the newest 18."""
+
+    count: int = Field(ge=0)
+    recent: list[SandboxRoutedPayment] = Field(max_length=18)
+
+
+class SandboxRoutingSnapshot(StrictFiniteModel):
+    """A run's revealed payments grouped by recommendation (spec 0006)."""
+
+    by_recommendation: dict[Literal["PASS", "CHALLENGE", "HOLD"], SandboxRoutingLane]
+
+
+class SandboxSimulationRun(StrictFiniteModel):
+    """Expose safe progress for one server-owned Sandbox simulation run.
+
+    A Mixed feed run (``MIX``, spec 0008) draws from S01 to S05 and has no
+    single fixture version; each of its payments records its own.
+    """
+
+    run_id: str = Field(min_length=1, max_length=64)
+    scenario_id: str = Field(pattern=r"^(S0[1-8]|MIX)$")
+    fixture_version: str | None = Field(default=None, min_length=1, max_length=128)
+    seed: str = Field(min_length=1, max_length=128)
+    state: Literal["pending", "running", "completed", "failed", "cancelled"]
+    scheduled_event_count: int = Field(ge=0)
+    appended_event_count: int = Field(ge=0)
+    next_due_at: str | None = None
+    # Kept after a cancel, so a stopped run's board does not reset to zero.
+    routing_snapshot: SandboxRoutingSnapshot | None = None
+
+
 class HistoryPoint(StrictFiniteModel):
     """One bounded, amount-only historical observation for the demo pipeline."""
 

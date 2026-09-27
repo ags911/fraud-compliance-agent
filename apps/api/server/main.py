@@ -19,10 +19,13 @@ The live demo pipeline needs vendor/arbiris-sdk (a private git submodule) and
 
 import asyncio
 import json
+import logging
 import math
 import os
+import re
 import sys
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
@@ -60,10 +63,38 @@ from server.models import (
     HealthResponse,
     PresetRunRequest,
     RunRequest,
+    SandboxScenarioAnalytics,
+    SandboxScenarioDecisions,
+    SandboxSimulationRun,
     ScenarioNotFoundError,
     ScenarioSummary,
 )
 from server.records import read_record
+from server.sandbox_data.service import (
+    SandboxDataUnavailable,
+    ScenarioDatasetNotFound,
+    ScenarioNotDecided,
+    ScenarioSimulationNotFound,
+    SimulationBusy,
+    SimulationRateLimited,
+    cancel_sandbox_simulation,
+    load_sandbox_analytics,
+    load_sandbox_decisions,
+    load_sandbox_simulation_run,
+    start_sandbox_simulation,
+)
+from server.sandbox_data.worker import run_simulation_worker
+from server.showcase_cases.capture import EventValidator
+from server.showcase_cases.models import CaseDetailResponse, CaseListResponse
+from server.showcase_cases.repository import (
+    PAGE_SIZE,
+    CaseNotFound,
+    CasesUnavailable,
+    InvalidCursor,
+    PsycopgCaseRepository,
+)
+from server.showcase_cases.settings import load_case_settings, valid_browser_id
+from server.showcase_cases.stream import CaseRecorder, record_case_stream
 from server.showcase_investigation.errors import ShowcaseRuntimeUnavailable
 from server.showcase_investigation.models import (
     ShowcaseError,
@@ -71,6 +102,8 @@ from server.showcase_investigation.models import (
     ShowcaseInvestigationRequest,
 )
 from server.showcase_investigation.runtime import ShowcaseRuntime
+
+logger = logging.getLogger(__name__)
 
 
 def _allowed_origins() -> list[str]:
@@ -132,6 +165,22 @@ def _positive_float_env(name: str, default: float) -> float:
     if value <= 0 or not math.isfinite(value):
         raise RuntimeError(f"{name} must be a positive finite number")
     return value
+
+
+def _configure_server_logging() -> None:
+    """Show the ``server`` package's logs, which uvicorn does not configure.
+
+    Side effects:
+        Sets the ``server`` logger's level from ``API_LOG_LEVEL`` (default
+        ``INFO``) and adds one stderr handler, only if it has none yet, so
+        repeated app creation never duplicates log lines.
+    """
+    server_logger = logging.getLogger("server")
+    server_logger.setLevel(os.getenv("API_LOG_LEVEL", "INFO").strip().upper())
+    if not server_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s %(message)s"))
+        server_logger.addHandler(handler)
 
 
 def _boolean_env(name: str, default: bool) -> bool:
@@ -354,6 +403,53 @@ async def _stream_bounded_run(
         yield "event: done\ndata: {}\n\n"
 
 
+_CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+
+
+def _simulation_browser_id(request: Request) -> str:
+    """Return the caller's showcase browser ID, or raise a non echoing 400.
+
+    The live feed (spec 0003) scopes every run to this anonymous key, as saved
+    cases do (spec 0002); it is scoping, not authentication.
+    """
+    browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+    if browser_id is None:
+        raise HTTPException(status_code=400, detail="invalid_browser_id")
+    return browser_id
+
+
+# A simulation progress stream stays open for one feed run plus a margin.
+_SIMULATION_STREAM_SECONDS = 660
+
+
+def _case_error(status_code: int, code: str, message: str) -> HTTPException:
+    """Build a case route error in the showcase ``{code, message}`` shape."""
+    return HTTPException(
+        status_code=status_code, detail={"code": code, "message": message}
+    )
+
+
+def _case_store_unavailable(diagnostic: str) -> HTTPException:
+    """Log a safe local reason for unavailable case storage and redact it from clients.
+
+    Args:
+        diagnostic: A fixed category from configuration or repository code. It
+            must never contain database URLs, credentials, hosts, SQL, or request data.
+
+    Returns:
+        The stable 503 error envelope consumed by the browser.
+
+    Side effects:
+        Writes one warning to the local API log for developer troubleshooting.
+    """
+    logger.warning("Case storage unavailable: %s", diagnostic)
+    return _case_error(
+        503,
+        "cases_unavailable",
+        "Saved cases are unavailable. Check the local API logs for storage status.",
+    )
+
+
 def create_app() -> FastAPI:
     """Create the demo-only API with redacted streaming routes.
 
@@ -364,6 +460,7 @@ def create_app() -> FastAPI:
         Registers CORS middleware and route handlers. It does not contact a
         provider, load a model, or authorise a payment action during creation.
     """
+    _configure_server_logging()
     # These process-local guards are suitable for the single-container public
     # showcase. They are not a substitute for production admission control.
     run_slots = asyncio.Semaphore(_positive_int_env("DEMO_MAX_CONCURRENT_RUNS", 2))
@@ -380,7 +477,44 @@ def create_app() -> FastAPI:
         # inputs are absent. The new endpoint returns its accepted redacted 503.
         showcase_runtime = None
 
+    # Durable showcase cases (spec 0002) are off unless explicitly enabled with
+    # a database, so the database free public deployment never stores cases.
+    case_settings = load_case_settings()
+    case_repository: PsycopgCaseRepository | None = None
+    case_recorder: CaseRecorder | None = None
+    if case_settings.ready and case_settings.database_url:
+        try:
+            case_repository = PsycopgCaseRepository(case_settings.database_url)
+            case_recorder = CaseRecorder(
+                case_repository, EventValidator(case_settings.event_schema_path)
+            )
+        except (CasesUnavailable, OSError, ValueError):
+            # A bad URL or an unreadable event schema leaves storage off; runs
+            # still stream normally and the case routes answer 503.
+            case_repository = None
+            case_recorder = None
+
+    # The local live feed's worker (spec 0003) runs inside the API only when
+    # explicitly enabled with a database; it is off for the public showcase.
+    run_worker = _boolean_env("SIMULATION_WORKER_ENABLED", False) and bool(
+        os.getenv("DATABASE_URL", "").strip()
+    )
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if not run_worker:
+            yield
+            return
+        stop = asyncio.Event()
+        worker = asyncio.create_task(run_simulation_worker(stop))
+        try:
+            yield
+        finally:
+            stop.set()
+            await worker
+
     app = FastAPI(
+        lifespan=lifespan,
         title="Fraud Compliance Agent Console API",
         description=(
             "Synthetic-only recruiter-showcase API. It streams the current "
@@ -401,6 +535,18 @@ def create_app() -> FastAPI:
         request: Request, error: RequestValidationError
     ) -> JSONResponse:
         """Redact only the public-showcase route's request-validation details."""
+        if request.url.path == "/cases" or request.url.path.startswith("/cases/"):
+            # Case routes validate their own inputs; this is a safety net so a
+            # framework validation error can never echo request input back.
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": {
+                        "code": "invalid_parameters",
+                        "message": "Check the case filters and page size.",
+                    }
+                },
+            )
         if request.url.path == "/showcase/investigations":
             detail = ShowcaseErrorDetail(
                 code="invalid_request",
@@ -438,6 +584,351 @@ def create_app() -> FastAPI:
     async def demo_model_summary() -> DemoModelSummary:
         """Return only the audit-safe synthetic benchmark summary for the portfolio UI."""
         return _demo_model_summary()
+
+    @app.get(
+        "/sandbox/scenarios/{scenario_id}/analytics",
+        include_in_schema=False,
+        response_model=SandboxScenarioAnalytics,
+        responses={404: {"model": DemoError}, 503: {"model": DemoError}},
+    )
+    def sandbox_scenario_analytics(
+        scenario_id: str, request: Request, simulation_run_id: str | None = None
+    ) -> SandboxScenarioAnalytics:
+        """Return read only, prepared aggregate data for one Sandbox scenario.
+
+        The route reads only a versioned sanitised dataset from the optional
+        Neon store. It cannot contact Plaid, return raw transactions, score a
+        payment, or mutate a scenario. With ``simulation_run_id``, that run's
+        shown feed payments are added to the imported base, for its own
+        browser only.
+        """
+        browser_id = (
+            _simulation_browser_id(request) if simulation_run_id is not None else None
+        )
+        try:
+            return SandboxScenarioAnalytics.model_validate(
+                load_sandbox_analytics(scenario_id, simulation_run_id, browser_id)
+            )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/sandbox/scenarios/{scenario_id}/decisions",
+        include_in_schema=False,
+        response_model=SandboxScenarioDecisions,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def sandbox_scenario_decisions(
+        scenario_id: str, request: Request, simulation_run_id: str | None = None
+    ) -> SandboxScenarioDecisions:
+        """Return PASS, CHALLENGE and HOLD counts per day for one scenario (spec 0004).
+
+        Every imported outbound payment is decided by the scenario's
+        deterministic rule. With ``simulation_run_id``, that run's revealed
+        feed payments are added, for its own browser only; the same 404 rules
+        as the analytics overlay apply. S06 to S08 have no rule and are 404.
+        """
+        browser_id = (
+            _simulation_browser_id(request) if simulation_run_id is not None else None
+        )
+        try:
+            return SandboxScenarioDecisions.model_validate(
+                load_sandbox_decisions(scenario_id, simulation_run_id, browser_id)
+            )
+        except ScenarioNotDecided as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_decided"
+            ) from error
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/cases",
+        include_in_schema=False,
+        response_model=CaseListResponse,
+        responses={
+            400: {"model": DemoError},
+            422: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def list_showcase_cases(
+        request: Request,
+        limit: str | None = None,
+        cursor: str | None = None,
+        scenario_id: str | None = None,
+        recommendation: str | None = None,
+    ) -> CaseListResponse:
+        """Return one page of the calling browser's durable cases (spec 0002).
+
+        Parameters arrive as plain strings and are validated here, so the
+        fixed error order holds: storage off (503), then the browser key (400),
+        then a bad cursor (400) or other bad parameters (422). No error body
+        echoes request input.
+        """
+        if case_repository is None:
+            raise _case_store_unavailable("case_storage_disabled")
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+        if browser_id is None:
+            raise _case_error(
+                400, "invalid_browser_id", "A valid browser key is required."
+            )
+        invalid = _case_error(
+            422, "invalid_parameters", "Check the case filters and page size."
+        )
+        if limit is not None and not re.fullmatch(r"[1-9][0-9]?", limit):
+            raise invalid
+        page_size = int(limit) if limit is not None else PAGE_SIZE
+        if page_size > PAGE_SIZE:
+            raise invalid
+        if scenario_id is not None and not re.fullmatch(r"S0[1-8]", scenario_id):
+            raise invalid
+        if recommendation is not None and recommendation not in {
+            "PASS",
+            "CHALLENGE",
+            "HOLD",
+        }:
+            raise invalid
+        try:
+            page = case_repository.list_cases(
+                browser_id,
+                limit=page_size,
+                cursor=cursor,
+                scenario_id=scenario_id,
+                recommendation=recommendation,
+            )
+        except InvalidCursor as error:
+            raise _case_error(
+                400, "invalid_cursor", "The page cursor is not valid."
+            ) from error
+        except CasesUnavailable as error:
+            raise _case_store_unavailable(error.diagnostic) from error
+        return CaseListResponse.model_validate(
+            {
+                "contract_version": "1.0",
+                "items": page.items,
+                "next_cursor": page.next_cursor,
+                "totals": page.totals,
+            }
+        )
+
+    @app.get(
+        "/cases/{case_id}",
+        include_in_schema=False,
+        response_model=CaseDetailResponse,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def read_showcase_case(case_id: str, request: Request) -> CaseDetailResponse:
+        """Return one durable showcase case for the calling browser (spec 0002).
+
+        Checks run in a fixed order, first failure wins: storage off or
+        unreachable (503), then a missing or malformed browser key (400). A
+        case that does not exist, has expired, belongs to another browser, or
+        has a malformed ID is the same 404, so IDs reveal nothing.
+        """
+        if case_repository is None:
+            raise _case_store_unavailable("case_storage_disabled")
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+        if browser_id is None:
+            raise _case_error(
+                400, "invalid_browser_id", "A valid browser key is required."
+            )
+        not_found = _case_error(404, "case_not_found", "Case not found.")
+        if not re.fullmatch(r"run_[a-z0-9_]{3,64}", case_id):
+            raise not_found
+        try:
+            return CaseDetailResponse.model_validate(
+                case_repository.get_case(browser_id, case_id)
+            )
+        except CaseNotFound as error:
+            raise not_found from error
+        except CasesUnavailable as error:
+            raise _case_store_unavailable(error.diagnostic) from error
+
+    @app.post(
+        "/sandbox/scenarios/{scenario_id}/simulation-runs",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            429: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def start_sandbox_scenario_simulation(
+        scenario_id: str, request: Request
+    ) -> SandboxSimulationRun:
+        """Start one browser's deterministic feed without accepting event data.
+
+        Refused with 429 when the site is at its live run cap or this browser
+        started too many runs this minute (spec 0003).
+        """
+        browser_id = _simulation_browser_id(request)
+        try:
+            run = SandboxSimulationRun.model_validate(
+                start_sandbox_simulation(scenario_id, browser_id)
+            )
+        except SimulationBusy as error:
+            logger.warning("simulation_start_refused reason=simulation_busy")
+            raise HTTPException(status_code=429, detail="simulation_busy") from error
+        except SimulationRateLimited as error:
+            # Log the code only: this error carries the browser ID, which
+            # never appears in logs (spec 0003).
+            logger.warning("simulation_start_refused reason=simulation_rate_limited")
+            raise HTTPException(
+                status_code=429, detail="simulation_rate_limited"
+            ) from error
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+        # The scenario comes from the validated run, never the raw path.
+        logger.info("simulation_run_started scenario_id=%s", run.scenario_id)
+        return run
+
+    @app.post(
+        "/sandbox/simulation-runs/{run_id}/cancel",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def cancel_sandbox_scenario_simulation(
+        run_id: str, request: Request
+    ) -> SandboxSimulationRun:
+        """Stop one of this browser's runs; payments already shown stay shown."""
+        browser_id = _simulation_browser_id(request)
+        try:
+            return SandboxSimulationRun.model_validate(
+                cancel_sandbox_simulation(run_id, browser_id)
+            )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/sandbox/simulation-runs/{run_id}",
+        include_in_schema=False,
+        response_model=SandboxSimulationRun,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    def sandbox_simulation_run(run_id: str, request: Request) -> SandboxSimulationRun:
+        """Return one of this browser's runs' safe progress information."""
+        browser_id = _simulation_browser_id(request)
+        try:
+            return SandboxSimulationRun.model_validate(
+                load_sandbox_simulation_run(run_id, browser_id)
+            )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+    @app.get(
+        "/sandbox/simulation-runs/{run_id}/events",
+        include_in_schema=False,
+        response_class=StreamingResponse,
+        responses={
+            400: {"model": DemoError},
+            404: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    async def sandbox_simulation_events(
+        run_id: str, request: Request
+    ) -> StreamingResponse:
+        """Stream one of this browser's runs' safe state while it is connected.
+
+        Read with ``fetch`` (spec 0003), so the browser ID arrives as a header.
+        Ownership is checked before streaming, so another browser's run is a
+        plain 404 rather than an empty stream.
+        """
+        browser_id = _simulation_browser_id(request)
+        try:
+            # psycopg is synchronous; each read runs off the event loop.
+            first = await asyncio.to_thread(
+                load_sandbox_simulation_run, run_id, browser_id
+            )
+        except ScenarioSimulationNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_simulation_not_found"
+            ) from error
+        except SandboxDataUnavailable as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+
+        async def event_stream() -> AsyncIterator[str]:
+            previous: str | None = None
+            state = first
+            # Long enough to follow a whole feed run, then the client reconnects.
+            for _ in range(_SIMULATION_STREAM_SECONDS):
+                payload = json.dumps(state, sort_keys=True)
+                if payload != previous:
+                    yield f"event: simulation_state\ndata: {payload}\n\n"
+                    previous = payload
+                if state["state"] in {"completed", "failed", "cancelled"}:
+                    return
+                await asyncio.sleep(1)
+                if await request.is_disconnected():
+                    return
+                try:
+                    state = await asyncio.to_thread(
+                        load_sandbox_simulation_run, run_id, browser_id
+                    )
+                except (SandboxDataUnavailable, ScenarioSimulationNotFound):
+                    return
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     @app.post(
         "/showcase/investigations",
@@ -488,8 +979,16 @@ def create_app() -> FastAPI:
         # The socket peer is server-observed metadata. Arbitrary forwarding or
         # caller-supplied identity headers are deliberately ignored.
         client_key = request.client.host if request.client else "unknown"
+        # The browser key only scopes where a completed case is saved (spec
+        # 0002). It never feeds admission or rate limiting, and the stream is
+        # passed through unchanged whether or not the case is saved.
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         return StreamingResponse(
-            showcase_runtime.stream(body, client_key),
+            record_case_stream(
+                showcase_runtime.stream(body, client_key),
+                browser_id=browser_id,
+                recorder=case_recorder,
+            ),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
         )

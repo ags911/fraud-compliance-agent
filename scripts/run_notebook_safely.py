@@ -38,7 +38,7 @@ def main() -> int:
     output_directory = args.output_directory.resolve()
     if (
         not source.is_file()
-        or not (repository_root / "docs" / "project-context.md").is_file()
+        or not (repository_root / "context" / "project_overview.md").is_file()
     ):
         raise RuntimeError(
             "Expected a notebook inside the fraud-compliance-agent repository."

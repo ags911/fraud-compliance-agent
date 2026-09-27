@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "config_version": "fast-path-richer-features-v2-candidate",
+  "status": "proposed",
+  "owner": "model-risk",
+  "approval_scope": "None. This is a proposed offline experiment on the Sparkov synthetic benchmark. It does not amend the accepted mechanics-only contract (fast-path-mechanics-v1), which stays in force and unchanged.",
+  "effective_scope": "Offline use by the apps/api modelling library and Notebook 08 section 8 only. It is never read by the served API, never scores a payment, selects no operating threshold, and approves no feature for runtime.",
+  "random_seed": 20260916,
+  "partitioning": {
+    "note": "Identical to the accepted benchmark so results are comparable. The cutpoint and counts are checked against data/manifests/sparkov-mechanics-v1.manifest.json values recorded here.",
+    "chronological_train_cutpoint": "2020-03-06T07:15:17+00:00",
+    "expected_partition_counts": {
+      "train": 1037340,
+      "calibration": 259335,
+      "test": 555719
+    },
+    "tuning_fraction_of_calibration": 0.5
+  },
+  "features": {
+    "windows_seconds": [3600, 86400, 604800],
+    "minimum_history_transactions": 5,
+    "mechanics_v1_columns": [
+      "amount",
+      "event_hour_utc",
+      "event_day_of_week_utc",
+      "is_weekend"
+    ],
+    "groups": {
+      "base": ["amount", "log_amount", "event_hour_utc", "event_day_of_week_utc", "is_weekend"],
+      "category": ["category_*"],
+      "amount_vs_card_history": [
+        "card_prior_count",
+        "card_prior_mean_amount",
+        "amount_to_card_prior_mean",
+        "amount_zscore_vs_card_prior"
+      ],
+      "card_velocity_and_timing": [
+        "card_seconds_since_prior",
+        "card_count_last_*",
+        "card_amount_sum_last_*"
+      ],
+      "familiarity": [
+        "card_merchant_prior_count",
+        "card_category_prior_count",
+        "merchant_prior_count"
+      ]
+    }
+  },
+  "search": {
+    "note": "Model selection uses the first chronological half of the calibration partition only. The test partition is scored once, after selection.",
+    "maximum_trees": 1500,
+    "early_stopping_rounds": 50,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "learning_rate": 0.1,
+    "n_jobs": 8,
+    "tree_method": "hist",
+    "grid": [
+      {"max_depth": 6, "min_child_weight": 1, "scale_pos_weight_mode": "none"},
+      {"max_depth": 8, "min_child_weight": 5, "scale_pos_weight_mode": "none"},
+      {"max_depth": 6, "min_child_weight": 1, "scale_pos_weight_mode": "sqrt_ratio"},
+      {"max_depth": 8, "min_child_weight": 5, "scale_pos_weight_mode": "sqrt_ratio"}
+    ]
+  },
+  "calibration": {
+    "method": "isotonic",
+    "note": "Fitted on the second chronological half of the calibration partition, which selection never used."
+  },
+  "fit_checks": {
+    "train_curve_sample_rows": 200000,
+    "learning_curve_points": 25,
+    "recall_at_false_positive_rate": [0.001, 0.01],
+    "top_share_precision": [0.005, 0.01],
+    "score_quantile_bins": [0.0, 0.5, 0.9, 0.95, 0.99, 0.995, 1.0]
+  },
+  "notes": "Results from this configuration are Sparkov synthetic benchmark mechanics. They are not a production fraud-performance claim. This file holds no fraud threshold, promotion criterion, or action limit."
+}

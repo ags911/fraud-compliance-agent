@@ -9,7 +9,10 @@ dependencies = [
     "uvicorn[standard]>=0.30.0",
     "langgraph>=0.2.0",
     "groq>=1.4.0",
+    "psycopg[binary]>=3.1.0",
     "python-dotenv>=1.0.0",
+    # Validates stored showcase case events against the accepted v1 schema.
+    "jsonschema>=4.26.0",
 ]
 
 # The live demo pipeline needs the private Arbiris SDK submodule. Everything else
@@ -32,12 +35,13 @@ extend-select = ["I", "S"]
 # fixed HTTPS Plaid Sandbox endpoint, so partial executable paths and URL opening are accepted here.
 # The API's own code under server/ has no exceptions.
 "../../notebooks/*.ipynb" = ["S310", "S603", "S607"]
-"../../scripts/*.py" = ["S603", "S607"]
+"../../scripts/*.py" = ["S310", "S603", "S607"]
+# Explicit importer scripts call the fixed HTTPS Plaid Sandbox host only.
+"scripts/import_plaid_sandbox_history.py" = ["S310"]
 
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.0",
-    "jsonschema>=4.26.0",
     "nbclient>=0.10.0",
     "nbformat>=5.10.0",
     "numpy>=2.0.0",

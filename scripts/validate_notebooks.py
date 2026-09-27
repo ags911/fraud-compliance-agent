@@ -44,13 +44,13 @@ def repository_root(start: Path) -> Path:
         start: Existing path inside the repository.
 
     Returns:
-        Repository directory containing ``docs/project-context.md`` and ``notebooks``.
+        Repository directory containing ``context/project_overview.md`` and ``notebooks``.
 
     Raises:
         RuntimeError: If the expected repository markers cannot be found.
     """
     for candidate in (start, *start.parents):
-        if (candidate / "docs" / "project-context.md").is_file() and (
+        if (candidate / "context" / "project_overview.md").is_file() and (
             candidate / "notebooks"
         ).is_dir():
             return candidate

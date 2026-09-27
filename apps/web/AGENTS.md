@@ -1,38 +1,36 @@
 # Web console instructions
 
-Read the [repository context](../../docs/project-context.md) first. This file
-adds only rules that are specific to `apps/web`.
+Read the [repository context](../../context/project_overview.md) first
+(and the rest of `../../context/`). This file adds only rules that are
+specific to `apps/web`.
 
 - Focused checks, run from the repository root: `make web-lint`,
-  `make web-design-check`, `make web-build`, and `make web-test`. CI uses
-  Node 22.
-- The Payments design system is frozen. `work/payments-design-concept.html` is
-  the approved visual source, and the frozen Rules Performance reference and the
-  tokens in `docs/design/payments-design-system.md` must not change as a side
-  effect of feature work. Use the documented tokens and components; do not
-  approximate a value with the nearest utility class.
-- For dashboard, chart, navigation, or shared UI work, use the
-  `$payments-dashboard-consistency` skill, including screenshot validation of
-  hover states.
-- Playwright screenshot baselines are recorded with Chrome on macOS, which is why
-  CI runs the web job on macOS. Do not re-record a baseline to make a test pass.
-  Use `npm run test:payments:update` only for an approved visual change.
-- The root `*.html` pages are Vite entries that the tests load by URL. Moving or
-  renaming one means updating `vite.config.ts` and the tests together. Do not add
-  an entry whose name shadows a product route: the dev server answers `/overview`
-  with an `overview.html` file if one exists, while production serves the app
-  there, and the tests would then exercise the wrong page. The Payments Overview
-  is `overview-reference.html` for exactly that reason.
-- The Overview route is the shadcn dashboard (`src/Dashboard.tsx`), routed
-  outside the Payments shell. Its theme, `src/dashboard-theme.css`, redefines
-  Payments token names, so it is scoped to `:root[data-app-theme="dashboard"]`
-  and the route sets and clears that attribute. Keep the scope: widening it
-  restyles the approved pages.
+  `make web-build`, and `make web-test` (`npm test` in `apps/web`, Playwright
+  only; there is no unit runner). CI uses Node 22.
+- The app is one page, the Risk Console: `index.html` holds its markup shell
+  and all of its layout CSS inline, and `src/main.tsx` mounts
+  `src/console/RiskConsole.tsx`. There is no router. View state lives in the
+  query string (`?scenario=`, `?case=` for the case drawer), and every unknown
+  path falls back to `index.html` (`public/staticwebapp.config.json`), so old
+  `/radar` links still land on the console.
+- Style with the page's own tokens in `index.html`'s `:root`: the `--lch-*`
+  neutral ramp, `--sev-low`/`--sev-moderate`/`--sev-high` for PASS,
+  CHALLENGE and HOLD only, and `--console-accent`.
+  `src/console/console-controls-theme.css` remaps the shadcn tokens to them so
+  Radix portals (Select, Sheet, Tooltip) match. Readable text uses
+  `--lch-text-secondary`; `--lch-text-tertiary` fails AA for small text and is
+  for chart axis ticks only. `tests/accessibility.spec.ts` runs axe on every
+  tab at both widths.
+- The page CSS is unlayered and resets `* { padding: 0 }`, so it beats
+  Tailwind `@layer` utilities: a utility loses to any page rule that sets the
+  same property. Prefer the page's own classes for console markup.
+- For chart or shared UI work, use the `$payments-dashboard-consistency`
+  skill, including screenshot validation of hover states.
 - No API internals, database models, or secrets in browser code; consume only
   accepted contracts.
 - Chart, graph, and table components are presentational: they receive data only
   through typed props and do not fetch or transform data. Fetching and data
-  shaping live in hooks (for example `useAgentRun`) or in `src/lib`. Local UI
+  shaping live in hooks (for example `useSandboxFeed`) or in `src/lib`. Local UI
   state, such as an open menu, a filter, or a draft, is fine in a component.
 - Every component's props are typed with a TypeScript `interface` or `type`.
   `any` is banned and enforced by lint (`typescript/no-explicit-any`); use

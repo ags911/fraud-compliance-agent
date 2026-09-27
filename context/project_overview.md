@@ -1,0 +1,341 @@
+# Project Overview
+
+> **Relationship to existing docs.** This `/context/` directory is a
+> supplementary baseline, synthesized from every Markdown document in this
+> repository (PRD, ADRs, proposals, experiments, design docs, audits) as of
+> 2026-09-22. It does **not** replace or override `docs/project-context.md`,
+> which root `AGENTS.md`/`CLAUDE.md` name as the canonical instruction source,
+> nor the PRD/ADR authority chain those documents establish. Where this file
+> and a primary source disagree, the primary source wins — treat this as a
+> synthesis for orientation, not a new approval record. Root `AGENTS.md` has
+> not been modified to point here. **Every "accepted" vs "proposed"/
+> "candidate" marker below is load-bearing**: this repository repeatedly
+> states that a proposal, a notebook result, or a "decided" direction note is
+> not itself a contract acceptance — only a resolved ADR plus a versioned
+> artifact under `docs/contracts/` is.
+
+## Summary
+
+Fraud Compliance Agent is a monorepo containing a provider-neutral
+payment-risk decision demo: a React/Vite operator console (`apps/web`) and a
+FastAPI backend (`apps/api`) that together demonstrate an auditable flow from
+transaction signals to a simulated outcome, evidence, oversight, and review.
+Per the PRD (`docs/product/prd.md`, v0.3, **status: candidate for approval,
+not yet the ground-truth PRD**) and `docs/project-context.md`: this is a
+**public recruiter/employer showcase, not a production financial service**.
+It is production-shaped in architecture, contract-first interfaces, typed
+state, testing, and data boundaries, but deliberately uses synthetic
+scenarios and simulated actions. "It must not collect real customer data,
+execute a payment, make a compliance claim, or imply a live fraud-performance
+result."
+
+**Document authority hierarchy** (PRD §1, once approved): (1) the PRD, (2)
+accepted API ADRs and contracts, (3) the API Phase 0 backlog/PRD review, (4)
+the dual-tier build plan, (5) the Fraud Risk Console implementation plan.
+"An implementation plan may not silently override an accepted contract."
+Until the PRD's own approval record (§12) is complete, the **API
+repository's accepted Phase 0 ADR artifacts remain authoritative** for
+backend contracts.
+
+## Core Goals (PRD §2, §4)
+
+**Product statement:** "Provide an auditable payment-risk orchestration
+service that recommends safe payment routes, investigates only eligible
+contextual cases, and makes any simulated action subject to independent
+authority, oversight, and human-review controls." Not a replacement for a
+PSP's fraud network — the first release proves a transparent, controlled
+operating model for one provider-shaped payment flow.
+
+**In scope (v1):** one provider adapter and canonical payment-event schema;
+point-in-time feature derivation and deterministic fraud/APP controls; a
+candidate calibrated tabular-model interface (Logistic Regression benchmark,
+XGBoost primary candidate — model selection itself not yet approved); typed
+`PASS`/`CHALLENGE`/`HOLD` recommendations; bounded contextual investigation
+for permitted ambiguous/APP-risk cases only; simulated actions with
+authority/oversight controls, durable history, and review; versioned
+synthetic fixtures with later provider/Plaid integration testing; a React
+operator console using the approved Payments design system.
+
+**Explicit non-goals (v1):** real payment execution, real account blocking,
+or automated chargeback filing; multi-PSP orchestration, Web3 rails,
+breach-intelligence collection, or a universal agentic-commerce identity
+signal; claims of production fraud-detection performance from synthetic
+data; Arbiris governance-record exploration or evidence-pack assembly inside
+this app (that stays the vendored SDK's own capability).
+
+## Users and Jobs (PRD §3)
+
+| User | Job |
+|---|---|
+| Fraud operator | Submit/select a payment, understand its facts, route, reasons, and current operational status. |
+| Fraud reviewer | Safely claim and decide eligible cases, with conflict protection and an immutable record. |
+| Administrator | View controlled configuration, integration health, access, and release provenance within server-enforced permissions. |
+| Demonstrator | Run repeatable, truthfully labelled scenarios without implying live operational history. |
+
+## Required Decision Flow (PRD §5, target — not fully built)
+
+```
+provider payment event
+  → validate / canonicalise / version source facts
+  → construct point-in-time feature snapshot
+  → deterministic fraud and APP controls
+  → calibrated-model score
+  → PASS / CHALLENGE / HOLD recommendation
+  → eligible contextual investigation only
+  → authority check
+  → oversight requirement
+  → review where required
+  → simulated action, operational history, and linked evidence delivery
+```
+"`PASS` is never synonymous with `RELEASE`. A low model score or investigator
+recommendation cannot bypass a hard control or missing critical evidence."
+
+## Current Core Flows (what actually runs today)
+
+The web app is one page, the **Risk Console** at `/` (renamed from "Radar"
+and made the only page on 2026-09-27; see `ui_context.md`). The Overview
+dashboard, `/simulation` mock, investigation, benchmark, legacy run, case
+detail and placeholder pages were removed then. The API flows below still
+exist; where a flow's own page was removed, only the console or the API
+itself exercises it now.
+
+1. **Risk Console** (built): Scenario / Cases / Model tabs. The Scenario tab
+   reads the internal `GET /sandbox/scenarios/{id}/analytics` for the
+   selected scenario (real sanitised Sandbox aggregates; the Mixed feed
+   combines S01–S05) next to PASS/CHALLENGE/HOLD counts per day from the
+   internal `GET /sandbox/scenarios/{id}/decisions`, each outbound payment
+   decided by its scenario's deterministic rule (spec 0004; no model score
+   decides anything); the Cases tab shows the live routing board and lists
+   this browser's saved cases, including live feed cases, in a drawer; the
+   Model tab shows the accepted benchmark summary.
+2. **Showcase investigation flow** (API built; no dedicated page): the
+   console's "Run showcase" calls `POST /showcase/investigations`; the API
+   loads the matching S01–S08 fixture, optionally runs a bounded
+   tool-calling investigation (recorded or live Groq), and streams typed SSE
+   events back.
+3. **Legacy custom-transaction and preset flows** (API only, local-only
+   compatibility reference, no web page since 2026-09-27): `POST /run` and
+   `POST /run/preset/{scenario_id}` against the legacy A–F scenarios from
+   `GET /scenarios`, through the optional private Arbiris SDK. Retiring the
+   API routes needs its own decision (ADR-012 froze that contract).
+4. **Model benchmark** (built): `GET /demo/model-summary`, an **accepted
+   mechanics-only** Sparkov benchmark report, shown on the console's Model
+   tab — the only metric surface backed by recorded evaluation data rather
+   than a live/invented figure.
+5. **Stateless scoring (`POST /risk/score`) and stateful processing
+   (`POST /transactions/{transaction_id}/process`)** (target, **not built**):
+   named in the PRD/implementation plan as candidate operations only; exact
+   paths/envelopes/status codes remain unresolved pending the canonical
+   transaction, persistence, and identity proposals.
+
+## Scenario Catalogue
+
+**Target set S01–S08** (PRD §8, ADR-016 accepts the fixture values for
+showcase use only):
+
+| ID | Coverage | Acceptance condition |
+|---|---|---|
+| S01 | Trusted recurring payment | PASS recommendation, no invented action |
+| S02 | High-value / high-velocity risk | HOLD cannot be bypassed |
+| S03 | Account drain / new payee | APP hard control runs before fast release |
+| S04 | Ambiguous contextual case | Bounded investigation → typed evidence + route (sole normal agent path) |
+| S05 | Model/investigation outage | Truthful fail-safe HOLD, visible error state (explicit failure path) |
+| S06 | Reviewer conflict | Stale review version fails without overwriting a decision |
+| S07 | Duplicate process request | Same/resumed run; no second simulated action |
+| S08 | Provider correction | New source revision, read-only replay, no repeat action |
+
+S01–S03 and S06–S08 bypass the agent entirely; only S04 runs the agent
+normally and S05 exercises its explicit incomplete/failure path. S06–S08
+operational behavior (review/idempotency/replay) is deferred to F3–F6 — the
+public API returns a stable redacted 503 for those today.
+
+**Legacy A–F** (existing `GET /scenarios` presets, from the vendored SDK
+example) are a separate, unmapped set: "Legacy API scenarios A–F are
+characterised separately and mapped to this catalogue only through an
+approved routing/scenario decision" — do not assume equivalence. A
+same-named characterisation doc (`docs/proposals/legacy-scenario-characterisation.md`)
+records only *candidate* overlaps (A~S02, B~S01, D/F~S03), each still
+requiring an approved target-policy decision; C has no S01–S08 equivalent.
+
+## Scope Boundaries
+
+### Built and wired into runtime code
+- SSE-streamed demo/showcase investigation endpoints, backed by synthetic
+  fixtures only (S01–S05 runtime-ready; S06–S08 deferred).
+- One optional live-provider integration (Groq), gated behind two
+  independent off-by-default flags, with no fallback to a second LLM.
+- CORS restricted to an explicit origin allowlist (never wildcard).
+- No database or persistence layer; all state is in-memory, request-scoped,
+  or read from committed fixture/JSON files.
+- Azure Static Web Apps (console) + Azure Container Apps Consumption
+  scale-to-zero (API) — **deployed and verified 2026-09-21** (see
+  [`progress_tracker.md`](progress_tracker.md) for the release record).
+
+### Present only as proposal/config — not runtime fact
+- The six-entity canonical domain contract (`SourceEvent`,
+  `CanonicalTransaction`, `FeatureSnapshot`, `Prediction`, `RunContext`,
+  `OutcomeLabel`) — proposed (ADR-002), not accepted.
+- PostgreSQL persistence, identity/roles/authentication, the operational
+  `/risk/score` and `/transactions/{id}/process` API — all proposed
+  (ADR-009, ADR-010, ADR-001/backlog P0-07/P0-08), not built. **MVP 1–3
+  remain database-free by explicit design; no Azure database is
+  authorised.**
+- A numeric runtime fraud-model score or decision threshold — explicitly out
+  of scope for the current showcase: "MVP 3 has no numeric runtime
+  fraud-model score or decision threshold." Deferred to **F3a**.
+- Plaid Sandbox: fixture data is labelled `source_class:
+  "plaid_sandbox_derived"` for one narrow accepted case (S04's
+  `get_account_activity_evidence`, ADR-019); there is no live Plaid API
+  client in `server/`, and Plaid Sandbox is integration/feasibility
+  evidence, never a labelled fraud-training corpus.
+- Sparkov: **accepted only** as a checksum-verified **mechanics-only**
+  benchmark corpus (`fraudTrain.csv` 1,296,675 rows / 7,506 positive;
+  `fraudTest.csv` 555,719 rows / 2,145 positive) — cannot substantiate a
+  production-performance claim. PaySim and IEEE-CIS were evaluated and
+  **not pursued** (decision recorded 2026-09-22: PaySim's balance-drain
+  columns are excluded by the source's own leakage warning; IEEE-CIS's
+  Kaggle competition licence was never confirmed to permit this project's
+  public-repo use).
+- Stripe/Radar: not a selected provider integration anywhere; explicitly may
+  never be used as a fraud training label (its score is Stripe's own
+  payment-specific prediction, not independent ground truth).
+- Azure: referenced only as a deployment target; no managed database,
+  VNet, cache, queue, or production identity service is authorised.
+
+### Deterministic Sandbox data plan (S04 proof active locally)
+
+The next data slice is intended to make scenario data time-aware and
+repeatable without calling Plaid during an operator run. A controlled Plaid
+Sandbox import would create a scenario-specific, versioned and sanitised
+dataset in PostgreSQL. Scenario execution, replay and charts would then read
+only that dataset and its derived daily aggregates.
+
+- **Import boundary:** Plaid Sandbox is contacted only by an explicit setup
+  or refresh job. It is never called from an operator scenario run, chart
+  request or browser.
+- **Scenario isolation:** every scenario has its own fixture version, stable
+  seed, dated event history and expected derived facts. A run cannot append
+  data to or otherwise affect another scenario.
+- **Data boundary:** raw provider responses, access tokens, account IDs and
+  transaction descriptions stay outside Git and outside the application
+  store. The database contains only pseudonymised, sanitised events and
+  derived aggregates needed for deterministic replay and display.
+- **Time boundary:** a first S04 proof may use a proposed 180-day historical
+  baseline plus dated incremental Sandbox events. The approved duration,
+  fields and aggregation grain must be recorded in a fixture manifest before
+  implementation.
+- **Storage choice:** Neon PostgreSQL is selected for the Sandbox-only S04
+  proof. It does not authorise a production deployment or alter the
+  database-free showcase.
+
+The assumed-spec preparation slice was activated locally on 2026-09-23: the
+Neon migration applied, `s04-sandbox-v1` imported, and the internal
+`GET /sandbox/scenarios/S04/analytics` endpoint returned `200` through a
+Doppler-injected local API process. On 2026-09-24, an explicit Plaid Sandbox
+sync import replaced that small proof with a 331-event sanitised common
+baseline dated 2026-06-29 through 2026-09-23 and eight isolated scenario
+datasets. Each dataset has all 87 calendar days in that boundary, including
+zero-activity days; S01–S05 also carry their deterministic fixture overlay.
+It remains a Sandbox-only, non-public service.
+
+The database URL, import-only Sandbox access token, and pseudonymisation key
+remain outside source control. The implementation reads one complete Plaid
+Sandbox `/transactions/sync` history in memory, HMAC-pseudonymises permitted
+values into a common baseline, derives eight isolated S01–S08 datasets, and
+supports idempotent scenario-local simulated-event appends. It has no raw
+provider data or Azure deployment, and it must not create a new Item as a
+substitute for the intended history. A resolving ADR is still required before
+the store can be represented as an accepted runtime data source.
+
+### Implemented local scenario simulation and live display foundation
+
+The current datasets are deliberately finite. They are not live streams: no
+route starts a simulator, no worker advances a scenario clock, and the
+dashboard has no subscription to scenario changes. Existing SSE describes an
+investigation trace only, not changing Sandbox transaction data.
+
+### Proposed regulatory-reference support (showcase only)
+
+The intended regulatory-reference experience is a small, curated, dated FCA
+Handbook corpus with retrieval-augmented generation (RAG), not a live FCA API
+or MCP dependency. It would support an S04 investigation by returning
+relevant, cited extracts from the reviewed corpus. Each durable case must
+retain the corpus version, source link or provision identifier, and the exact
+retrieved extracts used in that run so a later replay can show the same
+evidence. The feature is regulatory-reference support, not legal advice and
+not an authority to change a deterministic decision, simulated action, or
+human-review outcome.
+
+The present agent has no FCA Handbook tool. A direct API or MCP connector is
+deferred: it would need separately approved source terms, availability and
+freshness controls, caching, source-version capture, monitoring, and replay
+semantics. MCP is only a tool protocol, not a regulatory source.
+
+**Planned dashboard placement:** regulatory references belong on an S04 case
+detail page, alongside the evidence, deterministic controls, and proposed
+route. The panel must show the provision title and identifier, short retrieved
+excerpt, relevance to the case, FCA source link, corpus version, and retrieval
+time. The investigation trace may show a bounded retrieval event with the same
+provenance. Risk Console must not become a generic Handbook chat or assert “FCA
+compliant”; its future Health tab may show only corpus version, last review,
+and retrieval availability. S01–S03 do not retrieve regulatory references by
+default, S05 fails safe when retrieval is unavailable, and S06–S08 rely on
+their conflict, idempotency, and revision controls rather than retrieval.
+
+The local Sandbox slice now includes a deterministic simulator. It keeps Plaid as an
+import-only source, starts from the selected scenario's versioned baseline
+and overlay, and emits that scenario's predeclared events in sequence. Each
+emission is appended only to that scenario timeline, updates its daily
+aggregates and derived features, and becomes visible to the dashboard. The
+same seed, starting revision and sequence must reproduce the same result.
+
+The implementation has durable simulation-run state, scheduled event records,
+idempotency per `(run_id, sequence)`, an explicit reset or new-run operation,
+and a read-only browser stream. A browser disconnect must not create duplicate
+events or let one scenario affect another. S01–S05 need scenario-specific
+transaction sequences before they can honestly demonstrate recurring,
+velocity, new-payee, contextual, or outage behaviour. S06–S08 are workflow
+scenarios and must not receive invented payment events merely to animate a
+chart. It remains a local, internal Sandbox capability. Its worker deployment,
+API contract, reset lifecycle, and public exposure are not yet accepted as a
+runtime contract.
+
+### Incomplete/placeholder in the web app
+- The planned `/transactions`, `/reviews`, `/rules/performance` and
+  `/settings` placeholder pages were removed with the rest of the non-console
+  pages on 2026-09-27; those surfaces return only when their backend
+  contracts exist.
+- Deferred engineering increments (implementation plan §9.1, all "—" not
+  started): I1 stateless scoring, I2 durable processing/actions, I3 typed
+  investigation, I4 authenticated human review, I5 provider sync/monitoring/
+  replay.
+
+## MVP Staging (delivery plan, progress as of 2026-09-21)
+
+| MVP | Goal | Status |
+|---|---|---|
+| MVP 0 — Local engineering foundation | Keep the synthetic showcase safe/reproducible | 9/9 ✓ |
+| MVP 1 — Guided walkthrough | Explain the product, no setup/account | 6/6 automated ✓ (manual assistive-tech review pending) |
+| MVP 2 — Live decision demonstration | One transparent simulated decision end-to-end | 6/6 ✓ |
+| MVP 3 — Azure public showcase | Shareable cloud deployment + inspectable engineering story | 9/12 ✓ + 3 ◐ (Doppler config, budget-alert delivery, tour status step) |
+
+"MVP 3 is complete when the public synthetic demo can be run reliably enough
+for a portfolio review, costs are guarded, deployment limitations are
+visible, and the project can be reproduced locally. It is not a
+production-readiness claim." See
+[`progress_tracker.md`](progress_tracker.md) for the F0–F6 technical-stage
+table and the full Architectural Decisions Log.
+
+## Showcase Technology Register (PRD §14 — "selected showcase stack, not a
+production architecture approval")
+
+Selected/deployed for the first public showcase: GitHub + Actions (CI
+configured), Doppler (local usage exists, unused in the verified release),
+Azure Static Web Apps (deployed 2026-09-21), Azure Container Apps Consumption
+(deployed 2026-09-21). External data sources: Groq API (current, sole
+optional live provider), Plaid Sandbox `/transactions/sync` (current,
+notebooks/fixture-derivation only), Sparkov (current, offline mechanics
+only), Stripe/Radar (not selected). **Deliberately deferred**: managed
+PostgreSQL; Redis/cache/queue/worker scheduler; production
+authentication/SSO/tenancy; production monitoring/SIEM/model registry;
+payment-processor or bank-data production access.
