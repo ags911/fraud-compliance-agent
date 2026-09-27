@@ -78,12 +78,15 @@ never a raw colour or the nearest utility class, and keep readable text at
 
 ## ADR Documentation Standard (`apps/api/docs/adr/`)
 
-Every ADR follows the template in `0000-template.md`: Status/Date/Owner/PRD
-revision/Backlog task/Related decisions/Repository scope header; Context and
-evidence; Decision to be made; Constraints; Options considered; Proposed
-decision; Contracts and invariants; Verification; Consequences and
-ownership; Open questions; Acceptance record. **"An author or coding agent
-proposing the ADR must not fill in approval on someone else's behalf."**
+New ADRs (ADR-020 onward) live in `apps/api/docs/adr/`. The historical
+ADRs and the `0000-template.md` format reference live in
+`docs/archive/apps/api/docs/adr/`. Every ADR follows that template:
+Status/Date/Owner/PRD revision/Backlog task/Related decisions/Repository
+scope header; Context and evidence; Decision to be made; Constraints; Options
+considered; Proposed decision; Contracts and invariants; Verification;
+Consequences and ownership; Open questions; Acceptance record. **"An author
+or coding agent proposing the ADR must not fill in approval on someone else's
+behalf."**
 Status values used in practice: Proposed, Accepted, Accepted for
 (preparation/scoped preparation) only, Accepted-superseded-in-part. Supersede
 an accepted record rather than rewriting history.
