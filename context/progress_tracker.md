@@ -157,7 +157,7 @@ the append and aggregate path end to end. S01–S05 have transaction-shaped
 schedules. S06–S08 remain workflow cases, not fabricated transaction streams.
 Spec 0003 (ratified 2026-09-24) has since replaced appends with an overlay on
 the imported data, per browser ownership, limits, a 7 day sweep and an in API
-worker, all built locally; its `verify.md` has not been run. The API contract,
+worker, all built locally; its `verify.md` passed all 28 steps on 2026-09-27. The API contract,
 a public database ADR and worker deployment still require decisions before
 any public use.
 
@@ -231,6 +231,13 @@ opens on a Mixed feed (`MIX`) that interleaves S01 to S05 payments, each carryin
 its source scenario, fixture version, and that scenario's decision. The auto-start
 waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
 with `keepalive`.
+
+**Delivery record, 2026-09-27.** Specs 0002, 0006, 0008 and 0009 are
+Accepted; spec 0003 is verified 28/28. ADR-022 is Proposed. Codex's fresh
+model review is recorded at
+[`docs/reviews/2026-09-27-refactor-risk-console.md`](../docs/reviews/2026-09-27-refactor-risk-console.md)
+with an Approve verdict. Public-database guards remain on
+`feat/public-db-guards`, pending ADR-021.
 
 **Risk Console Operations brief** (proposed follow-up, 2026-09-26). Add an optional,
 read-only dashboard summary that turns the currently available, sanitised Risk Console
