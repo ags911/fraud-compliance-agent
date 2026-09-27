@@ -41,9 +41,11 @@ more than a local experiment.
 
 Verification status: `apps/api/tests/test_showcase_cases.py` and the spec 0004
 tests pass (`make api-test`, 445 tests, 2026-09-27). Spec 0004's `verify.md` is
-fully ticked. Spec 0002's `verify.md` has 45 unticked steps, and several of its
-UI steps still name pages removed on 2026-09-27, when the Risk Console became
-the only page.
+fully ticked. Spec 0002's `verify.md` was updated for the Risk Console and run
+with `/check verify` on 2026-09-27 against a local API and Neon: all 40 steps
+pass, after two fixes (a malformed `?case=` link now shows "Case not found",
+and the storage off note uses the AC-10 wording; commit `9accffa`). Spec 0002
+is marked Accepted as a feature spec; that does not accept this ADR.
 
 ## Decision to be made
 
@@ -117,7 +119,7 @@ Option 2.
 
 ## Verification
 
-Before this ADR is accepted:
+Before this ADR is accepted (all three met on 2026-09-27; see Context):
 
 - `make api-test` and `make api-lint` pass.
 - Spec 0002's `verify.md` is updated for the Risk Console (the case drawer

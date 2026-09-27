@@ -1,7 +1,7 @@
 # 0002. Durable investigation cases (F4)
 
 **Date**: 2026-09-24 (updated 2026-09-24 to match the build; paths updated 2026-09-27)
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 
