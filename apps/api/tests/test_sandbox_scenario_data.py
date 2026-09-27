@@ -790,3 +790,80 @@ def test_cancelling_a_run_keeps_its_routing_snapshot(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert response.json().get("routing_snapshot") == _routing(3, 2, 4)
+
+
+def _simulation_logs(caplog, name: str) -> list[str]:
+    return [r.getMessage() for r in caplog.records if r.name == name]
+
+
+def test_starting_a_run_logs_its_scenario_but_no_identifiers(
+    monkeypatch, caplog
+) -> None:
+    """Spec 0003 follow-up: a started run is logged without browser or run ID."""
+    caplog.set_level("INFO")
+    monkeypatch.setattr(main, "start_sandbox_simulation", lambda s, b: _run())
+
+    TestClient(create_app()).post(
+        "/sandbox/scenarios/S02/simulation-runs", headers=OWNER
+    )
+
+    assert _simulation_logs(caplog, "server.main") == [
+        "simulation_run_started scenario_id=S02"
+    ]
+    assert BROWSER not in caplog.text
+    assert "run-test" not in caplog.text
+
+
+def test_a_refused_start_logs_which_limit_was_hit(monkeypatch, caplog) -> None:
+    """Both 429s are logged as warnings with their stable code only."""
+    caplog.set_level("INFO")
+    client = TestClient(create_app())
+    for error in (main.SimulationBusy(), main.SimulationRateLimited(BROWSER)):
+        monkeypatch.setattr(
+            main,
+            "start_sandbox_simulation",
+            lambda s, b, error=error: (_ for _ in ()).throw(error),
+        )
+        client.post("/sandbox/scenarios/S02/simulation-runs", headers=OWNER)
+
+    refused = [r for r in caplog.records if r.name == "server.main"]
+    assert [r.getMessage() for r in refused] == [
+        "simulation_start_refused reason=simulation_busy",
+        "simulation_start_refused reason=simulation_rate_limited",
+    ]
+    assert all(r.levelname == "WARNING" for r in refused)
+    assert BROWSER not in caplog.text
+
+
+def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> None:
+    """A sweep logs its count; an outage warns once and its recovery is logged."""
+    import asyncio
+
+    from server.sandbox_data import worker
+
+    caplog.set_level("INFO")
+    outcomes = iter([False, False, True])
+
+    def advance() -> int:
+        if not next(outcomes, True):
+            raise worker.SandboxDataUnavailable()
+        return 0
+
+    monkeypatch.setattr(worker, "advance_sandbox_simulation_events", advance)
+    monkeypatch.setattr(worker, "sweep_sandbox_simulation_runs", lambda: 4)
+
+    async def scenario() -> None:
+        stop = asyncio.Event()
+        task = asyncio.create_task(
+            worker.run_simulation_worker(stop, poll_seconds=0.01)
+        )
+        await asyncio.sleep(0.08)
+        stop.set()
+        await asyncio.wait_for(task, timeout=1)
+
+    asyncio.run(scenario())
+    assert _simulation_logs(caplog, "server.sandbox_data.worker") == [
+        "simulation_worker_store_unavailable",
+        "simulation_worker_store_recovered",
+        "simulation_runs_swept count=4",
+    ]

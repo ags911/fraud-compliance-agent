@@ -167,6 +167,6 @@ Remaining, as thin end to end slices:
 
 - [ ] Before any public enablement: an ADR allowing a public database (shared with spec 0002's cases; partly reverses ADR-016), plus a hosting and secrets plan for Neon.
 - [ ] Update `context/architecture.md`'s "Implemented local deterministic simulation runtime": it still says each append recomputes the scenario's aggregates, and does not mention the overlay, ownership, limits or the in API worker (left for its owner, since `context/` has other uncommitted edits).
-- [ ] Server logging for the worker and limits (runs started, 429s, sweeps), owed like spec 0002's case logging.
+- [x] Server logging for the worker and limits (runs started, 429s, sweeps), owed like spec 0002's case logging. Added 2026-09-27: `simulation_run_started scenario_id=…`, `simulation_start_refused reason=…` (warning), `simulation_runs_swept count=…`, and a store outage logged once when it starts and once when it ends. No browser or run IDs are logged.
 - [ ] Consider releasing a run when its viewer disconnects, if closed tabs holding slots becomes a problem.
 - [ ] A versioned API contract for the simulation endpoints under `docs/proposals/schemas/`, accepted with the public database ADR.

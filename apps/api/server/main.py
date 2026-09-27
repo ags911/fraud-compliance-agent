@@ -794,12 +794,16 @@ def create_app() -> FastAPI:
         """
         browser_id = _simulation_browser_id(request)
         try:
-            return SandboxSimulationRun.model_validate(
+            run = SandboxSimulationRun.model_validate(
                 start_sandbox_simulation(scenario_id, browser_id)
             )
         except SimulationBusy as error:
+            logger.warning("simulation_start_refused reason=simulation_busy")
             raise HTTPException(status_code=429, detail="simulation_busy") from error
         except SimulationRateLimited as error:
+            # Log the code only: this error carries the browser ID, which
+            # never appears in logs (spec 0003).
+            logger.warning("simulation_start_refused reason=simulation_rate_limited")
             raise HTTPException(
                 status_code=429, detail="simulation_rate_limited"
             ) from error
@@ -811,6 +815,9 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
+        # The scenario comes from the validated run, never the raw path.
+        logger.info("simulation_run_started scenario_id=%s", run.scenario_id)
+        return run
 
     @app.post(
         "/sandbox/simulation-runs/{run_id}/cancel",

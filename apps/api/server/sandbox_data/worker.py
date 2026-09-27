@@ -7,6 +7,7 @@ run; it never advances the clock. The script stays for a separate job later.
 """
 
 import asyncio
+import logging
 import time
 
 from server.sandbox_data.service import (
@@ -14,6 +15,8 @@ from server.sandbox_data.service import (
     advance_sandbox_simulation_events,
     sweep_sandbox_simulation_runs,
 )
+
+logger = logging.getLogger(__name__)
 
 POLL_SECONDS = 1.0
 # Finished runs older than 7 days are deleted at most this often (spec 0003).
@@ -32,18 +35,27 @@ async def run_simulation_worker(
     Side effects:
         Marks due scheduled events as shown in Neon, and sweeps finished runs
         older than 7 days once an hour. An unavailable store is retried on the
-        next poll rather than stopping the API.
+        next poll rather than stopping the API. Logs each sweep's count, and a
+        store outage once when it starts and once when it ends.
     """
     last_sweep: float | None = None
+    store_down = False
     while not stop.is_set():
         try:
             # psycopg is synchronous, so each poll runs off the event loop.
             await asyncio.to_thread(advance_sandbox_simulation_events)
+            if store_down:
+                logger.info("simulation_worker_store_recovered")
+                store_down = False
             if last_sweep is None or time.monotonic() - last_sweep >= SWEEP_SECONDS:
-                await asyncio.to_thread(sweep_sandbox_simulation_runs)
+                swept = await asyncio.to_thread(sweep_sandbox_simulation_runs)
+                logger.info("simulation_runs_swept count=%d", swept)
                 last_sweep = time.monotonic()
         except SandboxDataUnavailable:
-            pass
+            # Log only the change, not every one second poll of an outage.
+            if not store_down:
+                logger.warning("simulation_worker_store_unavailable")
+                store_down = True
         try:
             await asyncio.wait_for(stop.wait(), timeout=poll_seconds)
         except TimeoutError:
