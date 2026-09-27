@@ -4,9 +4,10 @@ import { isShowcaseCaseId } from "@/lib/showcase-cases"
 
 const PARAM = "case"
 
+// Any non-empty value opens the drawer: a malformed ID then shows "Case not
+// found", and fetchShowcaseCase rejects it before any request (spec 0002 AC-14).
 function readCaseParam(): string | null {
-  const value = new URLSearchParams(window.location.search).get(PARAM)
-  return isShowcaseCaseId(value ?? undefined) ? value : null
+  return new URLSearchParams(window.location.search).get(PARAM) || null
 }
 
 function urlWithCase(href: string, caseId: string | null): string {

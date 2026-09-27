@@ -84,7 +84,7 @@ const COPY = {
   fallback: {
     heading: "This visit's runs",
     description:
-      "Saved cases are unavailable. Check the local API logs for storage status. Only this visit's runs appear here. No payments are executed and no runtime model score is shown.",
+      "Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown.",
     emptyTitle: "No showcase runs yet",
     emptyEnding: "Runs stay in this browser session only.",
     tableTitle: "This visit's decisions",

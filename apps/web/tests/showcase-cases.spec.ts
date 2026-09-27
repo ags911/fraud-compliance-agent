@@ -324,6 +324,22 @@ test.describe("Risk Console Cases tab", () => {
     await expect(page.getByRole("tab", { name: /^Cases/ })).toHaveAttribute("aria-selected", "true")
   })
 
+  test("shows Case not found for a malformed ?case= link without requesting it", async ({ page }) => {
+    await stubCaseList(page)
+    const caseReads: string[] = []
+    page.on("request", (request) => {
+      if (/\/cases\/[^?]/.test(new URL(request.url()).pathname)) caseReads.push(request.url())
+    })
+    await page.goto("/?case=not-a-case")
+
+    const drawer = page.getByRole("dialog")
+    await expect(drawer).toContainText("Case not found")
+    expect(caseReads).toEqual([])
+    await drawer.getByRole("button", { name: "Close" }).click()
+    await expect(drawer).toHaveCount(0)
+    await expect(page).not.toHaveURL(/case=/)
+  })
+
   test("lists a feed case as Live feed and opens it with the carried route and no score", async ({ page }) => {
     await page.route(/\/cases(\?.*)?$/, (route) =>
       route.fulfill({
@@ -359,7 +375,9 @@ test.describe("Risk Console Cases tab", () => {
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()
-    await expect(page.getByText(/Saved cases are unavailable. Check the local API logs for storage status/)).toBeVisible()
+    await expect(page.getByText(/^Not saved: case history is off in this environment\./)).toBeVisible()
+    // Storage off is the public configuration, so no developer instruction shows.
+    await expect(page.getByText(/API logs/)).toHaveCount(0)
     await expect(page.getByRole("combobox", { name: "Filter by recommendation" })).toHaveCount(0)
     await expect(page.locator("a.case-link")).toHaveCount(0)
   })
