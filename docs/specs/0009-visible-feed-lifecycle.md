@@ -1,7 +1,7 @@
 # 0009. Visible feed lifecycle
 
 **Date**: 2026-09-25
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 
