@@ -22,11 +22,27 @@ param apiImage string
 @description('Optional Groq credential from Doppler. Leave empty for recorded-only deployment.')
 param groqApiKey string = ''
 
+@secure()
+@description('Optional PostgreSQL runtime credential from Doppler. Leave empty to keep the showcase database free.')
+param databaseUrl string = ''
+
 @description('Optional operator-selected Groq model. There is deliberately no repository default.')
 param showcaseGroqModel string = ''
 
 @description('Comma-separated server-side allowlist for the optional Groq model.')
 param showcaseGroqAllowedModels string = ''
+
+@description('Enable saved showcase cases only when a guarded public database is ready.')
+param showcaseCasesEnabled string = 'false'
+
+@description('Enable the in-API simulation worker only when a guarded public database is ready.')
+param simulationWorkerEnabled string = 'false'
+
+@description('Enable public database guard limits only after ingress forwarding is confirmed.')
+param publicDatabaseGuardsEnabled string = 'false'
+
+@description('Number of trusted ingress proxy hops for client identity derivation.')
+param showcaseTrustedProxyHops string = '0'
 
 @description('Optional resource tags for ownership and cost tracing.')
 param tags object = {
@@ -71,12 +87,20 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
     managedEnvironmentId: containerEnvironment.id
     configuration: {
       activeRevisionsMode: 'Single'
-      secrets: empty(groqApiKey) ? [] : [
-        {
-          name: 'groq-api-key'
-          value: groqApiKey
-        }
-      ]
+      secrets: concat(
+        empty(groqApiKey) ? [] : [
+          {
+            name: 'groq-api-key'
+            value: groqApiKey
+          }
+        ],
+        empty(databaseUrl) ? [] : [
+          {
+            name: 'database-url'
+            value: databaseUrl
+          }
+        ]
+      )
       ingress: {
         external: true
         targetPort: 8000
@@ -118,10 +142,31 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
                 name: 'SHOWCASE_GROQ_ALLOWED_MODELS'
                 value: showcaseGroqAllowedModels
               }
+              {
+                name: 'SHOWCASE_CASES_ENABLED'
+                value: showcaseCasesEnabled
+              }
+              {
+                name: 'SIMULATION_WORKER_ENABLED'
+                value: simulationWorkerEnabled
+              }
+              {
+                name: 'PUBLIC_DATABASE_GUARDS_ENABLED'
+                value: publicDatabaseGuardsEnabled
+              }
+              {
+                name: 'SHOWCASE_TRUSTED_PROXY_HOPS'
+                value: showcaseTrustedProxyHops
+              }
             ], empty(groqApiKey) ? [] : [
               {
                 name: 'GROQ_API_KEY'
                 secretRef: 'groq-api-key'
+              }
+            ], empty(databaseUrl) ? [] : [
+              {
+                name: 'DATABASE_URL'
+                secretRef: 'database-url'
               }
             ])
         }

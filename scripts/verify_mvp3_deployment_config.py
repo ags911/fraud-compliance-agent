@@ -45,6 +45,9 @@ def main() -> None:
         "az deployment group create",
         "az staticwebapp secrets list",
         "make acceptance-mvp3-public",
+        "apply_sandbox_migrations:",
+        "SHOWCASE_APPLY_SANDBOX_MIGRATIONS",
+        "scripts/apply_sandbox_migrations.py",
     ):
         _require(workflow, fragment, ".github/workflows/deploy-showcase.yml")
 
@@ -73,8 +76,36 @@ def main() -> None:
         "value: 'false'",
         "secretRef: 'groq-api-key'",
         "@secure()",
+        "param databaseUrl string = ''",
+        "name: 'DATABASE_URL'",
+        "secretRef: 'database-url'",
     ):
         _require(main_bicep, fragment, "infra/azure/main.bicep")
+
+    if re.search(r"name:\s*'DATABASE_URL'\s*\n\s*value:", main_bicep):
+        raise SystemExit(
+            "DATABASE_URL must use a Container App secret reference, not value."
+        )
+
+    required_settings = {
+        "SHOWCASE_CASES_ENABLED": "false",
+        "SIMULATION_WORKER_ENABLED": "false",
+        "PUBLIC_DATABASE_GUARDS_ENABLED": "false",
+        "SHOWCASE_TRUSTED_PROXY_HOPS": "0",
+    }
+    for setting, default in required_settings.items():
+        _require(main_bicep, f"name: '{setting}'", "infra/azure/main.bicep")
+        if setting != "SHOWCASE_TRUSTED_PROXY_HOPS" and re.search(
+            rf"name:\s*'{setting}'\s*\n\s*value:\s*'true'", main_bicep
+        ):
+            raise SystemExit(f"{setting} must default to false.")
+        parameter = "".join(part.title() for part in setting.lower().split("_"))
+        parameter = parameter[0].lower() + parameter[1:]
+        _require(
+            main_bicep,
+            f"param {parameter} string = '{default}'",
+            "infra/azure/main.bicep",
+        )
     for fragment in ("threshold: 80", "threshold: 100", "contactEmails"):
         _require(subscription_bicep, fragment, "infra/azure/subscription.bicep")
 

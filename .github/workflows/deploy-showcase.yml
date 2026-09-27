@@ -8,6 +8,11 @@ on:
         required: true
         default: false
         type: boolean
+      apply_sandbox_migrations:
+        description: Apply guarded public Sandbox migrations after deployment credentials are available
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: public-showcase
@@ -139,12 +144,38 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Set up uv for guarded Sandbox migrations
+        if: ${{ inputs.apply_sandbox_migrations || vars.SHOWCASE_APPLY_SANDBOX_MIGRATIONS == 'true' }}
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+
+      - name: Apply guarded Sandbox migrations
+        if: ${{ inputs.apply_sandbox_migrations || vars.SHOWCASE_APPLY_SANDBOX_MIGRATIONS == 'true' }}
+        env:
+          DATABASE_URL: ${{ steps.doppler.outputs.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Sandbox migrations require DATABASE_URL from Doppler." >&2
+            exit 1
+          fi
+          cd apps/api
+          uv sync --frozen
+          uv run python scripts/apply_sandbox_migrations.py
+
       - name: Review the resource-group deployment
         env:
           GROQ_API_KEY: ${{ steps.doppler.outputs.GROQ_API_KEY }}
+          DATABASE_URL: ${{ steps.doppler.outputs.DATABASE_URL }}
           SHOWCASE_GROQ_MODEL: ${{ steps.doppler.outputs.SHOWCASE_GROQ_MODEL }}
           SHOWCASE_GROQ_ALLOWED_MODELS: ${{ steps.doppler.outputs.SHOWCASE_GROQ_ALLOWED_MODELS }}
+          SHOWCASE_CASES_ENABLED: ${{ vars.SHOWCASE_CASES_ENABLED || 'false' }}
+          SIMULATION_WORKER_ENABLED: ${{ vars.SIMULATION_WORKER_ENABLED || 'false' }}
+          PUBLIC_DATABASE_GUARDS_ENABLED: ${{ vars.PUBLIC_DATABASE_GUARDS_ENABLED || 'false' }}
+          SHOWCASE_TRUSTED_PROXY_HOPS: ${{ vars.SHOWCASE_TRUSTED_PROXY_HOPS || '0' }}
         run: |
+          database_parameter=()
+          if [ -n "$DATABASE_URL" ]; then
+            database_parameter+=(databaseUrl="$DATABASE_URL")
+          fi
           az deployment group what-if \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --template-file infra/azure/main.bicep \
@@ -157,16 +188,30 @@ jobs:
               apiImage="${{ steps.image.outputs.reference }}" \
               groqApiKey="$GROQ_API_KEY" \
               showcaseGroqModel="$SHOWCASE_GROQ_MODEL" \
-              showcaseGroqAllowedModels="$SHOWCASE_GROQ_ALLOWED_MODELS"
+              showcaseGroqAllowedModels="$SHOWCASE_GROQ_ALLOWED_MODELS" \
+              showcaseCasesEnabled="$SHOWCASE_CASES_ENABLED" \
+              simulationWorkerEnabled="$SIMULATION_WORKER_ENABLED" \
+              publicDatabaseGuardsEnabled="$PUBLIC_DATABASE_GUARDS_ENABLED" \
+              showcaseTrustedProxyHops="$SHOWCASE_TRUSTED_PROXY_HOPS" \
+              "${database_parameter[@]}"
 
       - name: Deploy the API and static site resources
         id: azure
         env:
           GROQ_API_KEY: ${{ steps.doppler.outputs.GROQ_API_KEY }}
+          DATABASE_URL: ${{ steps.doppler.outputs.DATABASE_URL }}
           SHOWCASE_GROQ_MODEL: ${{ steps.doppler.outputs.SHOWCASE_GROQ_MODEL }}
           SHOWCASE_GROQ_ALLOWED_MODELS: ${{ steps.doppler.outputs.SHOWCASE_GROQ_ALLOWED_MODELS }}
+          SHOWCASE_CASES_ENABLED: ${{ vars.SHOWCASE_CASES_ENABLED || 'false' }}
+          SIMULATION_WORKER_ENABLED: ${{ vars.SIMULATION_WORKER_ENABLED || 'false' }}
+          PUBLIC_DATABASE_GUARDS_ENABLED: ${{ vars.PUBLIC_DATABASE_GUARDS_ENABLED || 'false' }}
+          SHOWCASE_TRUSTED_PROXY_HOPS: ${{ vars.SHOWCASE_TRUSTED_PROXY_HOPS || '0' }}
         run: |
           deployment="showcase-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          database_parameter=()
+          if [ -n "$DATABASE_URL" ]; then
+            database_parameter+=(databaseUrl="$DATABASE_URL")
+          fi
           az deployment group create \
             --name "$deployment" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
@@ -181,6 +226,11 @@ jobs:
               groqApiKey="$GROQ_API_KEY" \
               showcaseGroqModel="$SHOWCASE_GROQ_MODEL" \
               showcaseGroqAllowedModels="$SHOWCASE_GROQ_ALLOWED_MODELS" \
+              showcaseCasesEnabled="$SHOWCASE_CASES_ENABLED" \
+              simulationWorkerEnabled="$SIMULATION_WORKER_ENABLED" \
+              publicDatabaseGuardsEnabled="$PUBLIC_DATABASE_GUARDS_ENABLED" \
+              showcaseTrustedProxyHops="$SHOWCASE_TRUSTED_PROXY_HOPS" \
+              "${database_parameter[@]}" \
             --only-show-errors \
             --output none
           api_fqdn="$(az deployment group show \
