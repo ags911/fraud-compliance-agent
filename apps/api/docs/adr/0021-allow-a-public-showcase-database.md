@@ -122,7 +122,9 @@ Guards required before enablement:
   sweeps. Sanitised Sandbox datasets are reference data and are not
   personal data.
 - **Contracts.** The simulation endpoints get a versioned contract
-  (`sandbox-simulation.v1`) accepted with this ADR or before enablement;
+  (`sandbox-simulation.v1`, drafted as
+  `docs/proposals/schemas/sandbox-simulation.v0.proposed.openapi.json`)
+  accepted with this ADR or before enablement;
   saved cases use `showcase-cases.v1` from ADR-020.
 
 ## Verification

@@ -1,6 +1,7 @@
 """Tests for the deterministic, sanitised Sandbox scenario data slice."""
 
 import json
+import re
 from datetime import date
 
 from fastapi.testclient import TestClient
@@ -867,3 +868,54 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
         "simulation_worker_store_recovered",
         "simulation_runs_swept count=4",
     ]
+
+
+SIMULATION_CONTRACT = "docs/proposals/schemas/sandbox-simulation.v0.proposed.openapi.json"
+
+
+def _simulation_contract(repository_root) -> dict:
+    return json.loads((repository_root / SIMULATION_CONTRACT).read_text(encoding="utf-8"))
+
+
+def test_run_responses_match_the_proposed_simulation_contract(
+    monkeypatch, repository_root
+) -> None:
+    """Start, status and cancel bodies, with and without a snapshot, fit the contract."""
+    contract = _simulation_contract(repository_root)
+    validator = Draft202012Validator(
+        {"$ref": "#/components/schemas/SimulationRun", "components": contract["components"]}
+    )
+    mixed = {**_run(), "scenario_id": "MIX", "fixture_version": None}
+    monkeypatch.setattr(main, "start_sandbox_simulation", lambda s, b: mixed)
+    monkeypatch.setattr(
+        main,
+        "cancel_sandbox_simulation",
+        lambda r, b: {**_run(r, "cancelled", 9), "routing_snapshot": _routing(3, 2, 4)},
+    )
+    client = TestClient(create_app())
+
+    bodies = [
+        client.post("/sandbox/scenarios/MIX/simulation-runs", headers=OWNER).json(),
+        client.post("/sandbox/simulation-runs/run-test/cancel", headers=OWNER).json(),
+    ]
+
+    for body in bodies:
+        assert list(validator.iter_errors(body)) == []
+
+
+def test_every_simulation_error_code_is_in_the_proposed_contract(repository_root) -> None:
+    """A route may only answer with a code the contract lists."""
+    listed = set(
+        _simulation_contract(repository_root)["components"]["schemas"]["Error"][
+            "properties"
+        ]["detail"]["enum"]
+    )
+    source = (repository_root / "apps/api/server/main.py").read_text(encoding="utf-8")
+    # Every simulation and Sandbox code the routes raise, plus the header check.
+    used = {
+        code
+        for code in re.findall(r'detail="([a-z_]+)"', source)
+        if code.startswith(("sandbox_", "simulation_")) or code == "invalid_browser_id"
+    }
+
+    assert used == listed
