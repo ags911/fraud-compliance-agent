@@ -1,6 +1,6 @@
 # ADR-021 — Allow the public showcase one guarded PostgreSQL database
 
-Status: Proposed  
+Status: Accepted  
 Date: 2026-09-27  
 Owner: Darren Gidado (product owner)  
 PRD revision/sections: Candidate v0.3  
@@ -184,6 +184,6 @@ Before enablement:
 
 ## Acceptance record
 
-Accepted by:  
-Date:  
-Notes:  
+Accepted by: Darren Gidado (product owner)  
+Date: 2026-09-28  
+Notes: Accepted as written, by the owner's explicit choice in a Claude Code session; recorded by Claude on that instruction. This accepts the proposed privacy position (treat the 30 day browser ID as personal data, add a short privacy note, store nothing else about visitors) and the recorded limits and ceilings. Public switch-on still requires every guard and every check in Verification: the guards are built behind `PUBLIC_DATABASE_GUARDS_ENABLED`; the staging deployment, the ingress header confirmation, the budget alert test, the rollback drill and the privacy note remain. `sandbox-simulation.v1` must be accepted before enablement.  
