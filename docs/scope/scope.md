@@ -35,7 +35,7 @@ The Risk Console opens on a feed that interleaves S01 to S05 payments. Each paym
   - [x] Migration, mixed schedule, run start, reveal and overlays (AC 2 to AC 5)
   - [x] Picker default, combined Scenario tab, guards (AC 1, AC 6, AC 7)
   - [x] Routing board single-route line (AC 8)
-- [ ] Verify it: /check verify mixed feed
+- [x] Verify it: /check verify mixed feed
 - [ ] Test it: /test mixed feed
 
 ### 3. Visible feed lifecycle · in-progress

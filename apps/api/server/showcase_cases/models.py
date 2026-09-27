@@ -1,6 +1,6 @@
 """Strict response models for the internal case routes (proposed contract).
 
-They mirror ``docs/proposals/schemas/showcase-cases.v0.proposed.schema.json``.
+They mirror ``docs/contracts/showcase-cases.v1.schema.json``.
 Stored event payloads stay plain dictionaries: they are the accepted
 public-showcase-events.v1 payloads, validated against that schema on write.
 """

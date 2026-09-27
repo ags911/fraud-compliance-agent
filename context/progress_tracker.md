@@ -180,10 +180,9 @@ Accepted as a feature on 2026-09-27** (built locally; `/check verify` passed
 all 40 steps against a local API and Neon). The public showcase stays database
 free. Scope is F4
 only, narrowed to a durable record of completed runs; 19 acceptance
-criteria, three Tracer Bullet slices. Prerequisites before it is a runtime
-contract: ADR-020 (Proposed 2026-09-27) accepting `showcase-cases.v1` and case
-persistence; any
-public enablement additionally needs an ADR revisiting ADR-016, a rate
+criteria, three Tracer Bullet slices. ADR-020 accepted `showcase-cases.v1` and case
+persistence for local and internal use on 2026-09-27; any
+public enablement additionally needs ADR-021 (Proposed), a rate
 limit, an expiry sweep and a hosting/secrets plan.
 
 **Proposed regulatory-reference increment:** F4 may add a curated, dated FCA
@@ -272,7 +271,7 @@ implementation."
 | 0017 | Implement public-showcase runtime | **Accepted** (2026-09-20) | Implements `apps/api/server/showcase_investigation/`; live mode off by default; no model identifier invented |
 | 0018 | Accept Plaid Sandbox-derived showcase fixture enrichment rules | **Accepted for its narrow boundary; superseded in part by 0019** (2026-09-22) | 6 derivation rules for a future `scenarios.v2` packet; found S01/S02 rules have no runtime effect |
 | 0019 | Accept Plaid Sandbox-derived S04 account-activity evidence | **Accepted** (2026-09-22) | Widens `EvidenceItem.source_class` to include `plaid_sandbox_derived`; adds one S04 evidence item; fixture packet → v1.1 |
-| 0020 | Accept local case persistence and the showcase cases contract | Proposed (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
+| 0020 | Accept local case persistence and the showcase cases contract | **Accepted** (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
 | 0021 | Allow the public showcase one guarded PostgreSQL database | Proposed (2026-09-27) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
 
 Full per-ADR invariants are preserved in

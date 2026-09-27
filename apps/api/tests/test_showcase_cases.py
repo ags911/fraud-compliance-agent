@@ -39,7 +39,7 @@ from server.showcase_cases.settings import load_case_settings, valid_browser_id
 from server.showcase_cases.stream import CaseRecorder, record_case_stream
 
 BROWSER_ID = "3f2b8c1e-9a4d-4b6e-8f0a-1c2d3e4f5a6b"
-PROPOSED_SCHEMA = "docs/proposals/schemas/showcase-cases.v0.proposed.schema.json"
+CASES_CONTRACT = "docs/contracts/showcase-cases.v1.schema.json"
 EVENTS_SCHEMA = "docs/contracts/public-showcase-events.v1.schema.json"
 
 
@@ -345,7 +345,7 @@ def test_read_shapes_match_the_proposed_contract(
     repository_root: Path, validator: EventValidator
 ) -> None:
     """AC-6, AC-7: summaries, totals and details validate against the draft schema."""
-    schema = json.loads((repository_root / PROPOSED_SCHEMA).read_text(encoding="utf-8"))
+    schema = json.loads((repository_root / CASES_CONTRACT).read_text(encoding="utf-8"))
     proposed = Draft202012Validator(schema)
     defs = schema["$defs"]
     record = build_case(_captured(_frames("S04")), validator)
@@ -385,13 +385,14 @@ def test_read_shapes_match_the_proposed_contract(
     assert "browser_id" not in summary
 
 
-def test_proposed_contract_is_not_presented_as_accepted(repository_root: Path) -> None:
-    """The draft stays a proposal until an ADR accepts it."""
-    schema = json.loads((repository_root / PROPOSED_SCHEMA).read_text(encoding="utf-8"))
+def test_the_contract_is_accepted_and_the_proposal_is_gone(repository_root: Path) -> None:
+    """ADR-020 accepted the cases contract; only the accepted copy remains."""
+    schema = json.loads((repository_root / CASES_CONTRACT).read_text(encoding="utf-8"))
 
-    assert schema["x-approval-status"] == "proposed"
+    assert schema["x-approval-status"] == "accepted"
+    assert schema["x-contract-version"] == "1.0"
     assert not (
-        repository_root / "docs/contracts/showcase-cases.v1.schema.json"
+        repository_root / "docs/proposals/schemas/showcase-cases.v0.proposed.schema.json"
     ).exists()
 
 
@@ -659,7 +660,7 @@ def test_list_returns_this_browsers_cases_newest_first_with_totals(
 
     reply = client.get("/cases", headers=_key())
     body = reply.json()
-    schema = json.loads((repository_root / PROPOSED_SCHEMA).read_text(encoding="utf-8"))
+    schema = json.loads((repository_root / CASES_CONTRACT).read_text(encoding="utf-8"))
     Draft202012Validator(
         {**schema["$defs"]["caseListResponse"], "$defs": schema["$defs"]}
     ).validate(body)

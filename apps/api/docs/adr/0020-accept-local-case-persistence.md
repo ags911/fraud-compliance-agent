@@ -1,6 +1,6 @@
 # ADR-020 — Accept local case persistence and the showcase cases contract
 
-Status: Proposed  
+Status: Accepted  
 Date: 2026-09-27  
 Owner: Darren Gidado (product owner)  
 PRD revision/sections: Candidate v0.3  
@@ -153,6 +153,6 @@ test fails if a read response drifts from `showcase-cases.v1`.
 
 ## Acceptance record
 
-Accepted by:  
-Date:  
-Notes:  
+Accepted by: Darren Gidado (product owner)  
+Date: 2026-09-27  
+Notes: Accepted as written, by the owner's explicit choice in a Claude Code session; recorded by Claude on that instruction. On acceptance the schema moved to `docs/contracts/showcase-cases.v1.schema.json` with its shapes unchanged, and the tests now read it there. The open questions stay open; the privacy question must be answered by ADR-021 before any public use.  

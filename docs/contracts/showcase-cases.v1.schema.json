@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "showcase-cases.v0.proposed.schema.json",
-  "title": "Showcase cases read responses (proposed)",
-  "description": "Proposed read contract for durable showcase investigation cases (spec 0002). Not accepted: it may move to docs/contracts/ as v1 only through an ADR. The stored events inside a case are the accepted public-showcase-events.v1 payloads, unchanged.",
-  "x-contract-version": "0.1",
-  "x-approval-status": "proposed",
+  "$id": "showcase-cases.v1.schema.json",
+  "title": "Showcase cases read responses",
+  "description": "Read contract for durable showcase investigation cases (spec 0002), accepted by ADR-020 on 2026-09-27 for local and internal use; public use needs ADR-021. The stored events inside a case are the accepted public-showcase-events.v1 payloads, unchanged.",
+  "x-contract-version": "1.0",
+  "x-approval-status": "accepted",
   "x-runtime-consumption": "internal-only",
   "x-request-header": {
     "name": "X-Showcase-Browser-Id",

@@ -3,7 +3,7 @@ import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 /**
  * Types and fetchers for durable showcase cases, mirroring the proposed
- * `docs/proposals/schemas/showcase-cases.v0.proposed.schema.json` (spec 0002).
+ * `docs/contracts/showcase-cases.v1.schema.json` (spec 0002).
  * Internal and not yet an accepted contract.
  */
 
