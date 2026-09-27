@@ -12,6 +12,10 @@ from psycopg import sql
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+from server.public_database_guards import (
+    load_public_database_guard_settings,
+    table_has_capacity,
+)
 from server.showcase_cases.capture import (
     CONTRACT_VERSION,
     MAX_CASES_BY_ORIGIN,
@@ -28,6 +32,7 @@ CaseStorageDiagnostic = Literal[
     "case_schema_unavailable",
     "database_query_timed_out",
     "case_storage_failed",
+    "storage_ceiling",
 ]
 
 _SUMMARY_COLUMNS = (
@@ -94,6 +99,10 @@ class CaseNotFound(LookupError):
 
 class InvalidCursor(ValueError):
     """Signal a paging cursor that does not decode to a valid position."""
+
+
+class CaseStorageCeiling(RuntimeError):
+    """Signal that the opt-in showcase case row ceiling has been reached."""
 
 
 def case_storage_diagnostic(error: psycopg.Error) -> CaseStorageDiagnostic:
@@ -230,6 +239,20 @@ class PsycopgCaseRepository:
         cursor.execute(
             "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (browser_id,)
         )
+        settings = load_public_database_guard_settings()
+        if settings.enabled:
+            # Prune this browser before the guarded estimate, so expired rows
+            # never needlessly refuse a new public showcase case.
+            cursor.execute(
+                "DELETE FROM showcase_cases WHERE browser_id = %s AND expires_at <= now()",
+                (browser_id,),
+            )
+            # The guarded public store avoids another durable case when its
+            # cached one-minute relation estimate is at the operator ceiling.
+            if not table_has_capacity(
+                cursor, "showcase_cases", settings.case_row_ceiling
+            ):
+                raise CaseStorageCeiling()
         cursor.execute(
             _INSERT_CASE,
             (browser_id, *(getattr(record, column) for column in _SUMMARY_COLUMNS)),
@@ -250,10 +273,6 @@ class PsycopgCaseRepository:
                 )
                 for event in record.events
             ],
-        )
-        cursor.execute(
-            "DELETE FROM showcase_cases WHERE browser_id = %s AND expires_at <= now()",
-            (browser_id,),
         )
         cursor.execute(
             """DELETE FROM showcase_cases WHERE browser_id = %s AND origin = %s AND case_id NOT IN (
@@ -283,6 +302,28 @@ class PsycopgCaseRepository:
         with self._connect() as connection, connection.cursor() as cursor:
             self._limit_statements(cursor)
             self.insert_case(cursor, record, browser_id)
+
+    def sweep_expired_cases(self) -> int:
+        """Delete expired showcase cases and return the number removed.
+
+        Returns:
+            Number of expired case rows deleted; events are removed by the
+            existing foreign-key cascade.
+
+        Raises:
+            CasesUnavailable: If the case store cannot perform the sweep.
+
+        Side effects:
+            Deletes expired durable showcase cases without reading or logging
+            their browser IDs, case IDs, or payloads.
+        """
+        try:
+            with self._connect() as connection, connection.cursor() as cursor:
+                self._limit_statements(cursor)
+                cursor.execute("DELETE FROM showcase_cases WHERE expires_at <= now()")
+                return cursor.rowcount
+        except psycopg.Error as error:
+            raise CasesUnavailable(case_storage_diagnostic(error)) from error
 
     def list_cases(
         self,

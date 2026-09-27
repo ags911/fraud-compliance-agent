@@ -57,6 +57,7 @@ specific to `apps/api`.
 - Log with `logging.getLogger(__name__)`; `create_app()` shows the `server`
   logger at `API_LOG_LEVEL` (default `INFO`). Log fixed categories only: never
   payloads, driver messages, or browser, run or case IDs.
+- Public database guards are opt-in with `PUBLIC_DATABASE_GUARDS_ENABLED`; their settings are `SHOWCASE_TRUSTED_PROXY_HOPS`, `SHOWCASE_CLIENT_FEED_STARTS_PER_MINUTE`, `SHOWCASE_CLIENT_CASE_READS_PER_MINUTE`, `SHOWCASE_CASE_ROW_CEILING`, `SHOWCASE_SIMULATION_RUN_ROW_CEILING`, and `SHOWCASE_SIMULATION_EVENT_ROW_CEILING`.
 - Security review is automated first: `make api-lint` runs Ruff's security
   rules (`S`) on `server/` with no exceptions, and the developer-only notebooks
   and scripts have a short, justified ignore list in `pyproject.toml`. Fix a

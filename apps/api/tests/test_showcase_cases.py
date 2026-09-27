@@ -558,6 +558,99 @@ def test_case_errors_follow_the_fixed_order(cases_enabled, monkeypatch) -> None:
     assert disabled.json()["detail"]["code"] == "cases_unavailable"
 
 
+def test_case_read_limit_runs_after_storage_check_and_before_browser_check(
+    monkeypatch,
+) -> None:
+    """The opt-in read limit is shared by browser IDs and preserves error order."""
+    monkeypatch.setenv("PUBLIC_DATABASE_GUARDS_ENABLED", "true")
+    monkeypatch.setenv("SHOWCASE_CLIENT_CASE_READS_PER_MINUTE", "1")
+    # Recreate after configuring the process-local limiter.
+    from server import main
+
+    monkeypatch.setenv("SHOWCASE_CASES_ENABLED", "true")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example/db")
+    repositories: list[ListingCaseRepository] = []
+
+    def build(database_url: str) -> ListingCaseRepository:
+        repository = ListingCaseRepository(database_url)
+        repositories.append(repository)
+        return repository
+
+    monkeypatch.setattr(main, "PsycopgCaseRepository", build)
+    limited = TestClient(main.create_app())
+    first = limited.get("/cases", headers=_key(BROWSER_ID))
+    second = limited.get("/cases", headers=_key("7c9e6679-7425-40de-944b-e07fc1f90ae7"))
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert second.json()["detail"]["code"] == "cases_rate_limited"
+
+
+def test_case_storage_ceiling_is_logged_as_a_non_identifying_save_failure(
+    validator: EventValidator, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A ceiling leaves the stream intact and emits only its fixed failure class."""
+    from server.showcase_cases.repository import CaseStorageCeiling
+
+    class CeilingStore(MemoryStore):
+        """Reject every save as if the global case row ceiling were reached."""
+
+        def save_case(self, record: CaseRecord, browser_id: str) -> None:
+            raise CaseStorageCeiling()
+
+    caplog.set_level(logging.INFO)
+    frames = _frames("S04")
+
+    assert _run(frames, CaseRecorder(CeilingStore(), validator), BROWSER_ID) == frames
+    [record] = _case_logs(caplog)
+    assert record.getMessage() == "case_persist_failed failure_class=storage_ceiling"
+    assert BROWSER_ID not in caplog.text
+
+
+def test_case_sweep_deletes_expired_rows_and_relies_on_the_event_cascade(
+    monkeypatch,
+) -> None:
+    """The hourly worker repository operation removes expired cases without IDs."""
+    from server.showcase_cases.repository import PsycopgCaseRepository
+
+    statements: list[str] = []
+
+    class SweepCursor:
+        """Record the fixed expiry query and report two expired rows."""
+
+        rowcount = 2
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info) -> None:
+            return None
+
+        def execute(self, query, params=None) -> None:
+            statements.append(str(query))
+
+    class SweepConnection:
+        """Provide the repository context-manager surface without a database."""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info) -> None:
+            return None
+
+        def cursor(self) -> SweepCursor:
+            return SweepCursor()
+
+    repository = PsycopgCaseRepository("postgresql://example/db")
+    monkeypatch.setattr(repository, "_connect", lambda **options: SweepConnection())
+
+    assert repository.sweep_expired_cases() == 2
+    assert any(
+        "DELETE FROM showcase_cases WHERE expires_at <= now()" in query
+        for query in statements
+    )
+
+
 def test_storage_off_means_no_repository_is_ever_built(monkeypatch) -> None:
     """AC-15: with the flag unset, no database client is created at all."""
     import server.main as main

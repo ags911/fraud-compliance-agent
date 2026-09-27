@@ -13,6 +13,7 @@ import time
 from server.sandbox_data.service import (
     SandboxDataUnavailable,
     advance_sandbox_simulation_events,
+    sweep_expired_showcase_cases,
     sweep_sandbox_simulation_runs,
 )
 
@@ -34,9 +35,9 @@ async def run_simulation_worker(
 
     Side effects:
         Marks due scheduled events as shown in Neon, and sweeps finished runs
-        older than 7 days once an hour. An unavailable store is retried on the
-        next poll rather than stopping the API. Logs each sweep's count, and a
-        store outage once when it starts and once when it ends.
+        plus expired showcase cases once an hour. An unavailable store is
+        retried on the next poll rather than stopping the API. Logs each sweep's
+        count, and a store outage once when it starts and once when it ends.
     """
     last_sweep: float | None = None
     store_down = False
@@ -50,6 +51,8 @@ async def run_simulation_worker(
             if last_sweep is None or time.monotonic() - last_sweep >= SWEEP_SECONDS:
                 swept = await asyncio.to_thread(sweep_sandbox_simulation_runs)
                 logger.info("simulation_runs_swept count=%d", swept)
+                swept_cases = await asyncio.to_thread(sweep_expired_showcase_cases)
+                logger.info("showcase_cases_swept count=%d", swept_cases)
                 last_sweep = time.monotonic()
         except SandboxDataUnavailable:
             # Log only the change, not every one second poll of an outage.

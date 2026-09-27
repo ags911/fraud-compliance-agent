@@ -433,6 +433,66 @@ def test_start_simulation_endpoint_maps_both_limits_to_429(monkeypatch) -> None:
         assert BROWSER not in response.text
 
 
+def test_client_feed_limit_cannot_be_bypassed_by_minting_browser_ids(
+    monkeypatch,
+) -> None:
+    """A server-derived client hits its own feed limit across fresh browser keys."""
+    monkeypatch.setenv("PUBLIC_DATABASE_GUARDS_ENABLED", "true")
+    monkeypatch.setenv("SHOWCASE_CLIENT_FEED_STARTS_PER_MINUTE", "2")
+    monkeypatch.setattr(service, "_client_start_limiter", None)
+    monkeypatch.setattr(service, "_client_start_limit", None)
+    calls: list[str] = []
+
+    def fake(scenario_id: str, browser_id: str) -> dict:
+        calls.append(browser_id)
+        return _run(f"run-{len(calls)}")
+
+    monkeypatch.setattr(main, "start_sandbox_simulation", fake)
+    client = TestClient(create_app())
+    browser_ids = [
+        "0b6f2d4e-7a1c-4e8b-9f3a-2c5d8e1f4a6b",
+        "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "e7d9c35a-1a77-4c1e-8f57-7771e1bf9c2a",
+    ]
+
+    responses = [
+        client.post(
+            "/sandbox/scenarios/S02/simulation-runs",
+            headers={"X-Showcase-Browser-Id": browser_id},
+        )
+        for browser_id in browser_ids
+    ]
+
+    assert [response.status_code for response in responses] == [200, 200, 429]
+    assert responses[-1].json() == {"detail": "simulation_rate_limited"}
+    assert calls == browser_ids[:2]
+
+
+def test_start_simulation_maps_a_storage_ceiling_to_the_existing_503(
+    monkeypatch,
+) -> None:
+    """A row ceiling refuses a feed start without widening the simulation contract."""
+    monkeypatch.setattr(
+        main,
+        "admit_client_simulation_start",
+        lambda client_identity: None,
+    )
+    monkeypatch.setattr(
+        main,
+        "start_sandbox_simulation",
+        lambda scenario_id, browser_id: (_ for _ in ()).throw(
+            main.SimulationStorageCeiling()
+        ),
+    )
+
+    response = TestClient(create_app()).post(
+        "/sandbox/scenarios/S02/simulation-runs", headers=OWNER
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "sandbox_scenario_data_unavailable"}
+
+
 def test_simulation_event_stream_sends_real_sse_frames(monkeypatch) -> None:
     """Frame each state change with real line breaks, for a fetch based reader."""
     calls = []
@@ -852,6 +912,7 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
 
     monkeypatch.setattr(worker, "advance_sandbox_simulation_events", advance)
     monkeypatch.setattr(worker, "sweep_sandbox_simulation_runs", lambda: 4)
+    monkeypatch.setattr(worker, "sweep_expired_showcase_cases", lambda: 3)
 
     async def scenario() -> None:
         stop = asyncio.Event()
@@ -867,6 +928,7 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
         "simulation_worker_store_unavailable",
         "simulation_worker_store_recovered",
         "simulation_runs_swept count=4",
+        "showcase_cases_swept count=3",
     ]
 
 

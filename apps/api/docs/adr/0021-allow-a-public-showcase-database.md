@@ -173,6 +173,10 @@ Before enablement:
   scales to zero, so feeds advance only while a replica is warm (an open
   stream keeps it warm). Is that acceptable, or should the worker run as a
   separate scheduled job?
+- **Ingress forwarding.** The guard implementation assumes Container Apps
+  ingress appends its observed source address to `X-Forwarded-For`.
+  Confirm the exact header chain in staging before setting
+  `SHOWCASE_TRUSTED_PROXY_HOPS` above zero.
 - **Ceiling values** (answered by the owner on 2026-09-27). Per client: 20
   feed starts and 60 case reads per minute; the per browser start limit
   stays 10. Row ceilings: 20,000 cases, 2,000 feed runs, 400,000 feed
