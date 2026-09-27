@@ -28,11 +28,11 @@ The existing `sandbox_simulation_events` schedule holds 200 payments per S01 to 
 **Acceptance criteria**:
 
 1. **AC 1**: While the selected scenario has a live or finished feed run, the Cases tab displays a board with one input stream and three labelled outcome lanes, PASS, CHALLENGE, and HOLD.
-2. **AC 2**: A newly revealed feed payment appears once, travels from the input stream to the lane named by its existing deterministic recommendation, and increments only that lane count.
+2. **AC 2** (amended 2026-09-27): Each newly revealed feed payment increments only the count of the lane named by its existing deterministic recommendation. The newest routed payment (the highest `sequence` across the snapshot's `recent` lists, when it rises between two `simulation_state` frames) travels from the input stream to that lane. If several payments are revealed between two frames, every count is exact and only the newest animates.
 3. **AC 3**: Each lane keeps at most 18 visible settled tokens. Earlier tokens are removed from the visible collection only, while the lane count continues to show every revealed feed payment in that outcome.
 4. **AC 4** (moved to Follow up on 2026-09-27, not built): The internal feed stream emits one `routing_decision` frame for every newly revealed payment, including only `event_id`, `sequence`, and `recommendation`. The browser reconnects with its last received sequence and the server replays every later revealed decision before continuing live frames.
 5. **AC 5**: Each `simulation_state` frame includes a routing snapshot with the total count and up to 18 newest opaque revealed decisions for every outcome. The snapshot is one consistent read of the caller's run, ordered by descending sequence.
-6. **AC 6**: The board is driven only by the existing feed state, routing frames, and routing snapshot. It neither writes data nor accepts route changes, and it does not display a model score or an invented risk value.
+6. **AC 6**: The board is driven only by the existing feed state and the routing snapshot on `simulation_state` frames (amended 2026-09-27; there are no separate routing frames). It neither writes data nor accepts route changes, and it does not display a model score or an invented risk value.
 7. **AC 7**: With no live run, an unavailable feed, or an unsupported workflow scenario, the board shows an explicit quiet state and leaves the Cases table behaviour unchanged.
 8. **AC 8**: Motion is reduced when the operating system requests reduced motion. The outcome and count remain visible without travel animation, and the board remains understandable below 700 pixels wide.
 9. **AC 9**: While the chart is drawn, the board header has one disclosure button, "Hide board" or "Show board", with `aria-expanded` and `aria-controls` naming the chart area. It is visible by default. Hiding removes the chart and the screen reader count list; the "Last routed #N → OUTCOME" line and the rule note stay visible, and the polite routing announcement is unchanged. The choice is remembered in this browser across reloads and runs. It changes display only: the feed keeps running and no payment, run, or route is touched.
@@ -67,7 +67,7 @@ The board makes the current deterministic route visible at the right level of de
 
 **Data model sketch**:
 
-No database change. The internal stream gains `routing_decision` frames and a `routing_snapshot` field read from already stored feed decisions. The component creates ephemeral display tokens from the decision frames and seeds settled tokens from the snapshot without replaying their animation. A token has `eventId`, `recommendation`, and an arrival sequence. Tokens exist only in browser memory and are discarded on run, scenario, or tab change.
+No database change. The internal stream gains a `routing_snapshot` field read from already stored feed decisions (the `routing_decision` frames are deferred with AC 4). The component derives the newest routed payment by comparing each snapshot with the previous one, and draws settled tokens from the snapshot without replaying their animation. A token has `eventId`, `recommendation`, and an arrival sequence. Tokens exist only in browser memory and are discarded on run, scenario, or tab change.
 
 **State transitions**:
 
@@ -101,8 +101,8 @@ Each `simulation_state` frame adds this field:
 | Action | Value produced or displayed | Source |
 |---|---|---|
 | Board state | idle, live, finished, unavailable, unsupported | existing `useSandboxFeed` state |
-| Input token | each newly revealed payment | one authoritative `routing_decision` stream frame |
-| Outcome lane | PASS, CHALLENGE, HOLD | `recommendation` on the opaque decision item from the stream |
+| Input token | the newest routed payment | the item with the highest `sequence` across `routing_snapshot.*.recent`, when it is higher than the last one seen |
+| Outcome lane | PASS, CHALLENGE, HOLD | the `recommendation` on that `routing_snapshot.*.recent` item |
 | Lane count | all revealed payments in that outcome | `routing_snapshot.*.count` from the stream |
 | Visible token order | newest first | `sequence` on the decision item or snapshot |
 | Motion preference | animated or reduced motion | operating system reduced motion preference through Motion |
@@ -111,7 +111,7 @@ Each `simulation_state` frame adds this field:
 **Key invariants**:
 
 1. Every token has exactly one outcome lane.
-2. The browser de duplicates by `event_id` and never reanimates a snapshot token.
+2. The server's `recent` lists hold distinct payments; the browser animates only when the highest `sequence` rises, so it never reanimates a payment it has already shown.
 3. Only 18 tokens per lane are visible, but no count is truncated.
 4. A board token cannot create, edit, delete, or reroute a payment. The board's only control is the display disclosure (AC 9), which never sends a request or changes feed state.
 5. The board never displays a model score, threshold, or risk value.
@@ -126,7 +126,8 @@ None.
 
 **Critical test scenarios**:
 
-1. A live S02 feed emits a HOLD decision and the board adds one token and one count to HOLD, verifies **AC 1**, **AC 2**, and **AC 4**.
+1. A live S02 feed emits a HOLD decision and the board adds one token and one count to HOLD, verifies **AC 1**, **AC 2**, and **AC 5**.
+7. Several payments revealed between two frames (for example after the worker catches up) leave every lane count exact and animate only the newest, verifies **AC 2** and **AC 5**.
 2. A reconnect after missed decisions replays each later sequence once and does not duplicate a seen event, verifies **AC 4** and **AC 6**. (Deferred with AC 4 on 2026-09-27.)
 3. Nineteen revealed payments in one outcome lane produce 18 recent items and a count of 19, verifies **AC 3** and **AC 5**.
 4. A scenario without a payment schedule renders the quiet unsupported state, verifies **AC 7**.
