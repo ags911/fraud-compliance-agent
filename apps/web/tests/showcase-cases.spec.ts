@@ -371,11 +371,19 @@ test.describe("Risk Console Cases tab", () => {
     await page.route(/\/cases(\?.*)?$/, (route) =>
       route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify(UNAVAILABLE) }),
     )
+    await page.route("**/showcase/investigations", (route) =>
+      route.fulfill({
+        contentType: "text/event-stream",
+        body: `${S04_DETAIL.events.map((item) => `data: ${JSON.stringify(item.payload)}\n\n`).join("")}event: done\ndata: {}\n\n`,
+      }),
+    )
     await page.goto("/?scenario=S01")
 
+    await page.getByRole("button", { name: "Run showcase" }).click()
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()
     await expect(page.getByText(/^Not saved: case history is off in this environment\./)).toBeVisible()
+    await expect(page.getByRole("row").filter({ hasText: S04_ID })).toContainText(/\d{1,2} [A-Z][a-z]{2}, \d{2}:\d{2}:\d{2}/)
     // Storage off is the public configuration, so no developer instruction shows.
     await expect(page.getByText(/API logs/)).toHaveCount(0)
     await expect(page.getByRole("combobox", { name: "Filter by recommendation" })).toHaveCount(0)
