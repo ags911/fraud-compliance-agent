@@ -104,6 +104,34 @@ test("revealed decisions flow from the feed into their outcome nodes", async ({ 
   await expect(board.locator("[tabindex]:not([tabindex='-1'])")).toHaveCount(0)
 })
 
+test("a snapshot that reveals several payments keeps all lane counts exact and sweeps only its newest", async ({ page }) => {
+  // covers: AC 2, AC 5; this is the worker-catch-up case from critical scenario 7.
+  // The second simulation_state frame contains three newly revealed payments,
+  // rather than one routing frame per payment.
+  const reveal = await stubRouting(page, [
+    [41, "PASS"],
+    [42, "HOLD"],
+    [43, "CHALLENGE"],
+  ])
+  await page.goto("/?scenario=S01")
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  reveal()
+
+  const board = page.getByRole("region", { name: "Live decision routing" })
+  await expect(board.getByRole("list", { name: "Routed payments by outcome" }).getByRole("listitem")).toHaveText([
+    "PASS 1",
+    "CHALLENGE 1",
+    "HOLD 1",
+  ])
+  await expect(board.getByText("Last routed #43 → CHALLENGE")).toBeVisible()
+  // Comparing the snapshot's highest sequence with the prior frame animates
+  // only #43; the earlier catch-up payments settle without their own sweep.
+  await expect(page.locator("g[data-sweep]")).toHaveCount(1)
+  await expect(sweep(page, "CHALLENGE")).toHaveCount(1)
+  await expect(sweep(page, "PASS")).toHaveCount(0)
+  await expect(sweep(page, "HOLD")).toHaveCount(0)
+})
+
 // The newest payment's sweep, clipped by its lane. A clip on the moving
 // element itself travels with it and never meets the lane, so the sweep
 // would render nothing; the clip must sit on a still parent.
