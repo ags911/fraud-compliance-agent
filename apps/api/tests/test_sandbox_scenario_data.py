@@ -9,6 +9,7 @@ from jsonschema import Draft202012Validator
 from scripts.import_plaid_sandbox_history import sanitise_history
 from server import main
 from server.main import create_app
+from server.sandbox_data import service
 from server.sandbox_data.service import (
     PsycopgScenarioRepository,
     SanitisedEvent,
@@ -62,6 +63,62 @@ def test_dataset_builder_preserves_date_precision_and_derived_history() -> None:
     assert second_features["prior_mean_amount_minor"] == 1000
     assert second_features["payee_prior_count"] == 1
     assert dataset.daily_aggregates[1].outbound_amount_minor == 3000
+
+
+def test_replacing_a_dataset_deletes_children_before_the_parent(monkeypatch) -> None:
+    """Re-importing a fixture version must not trip the dataset foreign keys."""
+    queries: list[str] = []
+
+    class RecordingCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info) -> None:
+            return None
+
+        def execute(self, query: str, params: object = None) -> None:
+            queries.append(" ".join(query.split()))
+
+    class RecordingConnection(RecordingCursor):
+        def cursor(self) -> RecordingCursor:
+            return RecordingCursor()
+
+    monkeypatch.setattr(
+        service.psycopg, "connect", lambda database_url: RecordingConnection()
+    )
+    dataset = build_dataset(
+        scenario_id="S04",
+        fixture_version="s04-test-v1",
+        creation_revision="test",
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 1),
+        events=[
+            SanitisedEvent(
+                date(2026, 9, 1),
+                date(2026, 9, 1),
+                1000,
+                "GBP",
+                "outbound",
+                "grocery",
+                "payee_a",
+                "card",
+            )
+        ],
+    )
+
+    PsycopgScenarioRepository("postgresql://example.invalid/db").replace_dataset(
+        dataset
+    )
+
+    deleted = [q.split()[2] for q in queries if q.startswith("DELETE FROM")]
+    assert deleted == [
+        "sandbox_simulated_event_appends",
+        "sandbox_daily_aggregates",
+        "sandbox_transactions",
+        "sandbox_datasets",
+    ]
+    first_insert = next(i for i, q in enumerate(queries) if q.startswith("INSERT"))
+    assert first_insert == len(deleted)
 
 
 def test_dataset_builder_persists_zero_activity_calendar_days() -> None:

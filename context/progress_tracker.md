@@ -138,12 +138,12 @@ The import uses Doppler-provided `PLAID_SANDBOX_ACCESS_TOKEN` and
 Neon analytics for S01–S05 (Scenario tab stat cards and outbound chart). The
 leftover 8-event `S04:s04-sandbox-v1` dataset was deleted from Neon (children
 first, no appends referenced it), so S04 has only the Plaid-derived dataset.
-Open defect: `replace_dataset()` deletes parent before child rows and fails
-on re-import (see `architecture.md` §4 caveats).
+Fixed 2026-09-27: `replace_dataset()` now deletes child rows before the parent,
+so re-import works (see `architecture.md` §4 caveats).
 
 **Next decision and delivery work:** add controlled append fixtures for
 S06–S08 where future operational contracts supply transaction-shaped facts,
-fix the `replace_dataset()` delete order, and ratify the
+and ratify the
 time-aware event schema, Plaid mapping, retention and persistence in an ADR.
 Only then may the store be represented as an accepted runtime data source.
 

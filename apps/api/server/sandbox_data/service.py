@@ -453,6 +453,17 @@ class PsycopgScenarioRepository:
         )
         cls._insert_dataset_contents(cursor, dataset)
 
+    @staticmethod
+    def _delete_dataset(cursor: psycopg.Cursor[Any], dataset: ScenarioDataset) -> None:
+        """Delete one fixture version, children before the parent row they reference."""
+        for query in (
+            "DELETE FROM sandbox_simulated_event_appends WHERE scenario_id = %s AND fixture_version = %s",
+            "DELETE FROM sandbox_daily_aggregates WHERE scenario_id = %s AND fixture_version = %s",
+            "DELETE FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s",
+            "DELETE FROM sandbox_datasets WHERE scenario_id = %s AND fixture_version = %s",
+        ):
+            cursor.execute(query, (dataset.scenario_id, dataset.fixture_version))
+
     def replace_dataset(self, dataset: ScenarioDataset) -> None:
         """Replace one fixture version atomically with its derived records."""
         try:
@@ -460,10 +471,7 @@ class PsycopgScenarioRepository:
                 psycopg.connect(self._database_url) as connection,
                 connection.cursor() as cursor,
             ):
-                cursor.execute(
-                    "DELETE FROM sandbox_datasets WHERE scenario_id = %s AND fixture_version = %s",
-                    (dataset.scenario_id, dataset.fixture_version),
-                )
+                self._delete_dataset(cursor, dataset)
                 self._insert_dataset(cursor, dataset)
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
@@ -515,22 +523,7 @@ class PsycopgScenarioRepository:
                         ),
                     )
                 for dataset in datasets:
-                    cursor.execute(
-                        "DELETE FROM sandbox_simulated_event_appends WHERE scenario_id = %s AND fixture_version = %s",
-                        (dataset.scenario_id, dataset.fixture_version),
-                    )
-                    cursor.execute(
-                        "DELETE FROM sandbox_daily_aggregates WHERE scenario_id = %s AND fixture_version = %s",
-                        (dataset.scenario_id, dataset.fixture_version),
-                    )
-                    cursor.execute(
-                        "DELETE FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s",
-                        (dataset.scenario_id, dataset.fixture_version),
-                    )
-                    cursor.execute(
-                        "DELETE FROM sandbox_datasets WHERE scenario_id = %s AND fixture_version = %s",
-                        (dataset.scenario_id, dataset.fixture_version),
-                    )
+                    self._delete_dataset(cursor, dataset)
                     self._insert_dataset(cursor, dataset)
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error

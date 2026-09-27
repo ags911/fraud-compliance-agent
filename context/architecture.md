@@ -152,11 +152,12 @@ the Plaid-derived dataset. The web type `SandboxScenarioAnalytics` mirrors the
 v1 contract, including `baseline_version`, `overlay_version` and
 `enrichment_version` `s04-enrichment-v1 | sandbox-enrichment-v2`.
 
-Known caveats: `replace_dataset()` deletes the parent `sandbox_datasets` row
-before its referencing `sandbox_transactions`/`sandbox_daily_aggregates`, so
-re-importing an existing fixture version fails with a foreign-key violation
-(the append path deletes children first; fix: children first, plus
-appends once migration 0002 applies, with a regression test).
+Known caveats: `replace_dataset()` and the baseline import share
+`_delete_dataset()`, which deletes appends, aggregates and transactions before
+the `sandbox_datasets` row (fixed 2026-09-27, regression test in
+`test_sandbox_scenario_data.py`). A fixture version that simulation runs
+reference still cannot be re-imported: the runs' foreign keys refuse it, which
+keeps run history intact.
 `scripts/apply_sandbox_migrations.py` applies every numbered migration
 (`[0-9][0-9][0-9][0-9]_*.sql`, widened from `*_sandbox_*.sql` for spec 0002's
 `0004_showcase_cases.sql`) and keeps no applied-migration record, so every
