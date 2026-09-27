@@ -16,7 +16,11 @@ from server.showcase_cases.capture import (
     EventValidator,
     build_case,
 )
-from server.showcase_cases.repository import CasesUnavailable, case_storage_diagnostic
+from server.showcase_cases.repository import (
+    CaseStorageCeiling,
+    CasesUnavailable,
+    case_storage_diagnostic,
+)
 
 _DATA_PREFIX = "data: "
 _DONE_PREFIX = "event: done"
@@ -35,6 +39,8 @@ def _failure_class(error: Exception) -> str:
     """
     if isinstance(error, CasesUnavailable):
         return error.diagnostic
+    if isinstance(error, CaseStorageCeiling):
+        return "storage_ceiling"
     if isinstance(error, psycopg.Error):
         return case_storage_diagnostic(error)
     if isinstance(error, OSError):

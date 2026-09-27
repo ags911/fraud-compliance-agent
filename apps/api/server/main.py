@@ -54,6 +54,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from server.client_identity import client_identity, trusted_proxy_hops
 from server.models import (
     DemoError,
     DemoModelMetrics,
@@ -69,6 +70,10 @@ from server.models import (
     ScenarioNotFoundError,
     ScenarioSummary,
 )
+from server.public_database_guards import (
+    ClientWindowLimiter,
+    load_public_database_guard_settings,
+)
 from server.records import read_record
 from server.sandbox_data.service import (
     SandboxDataUnavailable,
@@ -76,7 +81,10 @@ from server.sandbox_data.service import (
     ScenarioNotDecided,
     ScenarioSimulationNotFound,
     SimulationBusy,
+    SimulationClientRateLimited,
     SimulationRateLimited,
+    SimulationStorageCeiling,
+    admit_client_simulation_start,
     cancel_sandbox_simulation,
     load_sandbox_analytics,
     load_sandbox_decisions,
@@ -480,6 +488,14 @@ def create_app() -> FastAPI:
     # Durable showcase cases (spec 0002) are off unless explicitly enabled with
     # a database, so the database free public deployment never stores cases.
     case_settings = load_case_settings()
+    public_database_guards = load_public_database_guard_settings()
+    # Validate the proxy-hop setting once at startup rather than per request.
+    trusted_proxy_hops()
+    case_read_limiter = (
+        ClientWindowLimiter(public_database_guards.client_case_reads_per_minute)
+        if public_database_guards.enabled
+        else None
+    )
     case_repository: PsycopgCaseRepository | None = None
     case_recorder: CaseRecorder | None = None
     if case_settings.ready and case_settings.database_url:
@@ -692,6 +708,14 @@ def create_app() -> FastAPI:
         """
         if case_repository is None:
             raise _case_store_unavailable("case_storage_disabled")
+        if case_read_limiter is not None and not case_read_limiter.allow(
+            client_identity(request)
+        ):
+            raise _case_error(
+                429,
+                "cases_rate_limited",
+                "Too many case reads. Try again in a minute.",
+            )
         browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         if browser_id is None:
             raise _case_error(
@@ -756,6 +780,14 @@ def create_app() -> FastAPI:
         """
         if case_repository is None:
             raise _case_store_unavailable("case_storage_disabled")
+        if case_read_limiter is not None and not case_read_limiter.allow(
+            client_identity(request)
+        ):
+            raise _case_error(
+                429,
+                "cases_rate_limited",
+                "Too many case reads. Try again in a minute.",
+            )
         browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
         if browser_id is None:
             raise _case_error(
@@ -794,6 +826,7 @@ def create_app() -> FastAPI:
         """
         browser_id = _simulation_browser_id(request)
         try:
+            admit_client_simulation_start(client_identity(request))
             run = SandboxSimulationRun.model_validate(
                 start_sandbox_simulation(scenario_id, browser_id)
             )
@@ -806,6 +839,16 @@ def create_app() -> FastAPI:
             logger.warning("simulation_start_refused reason=simulation_rate_limited")
             raise HTTPException(
                 status_code=429, detail="simulation_rate_limited"
+            ) from error
+        except SimulationClientRateLimited as error:
+            logger.warning("simulation_start_refused reason=simulation_rate_limited")
+            raise HTTPException(
+                status_code=429, detail="simulation_rate_limited"
+            ) from error
+        except SimulationStorageCeiling as error:
+            logger.warning("simulation_start_refused reason=storage_ceiling")
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
         except ScenarioDatasetNotFound as error:
             raise HTTPException(
@@ -976,9 +1019,9 @@ def create_app() -> FastAPI:
                 },
             ) from error
 
-        # The socket peer is server-observed metadata. Arbitrary forwarding or
-        # caller-supplied identity headers are deliberately ignored.
-        client_key = request.client.host if request.client else "unknown"
+        # The configured proxy-hop count is zero locally. In Azure it selects
+        # only ingress's right-most appended source address.
+        client_key = client_identity(request)
         # The browser key only scopes where a completed case is saved (spec
         # 0002). It never feeds admission or rate limiting, and the stream is
         # passed through unchanged whether or not the case is saved.

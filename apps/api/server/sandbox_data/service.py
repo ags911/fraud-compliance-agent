@@ -3,6 +3,7 @@
 import functools
 import hashlib
 import json
+import logging
 import os
 import uuid
 from collections import Counter
@@ -14,11 +15,22 @@ from typing import Any, Literal
 import psycopg
 from psycopg.types.json import Jsonb
 
+from server.public_database_guards import (
+    ClientWindowLimiter,
+    load_public_database_guard_settings,
+    table_has_capacity,
+)
 from server.sandbox_data.decisions import FeedDecision, feed_decision
 from server.sandbox_data.feed_cases import build_feed_case
 from server.showcase_cases.capture import CaseCaptureError, EventValidator
-from server.showcase_cases.repository import PsycopgCaseRepository
+from server.showcase_cases.repository import (
+    CaseStorageCeiling,
+    CasesUnavailable,
+    PsycopgCaseRepository,
+)
 from server.showcase_cases.settings import load_case_settings
+
+logger = logging.getLogger(__name__)
 
 ENRICHMENT_VERSION = "sandbox-enrichment-v2"
 OVERLAY_VERSION = "s01-s08-overlay-v1"
@@ -54,12 +66,51 @@ class SimulationRateLimited(RuntimeError):
     """Signal that one browser started too many feed runs in the last minute."""
 
 
+class SimulationStorageCeiling(RuntimeError):
+    """Signal that an opt-in public database row ceiling refuses a feed start."""
+
+
+class SimulationClientRateLimited(RuntimeError):
+    """Signal that one server-derived client started too many feeds this minute."""
+
+
 # Spec 0003 limits: live runs across the site, starts per browser per rolling
 # minute (10 since spec 0005 starts a feed on load and on scenario change),
 # and how long a finished run is kept before the worker sweeps it.
 MAX_LIVE_SIMULATION_RUNS = 20
 MAX_SIMULATION_STARTS_PER_MINUTE = 10
 SIMULATION_RETENTION = timedelta(days=7)
+_client_start_limiter: ClientWindowLimiter | None = None
+_client_start_limit: int | None = None
+
+
+def admit_client_simulation_start(client_identity: str) -> None:
+    """Reserve one opt-in process-local feed start for a derived client identity.
+
+    Args:
+        client_identity: Server-derived address used only as an in-memory key.
+
+    Raises:
+        SimulationClientRateLimited: If the configured client limit is reached.
+
+    Side effects:
+        Maintains an in-memory rolling minute counter only when the proposed
+        public-database guards are explicitly enabled.
+    """
+    global _client_start_limiter, _client_start_limit
+    settings = load_public_database_guard_settings()
+    if not settings.enabled:
+        return
+    if (
+        _client_start_limiter is None
+        or _client_start_limit != settings.client_feed_starts_per_minute
+    ):
+        _client_start_limiter = ClientWindowLimiter(
+            settings.client_feed_starts_per_minute
+        )
+        _client_start_limit = settings.client_feed_starts_per_minute
+    if not _client_start_limiter.allow(client_identity):
+        raise SimulationClientRateLimited()
 
 
 @dataclass(frozen=True)
@@ -581,6 +632,23 @@ class PsycopgScenarioRepository:
                 cursor.execute(
                     "SELECT pg_advisory_xact_lock(hashtext('sandbox_simulation_start'))"
                 )
+                settings = load_public_database_guard_settings()
+                # Estimate durable rows once a minute, before any run or its
+                # schedule is inserted, so a public start cannot exceed budget.
+                if settings.enabled and (
+                    not table_has_capacity(
+                        cursor,
+                        "sandbox_simulation_runs",
+                        settings.simulation_run_row_ceiling,
+                    )
+                    or not table_has_capacity(
+                        cursor,
+                        "sandbox_simulation_events",
+                        settings.simulation_event_row_ceiling,
+                        len(schedule),
+                    )
+                ):
+                    raise SimulationStorageCeiling()
                 cursor.execute(
                     """SELECT count(*) AS starts FROM sandbox_simulation_runs
                     WHERE browser_id = %s AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'""",
@@ -666,7 +734,12 @@ class PsycopgScenarioRepository:
                     ],
                 )
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
-        except (ScenarioDatasetNotFound, SimulationBusy, SimulationRateLimited):
+        except (
+            ScenarioDatasetNotFound,
+            SimulationBusy,
+            SimulationRateLimited,
+            SimulationStorageCeiling,
+        ):
             raise
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
@@ -906,15 +979,22 @@ class PsycopgScenarioRepository:
                 # Revealed but never retried: the payment is shown, no case is kept.
                 case_status = "invalid"
             else:
-                if PsycopgCaseRepository.insert_case(
-                    cursor, record, event["browser_id"]
-                ):
-                    case_id, case_status = record.case_id, "saved"
+                try:
+                    inserted = PsycopgCaseRepository.insert_case(
+                        cursor, record, event["browser_id"]
+                    )
+                except CaseStorageCeiling:
+                    logger.warning("case_persist_failed failure_class=storage_ceiling")
+                    # The column allows saved, invalid or storage_off (migration
+                    # 0006); a ceiling refusal is recorded as storage off.
+                    case_status = "storage_off"
                 else:
-                    # The case ID already belongs to another row (a collision the
-                    # run UUID makes near impossible). Nothing was saved, and the
-                    # pointer stays empty so the unique case_id is never shared.
-                    case_status = "invalid"
+                    if inserted:
+                        case_id, case_status = record.case_id, "saved"
+                    else:
+                        # The case ID already belongs to another row (a collision
+                        # the run UUID makes near impossible), so keep no pointer.
+                        case_status = "invalid"
         cursor.execute(
             "UPDATE sandbox_simulation_events SET case_id = %s, case_status = %s WHERE run_id = %s AND sequence = %s",
             (case_id, case_status, run_id, sequence),
@@ -1319,3 +1399,25 @@ def sweep_sandbox_simulation_runs() -> int:
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     return PsycopgScenarioRepository(database_url).sweep_finished_simulation_runs()
+
+
+def sweep_expired_showcase_cases() -> int:
+    """Delete expired saved cases through the case repository.
+
+    Returns:
+        Number of expired cases removed; their stored event rows cascade.
+
+    Raises:
+        SandboxDataUnavailable: If no optional store is configured or it cannot
+            be reached.
+
+    Side effects:
+        Deletes only expired durable showcase cases and never logs identifiers.
+    """
+    settings = load_case_settings()
+    if not settings.ready or not settings.database_url:
+        return 0
+    try:
+        return PsycopgCaseRepository(settings.database_url).sweep_expired_cases()
+    except CasesUnavailable as error:
+        raise SandboxDataUnavailable("case storage is unavailable") from error
