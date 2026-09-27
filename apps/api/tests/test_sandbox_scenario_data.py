@@ -870,11 +870,15 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
     ]
 
 
-SIMULATION_CONTRACT = "docs/proposals/schemas/sandbox-simulation.v0.proposed.openapi.json"
+SIMULATION_CONTRACT = (
+    "docs/proposals/schemas/sandbox-simulation.v0.proposed.openapi.json"
+)
 
 
 def _simulation_contract(repository_root) -> dict:
-    return json.loads((repository_root / SIMULATION_CONTRACT).read_text(encoding="utf-8"))
+    return json.loads(
+        (repository_root / SIMULATION_CONTRACT).read_text(encoding="utf-8")
+    )
 
 
 def test_run_responses_match_the_proposed_simulation_contract(
@@ -883,7 +887,10 @@ def test_run_responses_match_the_proposed_simulation_contract(
     """Start, status and cancel bodies, with and without a snapshot, fit the contract."""
     contract = _simulation_contract(repository_root)
     validator = Draft202012Validator(
-        {"$ref": "#/components/schemas/SimulationRun", "components": contract["components"]}
+        {
+            "$ref": "#/components/schemas/SimulationRun",
+            "components": contract["components"],
+        }
     )
     mixed = {**_run(), "scenario_id": "MIX", "fixture_version": None}
     monkeypatch.setattr(main, "start_sandbox_simulation", lambda s, b: mixed)
@@ -903,7 +910,9 @@ def test_run_responses_match_the_proposed_simulation_contract(
         assert list(validator.iter_errors(body)) == []
 
 
-def test_every_simulation_error_code_is_in_the_proposed_contract(repository_root) -> None:
+def test_every_simulation_error_code_is_in_the_proposed_contract(
+    repository_root,
+) -> None:
     """A route may only answer with a code the contract lists."""
     listed = set(
         _simulation_contract(repository_root)["components"]["schemas"]["Error"][

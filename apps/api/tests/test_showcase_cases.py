@@ -241,9 +241,7 @@ def test_a_storage_failure_logs_only_its_failure_class(
     _run(_frames("S04"), CaseRecorder(store, validator), BROWSER_ID)
 
     [record] = _case_logs(caplog)
-    assert record.getMessage() == (
-        f"case_persist_failed failure_class={failure_class}"
-    )
+    assert record.getMessage() == (f"case_persist_failed failure_class={failure_class}")
     assert record.levelno == logging.WARNING
     assert "secret-db" not in caplog.text
     assert BROWSER_ID not in caplog.text
@@ -385,14 +383,17 @@ def test_read_shapes_match_the_proposed_contract(
     assert "browser_id" not in summary
 
 
-def test_the_contract_is_accepted_and_the_proposal_is_gone(repository_root: Path) -> None:
+def test_the_contract_is_accepted_and_the_proposal_is_gone(
+    repository_root: Path,
+) -> None:
     """ADR-020 accepted the cases contract; only the accepted copy remains."""
     schema = json.loads((repository_root / CASES_CONTRACT).read_text(encoding="utf-8"))
 
     assert schema["x-approval-status"] == "accepted"
     assert schema["x-contract-version"] == "1.0"
     assert not (
-        repository_root / "docs/proposals/schemas/showcase-cases.v0.proposed.schema.json"
+        repository_root
+        / "docs/proposals/schemas/showcase-cases.v0.proposed.schema.json"
     ).exists()
 
 

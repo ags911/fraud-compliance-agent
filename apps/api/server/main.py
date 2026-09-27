@@ -895,7 +895,9 @@ def create_app() -> FastAPI:
         browser_id = _simulation_browser_id(request)
         try:
             # psycopg is synchronous; each read runs off the event loop.
-            first = await asyncio.to_thread(load_sandbox_simulation_run, run_id, browser_id)
+            first = await asyncio.to_thread(
+                load_sandbox_simulation_run, run_id, browser_id
+            )
         except ScenarioSimulationNotFound as error:
             raise HTTPException(
                 status_code=404, detail="sandbox_simulation_not_found"

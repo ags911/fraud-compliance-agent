@@ -548,54 +548,123 @@ class PsycopgScenarioRepository:
         fixture version, and is decided by that scenario's rule.
         """
         mixed = scenario_id == MIXED_FEED_ID
-        if (scenario_id not in SCENARIO_IDS and not mixed) or not run_id or not seed or not browser_id:
-            raise ValueError("simulation run requires a scenario, run ID, seed and browser ID")
+        if (
+            (scenario_id not in SCENARIO_IDS and not mixed)
+            or not run_id
+            or not seed
+            or not browser_id
+        ):
+            raise ValueError(
+                "simulation run requires a scenario, run ID, seed and browser ID"
+            )
         try:
-            with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
+            with (
+                psycopg.connect(
+                    self._database_url, row_factory=psycopg.rows.dict_row
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
                 # A Mixed run needs every source dataset; the run itself names none.
                 source_versions: dict[str, str] = {}
                 for source in MIXED_FEED_SOURCES if mixed else (scenario_id,):
-                    cursor.execute("SELECT fixture_version FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1", (source,))
+                    cursor.execute(
+                        "SELECT fixture_version FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1",
+                        (source,),
+                    )
                     found = cursor.fetchone()
                     if found is None:
                         raise ScenarioDatasetNotFound(scenario_id)
                     source_versions[source] = found["fixture_version"]
-                dataset = {"fixture_version": None if mixed else source_versions[scenario_id]}
-                cursor.execute("SELECT pg_advisory_xact_lock(hashtext('sandbox_simulation_start'))")
-                cursor.execute("""SELECT count(*) AS starts FROM sandbox_simulation_runs
-                    WHERE browser_id = %s AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'""", (browser_id,))
+                dataset = {
+                    "fixture_version": None if mixed else source_versions[scenario_id]
+                }
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(hashtext('sandbox_simulation_start'))"
+                )
+                cursor.execute(
+                    """SELECT count(*) AS starts FROM sandbox_simulation_runs
+                    WHERE browser_id = %s AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'""",
+                    (browser_id,),
+                )
                 if cursor.fetchone()["starts"] >= MAX_SIMULATION_STARTS_PER_MINUTE:
                     raise SimulationRateLimited(browser_id)
                 # This browser's own live run is about to be replaced, so it does not count.
-                cursor.execute("""SELECT count(*) AS live FROM sandbox_simulation_runs
-                    WHERE state IN ('pending', 'running') AND browser_id IS DISTINCT FROM %s""", (browser_id,))
+                cursor.execute(
+                    """SELECT count(*) AS live FROM sandbox_simulation_runs
+                    WHERE state IN ('pending', 'running') AND browser_id IS DISTINCT FROM %s""",
+                    (browser_id,),
+                )
                 if cursor.fetchone()["live"] >= MAX_LIVE_SIMULATION_RUNS:
                     raise SimulationBusy()
-                cursor.execute("""UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
-                    WHERE browser_id = %s AND state IN ('pending', 'running')""", (browser_id,))
-                cursor.execute("""INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, browser_id)
-                    VALUES (%s, %s, %s, %s, 'pending', %s, %s)""", (run_id, scenario_id, dataset["fixture_version"], seed, len(schedule), browser_id))
+                cursor.execute(
+                    """UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
+                    WHERE browser_id = %s AND state IN ('pending', 'running')""",
+                    (browser_id,),
+                )
+                cursor.execute(
+                    """INSERT INTO sandbox_simulation_runs (run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, browser_id)
+                    VALUES (%s, %s, %s, %s, 'pending', %s, %s)""",
+                    (
+                        run_id,
+                        scenario_id,
+                        dataset["fixture_version"],
+                        seed,
+                        len(schedule),
+                        browser_id,
+                    ),
+                )
                 now = datetime.now(UTC)
+
                 # Every outbound payment is decided now, by its scenario's rule
                 # alone (spec 0004); a Mixed payment by its source scenario's
                 # (spec 0008). The model score stays null until slice 3.
-                def decided(source: str, direction: str) -> tuple[str | None, str | None, str | None]:
+                def decided(
+                    source: str, direction: str
+                ) -> tuple[str | None, str | None, str | None]:
                     decision = feed_decision(source)
                     if decision is None or direction != "outbound":
                         return (None, None, None)
-                    return (decision.deterministic_route, decision.recommendation, decision.recommendation_basis)
+                    return (
+                        decision.deterministic_route,
+                        decision.recommendation,
+                        decision.recommendation_basis,
+                    )
 
                 def lineage(item: Any) -> tuple[str | None, str | None]:
                     if not mixed:
                         return (None, None)
-                    return (item.source_scenario_id, source_versions[item.source_scenario_id])
+                    return (
+                        item.source_scenario_id,
+                        source_versions[item.source_scenario_id],
+                    )
 
                 # One batched insert: a feed schedules hundreds of events.
-                cursor.executemany("""INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", [
-                    (run_id, item.sequence, item.event.event_id, now + timedelta(seconds=item.delay_seconds), item.event.event_date, item.event.available_date, item.event.amount_minor, item.event.currency, item.event.direction, item.event.category_bucket, item.event.payee_reference, item.event.payment_channel, *lineage(item), *decided(item.source_scenario_id or scenario_id, item.event.direction))
-                    for item in schedule
-                ])
+                cursor.executemany(
+                    """INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    [
+                        (
+                            run_id,
+                            item.sequence,
+                            item.event.event_id,
+                            now + timedelta(seconds=item.delay_seconds),
+                            item.event.event_date,
+                            item.event.available_date,
+                            item.event.amount_minor,
+                            item.event.currency,
+                            item.event.direction,
+                            item.event.category_bucket,
+                            item.event.payee_reference,
+                            item.event.payment_channel,
+                            *lineage(item),
+                            *decided(
+                                item.source_scenario_id or scenario_id,
+                                item.event.direction,
+                            ),
+                        )
+                        for item in schedule
+                    ],
+                )
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except (ScenarioDatasetNotFound, SimulationBusy, SimulationRateLimited):
             raise
@@ -607,15 +676,22 @@ class PsycopgScenarioRepository:
         cursor: psycopg.Cursor[Any], run_id: str, browser_id: str
     ) -> dict[str, object]:
         """Return safe progress for one of this browser's runs; another's reads as missing."""
-        cursor.execute("""SELECT run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, appended_event_count, created_at, started_at, completed_at, failure_reason
-            FROM sandbox_simulation_runs WHERE run_id = %s AND browser_id = %s""", (run_id, browser_id))
+        cursor.execute(
+            """SELECT run_id, scenario_id, fixture_version, seed, state, scheduled_event_count, appended_event_count, created_at, started_at, completed_at, failure_reason
+            FROM sandbox_simulation_runs WHERE run_id = %s AND browser_id = %s""",
+            (run_id, browser_id),
+        )
         run = cursor.fetchone()
         if run is None:
             raise ScenarioSimulationNotFound(run_id)
-        cursor.execute("SELECT MIN(due_at) AS next_due_at FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NULL", (run_id,))
+        cursor.execute(
+            "SELECT MIN(due_at) AS next_due_at FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NULL",
+            (run_id,),
+        )
         next_due = cursor.fetchone()["next_due_at"]
         routing: dict[str, dict[str, object]] = {
-            outcome: {"count": 0, "recent": []} for outcome in ("PASS", "CHALLENGE", "HOLD")
+            outcome: {"count": 0, "recent": []}
+            for outcome in ("PASS", "CHALLENGE", "HOLD")
         }
         if int(run["appended_event_count"]) > 0:
             cursor.execute(
@@ -632,13 +708,34 @@ class PsycopgScenarioRepository:
                 lane["count"] = int(lane["count"]) + 1
                 recent = lane["recent"]
                 if isinstance(recent, list) and len(recent) < 18:
-                    recent.append({"event_id": event["event_id"], "sequence": event["sequence"], "recommendation": outcome})
-        return {"run_id": run["run_id"], "scenario_id": run["scenario_id"], "fixture_version": run["fixture_version"], "seed": run["seed"], "state": run["state"], "scheduled_event_count": run["scheduled_event_count"], "appended_event_count": run["appended_event_count"], "next_due_at": next_due.isoformat() if next_due else None, "routing_snapshot": {"by_recommendation": routing}}
+                    recent.append(
+                        {
+                            "event_id": event["event_id"],
+                            "sequence": event["sequence"],
+                            "recommendation": outcome,
+                        }
+                    )
+        return {
+            "run_id": run["run_id"],
+            "scenario_id": run["scenario_id"],
+            "fixture_version": run["fixture_version"],
+            "seed": run["seed"],
+            "state": run["state"],
+            "scheduled_event_count": run["scheduled_event_count"],
+            "appended_event_count": run["appended_event_count"],
+            "next_due_at": next_due.isoformat() if next_due else None,
+            "routing_snapshot": {"by_recommendation": routing},
+        }
 
     def read_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
         """Read safe state for one of this browser's simulation runs."""
         try:
-            with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
+            with (
+                psycopg.connect(
+                    self._database_url, row_factory=psycopg.rows.dict_row
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except ScenarioSimulationNotFound:
             raise
@@ -648,9 +745,17 @@ class PsycopgScenarioRepository:
     def cancel_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
         """Stop one of this browser's runs; shown payments stay shown, no more are added."""
         try:
-            with psycopg.connect(self._database_url, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
-                cursor.execute("""UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
-                    WHERE run_id = %s AND browser_id = %s AND state IN ('pending', 'running')""", (run_id, browser_id))
+            with (
+                psycopg.connect(
+                    self._database_url, row_factory=psycopg.rows.dict_row
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
+                cursor.execute(
+                    """UPDATE sandbox_simulation_runs SET state = 'cancelled', completed_at = CURRENT_TIMESTAMP
+                    WHERE run_id = %s AND browser_id = %s AND state IN ('pending', 'running')""",
+                    (run_id, browser_id),
+                )
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except ScenarioSimulationNotFound:
             raise
@@ -661,9 +766,15 @@ class PsycopgScenarioRepository:
         """Delete finished runs older than the retention window; events cascade."""
         cutoff = (now or datetime.now(UTC)) - SIMULATION_RETENTION
         try:
-            with psycopg.connect(self._database_url) as connection, connection.cursor() as cursor:
-                cursor.execute("""DELETE FROM sandbox_simulation_runs
-                    WHERE state IN ('completed', 'cancelled', 'failed') AND completed_at < %s""", (cutoff,))
+            with (
+                psycopg.connect(self._database_url) as connection,
+                connection.cursor() as cursor,
+            ):
+                cursor.execute(
+                    """DELETE FROM sandbox_simulation_runs
+                    WHERE state IN ('completed', 'cancelled', 'failed') AND completed_at < %s""",
+                    (cutoff,),
+                )
                 return cursor.rowcount
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
@@ -692,14 +803,26 @@ class PsycopgScenarioRepository:
         advanced = 0
         try:
             # Autocommit, so each ``transaction()`` block is one real transaction.
-            with psycopg.connect(self._database_url, autocommit=True, row_factory=psycopg.rows.dict_row) as connection, connection.cursor() as cursor:
-                cursor.execute("""SELECT event.run_id, event.sequence
+            with (
+                psycopg.connect(
+                    self._database_url,
+                    autocommit=True,
+                    row_factory=psycopg.rows.dict_row,
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
+                cursor.execute(
+                    """SELECT event.run_id, event.sequence
                     FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
                     WHERE event.appended_at IS NULL AND event.due_at <= %s AND run.state IN ('pending', 'running')
-                    ORDER BY event.due_at, event.run_id, event.sequence""", (now,))
+                    ORDER BY event.due_at, event.run_id, event.sequence""",
+                    (now,),
+                )
                 for row in cursor.fetchall():
                     with connection.transaction():
-                        advanced += self._reveal_event(cursor, row["run_id"], row["sequence"], case_validator)
+                        advanced += self._reveal_event(
+                            cursor, row["run_id"], row["sequence"], case_validator
+                        )
                 with connection.transaction():
                     cursor.execute("""UPDATE sandbox_simulation_runs AS run SET state = 'completed', completed_at = CURRENT_TIMESTAMP
                         WHERE state IN ('pending', 'running') AND scheduled_event_count = appended_event_count
@@ -725,21 +848,34 @@ class PsycopgScenarioRepository:
         """
         # The run row is locked too, so a Stop waits for this payment and then
         # reports its true count; nothing is revealed after it.
-        cursor.execute("""SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
+        cursor.execute(
+            """SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
                 event.model_score, event.model_version, event.case_id,
                 COALESCE(event.source_scenario_id, run.scenario_id) AS scenario_id, run.browser_id
             FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
             WHERE event.run_id = %s AND event.sequence = %s AND event.appended_at IS NULL
               AND run.state IN ('pending', 'running')
-            FOR UPDATE OF event, run SKIP LOCKED""", (run_id, sequence))
+            FOR UPDATE OF event, run SKIP LOCKED""",
+            (run_id, sequence),
+        )
         event = cursor.fetchone()
         if event is None:
             return 0
-        cursor.execute("UPDATE sandbox_simulation_events SET appended_at = CURRENT_TIMESTAMP WHERE run_id = %s AND sequence = %s", (run_id, sequence))
-        cursor.execute("UPDATE sandbox_simulation_runs SET state = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), appended_event_count = appended_event_count + 1 WHERE run_id = %s", (run_id,))
+        cursor.execute(
+            "UPDATE sandbox_simulation_events SET appended_at = CURRENT_TIMESTAMP WHERE run_id = %s AND sequence = %s",
+            (run_id, sequence),
+        )
+        cursor.execute(
+            "UPDATE sandbox_simulation_runs SET state = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), appended_event_count = appended_event_count + 1 WHERE run_id = %s",
+            (run_id,),
+        )
         # PASS payments, and rows from before migration 0006, get no case.
         rule = feed_decision(event["scenario_id"])
-        if rule is None or event["recommendation"] in (None, "PASS") or event["case_id"] is not None:
+        if (
+            rule is None
+            or event["recommendation"] in (None, "PASS")
+            or event["case_id"] is not None
+        ):
             return 1
         case_id: str | None = None
         # Runs from before migration 0005 have no owner, but they also have no
@@ -753,24 +889,36 @@ class PsycopgScenarioRepository:
                     sequence=sequence,
                     scenario_id=event["scenario_id"],
                     # The stored decision, with the rule's skip reason.
-                    decision=FeedDecision(event["deterministic_route"], rule.skip_reason, event["recommendation"], event["recommendation_basis"]),
+                    decision=FeedDecision(
+                        event["deterministic_route"],
+                        rule.skip_reason,
+                        event["recommendation"],
+                        event["recommendation_basis"],
+                    ),
                     due_at=event["due_at"],
                     validator=case_validator,
-                    model_score=float(event["model_score"]) if event["model_score"] is not None else None,
+                    model_score=float(event["model_score"])
+                    if event["model_score"] is not None
+                    else None,
                     model_version=event["model_version"],
                 )
             except (CaseCaptureError, KeyError, TypeError, ValueError):
                 # Revealed but never retried: the payment is shown, no case is kept.
                 case_status = "invalid"
             else:
-                if PsycopgCaseRepository.insert_case(cursor, record, event["browser_id"]):
+                if PsycopgCaseRepository.insert_case(
+                    cursor, record, event["browser_id"]
+                ):
                     case_id, case_status = record.case_id, "saved"
                 else:
                     # The case ID already belongs to another row (a collision the
                     # run UUID makes near impossible). Nothing was saved, and the
                     # pointer stays empty so the unique case_id is never shared.
                     case_status = "invalid"
-        cursor.execute("UPDATE sandbox_simulation_events SET case_id = %s, case_status = %s WHERE run_id = %s AND sequence = %s", (case_id, case_status, run_id, sequence))
+        cursor.execute(
+            "UPDATE sandbox_simulation_events SET case_id = %s, case_status = %s WHERE run_id = %s AND sequence = %s",
+            (case_id, case_status, run_id, sequence),
+        )
         return 1
 
     @staticmethod
@@ -837,13 +985,19 @@ class PsycopgScenarioRepository:
                 )
                 aggregates = cursor.fetchall()
                 if simulation_run_id is not None:
-                    self._require_owned_run(cursor, simulation_run_id, browser_id, dataset)
+                    self._require_owned_run(
+                        cursor, simulation_run_id, browser_id, dataset
+                    )
                     cursor.execute(
                         # A Mixed run's payments from other scenarios are left out.
                         """SELECT event_date, amount_minor, direction, category_bucket
                     FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NOT NULL
                       AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))""",
-                        (simulation_run_id, dataset["scenario_id"], dataset["fixture_version"]),
+                        (
+                            simulation_run_id,
+                            dataset["scenario_id"],
+                            dataset["fixture_version"],
+                        ),
                     )
                     aggregates = _overlay_shown_events(aggregates, cursor.fetchall())
         except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
@@ -873,7 +1027,6 @@ class PsycopgScenarioRepository:
                 for item in aggregates
             ],
         }
-
 
     def read_decisions(
         self,
@@ -921,7 +1074,9 @@ class PsycopgScenarioRepository:
                 imported = cursor.fetchall()
                 revealed: list[dict[str, Any]] = []
                 if simulation_run_id is not None:
-                    self._require_owned_run(cursor, simulation_run_id, browser_id, dataset)
+                    self._require_owned_run(
+                        cursor, simulation_run_id, browser_id, dataset
+                    )
                     # Rows from before migration 0006 have no decision and are skipped.
                     cursor.execute(
                         """SELECT event_date, recommendation, count(*) AS payments
@@ -930,7 +1085,11 @@ class PsycopgScenarioRepository:
                       AND recommendation IS NOT NULL
                       AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))
                     GROUP BY event_date, recommendation""",
-                        (simulation_run_id, dataset["scenario_id"], dataset["fixture_version"]),
+                        (
+                            simulation_run_id,
+                            dataset["scenario_id"],
+                            dataset["fixture_version"],
+                        ),
                     )
                     revealed = cursor.fetchall()
         except (ScenarioDatasetNotFound, ScenarioSimulationNotFound):
@@ -998,7 +1157,10 @@ def _overlay_shown_events(
 ) -> list[dict[str, Any]]:
     """Add shown simulation events to daily aggregates, as build_dataset counts them."""
     by_date = {
-        item["aggregate_date"]: {**item, "category_counts": dict(item["category_counts"])}
+        item["aggregate_date"]: {
+            **item,
+            "category_counts": dict(item["category_counts"]),
+        }
         for item in aggregates
     }
     for event in events:
@@ -1076,9 +1238,15 @@ def start_sandbox_simulation(scenario_id: str, browser_id: str) -> dict[str, obj
                 source_analytics = repository.read_analytics(source)
             except ScenarioDatasetNotFound as error:
                 raise ScenarioDatasetNotFound(scenario_id) from error
-            latest_days[source] = date.fromisoformat(str(source_analytics["time_boundary"]["end_date"]))
+            latest_days[source] = date.fromisoformat(
+                str(source_analytics["time_boundary"]["end_date"])
+            )
         return repository.create_simulation_run(
-            scenario_id, run_id, "sandbox-simulation-v1", build_mixed_schedule(latest_days, run_id), browser_id
+            scenario_id,
+            run_id,
+            "sandbox-simulation-v1",
+            build_mixed_schedule(latest_days, run_id),
+            browser_id,
         )
     analytics = repository.read_analytics(scenario_id)
     # Feed payments land on the dataset's latest day, inside its time boundary.
@@ -1094,7 +1262,9 @@ def load_sandbox_simulation_run(run_id: str, browser_id: str) -> dict[str, objec
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
-    return PsycopgScenarioRepository(database_url).read_simulation_run(run_id, browser_id)
+    return PsycopgScenarioRepository(database_url).read_simulation_run(
+        run_id, browser_id
+    )
 
 
 def cancel_sandbox_simulation(run_id: str, browser_id: str) -> dict[str, object]:
@@ -1102,7 +1272,9 @@ def cancel_sandbox_simulation(run_id: str, browser_id: str) -> dict[str, object]
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
-    return PsycopgScenarioRepository(database_url).cancel_simulation_run(run_id, browser_id)
+    return PsycopgScenarioRepository(database_url).cancel_simulation_run(
+        run_id, browser_id
+    )
 
 
 @functools.lru_cache(maxsize=1)
