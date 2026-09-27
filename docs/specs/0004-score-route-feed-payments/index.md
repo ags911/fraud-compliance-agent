@@ -191,4 +191,4 @@ Build approach: none recorded, so thin end to end slices. Slices 1 and 2 build n
 - [ ] A per payment routing policy with owner set thresholds, if varied outcomes are wanted; only then may a score influence a route.
 - [ ] A Sandbox compatible labelled dataset, if a score meaningful on Sandbox payments is wanted.
 - [ ] Update `context/architecture.md` and `context/progress_tracker.md` for F3a once built (left for their owner while `context/` has other uncommitted edits).
-- [ ] Update spec 0003's Summary, which still calls its now built tasks "remaining".
+- [x] Update spec 0003's Summary, which still calls its now built tasks "remaining".

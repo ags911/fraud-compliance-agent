@@ -5,7 +5,7 @@
 
 ## Summary
 
-Radar's Live switch plays a feed of simulated payments into one scenario's charts, so the dashboard visibly counts up during a demo. Each run is a fixed, repeatable schedule of 200 payments, one every 3 seconds, laid over the imported Sandbox data without ever changing it, so every run starts from the same figures. Runs belong to the browser that started them (like saved cases), with limits so a hosted demo cannot be overloaded. The core feed is built; ownership, limits, a clean up sweep, a header carrying stream and retiring an older write path are the remaining build work.
+Radar's Live switch plays a feed of simulated payments into one scenario's charts, so the dashboard visibly counts up during a demo. Each run is a fixed, repeatable schedule of 200 payments, one every 3 seconds, laid over the imported Sandbox data without ever changing it, so every run starts from the same figures. Runs belong to the browser that started them (like saved cases), with limits so a hosted demo cannot be overloaded. All of it is built locally, including ownership, limits, the clean up sweep, the header carrying stream and the removal of the older write path. The verification checklist (`verify.md`) has not been run yet, and public use waits on the follow-ups below.
 
 ## Amendment (2026-09-24, spec 0005)
 
@@ -166,7 +166,7 @@ Remaining, as thin end to end slices:
 ## Follow-up
 
 - [ ] Before any public enablement: an ADR allowing a public database (shared with spec 0002's cases; partly reverses ADR-016), plus a hosting and secrets plan for Neon.
-- [ ] Update `context/architecture.md`'s "Implemented local deterministic simulation runtime": it still says each append recomputes the scenario's aggregates, and does not mention the overlay, ownership, limits or the in API worker (left for its owner, since `context/` has other uncommitted edits).
+- [x] Update `context/architecture.md`'s "Implemented local deterministic simulation runtime": it still says each append recomputes the scenario's aggregates, and does not mention the overlay, ownership, limits or the in API worker (left for its owner, since `context/` has other uncommitted edits).
 - [x] Server logging for the worker and limits (runs started, 429s, sweeps), owed like spec 0002's case logging. Added 2026-09-27: `simulation_run_started scenario_id=…`, `simulation_start_refused reason=…` (warning), `simulation_runs_swept count=…`, and a store outage logged once when it starts and once when it ends. No browser or run IDs are logged.
 - [ ] Consider releasing a run when its viewer disconnects, if closed tabs holding slots becomes a problem.
 - [ ] A versioned API contract for the simulation endpoints under `docs/proposals/schemas/`, accepted with the public database ADR.

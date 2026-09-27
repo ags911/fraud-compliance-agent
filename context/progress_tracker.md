@@ -155,8 +155,11 @@ API endpoints create and read run state and expose read-only SSE notices. A
 live Neon S02 run completed all three scheduled high-velocity events, proving
 the append and aggregate path end to end. S01–S05 have transaction-shaped
 schedules. S06–S08 remain workflow cases, not fabricated transaction streams.
-This is still an assumed, internal Sandbox design. The API contract, reset
-lifecycle, worker deployment, and dashboard integration require ratification.
+Spec 0003 (ratified 2026-09-24) has since replaced appends with an overlay on
+the imported data, per browser ownership, limits, a 7 day sweep and an in API
+worker, all built locally; its `verify.md` has not been run. The API contract,
+a public database ADR and worker deployment still require decisions before
+any public use.
 
 **Spec [0004](../docs/specs/0004-score-route-feed-payments/index.md), slices 1
 and 2 implemented locally, 2026-09-24 (spec In Progress).** Feed payments are

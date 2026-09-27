@@ -218,25 +218,37 @@ chat, regulatory-coverage metric, or an “FCA compliant” claim.
 
 #### Implemented local deterministic simulation runtime
 
-The current local service now has a worker command, internal simulation-run
-API, and browser subscription endpoint. The runtime introduces one durable, scenario-scoped
-simulation run. A run has a fixed dataset revision, seed, ordered schedule,
-current sequence, state (`pending`, `running`, `completed`, `failed`, or
-`cancelled`), and a reset lineage. Scheduled events are immutable and unique
-by `(simulation_run_id, sequence)`; their append record is the idempotency
-boundary. A worker advances due events from the stored schedule. It never
-calls Plaid, and each successful append recomputes only the affected scenario
-features and daily aggregates in the same database transaction.
+Spec 0003 is built locally; its `verify.md` checklist has not been run yet.
+A run is durable and belongs to one browser. It stores its scenario, fixture
+version (null for a Mixed `MIX` run, spec 0008), seed, owning browser ID,
+state (`pending`, `running`, `completed`, `failed`, or `cancelled`) and an
+immutable, ordered schedule: 200 payments one every 3 seconds for S01–S05,
+none for the S06–S08 workflow scenarios. Scheduled events are unique by
+`(run_id, sequence)`, and marking one as shown (`appended_at`) is the
+idempotency boundary. The worker runs inside the API when
+`SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` is set, or as
+`scripts/run_sandbox_simulation_worker.py`. It never calls Plaid.
 
-The browser receives a read-only SSE stream of run state and appended-event
-notices, then reads the updated analytics representation. It cannot supply an
-event body, alter a schedule, or write to another scenario. Reconnection uses
-the durable sequence cursor, rather than re-emitting events. Starting a new
-run is explicit and must either use a new isolated dataset revision or reset
-to a declared baseline; it must never silently rewrite the historical record.
-This local implementation needs a versioned API contract, an accepted
-persistence decision, and an operational worker deployment decision before it
-can be deployed or described as accepted runtime behaviour.
+Shown payments are an overlay: the imported dataset is never changed.
+`GET /sandbox/scenarios/{id}/analytics?simulation_run_id=` returns the base
+aggregates plus that run's shown payments (`_overlay_shown_events`), so every
+run starts from the same figures. The older manual append path is removed;
+`sandbox_simulated_event_appends` stays as history only.
+
+Every run belongs to the browser in the `X-Showcase-Browser-Id` header, which
+never appears in a URL, response or log. A browser has at most one live run.
+The site allows 20 live runs, and each browser 10 starts per rolling minute;
+over either limit a start returns 429 (`simulation_busy` or
+`simulation_rate_limited`) and creates nothing. The worker sweeps finished runs
+older than 7 days once an hour. Starts, refusals, sweeps and store outages are
+logged without identifiers.
+
+The browser follows a run through a read-only progress stream, read with
+`fetch` so the browser ID stays in a header, and reconnects while the run is
+live. It cannot supply an event body, alter a schedule, or act on another
+browser's run. Before this can be deployed or described as accepted runtime
+behaviour it needs a versioned API contract, an ADR allowing a public database,
+and a worker deployment decision.
 
 **Feed decisions and feed cases (spec 0004, slices 1 and 2, implemented
 locally 2026-09-24).** At run start every outbound scheduled payment stores its
