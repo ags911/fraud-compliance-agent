@@ -50,8 +50,11 @@ The built store has these boundaries:
 `context/architecture.md` §4 and the F3a record in
 `context/progress_tracker.md` describe this as implemented locally but not an
 accepted runtime source. They also record that aggregation grain and retention
-still need an explicit decision. ADR-021 remains Proposed and separately
-governs whether any database-backed feature may be enabled publicly.
+still need an explicit decision. The current replacement code deletes only a
+matching scenario and fixture version; a later import with a new fixture
+version can leave an older sanitised dataset in place. ADR-021 remains Proposed
+and separately governs whether any database-backed feature may be enabled
+publicly.
 
 ## Decision to be made
 
@@ -102,11 +105,14 @@ Option 2.
    scenario-local import; replacement removes its dependent stored data in
    child-first order. A referenced dataset is not replaced while foreign keys
    preserve simulation-run history.
-4. Retain only the declared finite time boundary of each active imported
-   dataset and its derived aggregates. Import manifests must record the
-   boundary, fixture/baseline/overlay/enrichment versions and permitted
-   fields; a new duration, field, precision or aggregation grain requires a
-   versioned successor and ADR review.
+4. Before acceptance, implement and verify a retention policy for imported
+   sanitised datasets and their derived aggregates. It must retain data only
+   within each dataset's declared finite time boundary, define whether
+   superseded fixture versions remain available for replay, and clean them up
+   explicitly. Import manifests must record the boundary,
+   fixture/baseline/overlay/enrichment versions and permitted fields; a new
+   duration, field, precision or aggregation grain requires a versioned
+   successor and ADR review.
 5. Accept the spec 0003 overlay model: scheduled, shown simulation payments
    are read-time additions to a run's analytics only. They never mutate the
    imported baseline or cause a provider call.
@@ -126,10 +132,13 @@ Option 2.
 - **Versioned provenance.** Every dataset and analytics response identifies
   the scenario, fixture version, baseline, overlay, enrichment and declared
   time boundary needed to reproduce its display.
-- **Minimum retention.** The runtime store retains only the active,
-  sanitised dataset and derived aggregates within that declared boundary; it
-  holds no raw import archive. Replacement is explicit and validated, never a
-  side effect of viewing or running a scenario.
+- **Retention before acceptance.** The runtime store must retain only the
+  sanitised datasets and derived aggregates allowed by an explicit retention
+  policy, within their declared boundaries, and hold no raw import archive.
+  The current code only replaces a matching fixture version, so it does not
+  yet meet this invariant for superseded versions. Replacement and cleanup
+  must be explicit and validated, never a side effect of viewing or running a
+  scenario.
 - **Scenario isolation.** Reads and writes are constrained by scenario and
   fixture version. A deterministic overlay is scoped to its simulation run;
   one run's shown payments cannot change another run or the baseline.
