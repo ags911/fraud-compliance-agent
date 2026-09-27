@@ -1,6 +1,6 @@
 # Verify: deterministic scenario simulation (live feed) · spec 0003 · updated 2026-09-27
 
-_Last run 2026-09-27 with `/check verify`: BLOCKED, 27 of 28 steps pass. "Worker not running" could not be observed because another local API was running the worker against the same Neon database; rerun that one step with no worker running anywhere._
+_Last run 2026-09-27 with `/check verify`: PASS, all 28 steps. "Worker not running" was rerun with no worker running anywhere; the message appeared after about 4 seconds._
 
 _Steps derived from spec 0003 acceptance criteria. `/check verify` runs these; `/test` locks the durable ones._
 
@@ -28,7 +28,7 @@ Setup: the API with `DATABASE_URL`, migrations through `0005_simulation_run_owne
 - [x] Switch Live off → "Stopped · N", and N equals `appended_event_count` in Neon → AC-2, AC-7
 - [x] Switch Live on again → Transactions starts from the same base again, not from the last count → AC-2, AC-6
 - [x] Change scenario while live → the feed stops (its run is `cancelled`), and the new scenario shows its own base → AC-8
-- [ ] With the API started without `SIMULATION_WORKER_ENABLED` → after about 6 seconds the switch reads "Worker not running" → AC-3, AC-8
+- [x] With the API started without `SIMULATION_WORKER_ENABLED` → after about 6 seconds the switch reads "Worker not running" → AC-3, AC-8
 - [x] Two browser profiles on the same scenario, both live → each counts its own feed, and neither stops the other → AC-9, AC-10
 - [x] In the network panel, the stream request is a `fetch` carrying `X-Showcase-Browser-Id`, with no browser ID in any URL → AC-13
 - [x] Keep a feed running past 11 minutes of stream time (or restart the API mid run) → the switch keeps updating after the reconnect → AC-13
