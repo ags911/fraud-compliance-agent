@@ -273,6 +273,7 @@ implementation."
 | 0018 | Accept Plaid Sandbox-derived showcase fixture enrichment rules | **Accepted for its narrow boundary; superseded in part by 0019** (2026-09-22) | 6 derivation rules for a future `scenarios.v2` packet; found S01/S02 rules have no runtime effect |
 | 0019 | Accept Plaid Sandbox-derived S04 account-activity evidence | **Accepted** (2026-09-22) | Widens `EvidenceItem.source_class` to include `plaid_sandbox_derived`; adds one S04 evidence item; fixture packet → v1.1 |
 | 0020 | Accept local case persistence and the showcase cases contract | Proposed (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
+| 0021 | Allow the public showcase one guarded PostgreSQL database | Proposed (2026-09-27) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
 
 Full per-ADR invariants are preserved in
 [`architecture.md`](architecture.md#5-accepted-architecture-invariants-from-accepted-adrs--these-are-built-rules).
