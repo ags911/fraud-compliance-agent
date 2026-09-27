@@ -149,10 +149,25 @@ export function AverlynxLynxGateMark({ className }: { className?: string }) {
       className={cn("size-5", className)}
       aria-hidden="true"
     >
-      <path d="m3.5 3.4 6.65 6.45-2.1 2.1 2.55 6.55-7.1-3.05V10.4l1.7-1.65L3.5 6.95Z" fill="currentColor" />
-      <path d="m20.5 3.4-6.65 6.45 2.1 2.1-2.55 6.55 7.1-3.05V10.4l-1.7-1.65 1.8-1.8Z" fill="currentColor" />
-      <path d="m12 10.35 1.65 1.65L12 13.65 10.35 12 12 10.35Z" fill="#57e0c2" />
+      <path d="m3.5 4.25 6.75 6.75-2 2L3.5 8.25Z" fill="#57e0c2" />
+      <path d="m20.5 4.25-6.75 6.75 2 2 4.75-4.75Z" fill="#57e0c2" />
+      <path d="m12 10.5 1.5 1.5-1.5 1.5-1.5-1.5 1.5-1.5Z" fill="currentColor" />
     </svg>
+  )
+}
+
+/**
+ * Sliced A: the selected Averlynx monogram. A unified silhouette is cut by
+ * one forward route, retaining its identity at both title and favicon scale.
+ */
+export function AverlynxSlicedAMark({ className }: { className?: string }) {
+  return (
+    <img
+      src="/averlynx-sliced-a@2x.png"
+      alt=""
+      className={cn("size-5", className)}
+      aria-hidden="true"
+    />
   )
 }
 
@@ -161,7 +176,7 @@ export function AverlynxLynxGateMark({ className }: { className?: string }) {
 export function AverlynxBrand({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-2 text-[#18181b]", className)}>
-      <AverlynxLynxGateMark className="size-5 shrink-0" />
+      <AverlynxSlicedAMark className="size-5 shrink-0" />
       <span className="text-base leading-5 font-semibold tracking-[-0.01em] group-data-[collapsible=icon]:hidden">
         Averlynx
       </span>
