@@ -1,13 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './shadcn-defaults.css'
-import './overview.css'
-// Overrides shadcn-defaults.css's palette with the app-wide theme; must load after it.
-import './app-theme.css'
-import ProductApp from './ProductApp.tsx'
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
 
-createRoot(document.getElementById('root')!).render(
+import "./shadcn-defaults.css"
+// Loaded after shadcn-defaults.css so its :root overrides win the cascade --
+// see its own header comment for why ConsoleTopbarControls needs retheming here.
+import "./console/console-controls-theme.css"
+import { RiskConsole } from "./console/RiskConsole"
+
+createRoot(document.getElementById("console-root")!).render(
   <StrictMode>
-    <ProductApp />
+    <RiskConsole />
   </StrictMode>,
 )

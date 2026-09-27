@@ -84,9 +84,9 @@ async function stubApi(page: Page, { decided = SOURCES.map((source) => RULE[sour
 
 // ---- Mixed feed (spec 0008) --------------------------------------------------
 
-test("Radar opens on the Mixed feed and starts it", async ({ page }) => {
+test("Risk Console opens on the Mixed feed and starts it", async ({ page }) => {
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
 
   await expect(page.getByRole("combobox", { name: "Synthetic showcase scenario" })).toHaveText("Mixed feed · S01 to S05")
   await expect(page.getByText("Mixed feed · S01 to S05", { exact: true }).last()).toBeVisible()
@@ -97,14 +97,14 @@ test("Radar opens on the Mixed feed and starts it", async ({ page }) => {
   await expect(page.getByLabel("Mixed feed Sandbox activity summary").locator(".stat-value").first()).toHaveText("55")
 
   // An investigation needs one scenario.
-  const runButton = page.locator("#radar-run-showcase")
+  const runButton = page.locator("#console-run-showcase")
   await expect(runButton).toBeDisabled()
   await expect(runButton).toHaveAttribute("title", "Pick one scenario to run the showcase")
 })
 
 test("the Mixed feed's routing board shows every outcome and says why", async ({ page }) => {
   await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   const board = page.getByRole("region", { name: "Live decision routing" })
 
@@ -114,12 +114,12 @@ test("the Mixed feed's routing board shows every outcome and says why", async ({
 
 test("?scenario= opens one scenario, and an unknown value falls back to Mixed", async ({ page }) => {
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html?scenario=S04")
+  await page.goto("/?scenario=S04")
   await expect(page.getByRole("combobox", { name: "Synthetic showcase scenario" })).toHaveText("S04 · Ambiguous contextual case")
   await expect.poll(() => calls).toContain("start:S04")
-  await expect(page.locator("#radar-run-showcase")).toBeEnabled()
+  await expect(page.locator("#console-run-showcase")).toBeEnabled()
 
-  await page.goto("/references/radar-reference.html?scenario=S99")
+  await page.goto("/?scenario=S99")
   await expect(page.getByRole("combobox", { name: "Synthetic showcase scenario" })).toHaveText("Mixed feed · S01 to S05")
 })
 
@@ -145,7 +145,7 @@ async function setTabHidden(page: Page, hidden: boolean) {
 test("a tab opened in the background starts its feed only once shown", async ({ page }) => {
   await controllableVisibility(page, true)
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
   await expect(page.getByRole("combobox", { name: "Synthetic showcase scenario" })).toBeVisible()
   await page.waitForTimeout(500)
   expect(calls.filter((call) => call.startsWith("start:"))).toEqual([])
@@ -158,7 +158,7 @@ test("a tab hidden for two minutes stops its feed without switching Live off", a
   await controllableVisibility(page, false)
   await page.clock.install()
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
   await expect(page.locator(".live-status")).toHaveText("5 / 200")
 
   await setTabHidden(page, true)
@@ -171,14 +171,14 @@ test("a tab hidden for two minutes stops its feed without switching Live off", a
   await setTabHidden(page, false)
   await expect(page.locator(".live-status")).toHaveText("Stopped · 5")
   expect(calls.filter((call) => call.startsWith("start:"))).toEqual(["start:MIX"])
-  expect(await page.evaluate(() => window.localStorage.getItem("radar-live-feed"))).toBeNull()
+  expect(await page.evaluate(() => window.localStorage.getItem("console-live-feed"))).toBeNull()
 })
 
 test("a tab shown again within two minutes keeps its feed", async ({ page }) => {
   await controllableVisibility(page, false)
   await page.clock.install()
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
   await expect(page.locator(".live-status")).toHaveText("5 / 200")
 
   await setTabHidden(page, true)
@@ -191,7 +191,7 @@ test("a tab shown again within two minutes keeps its feed", async ({ page }) => 
 
 test("closing the tab cancels its live run", async ({ page }) => {
   const calls = await stubApi(page)
-  await page.goto("/references/radar-reference.html")
+  await page.goto("/")
   await expect(page.locator(".live-status")).toHaveText("5 / 200")
 
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false })))

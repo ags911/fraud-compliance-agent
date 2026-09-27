@@ -1,7 +1,7 @@
 # 0006. Live decision routing
 
 **Date**: 2026-09-24
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

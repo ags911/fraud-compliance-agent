@@ -27,9 +27,8 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npm run check:payments-design
       - run: npm run build
-      - run: npm run test:payments
+      - run: npm test
 
   api:
     name: API checks

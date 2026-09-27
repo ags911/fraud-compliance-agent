@@ -51,7 +51,7 @@ function firstPageInto(
 }
 
 /**
- * This browser's durable cases for the Radar Cases tab: the first page for
+ * This browser's durable cases for the Risk Console Cases tab: the first page for
  * the current filters, "Show more" paging, and a saved check per finished run.
  */
 export function useShowcaseCases(filters: ShowcaseCaseFilters) {

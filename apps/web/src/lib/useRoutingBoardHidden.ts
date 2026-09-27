@@ -2,7 +2,7 @@ import { useCallback, useState } from "react"
 
 // The routing board is shown by default (spec 0006 AC 9); hiding it is
 // remembered for this browser. Blocked storage falls back to shown.
-const HIDDEN_PREFERENCE_KEY = "radar-routing-board-hidden"
+const HIDDEN_PREFERENCE_KEY = "console-routing-board-hidden"
 
 function boardHidden(): boolean {
   try {

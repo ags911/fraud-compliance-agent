@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Radar's live feed (spec 0003). The API and the worker are stubbed: these
+ * Risk Console's live feed (spec 0003). The API and the worker are stubbed: these
  * check that the page starts, follows and stops a run, and that the figures
  * shown are the imported base plus that run's payments.
  */
@@ -17,7 +17,7 @@ async function useBrowserId(page: Page) {
 // The feed starts by itself (spec 0005). Tests of the switch itself begin from
 // a browser that switched Live off earlier.
 async function startOff(page: Page) {
-  await page.addInitScript(() => window.localStorage.setItem("radar-live-feed", "off"))
+  await page.addInitScript(() => window.localStorage.setItem("console-live-feed", "off"))
 }
 
 function run(state: string, appended: number) {
@@ -101,7 +101,7 @@ test("the Live switch starts a feed, shows the base plus its payments, and stops
   await useBrowserId(page)
   await startOff(page)
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   const live = page.getByRole("switch", { name: "Live feed" })
   const status = page.locator(".live-status")
@@ -133,7 +133,7 @@ test("says the feed is unavailable when the API cannot start it", async ({ page 
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
     route.fulfill({ status: 503, json: { detail: "sandbox_scenario_data_unavailable" } }),
   )
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   const live = page.getByRole("switch", { name: "Live feed" })
   await live.click()
@@ -148,7 +148,7 @@ test("says the feed is busy when the API is at a limit", async ({ page }) => {
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
     route.fulfill({ status: 429, json: { detail: "simulation_busy" } }),
   )
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   const live = page.getByRole("switch", { name: "Live feed" })
   await live.click()
@@ -160,10 +160,10 @@ test("the recommendations chart shows decided payments, not mock data, and count
   await useBrowserId(page)
   await startOff(page)
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
-  const chart = page.locator(".radar-outcome-card").filter({ hasText: "Recommendations over time" })
-  await expect(chart.locator(".radar-source-pill")).toHaveText("Sandbox")
+  const chart = page.locator(".console-outcome-card").filter({ hasText: "Recommendations over time" })
+  await expect(chart.locator(".console-source-pill")).toHaveText("Sandbox")
   await expect(page.getByText("Mock data")).toHaveCount(0)
   await expect(chart.locator(".card-copy")).toContainText("5 payments")
 
@@ -199,7 +199,7 @@ test("the Cases tab refetches while a feed runs and once when it ends, without a
       },
     })
   })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   await expect(page.getByText("Saved cases", { exact: true })).toBeVisible()
   const beforeFeed = listRequests
@@ -244,7 +244,7 @@ test("the Cases tab count follows a feed from the Scenario tab", async ({ page }
       },
     })
   })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   const casesTab = page.getByRole("tab", { name: /^Cases/ })
   await expect(casesTab).toHaveText("Cases")
 
@@ -312,7 +312,7 @@ test("a feed's quiet refresh keeps the rows already loaded with Show more", asyn
       },
     })
   })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   const caseLinks = page.locator("a.case-link")
   await expect(caseLinks).toHaveCount(20)
@@ -343,7 +343,7 @@ async function hint(page: Page) {
 test("the feed starts by itself when the page loads", async ({ page }) => {
   await useBrowserId(page)
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await expect(page.getByRole("switch", { name: "Live feed" })).toBeChecked()
   await expect(liveStatus(page)).toHaveText("2 / 200")
@@ -357,7 +357,7 @@ test("the feed starts by itself when the page loads", async ({ page }) => {
 test("switching Live off is remembered across a reload", async ({ page }) => {
   await useBrowserId(page)
   const calls = await stubFeed(page, { appended: 2, cancelled: 2 })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   const live = page.getByRole("switch", { name: "Live feed" })
   await expect(liveStatus(page)).toHaveText("2 / 200")
 
@@ -372,7 +372,7 @@ test("switching Live off is remembered across a reload", async ({ page }) => {
   // Switching on again clears it, so the next load starts by itself.
   await live.click()
   await expect(liveStatus(page)).toHaveText("2 / 200")
-  expect(await page.evaluate(() => window.localStorage.getItem("radar-live-feed"))).toBeNull()
+  expect(await page.evaluate(() => window.localStorage.getItem("console-live-feed"))).toBeNull()
 })
 
 test("changing scenario starts a fresh feed for the new scenario", async ({ page }) => {
@@ -384,7 +384,7 @@ test("changing scenario starts a fresh feed for the new scenario", async ({ page
     starts.push(scenario)
     return route.fulfill({ json: { ...run("pending", 0), scenario_id: scenario } })
   })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await expect.poll(() => starts).toEqual(["S01"])
 
   await page.getByRole("combobox", { name: "Synthetic showcase scenario" }).click()
@@ -399,7 +399,7 @@ test("an automatic start that fails stays quiet and shows history", async ({ pag
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
     route.fulfill({ status: 429, json: { detail: "simulation_busy" } }),
   )
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await expect(liveStatus(page)).toHaveText("Showing history")
   await expect(page.locator(".live-switch")).toHaveAttribute("data-tone", "idle")
@@ -413,7 +413,7 @@ test("with no API, an automatic start shows history quietly", async ({ page }) =
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
     route.fulfill({ status: 503, json: { detail: "sandbox_scenario_data_unavailable" } }),
   )
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await expect(liveStatus(page)).toHaveText("Showing history")
   await expect(await hint(page)).toContainText("isn't available here")
@@ -426,7 +426,7 @@ test("a start the viewer asked for that fails says why in the tooltip", async ({
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) =>
     route.fulfill({ status: 429, json: { detail: "simulation_busy" } }),
   )
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await page.getByRole("switch", { name: "Live feed" }).click()
   await expect(liveStatus(page)).toHaveText("Busy")
@@ -437,7 +437,7 @@ test("a start the viewer asked for that fails says why in the tooltip", async ({
 test("a run with no payments arriving puts the worker fix in the tooltip", async ({ page }) => {
   await useBrowserId(page)
   await stubFeed(page, { appended: 0, cancelled: 0 })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await expect(liveStatus(page)).toHaveText("Worker not running", { timeout: 10000 })
   await expect(await hint(page)).toContainText("SIMULATION_WORKER_ENABLED=true")
@@ -446,7 +446,7 @@ test("a run with no payments arriving puts the worker fix in the tooltip", async
 test("a finished run stays finished", async ({ page }) => {
   await useBrowserId(page)
   const calls = await stubFeed(page, { appended: 200, cancelled: 200, streamState: "completed" })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
   await expect(liveStatus(page)).toHaveText("Finished · 200")
   await expect(page.getByRole("switch", { name: "Live feed" })).not.toBeChecked()

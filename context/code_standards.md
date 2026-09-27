@@ -18,34 +18,33 @@
   for a file's single page/app-root component.
 - **Presentational-component rule**: chart/graph/table components receive
   data only through typed props and never fetch/transform data themselves;
-  fetching and data shaping live in hooks (e.g. `useAgentRun`) or `src/lib`.
+  fetching and data shaping live in hooks (e.g. `useSandboxFeed`) or `src/lib`.
 
 ## Component & File Structure (`apps/web`)
 
-- Naming splits by directory: `src/components/ui/*` (shadcn-generated) uses
-  **kebab-case**; `src/components/console/*` and top-level page components
-  under `src/` use **PascalCase**.
-- Directory layout: `components/` (shared), `components/console/` (domain),
-  `components/ui/` (shadcn primitives), `hooks/` (shadcn-only, project hooks
-  live in `lib/` instead), `lib/` (hooks + utilities), `references/` (frozen
-  visual references), `templates/` (page templates), top-level `src/` (page
-  components + Vite entries).
+- Naming splits by directory: `src/components/ui/*` (shadcn-generated) and
+  `src/components/evilcharts/**` (registry charts) use **kebab-case**;
+  `src/console/*` (the Risk Console and its parts) uses **PascalCase**, with
+  `Console*` names and `RiskConsole.tsx` as the page component.
+- Directory layout: `console/` (the page and its components, plus its
+  `console-controls-theme.css`), `components/ui/` (shadcn primitives),
+  `components/evilcharts/` (EvilCharts registry copies),
+  `components/averlynx-logo.tsx` (brand marks), `lib/` (hooks + utilities),
+  top-level `src/main.tsx` (the Vite entry) and the shadcn theme CSS.
 - One primary component per file; small unexported helper components may be
   colocated with the component they serve.
-- Tests: flat `apps/web/tests/` (Playwright specs, `base.ts` shared
-  fixtures), no unit-test runner.
+- Tests: flat `apps/web/tests/` (Playwright specs, `fixtures/` for stubbed
+  API bodies), no unit-test runner.
 
 ## Styling Rules (`apps/web`)
 
 See [`ui_context.md`](ui_context.md) for the full token/typography system.
 Summary rules: Tailwind v4 CSS-first config (no `tailwind.config.*`); the
-console is dark-mode-only by design, except the Overview route's separately
-scoped light+dark theme (`src/dashboard-theme.css`, scoped to
-`:root[data-app-theme="dashboard"]`); class merging via the `cn` npm package,
-re-exported from `src/lib/utils.ts`; variants via `class-variance-authority`.
-**The Payments design system is frozen** — see the Change Checklist and
-Review Ownership rules in `ui_context.md`; do not approximate an approved
-token with the nearest utility class.
+Risk Console is dark only, with its own palette in `apps/web/index.html`;
+class merging via the `cn` npm package, re-exported from `src/lib/utils.ts`;
+variants via `class-variance-authority`. Use the console's named tokens,
+never a raw colour or the nearest utility class, and keep readable text at
+`--lch-text-secondary` or brighter.
 
 ## Python Conventions (`apps/api`)
 

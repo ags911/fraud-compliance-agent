@@ -92,34 +92,37 @@ recommendation cannot bypass a hard control or missing critical evidence."
 
 ## Current Core Flows (what actually runs today)
 
-1. **Showcase investigation flow** (built): operator picks a scenario in
-   `/transactions/investigation` → web calls `POST /showcase/investigations`
-   → API loads the matching S01–S08 fixture, optionally runs a bounded
+The web app is one page, the **Risk Console** at `/` (renamed from "Radar"
+and made the only page on 2026-09-27; see `ui_context.md`). The Overview
+dashboard, `/simulation` mock, investigation, benchmark, legacy run, case
+detail and placeholder pages were removed then. The API flows below still
+exist; where a flow's own page was removed, only the console or the API
+itself exercises it now.
+
+1. **Risk Console** (built): Scenario / Cases / Model tabs. The Scenario tab
+   reads the internal `GET /sandbox/scenarios/{id}/analytics` for the
+   selected scenario (real sanitised Sandbox aggregates; the Mixed feed
+   combines S01–S05) next to PASS/CHALLENGE/HOLD counts per day from the
+   internal `GET /sandbox/scenarios/{id}/decisions`, each outbound payment
+   decided by its scenario's deterministic rule (spec 0004; no model score
+   decides anything); the Cases tab shows the live routing board and lists
+   this browser's saved cases, including live feed cases, in a drawer; the
+   Model tab shows the accepted benchmark summary.
+2. **Showcase investigation flow** (API built; no dedicated page): the
+   console's "Run showcase" calls `POST /showcase/investigations`; the API
+   loads the matching S01–S08 fixture, optionally runs a bounded
    tool-calling investigation (recorded or live Groq), and streams typed SSE
-   events back → console renders the trace with evidence citations.
-2. **Legacy custom-transaction flow** (built, local-only compatibility
-   reference): `/transactions/new` → `POST /run` → legacy vendor pipeline
-   (optional private Arbiris SDK) streams per-node output over SSE.
-3. **Preset scenario flow** (built): `POST /run/preset/{scenario_id}` against
-   the legacy A–F demo scenarios exposed by `GET /scenarios`.
-4. **Model benchmark review** (built): `/insights` reads
-   `GET /demo/model-summary`, an **accepted mechanics-only** Sparkov
-   benchmark report — the only chart/metric surface backed by recorded
-   evaluation data rather than a live/invented figure.
-5. **Overview dashboard** (built): `/` and `/overview` render the shadcn
-   dashboard with synthetic demo data, outside the Payments shell used by
-   every other route.
-6. **Radar portfolio overview** (built, standalone): `/radar` embeds
-   `references/radar-reference.html` — Scenario / Cases / Model tabs. The
-   Scenario tab reads the internal `GET /sandbox/scenarios/{id}/analytics`
-   for the selected S01–S05 scenario (real sanitised Sandbox aggregates) next
-   to PASS/CHALLENGE/HOLD counts per day from the internal
-   `GET /sandbox/scenarios/{id}/decisions`, each outbound payment decided by
-   its scenario's deterministic rule (spec 0004; no model score decides
-   anything); the Cases tab lists this browser's saved cases, including
-   live feed cases, and refreshes while a feed runs; the Model tab shows the
-   accepted benchmark summary. See `ui_context.md` → Radar Portfolio Page.
-7. **Stateless scoring (`POST /risk/score`) and stateful processing
+   events back.
+3. **Legacy custom-transaction and preset flows** (API only, local-only
+   compatibility reference, no web page since 2026-09-27): `POST /run` and
+   `POST /run/preset/{scenario_id}` against the legacy A–F scenarios from
+   `GET /scenarios`, through the optional private Arbiris SDK. Retiring the
+   API routes needs its own decision (ADR-012 froze that contract).
+4. **Model benchmark** (built): `GET /demo/model-summary`, an **accepted
+   mechanics-only** Sparkov benchmark report, shown on the console's Model
+   tab — the only metric surface backed by recorded evaluation data rather
+   than a live/invented figure.
+5. **Stateless scoring (`POST /risk/score`) and stateful processing
    (`POST /transactions/{transaction_id}/process`)** (target, **not built**):
    named in the PRD/implementation plan as candidate operations only; exact
    paths/envelopes/status codes remain unresolved pending the canonical
@@ -273,7 +276,7 @@ detail page, alongside the evidence, deterministic controls, and proposed
 route. The panel must show the provision title and identifier, short retrieved
 excerpt, relevance to the case, FCA source link, corpus version, and retrieval
 time. The investigation trace may show a bounded retrieval event with the same
-provenance. Radar must not become a generic Handbook chat or assert “FCA
+provenance. Risk Console must not become a generic Handbook chat or assert “FCA
 compliant”; its future Health tab may show only corpus version, last review,
 and retrieval availability. S01–S03 do not retrieve regulatory references by
 default, S05 fails safe when retrieval is unavailable, and S06–S08 rely on
@@ -298,8 +301,10 @@ API contract, reset lifecycle, and public exposure are not yet accepted as a
 runtime contract.
 
 ### Incomplete/placeholder in the web app
-- Routes `/transactions`, `/reviews`, `/rules/performance`, `/settings`
-  render a generic `PlannedPage` placeholder.
+- The planned `/transactions`, `/reviews`, `/rules/performance` and
+  `/settings` placeholder pages were removed with the rest of the non-console
+  pages on 2026-09-27; those surfaces return only when their backend
+  contracts exist.
 - Deferred engineering increments (implementation plan §9.1, all "—" not
   started): I1 stateless scoring, I2 durable processing/actions, I3 typed
   investigation, I4 authenticated human review, I5 provider sync/monitoring/

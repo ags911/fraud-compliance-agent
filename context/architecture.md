@@ -11,18 +11,16 @@
 
 ## 1. Tech Stack (code-verified, unchanged from prior audit)
 
-**`apps/web`**: React 19.3.0, Vite 8.3.0 (6-entry multi-build — `index.html`
-at the web root plus five design/visual-reference pages grouped under
-`apps/web/references/`, see [`ui_context.md`](ui_context.md#reference-pages)),
-React Router
-7.18.4 (client-side only), Tailwind CSS 4.3.3 (CSS-first, no
+**`apps/web`**: React 19.3.0, Vite 8.3.0 (a single entry, `index.html`, the
+Risk Console; no router since 2026-09-27, see
+[`ui_context.md`](ui_context.md#one-page-the-risk-console-)), Tailwind CSS 4.3.3 (CSS-first, no
 `tailwind.config.*`), shadcn/ui (`radix-nova` style) + Radix UI + cva +
 lucide-react, `cn` npm package for class merging, Recharts 3.10.1, date-fns,
 driver.js (tours), Motion. No state-management or data-fetching library — raw
-`fetch()` in hand-written hooks, React Context for cross-route state.
+`fetch()` in hand-written hooks; view state lives in the query string.
 TypeScript ~7.0.2 (no compiler-level `strict`; `any` banned via oxlint
-instead). Testing: Playwright only (E2E, visual regression, axe-core
-accessibility) — no unit-test runner.
+instead). Testing: Playwright only (E2E and axe-core
+accessibility; no visual regression baselines since 2026-09-27) — no unit-test runner.
 
 **`apps/api`**: FastAPI 0.141.1, Uvicorn 0.52.4, Pydantic 2.13.5, LangGraph
 1.2.11 (legacy pipeline only), Groq SDK 1.7.0 (sole live LLM integration). No
@@ -144,7 +142,7 @@ minor units, currency, permitted category or payee facts, provenance and
 fixture version. It must not retain raw provider payloads, access tokens,
 transaction descriptions or provider customer and account identifiers.
 
-Web consumption: Radar's Scenario tab fetches the analytics for whichever
+Web consumption: Risk Console's Scenario tab fetches the analytics for whichever
 S01–S05 scenario is selected (no longer S04 only) and fills zero days across
 `time_boundary` (`sandboxDailyActivitySeries` in
 `apps/web/src/lib/sandbox-scenario-analytics.ts`, matching what the importer
@@ -185,8 +183,8 @@ transaction (3 s limit, shielded thread) — the stream is never altered and a
 storage failure only means "Not saved". Cases are scoped to an anonymous
 `X-Showcase-Browser-Id` (localStorage UUID; a scoping key, not auth), private
 to that browser, 30 days / 50 cases, behind `SHOWCASE_CASES_ENABLED`
-(default off; the public showcase stays database-free per ADR-016). Radar's
-Session tab becomes Cases; case detail lives at `/transactions/:caseId`. It
+(default off; the public showcase stays database-free per ADR-016). The Risk Console's
+Cases tab lists them and opens each in a drawer (`/?case=<id>`). It
 needs an ADR accepting `showcase-cases.v1` before it is a contract.
 
 #### Proposed FCA Handbook RAG evidence source (F4–F6, not built)
@@ -207,13 +205,13 @@ provision-level version capture, monitoring, and replay. MCP would be a
 protocol wrapper around an approved source, not the source itself. Until then,
 the accepted investigation tool allowlist remains unchanged.
 
-The proposed UI surface is the S04 case-detail page, not Radar's primary
-Scenario dashboard. It places a Regulatory references panel beside the facts,
+The proposed UI surface is the S04 case drawer, not the Risk Console's
+Scenario tab. It places a Regulatory references panel beside the facts,
 deterministic controls, agent evidence, and proposed route. Each entry renders
 a provision title and identifier, a short retrieved excerpt, case relevance,
 FCA source link, corpus version, and retrieval time. The investigation trace
 may render a matching retrieval event. The stored retrieval bundle is the
-replay source of truth. Radar's F6 Health tab may report corpus version, last
+replay source of truth. Risk Console's F6 Health tab may report corpus version, last
 review, and retrieval availability only; it must not render a generic Handbook
 chat, regulatory-coverage metric, or an “FCA compliant” claim.
 
@@ -415,8 +413,9 @@ what runs with what's planned is how a demo becomes a false claim."
 - **Open decisions listed explicitly** (so their absence isn't oversight):
   no provider adapter selected; no operational store; public API deployed
   recorded-only (live mode has no approved model/secret yet); no approved
-  model target or threshold; two console shells coexist (Overview shadcn vs.
-  Payments shell) pending a migration decision; authentication is absent.
+  model target or threshold; authentication is absent. (The two console
+  shells, Overview shadcn vs. Payments shell, were retired on 2026-09-27 in
+  favour of the single Risk Console page.)
 
 ## 9. Deployment Architecture (Azure — verified 2026-09-21)
 

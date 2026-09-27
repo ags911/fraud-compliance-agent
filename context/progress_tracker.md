@@ -5,8 +5,9 @@
 > `docs/product/implementation-plan.md` and `apps/api/docs/adr/` before both
 > were archived under `docs/archive/` (historical only, do not reference for
 > active development). Keep the tables below current as delivery status
-> changes; a screen row's tick must continue to match a real route in
-> `apps/web/src/ProductApp.tsx` or `apps/web/vite.config.ts`.
+> changes. Since 2026-09-27 the web app is one page, the Risk Console
+> (`apps/web/index.html`); the MVP 1–3 screen tables below are the dated
+> record of what shipped then, not current routes.
 
 ## Active Phase
 
@@ -18,6 +19,15 @@ and the vendored SDK's reference architecture, as of branch
 `feature/overview-live-model-work`, 2026-09-22.
 
 ## MVP Completion Detail (progress dated 2026-09-21)
+
+> **Retired 2026-09-27.** Every screen listed in the MVP 1–3 tables below
+> (Overview, Benchmark Insights, Not Found, the Rules Performance reference,
+> New transaction, Decision workspace, Showcase investigation) was removed
+> when the Risk Console became the only page (branch `refactor/risk-console`).
+> The APIs they used remain. The ticks record what was delivered and
+> verified at the time; the MVP gates' web checks now run against the
+> console (`make acceptance-mvp1`/`-mvp2` = lint, build, Playwright; the
+> MVP 2/3 local browser matrix scripts were deleted with their pages).
 
 ### MVP 0 — Local engineering foundation
 
@@ -124,7 +134,7 @@ read S04's latest Neon dataset as baseline
 The import uses Doppler-provided `PLAID_SANDBOX_ACCESS_TOKEN` and
 `SANDBOX_PSEUDONYMISATION_KEY`; neither value is committed.
 
-**Dashboard wiring (2026-09-24):** Radar's scenario selector now reads the
+**Dashboard wiring (2026-09-24):** Risk Console's scenario selector now reads the
 Neon analytics for S01–S05 (Scenario tab stat cards and outbound chart). The
 leftover 8-event `S04:s04-sandbox-v1` dataset was deleted from Neon (children
 first, no appends referenced it), so S04 has only the Plaid-derived dataset.
@@ -151,7 +161,7 @@ lifecycle, worker deployment, and dashboard integration require ratification.
 **Spec [0004](../docs/specs/0004-score-route-feed-payments/index.md), slices 1
 and 2 implemented locally, 2026-09-24 (spec In Progress).** Feed payments are
 decided at run start by each scenario's deterministic rule; revealed non PASS
-payments become saved `Live feed` cases; Radar's "Recommendations over time"
+payments become saved `Live feed` cases; Risk Console's "Recommendations over time"
 reads real decided counts (mock removed) and the Cases tab refreshes during a
 feed. Migration `0006_feed_decisions.sql` is live in Neon. Verified live
 against Neon and in the browser (`verify.md` fully ticked); fresh model review
@@ -179,31 +189,31 @@ current tool allowlist does not include it. A live FCA API or MCP connector is
 explicitly deferred to F6, where source terms, freshness, caching,
 availability, monitoring, and replay would need their own approved design.
 The agreed UI placement is an S04 case-detail Regulatory references panel and
-matching trace event, not a Radar chart or generic Handbook chat. F6's Radar
+matching trace event, not a Risk Console chart or generic Handbook chat. F6's Risk Console
 Health tab may show corpus version, last review, and retrieval availability;
 it must not claim FCA compliance.
 
-**Dashboard implications for F5–F6** (agreed direction, not designed): Radar
+**Dashboard implications for F5–F6** (agreed direction, not designed): Risk Console
 stays the overview and links into product routes. F5's review queue belongs
-on `/reviews` (S06 stale version shown as a case-page error); F6 adds a Radar
+on `/reviews` (S06 stale version shown as a case-page error); F6 adds a Risk Console
 Health tab (freshness, dataset versions, provider status) and a read-only
 replay/compare view on the case page (S08, "Replay, no action taken"). The
 single "Run showcase" button does not fit S06–S08; their actions belong on the
 case page and review queue, and the selector would group Decisions (S01–S05)
-and Operations (S06–S08). Radar's Model tab overlaps the planned `/insights`.
+and Operations (S06–S08). Risk Console's Model tab overlaps the planned `/insights`.
 
 ## To do
 
 Small, agreed follow ups that belong to no active spec yet. Tick an item, or
 move it into a spec, when it is picked up.
 
-**Radar guided tour** ([spec 0007](../docs/specs/0007-radar-guided-tour.md), built
-locally 2026-09-24 with six steps covering only what Radar has today). Add a step
+**Risk Console guided tour** ([spec 0007](../docs/specs/0007-radar-guided-tour.md), built
+locally 2026-09-24 with six steps covering only what Risk Console has today). Add a step
 only when its surface ships, and split the tour per tab if it grows past about
 seven steps:
 - [ ] F5 human review: point at the review queue (`/reviews`) or the case
-  actions once they exist. Radar and the case page have no decision buttons yet.
-- [ ] F6: a step for Radar's Health tab once it exists.
+  actions once they exist. Risk Console and the case page have no decision buttons yet.
+- [ ] F6: a step for Risk Console's Health tab once it exists.
 - [ ] S06 to S08: when the scenario picker groups Decisions and Operations
   scenarios, give Operations scenarios their own steps in place of the live
   feed and Run showcase steps, which do not apply to them.
@@ -211,11 +221,22 @@ seven steps:
 **Mixed feed and feed lifecycle** (specs [0008](../docs/specs/0008-mixed-feed.md)
 and [0009](../docs/specs/0009-visible-feed-lifecycle.md), 2026-09-25). A
 scenario's feed routes every payment to one outcome, because `feed_decision()` is
-per scenario (S01 PASS, S02/S03 HOLD, S04 CHALLENGE, S05 HOLD). Radar therefore
+per scenario (S01 PASS, S02/S03 HOLD, S04 CHALLENGE, S05 HOLD). Risk Console therefore
 opens on a Mixed feed (`MIX`) that interleaves S01 to S05 payments, each carrying
 its source scenario, fixture version, and that scenario's decision. The auto-start
 waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
 with `keepalive`.
+
+**Risk Console Operations brief** (proposed follow-up, 2026-09-26). Add an optional,
+read-only dashboard summary that turns the currently available, sanitised Risk Console
+data into a short evidence-linked brief: what changed, what needs attention,
+and which displayed patterns explain it. It must distinguish facts from
+suggestions, link every statement to its source card/case/time range, and must
+not recommend or imply authority for an individual payment decision.
+- [ ] Define the brief's approved input surface, evidence links, refresh
+  behaviour, and empty/unavailable states in a feature spec before build.
+- [ ] Keep suggested follow-ups operational and safe (for example, inspect a
+  visible case group), never a payment-routing instruction.
 
 ## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
 

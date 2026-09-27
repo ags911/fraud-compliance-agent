@@ -10,7 +10,7 @@ type Settled = { key: string; state: ShowcaseCaseState }
 
 /**
  * Load one durable case for this browser, with a retry for unexpected errors.
- * With `enabled: false` nothing is requested (Radar's closed case drawer).
+ * With `enabled: false` nothing is requested (Risk Console's closed case drawer).
  */
 export function useShowcaseCase(
   caseId: string | undefined,

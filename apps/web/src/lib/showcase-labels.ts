@@ -6,7 +6,7 @@ import type {
 } from '@/lib/showcase-types'
 
 // Plain wording for showcase events, shared by the live trace, the case page
-// and Radar's case drawer, so each says the same thing.
+// and Risk Console's case drawer, so each says the same thing.
 
 export const FAILURE_REASON_LABELS: Record<ShowcaseFailureReason, string> = {
   provider_unavailable: 'The provider was unavailable.',

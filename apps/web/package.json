@@ -6,15 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "check:payments-design": "node scripts/check-payments-design-contract.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test:payments": "playwright test",
-    "test:payments:update": "playwright test --update-snapshots"
+    "test": "playwright test"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.3.0",
-    "@fontsource-variable/geist-mono": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
@@ -24,9 +20,7 @@
     "motion": "^13.3.0",
     "radix-ui": "^1.6.7",
     "react": "^19.2.8",
-    "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4",
     "recharts": "^3.10.1",
     "shadcn": "^4.21.0",
     "tailwindcss": "^4.3.3",

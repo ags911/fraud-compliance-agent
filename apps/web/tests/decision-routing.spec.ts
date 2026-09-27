@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Radar's decision routing board (spec 0006). The feed API is stubbed: the
+ * Risk Console's decision routing board (spec 0006). The feed API is stubbed: the
  * first stream answer is an empty run, later ones reveal two PASS payments, as S01's rule gives,
  * so the board shows every outcome at zero and then the routed decisions.
  */
@@ -77,7 +77,7 @@ function nodeText(page: Page) {
 
 test("revealed decisions flow from the feed into their outcome nodes", async ({ page }) => {
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   const board = page.getByRole("region", { name: "Live decision routing" })
 
@@ -113,7 +113,7 @@ function sweep(page: Page, outcome: Outcome) {
 
 test("the newest payment sweeps along its own lane only", async ({ page }) => {
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
 
@@ -133,7 +133,7 @@ test("the newest payment sweeps along its own lane only", async ({ page }) => {
 test("reduced motion tints the lane without travel", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" })
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
 
@@ -146,7 +146,7 @@ test("reduced motion tints the lane without travel", async ({ page }) => {
 
 test("Hide board stops the board's motion without stopping the feed, and is remembered", async ({ page }) => {
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -160,7 +160,7 @@ test("Hide board stops the board's motion without stopping the feed, and is reme
 
   // The chart and its count list go; the newest decision line stays.
   await expect(board.getByRole("button", { name: "Show board" })).toHaveAttribute("aria-expanded", "false")
-  await expect(board.locator(".radar-routing-chart")).toHaveCount(0)
+  await expect(board.locator(".console-routing-chart")).toHaveCount(0)
   await expect(board.getByRole("list", { name: "Routed payments by outcome" })).toHaveCount(0)
   await expect(board.getByText("Last routed #2 → PASS")).toBeVisible()
   await expect(board.getByText("Routing live payments.")).toBeAttached()
@@ -171,9 +171,9 @@ test("Hide board stops the board's motion without stopping the feed, and is reme
   await page.reload()
   await page.getByRole("tab", { name: /^Cases/ }).click()
   await expect(board.getByRole("button", { name: "Show board" })).toBeVisible()
-  await expect(board.locator(".radar-routing-chart")).toHaveCount(0)
+  await expect(board.locator(".console-routing-chart")).toHaveCount(0)
   await board.getByRole("button", { name: "Show board" }).click()
-  await expect(board.locator(".radar-routing-chart")).toBeVisible()
+  await expect(board.locator(".console-routing-chart")).toBeVisible()
   await expect(board.getByRole("button", { name: "Hide board" })).toHaveAttribute("aria-expanded", "true")
 })
 
@@ -182,23 +182,23 @@ test("blocked storage still shows the board", async ({ page }) => {
     const getItem = Storage.prototype.getItem
     const setItem = Storage.prototype.setItem
     Storage.prototype.getItem = function (key: string) {
-      if (key === "radar-routing-board-hidden") throw new DOMException("blocked", "SecurityError")
+      if (key === "console-routing-board-hidden") throw new DOMException("blocked", "SecurityError")
       return getItem.call(this, key)
     }
     Storage.prototype.setItem = function (key: string, value: string) {
-      if (key === "radar-routing-board-hidden") throw new DOMException("blocked", "SecurityError")
+      if (key === "console-routing-board-hidden") throw new DOMException("blocked", "SecurityError")
       return setItem.call(this, key, value)
     }
   })
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
-  await expect(board.locator(".radar-routing-chart")).toBeVisible()
+  await expect(board.locator(".console-routing-chart")).toBeVisible()
   // Hiding still works for this page view, even though it cannot be saved.
   await board.getByRole("button", { name: "Hide board" }).click()
-  await expect(board.locator(".radar-routing-chart")).toHaveCount(0)
+  await expect(board.locator(".console-routing-chart")).toHaveCount(0)
 })
 
 test("outcome nodes keep clear space when one outcome dominates", async ({ page }) => {
@@ -206,7 +206,7 @@ test("outcome nodes keep clear space when one outcome dominates", async ({ page 
   // side, each raised to its minimum height.
   const decided: Array<[number, Outcome]> = Array.from({ length: 40 }, (_, index) => [index + 1, index === 20 ? "CHALLENGE" : "HOLD"])
   const reveal = await stubRouting(page, decided)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -224,7 +224,7 @@ test("outcome nodes keep clear space when one outcome dominates", async ({ page 
     expect(outcomes[index].top - outcomes[index - 1].bottom).toBeGreaterThanOrEqual(8)
   }
   // Every node stays inside the chart.
-  const chart = await board.locator(".radar-routing-chart svg").boundingBox()
+  const chart = await board.locator(".console-routing-chart svg").boundingBox()
   expect(outcomes[0].top).toBeGreaterThanOrEqual(chart!.y)
   expect(outcomes[2].bottom).toBeLessThanOrEqual(chart!.y + chart!.height)
 })
@@ -233,7 +233,7 @@ test("a lane's count keeps every payment beyond the 18 listed", async ({ page })
   // covers: AC 3
   const decided: Array<[number, Outcome]> = Array.from({ length: 25 }, (_, index) => [index + 1, "HOLD"])
   const reveal = await stubRouting(page, decided)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -244,7 +244,7 @@ test("a lane's count keeps every payment beyond the 18 listed", async ({ page })
 
 test("an empty outcome's lane is drawn faint so its floor width does not read as flow", async ({ page }) => {
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -258,7 +258,7 @@ test("an empty outcome's lane is drawn faint so its floor width does not read as
 test("the Hide board button works from the keyboard", async ({ page }) => {
   // covers: AC 9
   const reveal = await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -268,16 +268,16 @@ test("the Hide board button works from the keyboard", async ({ page }) => {
   await toggle.focus()
   await page.keyboard.press("Enter")
   await expect(board.getByRole("button", { name: "Show board" })).toBeFocused()
-  await expect(board.locator(".radar-routing-chart")).toHaveCount(0)
+  await expect(board.locator(".console-routing-chart")).toHaveCount(0)
   await page.keyboard.press("Space")
   await expect(board.getByRole("button", { name: "Hide board" })).toHaveAttribute("aria-expanded", "true")
-  await expect(board.locator(".radar-routing-chart")).toBeVisible()
+  await expect(board.locator(".console-routing-chart")).toBeVisible()
 })
 
 test("stopping the feed keeps the routed counts and announces them", async ({ page }) => {
   // covers: AC 7. A stopped run keeps its last snapshot until the page leaves it.
   const reveal = await stubRouting(page, [[1, "PASS"], [2, "HOLD"], [3, "HOLD"]])
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
   const board = page.getByRole("region", { name: "Live decision routing" })
@@ -292,9 +292,9 @@ test("stopping the feed keeps the routed counts and announces them", async ({ pa
 
 test("with Live switched off before a run the board says how to start it", async ({ page }) => {
   // covers: AC 7
-  await page.addInitScript(() => window.localStorage.setItem("radar-live-feed", "off"))
+  await page.addInitScript(() => window.localStorage.setItem("console-live-feed", "off"))
   await stubRouting(page)
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   const board = page.getByRole("region", { name: "Live decision routing" })
 
@@ -314,9 +314,9 @@ test("Run showcase becomes Stop showcase while a run is in progress", async ({ p
   page.on("requestfailed", (request) => {
     if (request.url().includes("/showcase/investigations")) aborted = true
   })
-  await page.goto("/references/radar-reference.html?scenario=S01")
+  await page.goto("/?scenario=S01")
 
-  const button = page.locator("#radar-run-showcase")
+  const button = page.locator("#console-run-showcase")
   await expect(button).toHaveText("Run showcase")
   await button.click()
   await expect(button).toHaveText("Stop showcase")

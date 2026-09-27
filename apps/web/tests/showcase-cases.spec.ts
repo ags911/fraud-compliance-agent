@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * Durable showcase cases (spec 0002): the case page and Radar's Cases tab.
+ * Durable showcase cases (spec 0002): Risk Console's Cases tab and case drawer.
  * The API is stubbed; the storage, scoping and paging rules are covered by the
  * API tests, so these check what the browser shows for each response.
  */
@@ -231,130 +231,7 @@ async function useBrowserId(page: Page) {
   await page.addInitScript((id) => window.localStorage.setItem("showcase-browser-id", id), BROWSER_ID)
 }
 
-async function stubCase(page: Page, status: number, body: unknown) {
-  await page.route("**/cases/*", (route) =>
-    route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) }),
-  )
-}
-
-test.describe("Case page", () => {
-  test.beforeEach(async ({ page }) => {
-    await useBrowserId(page)
-  })
-
-  test("groups a completed case into Route, Evidence and Outcome, with claims linked to evidence", async ({ page }) => {
-    await stubCase(page, 200, S04_DETAIL)
-    await page.goto(`/transactions/${S04_ID}`)
-
-    await expect(page.getByRole("heading", { name: "S04 · CHALLENGE" })).toBeVisible()
-    await expect(page.getByTestId("case-failure-banner")).toHaveCount(0)
-
-    const route = page.getByTestId("case-stage-route")
-    await expect(route).toContainText("Eligible for investigation")
-    await expect(route.getByText("Stored events (2)")).toBeVisible()
-
-    // AC-13: category, displayed value, source class and fixture version.
-    const evidence = page.getByTestId("case-stage-evidence")
-    await expect(evidence).toContainText("Payee relationship")
-    await expect(evidence).toContainText("First payment to this synthetic payee")
-    await expect(evidence).toContainText("Synthetic fixture")
-    await expect(evidence).toContainText("Fixture s04-r1")
-
-    const outcome = page.getByTestId("case-stage-outcome")
-    await expect(outcome).toContainText("Investigation complete")
-    const citation = outcome.getByRole("link", { name: "ev_payee_relationship" })
-    await expect(citation).toHaveAttribute("href", "#evidence-ev_payee_relationship")
-    await expect(page.locator("#evidence-ev_payee_relationship")).toHaveCount(1)
-
-    // Each stage expands to its exact stored events.
-    await outcome.getByText("Stored events (2)").click()
-    await expect(outcome.getByRole("cell", { name: `evt_${S04_ID}_6` })).toBeVisible()
-  })
-
-  test("shows an incomplete investigation as a fail safe HOLD, never as completed", async ({ page }) => {
-    await stubCase(page, 200, S05_DETAIL)
-    await page.goto(`/transactions/${S05_ID}`)
-
-    const banner = page.getByTestId("case-failure-banner")
-    await expect(banner).toHaveAttribute("role", "alert")
-    await expect(banner).toContainText("Investigation incomplete: fail safe HOLD")
-    await expect(banner).toContainText("The provider was unavailable.")
-    await expect(banner).toContainText("Authority was not evaluated and no action was simulated.")
-    await expect(page.getByText("Investigation complete", { exact: true })).toHaveCount(0)
-    await expect(page.getByTestId("case-stage-evidence")).toContainText("No evidence tool was called.")
-  })
-
-  test("rejects a malformed case ID without calling the API", async ({ page }) => {
-    let requested = false
-    await page.route("**/cases/**", (route) => {
-      requested = true
-      return route.abort()
-    })
-    await page.goto("/transactions/not-a-case")
-
-    await expect(page.getByText("Case not found")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Back to Radar" })).toHaveAttribute("href", "/radar")
-    expect(requested).toBe(false)
-  })
-
-  test("shows a live feed case as Live feed, with the carried route copy and no score yet", async ({ page }) => {
-    await stubCase(page, 200, FEED_DETAIL)
-    await page.goto(`/transactions/${FEED_ID}`)
-
-    await expect(page.getByRole("heading", { name: "S04 · CHALLENGE" })).toBeVisible()
-    await expect(page.getByTestId("showcase-mode")).toContainText("Live feed")
-    await expect(page.getByTestId("showcase-mode")).not.toContainText("Recorded playback")
-    await expect(page.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
-    await expect(page.getByTestId("case-model-signal")).toContainText("Not scored yet")
-  })
-
-  test("shows an S05 feed case as a carried fail safe HOLD with no agent run and no failure banner", async ({ page }) => {
-    // covers: AC-10 (the S05 half of the carried route copy)
-    const s05Id = "run_feed_3f2a9c1e7b4d_008"
-    const s05 = JSON.parse(
-      JSON.stringify(FEED_DETAIL)
-        .replaceAll(FEED_ID, s05Id)
-        .replaceAll("run_feed_3f2a9c1e7b4d_007", "run_feed_3f2a9c1e7b4d_008")
-        .replaceAll("evt_feed_3f2a9c1e7b4d_007", "evt_feed_3f2a9c1e7b4d_008")
-        .replaceAll('"S04"', '"S05"')
-        .replaceAll('"CHALLENGE"', '"HOLD"')
-        .replaceAll('"evidence_grounded"', '"fail_safe"'),
-    )
-    await stubCase(page, 200, s05)
-    await page.goto(`/transactions/${s05Id}`)
-
-    await expect(page.getByRole("heading", { name: "S05 · HOLD" })).toBeVisible()
-    await expect(page.getByTestId("showcase-mode")).toContainText("Live feed")
-    await expect(page.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
-    await expect(page.getByTestId("case-model-signal")).toContainText("Not scored yet")
-    // A skipped investigation is not an incomplete one, so no failure banner.
-    await expect(page.getByTestId("case-failure-banner")).toHaveCount(0)
-  })
-
-  test("says case history is off when storage is unavailable", async ({ page }) => {
-    await stubCase(page, 503, UNAVAILABLE)
-    await page.goto(`/transactions/${S04_ID}`)
-
-    await expect(page.getByText("Case history is off")).toBeVisible()
-  })
-
-  test("offers a retry after a server error, which reloads the case", async ({ page }) => {
-    let fail = true
-    await page.route("**/cases/*", (route) =>
-      fail
-        ? route.fulfill({ status: 500, contentType: "application/json", body: "{}" })
-        : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(S04_DETAIL) }),
-    )
-    await page.goto(`/transactions/${S04_ID}`)
-
-    await expect(page.getByRole("alert")).toContainText("The case couldn't be loaded")
-    fail = false
-    await page.getByRole("button", { name: "Try again" }).click()
-    await expect(page.getByRole("heading", { name: "S04 · CHALLENGE" })).toBeVisible()
-  })
-})
-
-test.describe("Radar Cases tab", () => {
+test.describe("Risk Console Cases tab", () => {
   test.beforeEach(async ({ page }) => {
     await useBrowserId(page)
     // The Scenario tab's analytics are not under test here.
@@ -374,16 +251,15 @@ test.describe("Radar Cases tab", () => {
     })
   }
 
-  test("lists saved cases, keeps each Run ID a whole window deep link, and filters through the API", async ({ page }) => {
+  test("lists saved cases, keeps each Run ID a ?case= deep link, and filters through the API", async ({ page }) => {
     const queries: string[] = []
     await stubCaseList(page, queries)
-    await page.goto("/references/radar-reference.html?scenario=S01")
+    await page.goto("/?scenario=S01")
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("Saved cases", { exact: true })).toBeVisible()
     const link = page.getByRole("link", { name: S04_ID })
-    await expect(link).toHaveAttribute("href", `/transactions/${S04_ID}`)
-    await expect(link).toHaveAttribute("target", "_top")
+    await expect(link).toHaveAttribute("href", `/?case=${S04_ID}`)
     await expect(page.getByRole("link", { name: S05_ID })).toBeVisible()
 
     await page.getByRole("combobox", { name: "Filter by recommendation" }).click()
@@ -398,7 +274,7 @@ test.describe("Radar Cases tab", () => {
       detailRequests.push(route.request().url())
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(S04_DETAIL) })
     })
-    await page.goto("/references/radar-reference.html?scenario=S01")
+    await page.goto("/?scenario=S01")
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByRole("link", { name: S04_ID })).toBeVisible()
     expect(detailRequests).toHaveLength(0)
@@ -432,18 +308,18 @@ test.describe("Radar Cases tab", () => {
     await expect(page.getByRole("tab", { name: /^Cases/ })).toHaveAttribute("aria-selected", "true")
   })
 
-  test("reopens a shared ?case= link on the Cases tab, and closing it stays on Radar", async ({ page }) => {
+  test("reopens a shared ?case= link on the Cases tab, and closing it stays on Risk Console", async ({ page }) => {
     await stubCaseList(page)
     await page.route("**/cases/run_*", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(S05_DETAIL) }),
     )
-    await page.goto(`/references/radar-reference.html?scenario=S01&case=${S05_ID}`)
+    await page.goto(`/?scenario=S01&case=${S05_ID}`)
 
     const drawer = page.getByRole("dialog")
     await expect(drawer.getByTestId("case-failure-banner")).toContainText("Investigation incomplete: fail safe HOLD")
     await drawer.getByRole("button", { name: "Close" }).click()
     await expect(drawer).toHaveCount(0)
-    await expect(page).toHaveURL(/radar-reference\.html\?scenario=S01$/)
+    await expect(page).toHaveURL(/\/\?scenario=S01$/)
     // The modal hides the page from assistive tech while open, so the tab is checked after.
     await expect(page.getByRole("tab", { name: /^Cases/ })).toHaveAttribute("aria-selected", "true")
   })
@@ -459,7 +335,7 @@ test.describe("Radar Cases tab", () => {
     await page.route("**/cases/run_*", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FEED_DETAIL) }),
     )
-    await page.goto("/references/radar-reference.html?scenario=S01")
+    await page.goto("/?scenario=S01")
     await page.getByRole("tab", { name: /^Cases/ }).click()
 
     const feedRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: FEED_ID }) })
@@ -469,7 +345,7 @@ test.describe("Radar Cases tab", () => {
 
     await page.getByRole("link", { name: FEED_ID }).click()
     const drawer = page.getByRole("dialog")
-    await expect(drawer.locator(".radar-source-pill").first()).toHaveText("Live feed")
+    await expect(drawer.locator(".console-source-pill").first()).toHaveText("Live feed")
     await expect(drawer.getByText("Recorded playback")).toHaveCount(0)
     await expect(drawer.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
     await expect(drawer.getByTestId("case-model-signal")).toContainText("Not scored yet")
@@ -479,7 +355,7 @@ test.describe("Radar Cases tab", () => {
     await page.route(/\/cases(\?.*)?$/, (route) =>
       route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify(UNAVAILABLE) }),
     )
-    await page.goto("/references/radar-reference.html?scenario=S01")
+    await page.goto("/?scenario=S01")
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()

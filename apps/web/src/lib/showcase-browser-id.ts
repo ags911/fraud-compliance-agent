@@ -2,8 +2,7 @@
  * Anonymous browser scoping key for durable showcase cases (spec 0002).
  *
  * A random lowercase version 4 UUID kept in localStorage. It scopes which cases
- * this browser can read; it is not authentication. The Radar iframe is served
- * from the same origin without a `sandbox` attribute, so it shares this key.
+ * this browser can read; it is not authentication.
  * When storage is blocked or `crypto.randomUUID` is unavailable (outside a
  * secure context), there is no key: runs still work, they are just not saved.
  */

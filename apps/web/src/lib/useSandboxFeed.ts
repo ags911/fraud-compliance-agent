@@ -22,7 +22,7 @@ const tabHidden = () => document.visibilityState === "hidden"
 
 // The feed is on by default (spec 0005); switching Live off is remembered for
 // this browser. Blocked storage falls back to on.
-const LIVE_PREFERENCE_KEY = "radar-live-feed"
+const LIVE_PREFERENCE_KEY = "console-live-feed"
 
 function liveSwitchedOff(): boolean {
   try {

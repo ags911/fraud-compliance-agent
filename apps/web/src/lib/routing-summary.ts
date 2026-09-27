@@ -15,7 +15,7 @@ export type RoutingSummary = {
 }
 
 /**
- * Radar's decision routing board (spec 0006) reads only this: counts and the
+ * Risk Console's decision routing board (spec 0006) reads only this: counts and the
  * newest decision from the run's `routing_snapshot`. Null until the run has
  * a snapshot. Nothing here scores, thresholds, or reroutes a payment.
  */

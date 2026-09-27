@@ -117,7 +117,7 @@ preferences:
   score, or an “FCA compliant” badge.
 - S04 is the normal retrieval path. S01–S03 do not retrieve regulatory
   references by default; S05 treats retrieval failure as incomplete and fails
-  safe; S06–S08 rely on their operational controls instead. Radar may expose
+  safe; S06–S08 rely on their operational controls instead. Risk Console may expose
   only F6 health metadata: corpus version, last review, and availability.
 
 ## Scenario / Fixture Testing Isolation Rules

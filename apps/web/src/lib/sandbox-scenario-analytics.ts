@@ -47,7 +47,7 @@ export async function fetchSandboxScenarioAnalytics(
   return response.json() as Promise<SandboxScenarioAnalytics>
 }
 
-/** One calendar day of scenario activity, shaped for the Radar activity chart. */
+/** One calendar day of scenario activity, shaped for the Risk Console activity chart. */
 export type SandboxActivityDatum = {
   date: string
   label: string
