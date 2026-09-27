@@ -22,10 +22,10 @@ Locally, three features use one Neon PostgreSQL database (AWS `eu-west-2`,
 London), all verified on 2026-09-27:
 
 - Saved cases (spec 0002, and feed cases from spec 0004). Spec 0002 passed
-  all 40 verify steps. ADR-020 proposes accepting them for local and
-  internal use only.
-- The live feed (specs 0003 and 0008). Spec 0003 passed 27 of 28 steps, and
-  one was blocked by the test setup, not a fault.
+  all 40 verify steps. ADR-020 accepted them for local and internal
+  use only on 2026-09-27.
+- The live feed (specs 0003 and 0008). Spec 0003 passed all 28 verify
+  steps; the Mixed feed passed its checks.
 - Sandbox scenario analytics (spec 0001), read only.
 
 Existing protections, and their gaps for a public audience:
