@@ -43,7 +43,7 @@ The auto-started feed waits for a visible tab, stops after two hidden minutes wi
 **Done when:** background tabs never start a run, hidden tabs release theirs, and closing a tab cancels its run with a keepalive request.
 - [x] Design it (spec): [0009](../specs/0009-visible-feed-lifecycle.md)
 - [x] Build it: /develop visible feed lifecycle
-- [ ] Verify it: /check verify visible feed lifecycle
+- [x] Verify it: /check verify visible feed lifecycle
 - [ ] Test it: /test visible feed lifecycle
 
 ## Legend
