@@ -7,6 +7,10 @@
 
 The Cases tab gains a small live routing board. New simulated payments enter from one input stream and visibly settle in PASS, CHALLENGE, or HOLD lanes. The board is read only and uses the existing deterministic feed decisions. It is shown by default, and one "Hide board" button lets a viewer stop its motion and reclaim the space without stopping the feed; that choice is remembered in the browser. The existing internal feed stream gains a minimal routing snapshot, but there is no new score, policy, stored data, or public API.
 
+## Amendment (2026-09-27): AC 4 moves to Follow up
+
+You decided on 2026-09-27 to take AC 4 (`routing_decision` stream frames and replay on reconnect) out of this spec's scope. The board is driven by the AC 5 `routing_snapshot` on every `simulation_state` frame, which already carries every count and the newest 18 decisions per outcome, and the board never reads a decision frame. AC 4 was never built. It now sits under Follow up, to be built only if a future consumer needs a per payment event stream. Everything else in this spec is unchanged. Descriptions of the decision frame below are kept for the record and marked deferred.
+
 ## Context
 
 The current Scenario chart shows totals over time and the Cases tab refreshes saved case rows. Neither surface shows the moment a live payment receives its deterministic recommendation. A fixed routing board makes that event legible without implying that a viewer can change a decision.
@@ -26,7 +30,7 @@ The existing `sandbox_simulation_events` schedule holds 200 payments per S01 to 
 1. **AC 1**: While the selected scenario has a live or finished feed run, the Cases tab displays a board with one input stream and three labelled outcome lanes, PASS, CHALLENGE, and HOLD.
 2. **AC 2**: A newly revealed feed payment appears once, travels from the input stream to the lane named by its existing deterministic recommendation, and increments only that lane count.
 3. **AC 3**: Each lane keeps at most 18 visible settled tokens. Earlier tokens are removed from the visible collection only, while the lane count continues to show every revealed feed payment in that outcome.
-4. **AC 4**: The internal feed stream emits one `routing_decision` frame for every newly revealed payment, including only `event_id`, `sequence`, and `recommendation`. The browser reconnects with its last received sequence and the server replays every later revealed decision before continuing live frames.
+4. **AC 4** (moved to Follow up on 2026-09-27, not built): The internal feed stream emits one `routing_decision` frame for every newly revealed payment, including only `event_id`, `sequence`, and `recommendation`. The browser reconnects with its last received sequence and the server replays every later revealed decision before continuing live frames.
 5. **AC 5**: Each `simulation_state` frame includes a routing snapshot with the total count and up to 18 newest opaque revealed decisions for every outcome. The snapshot is one consistent read of the caller's run, ordered by descending sequence.
 6. **AC 6**: The board is driven only by the existing feed state, routing frames, and routing snapshot. It neither writes data nor accepts route changes, and it does not display a model score or an invented risk value.
 7. **AC 7**: With no live run, an unavailable feed, or an unsupported workflow scenario, the board shows an explicit quiet state and leaves the Cases table behaviour unchanged.
@@ -75,6 +79,8 @@ The display preference is separate from the feed state: `shown` (default) and `h
 
 No new endpoint. The existing internal `GET /sandbox/simulation-runs/{run_id}/events` stream accepts optional `after_sequence` and adds two frame types:
 
+_Amended 2026-09-27: `after_sequence` and the `routing_decision` row below are deferred with AC 4. The built stream adds only `routing_snapshot` to `simulation_state`, and the board's input token, lane and count all come from that snapshot._
+
 | Event | Payload | Rule |
 |---|---|---|
 | `routing_decision` | `{ event_id, sequence, recommendation }` | all revealed rows where `sequence` exceeds `after_sequence`, then one for each later reveal |
@@ -121,7 +127,7 @@ None.
 **Critical test scenarios**:
 
 1. A live S02 feed emits a HOLD decision and the board adds one token and one count to HOLD, verifies **AC 1**, **AC 2**, and **AC 4**.
-2. A reconnect after missed decisions replays each later sequence once and does not duplicate a seen event, verifies **AC 4** and **AC 6**.
+2. A reconnect after missed decisions replays each later sequence once and does not duplicate a seen event, verifies **AC 4** and **AC 6**. (Deferred with AC 4 on 2026-09-27.)
 3. Nineteen revealed payments in one outcome lane produce 18 recent items and a count of 19, verifies **AC 3** and **AC 5**.
 4. A scenario without a payment schedule renders the quiet unsupported state, verifies **AC 7**.
 5. Reduced motion settles a new token without travel animation while retaining the correct lane and count, verifies **AC 8**.
@@ -139,7 +145,7 @@ A "Hide board" / "Show board" text button sits in the header beside the Syntheti
 
 ## Build plan
 
-1. Extend the internal simulation stream model, repository read, replay cursor, and stream tests with decision frames and the bounded routing snapshot, satisfies **AC 4** and **AC 5**.
+1. Extend the internal simulation stream model, repository read, replay cursor, and stream tests with decision frames and the bounded routing snapshot, satisfies **AC 4** and **AC 5**. (Amended 2026-09-27: only the snapshot, AC 5, is in scope; the decision frames and replay cursor are deferred.)
 2. Add a typed presentational routing board and a small feed token derivation helper, satisfies **AC 1**, **AC 2**, and **AC 3**.
 3. Place the board above the Cases table and wire it to the existing selected feed state without any extra request, satisfies **AC 1**, **AC 6**, and **AC 7**.
 4. Add Motion transitions and reduced motion handling, then style the desktop and narrow layouts in the Risk Console's existing visual system, satisfies **AC 2** and **AC 8**.
@@ -166,6 +172,7 @@ A "Hide board" / "Show board" text button sits in the header beside the Syntheti
 ## Follow up
 
 1. Consider a future case detail link only after the public case and feed contracts are accepted. It is outside this visual only scope.
+2. AC 4, moved here on 2026-09-27: emit one `routing_decision` frame (`event_id`, `sequence`, `recommendation`) per newly revealed payment, and on reconnect replay every later revealed decision from an `after_sequence` cursor before live frames. Build it only when a consumer needs per payment events; the routing board does not.
 
 ## Migration plan
 

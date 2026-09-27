@@ -19,8 +19,8 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 Show individual synthetic feed payments moving from a fixed input stream to their deterministic PASS, CHALLENGE, or HOLD lane on the Risk Console's Cases tab.
 **Done when:** the owned live stream replays safe per payment outcomes, the board shows the newest 18 tokens per lane with accurate totals, and quiet plus reduced motion states are clear.
 - [x] Design it (spec): [0006](../specs/0006-live-decision-routing.md)
-- [ ] Build it: /develop live decision routing
-  - [ ] Safe stream event and replay cursor (AC 4, AC 5)
+- [x] Build it: /develop live decision routing
+  - [x] Safe stream event and replay cursor (AC 4, AC 5)
   - [x] Routing board and existing feed wiring (AC 1, AC 2, AC 3, AC 6)
   - [x] Motion, accessible narrow layout, and focused coverage (AC 7, AC 8)
   - [x] Hide board disclosure with a remembered preference (AC 6, AC 9)
