@@ -9,13 +9,13 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 
 | # | Feature | Phase | Status |
 |---|---|---|---|
-| 1 | Live decision routing | Slice 1 | in-progress |
+| 1 | Live decision routing | Slice 1 | done |
 | 2 | Mixed feed | Slice 1 | done |
 | 3 | Visible feed lifecycle | Slice 1 | done |
 
 ## Slice 1: Live decision routing
 
-### 1. Live decision routing · in-progress
+### 1. Live decision routing · done
 Show individual synthetic feed payments moving from a fixed input stream to their deterministic PASS, CHALLENGE, or HOLD lane on the Risk Console's Cases tab.
 **Done when:** the owned live stream replays safe per payment outcomes, the board shows the newest 18 tokens per lane with accurate totals, and quiet plus reduced motion states are clear.
 - [x] Design it (spec): [0006](../specs/0006-live-decision-routing.md)
@@ -24,8 +24,8 @@ Show individual synthetic feed payments moving from a fixed input stream to thei
   - [x] Routing board and existing feed wiring (AC 1, AC 2, AC 3, AC 6)
   - [x] Motion, accessible narrow layout, and focused coverage (AC 7, AC 8)
   - [x] Hide board disclosure with a remembered preference (AC 6, AC 9)
-- [ ] Verify it: /check verify live decision routing
-- [ ] Test it: /test live decision routing
+- [x] Verify it: /check verify live decision routing
+- [x] Test it: /test live decision routing
 
 ### 2. Mixed feed · done
 The Risk Console opens on a feed that interleaves S01 to S05 payments. Each payment keeps its own scenario's accepted decision, so the routing board shows a real three-way split. Single-scenario feeds say why they fill one lane.
