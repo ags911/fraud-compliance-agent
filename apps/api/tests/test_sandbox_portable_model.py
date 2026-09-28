@@ -145,7 +145,7 @@ def _start_run(monkeypatch, model):
     """Start an S04 run through the recording cursor with the given model."""
     from server.sandbox_data import service
     from server.sandbox_data.simulation import build_scenario_schedule
-    from tests.test_feed_decisions import (
+    from test_feed_decisions import (
         BROWSER,
         RUN_ID,
         RecordingConnection,
