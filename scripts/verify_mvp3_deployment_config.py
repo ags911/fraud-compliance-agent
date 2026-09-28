@@ -47,7 +47,7 @@ def main() -> None:
         "make acceptance-mvp3-public",
         "apply_sandbox_migrations:",
         "SHOWCASE_APPLY_SANDBOX_MIGRATIONS",
-        "scripts/apply_sandbox_migrations.py",
+        "uv run --frozen python scripts/apply_sandbox_migrations.py",
         "steps.doppler.outputs.DATABASE_MIGRATION_URL",
         "Refuse an unguarded public database",
     ):
