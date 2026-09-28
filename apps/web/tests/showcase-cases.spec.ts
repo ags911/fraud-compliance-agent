@@ -258,6 +258,7 @@ test.describe("Risk Console Cases tab", () => {
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("Saved cases", { exact: true })).toBeVisible()
+    await expect(page.getByText("Saved cases are linked to a random ID kept in this browser for 30 days. Nothing else about you is stored.")).toBeVisible()
     const link = page.getByRole("link", { name: S04_ID })
     await expect(link).toHaveAttribute("href", `/?case=${S04_ID}`)
     await expect(page.getByRole("link", { name: S05_ID })).toBeVisible()
@@ -383,6 +384,7 @@ test.describe("Risk Console Cases tab", () => {
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()
     await expect(page.getByText(/^Not saved: case history is off in this environment\./)).toBeVisible()
+    await expect(page.getByText("Saved cases are linked to a random ID kept in this browser for 30 days. Nothing else about you is stored.")).toHaveCount(0)
     await expect(page.getByRole("row").filter({ hasText: S04_ID })).toContainText(/\d{1,2} [A-Z][a-z]{2}, \d{2}:\d{2}:\d{2}/)
     // Storage off is the public configuration, so no developer instruction shows.
     await expect(page.getByText(/API logs/)).toHaveCount(0)
