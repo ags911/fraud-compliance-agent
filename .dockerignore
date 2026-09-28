@@ -30,6 +30,10 @@
 !config/public-showcase-investigation.v1.json
 !fixtures/s01-s08/scenarios.v1.json
 
+# The accepted public event schema. Saved cases (spec 0002) validate each
+# stored event against it; without it, case storage turns itself off.
+!docs/contracts/public-showcase-events.v1.schema.json
+
 # Never, under any pattern above.
 **/__pycache__
 **/*.py[cod]
