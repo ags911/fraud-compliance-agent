@@ -22,7 +22,7 @@ from server.public_database_guards import (
 )
 from server.sandbox_data.decisions import FeedDecision, feed_decision
 from server.sandbox_data.feed_cases import build_feed_case
-from server.sandbox_model import load_portable_model
+from server.sandbox_model import portable_model
 from server.sandbox_model.features import PortablePayment, build_feature_vector
 from server.showcase_cases.capture import CaseCaptureError, EventValidator
 from server.showcase_cases.repository import (
@@ -857,7 +857,8 @@ class PsycopgScenarioRepository:
 
                 # Features use only the owning scenario's imported outbound
                 # history, then earlier scheduled payments from that scenario.
-                model = load_portable_model()
+                model = portable_model()
+                score_failed = False
                 histories: dict[str, list[PortablePayment]] = {}
                 for source, fixture_version in source_versions.items():
                     cursor.execute(
@@ -897,8 +898,17 @@ class PsycopgScenarioRepository:
                     if item.event.direction != "outbound" or model is None:
                         return None, None, None
                     values = build_feature_vector(payment, histories[source])
-                    score, input_hash = model.score(values)
                     histories[source].append(payment)
+                    try:
+                        score, input_hash = model.score(values)
+                    except (ArithmeticError, IndexError, KeyError, TypeError, ValueError):
+                        # Evidence only: a scoring fault must never block the
+                        # run start, so the payment keeps a null score.
+                        nonlocal score_failed
+                        if not score_failed:
+                            logger.warning("sandbox_portable_score_failed")
+                            score_failed = True
+                        return None, None, None
                     return round(score, 5), model.model_version, input_hash
 
                 # One batched insert: a feed schedules hundreds of events.

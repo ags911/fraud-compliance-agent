@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import importlib.resources
 import json
@@ -140,3 +141,18 @@ def load_portable_model() -> PortableModel | None:
     except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
         logger.warning("sandbox_portable_model_unavailable")
         return None
+
+
+@functools.cache
+def portable_model() -> PortableModel | None:
+    """Return the packaged model, loaded and verified once per process.
+
+    Returns:
+        The same verified model on every call, or ``None`` for the whole process
+        when the artifact is missing or does not match its pinned digests.
+
+    Side effects:
+        The first call reads and hashes the package files and, on failure, logs
+        one fixed warning; later calls reuse that result (spec 0004 AC-12).
+    """
+    return load_portable_model()

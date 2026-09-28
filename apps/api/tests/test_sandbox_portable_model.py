@@ -48,10 +48,26 @@ def test_committed_artifact_matches_xgboost_on_seeded_rows(repository_root) -> N
     """Keep the committed booster and Platt parameters aligned with XGBoost."""
     model = load_portable_model()
     assert model is not None
-    rows = np.array(
-        [[1.1, 2, 0, 4, 12.5, np.nan, 1, 2], [2.2, 6, 1, 0, np.nan, np.nan, 0, 0]],
-        dtype="float32",
-    )
+    # Realistic ranges for all eight features, with missing history values,
+    # so the walker is checked across the committed trees, not two rows.
+    random = np.random.default_rng(20260928)
+    count = 2000
+    prior = random.integers(0, 400, count)
+    mean = random.uniform(1, 2000, count)
+    amount = random.uniform(0.5, 5000, count)
+    day = random.integers(0, 7, count)
+    rows = np.column_stack(
+        [
+            np.log1p(amount),
+            day,
+            day >= 5,
+            prior,
+            np.where(prior == 0, np.nan, mean),
+            np.where(prior == 0, np.nan, amount / mean),
+            random.integers(0, 50, count),
+            random.integers(0, 120, count),
+        ]
+    ).astype("float32")
     booster = Booster()
     booster.load_model(
         str(repository_root / "apps/api/server/sandbox_model/model.json")
@@ -123,3 +139,85 @@ def test_server_features_match_offline_builder_for_same_payments() -> None:
         offline[columns].to_numpy(dtype=float),
         equal_nan=True,
     )
+
+
+def _start_run(monkeypatch, model):
+    """Start an S04 run through the recording cursor with the given model."""
+    from server.sandbox_data import service
+    from server.sandbox_data.simulation import build_scenario_schedule
+    from tests.test_feed_decisions import (
+        BROWSER,
+        RUN_ID,
+        RecordingConnection,
+        RecordingCursor,
+    )
+
+    run_row = {
+        "run_id": RUN_ID,
+        "scenario_id": "S04",
+        "fixture_version": "fixture-test",
+        "seed": "sandbox-simulation-v1",
+        "state": "pending",
+        "scheduled_event_count": 40,
+        "appended_event_count": 0,
+    }
+    cursor = RecordingCursor(
+        [
+            {"fixture_version": "fixture-test"},
+            {"starts": 0},
+            {"live": 0},
+            run_row,
+            {"next_due_at": None},
+        ]
+    )
+    monkeypatch.setattr(
+        service.psycopg, "connect", lambda *args, **kwargs: RecordingConnection(cursor)
+    )
+    monkeypatch.setattr(service, "portable_model", lambda: model)
+    schedule = build_scenario_schedule("S04", date(2026, 9, 23), RUN_ID, event_count=40)
+    service.PsycopgScenarioRepository("postgresql://example/db").create_simulation_run(
+        "S04", RUN_ID, "sandbox-simulation-v1", schedule, BROWSER
+    )
+    [(_, rows)] = cursor.batches
+    return rows
+
+
+def test_a_scored_run_keeps_every_decision_of_an_unscored_run(monkeypatch) -> None:
+    """AC-2, AC-3: the real model adds scores and changes nothing else."""
+    model = load_portable_model()
+    assert model is not None
+    scored = _start_run(monkeypatch, model)
+    unscored = _start_run(monkeypatch, None)
+
+    # Column 3 is due_at, taken from the clock at each start; every other
+    # column, the decision included, must be identical.
+    def without_scores(rows):
+        return [row[:3] + row[4:-3] for row in rows]
+
+    assert without_scores(scored) == without_scores(unscored)
+    assert {row[-3:] for row in unscored} == {(None, None, None)}
+    outbound = [row for row in scored if row[-3] is not None]
+    assert outbound
+    for score, version, digest in (row[-3:] for row in outbound):
+        assert 0 <= score <= 1 and round(score, 5) == score
+        assert version == "sandbox-portable-xgb-v1"
+        assert len(digest) == 64
+
+
+def test_a_scoring_fault_leaves_null_scores_and_the_run_starts(
+    monkeypatch, caplog
+) -> None:
+    """A fault inside the scorer is evidence lost, never a failed run start."""
+
+    class BrokenModel:
+        model_version = "broken"
+
+        def score(self, values):
+            raise OverflowError("math range error")
+
+    rows = _start_run(monkeypatch, BrokenModel())
+
+    assert rows and {row[-3:] for row in rows} == {(None, None, None)}
+    assert [r.message for r in caplog.records].count(
+        "sandbox_portable_score_failed"
+    ) == 1

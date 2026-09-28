@@ -539,7 +539,7 @@ def test_run_start_stores_the_rule_decision_on_every_scheduled_payment(
     monkeypatch.setattr(
         service.psycopg, "connect", lambda *args, **kwargs: RecordingConnection(cursor)
     )
-    monkeypatch.setattr(service, "load_portable_model", lambda: None)
+    monkeypatch.setattr(service, "portable_model", lambda: None)
     schedule = build_scenario_schedule(
         scenario_id, date(2026, 9, 23), RUN_ID, event_count=3
     )

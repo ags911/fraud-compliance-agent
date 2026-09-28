@@ -36,7 +36,8 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 
 - [x] Run `train_sandbox_portable_model.py` twice against owner-local raw Sparkov CSVs; model SHA-256 `8fb7909ad5192993eabbffd6e014ffb95626af0457a6c9aefc48bdfe3afcb576` and manifest SHA-256 `411a4aadbcc2a98d73fe9d383f0f2ae9f4eba6d1281570db8f25027fb57f532d` match → AC-11
 - [x] Verify the committed artifact's tree-walker parity against XGBoost, including missing branches, and its pinned-hash refusal → AC-12, AC-14
-- [ ] Start a local Neon feed and inspect stored score, version and input digest; confirm the case copies score/version without changing rule decisions → AC-2, AC-3, AC-14
+- [x] Start a local Neon feed and inspect stored score, version and input digest; confirm the case copies score/version without changing rule decisions → AC-2, AC-3, AC-14 (2026-09-28, dev database: an S04 feed scored all 200 payments with `sandbox-portable-xgb-v1` and a 64 character digest; every feed case carried its payment's exact score; test rows deleted)
+- [x] A scored run start and an unscored one store identical rows apart from the three score columns and the clock's `due_at`; a scorer fault leaves null scores, logs one `sandbox_portable_score_failed`, and the run still starts → AC-2, AC-3 (`tests/test_sandbox_portable_model.py`)
 - [x] Build the API image, load and score the packaged model, and confirm `pip show xgboost` fails → AC-15
 
 ## Acceptance-criteria coverage
@@ -50,4 +51,4 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - AC-8 · chart Playwright test and S02 manual step
 - AC-9 · Cases polling Playwright test and manual step
 - AC-10 · case page and drawer Playwright tests and manual step
-- AC-11 to AC-15 · artifact training, hash pinning, scorer/feature parity, tamper refusal, image packaging and no-runtime-XGBoost checks pass; local-Neon persistence inspection remains pending
+- AC-11 to AC-15 · artifact training, hash pinning, scorer/feature parity, tamper refusal, image packaging and no-runtime-XGBoost checks pass; local Neon persistence verified
