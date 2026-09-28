@@ -1,5 +1,7 @@
 # Verify: score and route live feed payments · spec 0004 · updated 2026-09-24
-_Steps derived from spec 0004 acceptance criteria (slices 1 and 2; slice 3, AC-11 to AC-15, waits for its ADR). `/check verify` runs these; `/test` locks the durable ones._
+_Steps derived from spec 0004 acceptance criteria. ADR-024 unblocked slice 3;
+artifact-dependent checks remain pending until the owner-local raw Sparkov CSV
+files are available. `/check verify` runs these; `/test` locks the durable ones._
 
 ## UI / manual
 Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler, then open the Risk Console at `/` (`/radar` before 2026-09-27; it still falls back to `/`).
@@ -28,6 +30,14 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - [x] Overlay counts ← the named run's revealed, decided events: a second browser ID asking for the same run gets 404 `sandbox_simulation_not_found` → AC-7
 - [x] "Live feed" ← `origin = feed`: a Run showcase case still shows `Recorded playback` → AC-10
 - [x] Model signal ← `model_score`: null shows `Not scored yet` → AC-10
+- [x] Mocked scored feed case → drawer shows five-place score, model version and the ADR-024 mechanics label; null still says `Not scored yet` → AC-10
+
+## Slice 3 pending artifact verification
+
+- [ ] Run `train_sandbox_portable_model.py` twice against owner-local raw Sparkov CSVs; record matching model and manifest SHA-256 values → AC-11
+- [ ] Verify the committed artifact's tree-walker parity against XGBoost, including missing branches, and its pinned-hash refusal → AC-12, AC-14
+- [ ] Start a local Neon feed and inspect stored score, version and input digest; confirm the case copies score/version without changing rule decisions → AC-2, AC-3, AC-14
+- [ ] Build the API image, load and score the packaged model, and confirm `pip show xgboost` fails → AC-15
 
 ## Acceptance-criteria coverage
 - AC-1 · rule table tests, migration introspection, S01/S04 manual steps
@@ -40,4 +50,4 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - AC-8 · chart Playwright test and S02 manual step
 - AC-9 · Cases polling Playwright test and manual step
 - AC-10 · case page and drawer Playwright tests and manual step
-- AC-11 to AC-15 · slice 3, not built (blocked on the ADR)
+- AC-11 to AC-15 · ADR-024 accepted; portable loader, feature builder and local-only trainer are present, but artifact training/parity/image verification remains pending the owner-local raw Sparkov corpus
