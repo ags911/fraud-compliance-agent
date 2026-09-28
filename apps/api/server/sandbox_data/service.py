@@ -901,7 +901,13 @@ class PsycopgScenarioRepository:
                     histories[source].append(payment)
                     try:
                         score, input_hash = model.score(values)
-                    except (ArithmeticError, IndexError, KeyError, TypeError, ValueError):
+                    except (
+                        ArithmeticError,
+                        IndexError,
+                        KeyError,
+                        TypeError,
+                        ValueError,
+                    ):
                         # Evidence only: a scoring fault must never block the
                         # run start, so the payment keeps a null score.
                         nonlocal score_failed
