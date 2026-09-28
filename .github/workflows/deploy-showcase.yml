@@ -151,10 +151,12 @@ jobs:
       - name: Apply guarded Sandbox migrations
         if: ${{ inputs.apply_sandbox_migrations || vars.SHOWCASE_APPLY_SANDBOX_MIGRATIONS == 'true' }}
         env:
-          DATABASE_URL: ${{ steps.doppler.outputs.DATABASE_URL }}
+          # ADR-021: migrations use a separate migration role, never the
+          # least privilege runtime role the app gets as DATABASE_URL.
+          DATABASE_URL: ${{ steps.doppler.outputs.DATABASE_MIGRATION_URL }}
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "Sandbox migrations require DATABASE_URL from Doppler." >&2
+            echo "Sandbox migrations require DATABASE_MIGRATION_URL from Doppler." >&2
             exit 1
           fi
           cd apps/api
