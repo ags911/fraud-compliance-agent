@@ -866,6 +866,7 @@ class PsycopgScenarioRepository:
                           AND direction = 'outbound' ORDER BY event_date, transaction_id""",
                         (source, fixture_version),
                     )
+                    fetched_history = cursor.fetchall()
                     histories[source] = [
                         PortablePayment(
                             row["event_date"],
@@ -874,7 +875,7 @@ class PsycopgScenarioRepository:
                             row["payee_reference"],
                             row["category_bucket"],
                         )
-                        for row in cursor.fetchall()
+                        for row in fetched_history
                     ]
 
                 def model_values(

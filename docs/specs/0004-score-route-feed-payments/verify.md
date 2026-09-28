@@ -1,7 +1,7 @@
 # Verify: score and route live feed payments · spec 0004 · updated 2026-09-24
 _Steps derived from spec 0004 acceptance criteria. ADR-024 unblocked slice 3;
-artifact-dependent checks remain pending until the owner-local raw Sparkov CSV
-files are available. `/check verify` runs these; `/test` locks the durable ones._
+the trained portable artifact and automated checks are complete. `/check verify`
+runs these; `/test` locks the durable ones._
 
 ## UI / manual
 Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler, then open the Risk Console at `/` (`/radar` before 2026-09-27; it still falls back to `/`).
@@ -32,12 +32,12 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - [x] Model signal ← `model_score`: null shows `Not scored yet` → AC-10
 - [x] Mocked scored feed case → drawer shows five-place score, model version and the ADR-024 mechanics label; null still says `Not scored yet` → AC-10
 
-## Slice 3 pending artifact verification
+## Slice 3 verification
 
-- [ ] Run `train_sandbox_portable_model.py` twice against owner-local raw Sparkov CSVs; record matching model and manifest SHA-256 values → AC-11
-- [ ] Verify the committed artifact's tree-walker parity against XGBoost, including missing branches, and its pinned-hash refusal → AC-12, AC-14
+- [x] Run `train_sandbox_portable_model.py` twice against owner-local raw Sparkov CSVs; model SHA-256 `8fb7909ad5192993eabbffd6e014ffb95626af0457a6c9aefc48bdfe3afcb576` and manifest SHA-256 `411a4aadbcc2a98d73fe9d383f0f2ae9f4eba6d1281570db8f25027fb57f532d` match → AC-11
+- [x] Verify the committed artifact's tree-walker parity against XGBoost, including missing branches, and its pinned-hash refusal → AC-12, AC-14
 - [ ] Start a local Neon feed and inspect stored score, version and input digest; confirm the case copies score/version without changing rule decisions → AC-2, AC-3, AC-14
-- [ ] Build the API image, load and score the packaged model, and confirm `pip show xgboost` fails → AC-15
+- [x] Build the API image, load and score the packaged model, and confirm `pip show xgboost` fails → AC-15
 
 ## Acceptance-criteria coverage
 - AC-1 · rule table tests, migration introspection, S01/S04 manual steps
@@ -50,4 +50,4 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - AC-8 · chart Playwright test and S02 manual step
 - AC-9 · Cases polling Playwright test and manual step
 - AC-10 · case page and drawer Playwright tests and manual step
-- AC-11 to AC-15 · ADR-024 accepted; portable loader, feature builder and local-only trainer are present, but artifact training/parity/image verification remains pending the owner-local raw Sparkov corpus
+- AC-11 to AC-15 · artifact training, hash pinning, scorer/feature parity, tamper refusal, image packaging and no-runtime-XGBoost checks pass; local-Neon persistence inspection remains pending

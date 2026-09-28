@@ -169,11 +169,12 @@ reads real decided counts (mock removed) and the Cases tab refreshes during a
 feed. Migration `0006_feed_decisions.sql` is live in Neon. Verified live
 against Neon and in the browser (`verify.md` fully ticked); fresh model review
 approved with nits, all fixed (`docs/reviews/2026-09-24-feature-overview-live-model-work.md`).
-ADR-024 accepted Slice 3's display-only Sparkov score boundary on 2026-09-28:
-the served API has a standard-library portable-model loader and feature builder,
-while its rule table remains the only decider. The owner-local raw Sparkov CSVs
-and resulting pinned artifact are required before the score can be enabled;
-until then the loader safely returns no model and persisted scores stay null.
+ADR-024 accepted Slice 3's display-only Sparkov score boundary on 2026-09-28.
+The committed `sandbox-portable-xgb-v1` XGBoost JSON artifact is trained from
+the owner-local Sparkov corpus and loaded by a standard-library tree walker;
+the rule table remains the only decider. Pinned artifact hashes, parity and
+tamper-refusal tests, image validation and drawer copy are implemented. The
+remaining spec verification is a local-Neon manual persistence inspection.
 
 ### F4 built locally: durable investigation cases
 

@@ -74,7 +74,8 @@ below for why that SDK is documented separately.
   `test_modelling_boundaries.py`. Its parameters live in the **accepted**
   `config/fast-path-model-training.v1.json`. ADR-024 additionally permits a
   display-only, packaged booster JSON under `server/sandbox_model/`, evaluated
-  by a standard-library tree walker; its absent or invalid artifact is inert.
+  by a standard-library tree walker. The pinned `sandbox-portable-xgb-v1`
+  artifact is shipped in the wheel; an absent or invalid artifact is inert.
 - **No background jobs/queue/worker** exists; all work is synchronous
   per-request, bounded by concurrency/timeout/tool-budget controls.
 - **No database** (see §4). This is deliberate through MVP 1–3; PostgreSQL

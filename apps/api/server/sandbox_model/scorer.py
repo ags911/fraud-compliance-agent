@@ -16,6 +16,10 @@ from server.sandbox_model.features import FEATURE_NAMES, model_input_sha256
 logger = logging.getLogger(__name__)
 MODEL_FILE = "model.json"
 MANIFEST_FILE = "manifest.json"
+# These exact bytes are the ADR-024 reviewed artifact, not values supplied by
+# a manifest. A swapped pair therefore fails closed before it can be scored.
+MODEL_SHA256 = "8fb7909ad5192993eabbffd6e014ffb95626af0457a6c9aefc48bdfe3afcb576"
+MANIFEST_SHA256 = "411a4aadbcc2a98d73fe9d383f0f2ae9f4eba6d1281570db8f25027fb57f532d"
 
 
 def _float32(value: float) -> float:
@@ -24,9 +28,17 @@ def _float32(value: float) -> float:
 
 
 def _base_score(raw: Any) -> float:
-    """Parse XGBoost's scalar or bracketed base-score margin value."""
+    """Parse XGBoost's scalar or bracketed base score as a raw margin.
+
+    XGBoost JSON stores a logistic classifier's base score as a probability;
+    the tree walker sums raw margins, so that probability is converted to its
+    logit before adding leaves.
+    """
     text = str(raw).strip().strip("[]").split(",")[0]
-    return float(text)
+    value = float(text)
+    if 0 < value < 1:
+        return math.log(value / (1 - value))
+    return value
 
 
 @dataclass(frozen=True)
@@ -100,8 +112,12 @@ def load_portable_model() -> PortableModel | None:
         manifest = json.loads(manifest_raw)
         if tuple(manifest["feature_order"]) != FEATURE_NAMES:
             raise ValueError("feature order differs")
-        if hashlib.sha256(model_raw).hexdigest() != manifest["model_sha256"]:
+        if hashlib.sha256(model_raw).hexdigest() != MODEL_SHA256:
             raise ValueError("model digest differs")
+        if hashlib.sha256(manifest_raw).hexdigest() != MANIFEST_SHA256:
+            raise ValueError("manifest file digest differs")
+        if manifest["model_sha256"] != MODEL_SHA256:
+            raise ValueError("manifest model digest differs")
         # The manifest records a digest of its canonical content excluding this
         # self-referential field, so its own verification remains deterministic.
         unsigned_manifest = dict(manifest)
