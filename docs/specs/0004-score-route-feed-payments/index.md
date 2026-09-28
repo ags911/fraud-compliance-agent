@@ -16,7 +16,9 @@ Every outbound payment in the live feed (spec 0003) is now decided, not just cou
 - As a demo viewer, I want each saved feed case to show the model's score as evidence (once approved), so I can see where a model would fit without it deciding anything.
 - As the project owner, I want the score to come from a real, reproducible model with its limits stated, so nothing on the page is a placeholder dressed as real.
 
-**Acceptance criteria** (slices 1 and 2 build now; AC-11 to AC-15 are slice 3, gated on the ADR):
+> **Updated 2026-09-28, ADR-024 accepted.** Slice 3 is unblocked: Sparkov is the demo corpus, and the API scores with a plain Python tree scorer over the booster JSON instead of the `xgboost` package (AC-12, AC-14, AC-15 amended).
+
+**Acceptance criteria** (slices 1 and 2 are built; AC-11 to AC-15 are slice 3, unblocked by ADR-024):
 - **AC-1**: At run start, every scheduled outbound feed payment is stored with its deterministic route, recommendation and basis from the scenario decision rule table (below); S06 to S08 have no rule and no schedule.
 - **AC-2**: Each scheduled payment also stores a model score and version; both are null until slice 3, and null whenever the model is not loaded; a payment is decided either way.
 - **AC-3**: The score never changes a route, a recommendation or whether a case is saved.
@@ -30,8 +32,8 @@ Every outbound payment in the live feed (spec 0003) is now decided, not just cou
 - **AC-11**: (slice 3) A training script builds the model from the raw Sparkov files with the features below, Platt calibration on the calibration partition and metrics on test, and writes `model.json` and `manifest.json`; with pinned settings, two runs give identical file hashes.
 - **AC-12**: (slice 3) The API loads the artifact read only at startup, checks the SHA256 of both files and the feature tuple against constants pinned in server code, and on any mismatch or load failure keeps scores null with one warning log; it never fails startup.
 - **AC-13**: (slice 3) A proposed contract records the model's display only scope, features and data source (`docs/proposals/schemas/sandbox-portable-model.v0.proposed.json`); nothing is published as accepted.
-- **AC-14**: (slice 3) Scores are computed at run start in `server/` with no import of `modelling/` or scikit-learn; a parity test shows the server's features match `modelling.richer_features` on the same payments.
-- **AC-15**: (slice 3) The artifact ships inside the API package, and `xgboost` is its only new runtime dependency; `test_modelling_boundaries.py` is amended to allow exactly that.
+- **AC-14**: (slice 3) Scores are computed at run start in `server/` with no import of `modelling/`, scikit-learn, pandas or `xgboost`, by a plain Python scorer that walks the booster JSON; parity tests show the server's features match `modelling.richer_features` on the same payments, and its scores equal `xgboost`'s own predictions within 1e-6.
+- **AC-15**: (slice 3) The artifact ships inside the API package and the API gains no new runtime dependency; `test_modelling_boundaries.py` keeps `xgboost` development only and also covers `server/` subpackages.
 
 ## Decision
 
@@ -129,7 +131,7 @@ Events rows from before 0006 with null decisions are skipped by the decisions ov
 **Configuration required**:
 - Existing: `SHOWCASE_CASES_ENABLED` (feed cases need it), `SIMULATION_WORKER_ENABLED`, `DATABASE_URL`.
 - Slice 3, training only (local): the raw Sparkov files under `data/raw/sparkov/`, already gitignored.
-- Slice 3 dependency: `xgboost` moves into the API's runtime dependencies; scikit-learn and `modelling/` stay dev only.
+- Slice 3 dependency: none at runtime. `xgboost`, scikit-learn, pandas and `modelling/` stay dev only (ADR-024).
 
 **Critical test scenarios**:
 - Happy path: an S02 feed reveals HOLD payments; each gets a feed case in `/cases` and the decisions overlay counts HOLD up; verifies **AC-1**, **AC-4**, **AC-7**.
@@ -158,10 +160,10 @@ Build approach: none recorded, so thin end to end slices. Slices 1 and 2 build n
 6. Worker: reveal each event in its own transaction; for non PASS payments build the case with `build_case` and `EventValidator` in the shapes above and save it in that transaction; set `case_id` and `case_status`; satisfies **AC-4**, **AC-6**.
 7. Web: `origin` and score fields in case types; "Live feed" pill and Mode; the S04 and S05 route copy; "Not scored yet"; the Cases tab refetch while a feed runs; satisfies **AC-9**, **AC-10**.
 
-**Slice 3: the model (prerequisites: an ADR approving the display only runtime score, the history features and the raw Sparkov source; the dependency boundary change)**
+**Slice 3: the model (prerequisite met: ADR-024, accepted 2026-09-28)**
 8. Proposed contract `docs/proposals/schemas/sandbox-portable-model.v0.proposed.json`; satisfies **AC-13**.
 9. Training script with pinned settings and Platt calibration; commit the artifact under `server/sandbox_model/`; satisfies **AC-11**.
-10. Server side feature and Platt maths with a parity test; load with pinned hashes; score at run start; copy scores onto feed cases; amend the boundary test and add `xgboost` to runtime dependencies; satisfies **AC-2**, **AC-3**, **AC-12**, **AC-14**, **AC-15**.
+10. Server side features, the plain Python tree scorer and Platt maths with parity tests; load with pinned hashes; score at run start; copy scores onto feed cases; extend the boundary test to `server/` subpackages; satisfies **AC-2**, **AC-3**, **AC-12**, **AC-14**, **AC-15**.
 11. Drawer Model signal with the score and label; satisfies **AC-10**.
 
 **Across slices**
@@ -187,7 +189,7 @@ Build approach: none recorded, so thin end to end slices. Slices 1 and 2 build n
 
 ## Follow-up
 
-- [ ] An ADR approving the display only runtime score, the history features and the raw Sparkov source (amending `model-training-contract.v1.json`), plus the API dependency boundary change; this unblocks slice 3.
+- [x] An ADR approving the display only runtime score, the history features and the raw Sparkov source: ADR-024, accepted 2026-09-28 (the benchmark contract stays unchanged; the model gets its own proposed contract).
 - [ ] A per payment routing policy with owner set thresholds, if varied outcomes are wanted; only then may a score influence a route.
 - [ ] A Sandbox compatible labelled dataset, if a score meaningful on Sandbox payments is wanted.
 - [ ] Update `context/architecture.md` and `context/progress_tracker.md` for F3a once built (left for their owner while `context/` has other uncommitted edits).
