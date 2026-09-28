@@ -147,8 +147,12 @@ Before enablement:
 - A staging deployment passes spec 0002's and 0003's `verify.md` against the
   public database, and the budget alerts are proven to arrive (a test alert
   or a lowered threshold).
-- A rollback drill: both flags off, redeploy, and the console shows the
-  fallbacks with no database connection attempted.
+- A rollback drill: remove `DATABASE_URL` from the showcase Doppler config,
+  set both flags off, redeploy, and the console shows the fallbacks with no
+  database connection attempted. (Corrected 2026-09-28: the Sandbox routes
+  use the database whenever `DATABASE_URL` is set, so the flags alone do not
+  stop connections. The deploy workflow refuses `DATABASE_URL` without
+  `PUBLIC_DATABASE_GUARDS_ENABLED=true`.) Steps: `docs/runbooks/public-database-setup.md`.
 
 ## Consequences and ownership
 
