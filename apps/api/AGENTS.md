@@ -54,6 +54,8 @@ specific to `apps/api`.
 - Migrations live in `migrations/`. `scripts/apply_sandbox_migrations.py`
   applies every numbered file on every run and records nothing, so each
   migration must be rerunnable.
+- `scripts/prune_sandbox_datasets.py` is the explicit Sandbox retention command;
+  it dry-runs by default and requires `--apply` to delete eligible records.
 - Log with `logging.getLogger(__name__)`; `create_app()` shows the `server`
   logger at `API_LOG_LEVEL` (default `INFO`). Log fixed categories only: never
   payloads, driver messages, or browser, run or case IDs.

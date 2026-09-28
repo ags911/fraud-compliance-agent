@@ -74,6 +74,19 @@ class SimulationClientRateLimited(RuntimeError):
     """Signal that one server-derived client started too many feeds this minute."""
 
 
+@dataclass(frozen=True)
+class SandboxDatasetPruneCounts:
+    """Report the number of eligible sanitised dataset and baseline records.
+
+    Attributes:
+        datasets: Superseded scenario datasets not retained for a simulation run.
+        baselines: Baselines with no remaining dataset reference.
+    """
+
+    datasets: int
+    baselines: int
+
+
 # Spec 0003 limits: live runs across the site, starts per browser per rolling
 # minute (10 since spec 0005 starts a feed on load and on scenario change),
 # and how long a finished run is kept before the worker sweeps it.
@@ -505,15 +518,35 @@ class PsycopgScenarioRepository:
         cls._insert_dataset_contents(cursor, dataset)
 
     @staticmethod
-    def _delete_dataset(cursor: psycopg.Cursor[Any], dataset: ScenarioDataset) -> None:
-        """Delete one fixture version, children before the parent row they reference."""
+    def _delete_dataset_version(
+        cursor: psycopg.Cursor[Any], scenario_id: str, fixture_version: str
+    ) -> None:
+        """Delete one dataset version, its derived rows, and retired append history.
+
+        Args:
+            cursor: Open cursor in the caller's database transaction.
+            scenario_id: Validated scenario owning the dataset.
+            fixture_version: Validated version to remove.
+
+        Side effects:
+            Deletes only rows for the supplied dataset, in foreign-key-safe order.
+        """
         for query in (
             "DELETE FROM sandbox_simulated_event_appends WHERE scenario_id = %s AND fixture_version = %s",
             "DELETE FROM sandbox_daily_aggregates WHERE scenario_id = %s AND fixture_version = %s",
             "DELETE FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s",
             "DELETE FROM sandbox_datasets WHERE scenario_id = %s AND fixture_version = %s",
         ):
-            cursor.execute(query, (dataset.scenario_id, dataset.fixture_version))
+            cursor.execute(query, (scenario_id, fixture_version))
+
+    @classmethod
+    def _delete_dataset(
+        cls, cursor: psycopg.Cursor[Any], dataset: ScenarioDataset
+    ) -> None:
+        """Delete one fixture version, children before the parent row they reference."""
+        cls._delete_dataset_version(
+            cursor, dataset.scenario_id, dataset.fixture_version
+        )
 
     def replace_dataset(self, dataset: ScenarioDataset) -> None:
         """Replace one fixture version atomically with its derived records."""
@@ -578,6 +611,120 @@ class PsycopgScenarioRepository:
                     self._insert_dataset(cursor, dataset)
         except psycopg.Error as error:
             raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+
+    def prune_superseded_datasets(
+        self, *, apply: bool = False
+    ) -> SandboxDatasetPruneCounts:
+        """Plan or apply the explicit retention cleanup for imported Sandbox data.
+
+        Args:
+            apply: When true, delete eligible rows; false reports counts only.
+
+        Returns:
+            Counts of superseded datasets and unreferenced baselines selected.
+
+        Raises:
+            TypeError: If ``apply`` is not a boolean.
+            SandboxDataUnavailable: If the database is unreachable or returns
+                an invalid retention selection.
+
+        Side effects:
+            When ``apply`` is true, deletes sanitised child rows before their
+            dataset parent, then removes unreferenced baseline rows. It never
+            runs from reads or simulation execution.
+        """
+        if not isinstance(apply, bool):
+            raise TypeError("apply must be a boolean")
+        try:
+            with (
+                psycopg.connect(self._database_url) as connection,
+                connection.cursor() as cursor,
+            ):
+                # A run's foreign key makes its historical dataset ineligible.
+                cursor.execute(
+                    """WITH ranked_datasets AS (
+                    SELECT scenario_id, fixture_version,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY scenario_id
+                               ORDER BY imported_at DESC, fixture_version DESC
+                           ) AS import_rank
+                    FROM sandbox_datasets
+                    )
+                    SELECT scenario_id, fixture_version
+                    FROM ranked_datasets AS dataset
+                    WHERE import_rank > 1
+                      AND NOT EXISTS (
+                          SELECT 1 FROM sandbox_simulation_runs AS run
+                          WHERE run.scenario_id = dataset.scenario_id
+                            AND run.fixture_version = dataset.fixture_version
+                      )
+                      -- A Mixed run has no fixture version of its own; each of
+                      -- its payments references its source dataset instead.
+                      AND NOT EXISTS (
+                          SELECT 1 FROM sandbox_simulation_events AS event
+                          WHERE event.source_scenario_id = dataset.scenario_id
+                            AND event.source_fixture_version = dataset.fixture_version
+                      )"""
+                )
+                dataset_versions = self._validated_dataset_versions(cursor.fetchall())
+
+                # Baselines can be retired only after retained datasets are known.
+                cursor.execute(
+                    """SELECT baseline.baseline_version
+                    FROM sandbox_baselines AS baseline
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM sandbox_datasets AS dataset
+                        WHERE dataset.baseline_version = baseline.baseline_version
+                    )"""
+                )
+                baseline_versions = self._validated_baseline_versions(cursor.fetchall())
+                if apply:
+                    for scenario_id, fixture_version in dataset_versions:
+                        self._delete_dataset_version(
+                            cursor, scenario_id, fixture_version
+                        )
+                    for baseline_version in baseline_versions:
+                        cursor.execute(
+                            "DELETE FROM sandbox_baseline_transactions WHERE baseline_version = %s",
+                            (baseline_version,),
+                        )
+                        cursor.execute(
+                            "DELETE FROM sandbox_baselines WHERE baseline_version = %s",
+                            (baseline_version,),
+                        )
+                return SandboxDatasetPruneCounts(
+                    datasets=len(dataset_versions), baselines=len(baseline_versions)
+                )
+        except psycopg.Error as error:
+            raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+
+    @staticmethod
+    def _validated_dataset_versions(
+        rows: list[tuple[Any, ...]],
+    ) -> list[tuple[str, str]]:
+        """Validate the database-selected dataset identifiers before deletion."""
+        versions: list[tuple[str, str]] = []
+        for row in rows:
+            if (
+                len(row) != 2
+                or not isinstance(row[0], str)
+                or not row[0]
+                or not isinstance(row[1], str)
+                or not row[1]
+            ):
+                raise SandboxDataUnavailable("Sandbox retention selection is invalid")
+            versions.append((row[0], row[1]))
+        return versions
+
+    @staticmethod
+    def _validated_baseline_versions(rows: list[tuple[Any, ...]]) -> list[str]:
+        """Validate the database-selected baseline identifiers before deletion."""
+        versions: list[str] = []
+        for row in rows:
+            if len(row) != 1 or not isinstance(row[0], str) or not row[0]:
+                raise SandboxDataUnavailable("Sandbox retention selection is invalid")
+            versions.append(row[0])
+        return versions
 
     def create_simulation_run(
         self,

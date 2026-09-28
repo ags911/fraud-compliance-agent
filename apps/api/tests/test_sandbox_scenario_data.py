@@ -122,6 +122,97 @@ def test_replacing_a_dataset_deletes_children_before_the_parent(monkeypatch) -> 
     assert first_insert == len(deleted)
 
 
+def test_pruning_superseded_datasets_keeps_current_and_run_referenced_versions(
+    monkeypatch,
+) -> None:
+    """Delete only superseded unreferenced versions, children before parents."""
+    queries: list[tuple[str, object]] = []
+
+    class RecordingCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info) -> None:
+            return None
+
+        def execute(self, query: str, params: object = None) -> None:
+            queries.append((" ".join(query.split()), params))
+
+        def fetchall(self) -> list[tuple[str]] | list[tuple[str, str]]:
+            query = queries[-1][0]
+            if "ranked_datasets" in query:
+                # Only S04:v1 is eligible; S04:v3 is newest and S04:v2 has a run.
+                return [("S04", "s04-v1")]
+            if "FROM sandbox_baselines" in query:
+                return [("baseline-v1",)]
+            raise AssertionError(f"unexpected fetch: {query}")
+
+    class RecordingConnection(RecordingCursor):
+        def cursor(self) -> RecordingCursor:
+            return RecordingCursor()
+
+    monkeypatch.setattr(
+        service.psycopg, "connect", lambda database_url: RecordingConnection()
+    )
+
+    result = PsycopgScenarioRepository(
+        "postgresql://example.invalid/db"
+    ).prune_superseded_datasets(apply=True)
+
+    assert result.datasets == 1
+    assert result.baselines == 1
+    deleted = [query.split()[2] for query, _ in queries if query.startswith("DELETE")]
+    assert deleted == [
+        "sandbox_simulated_event_appends",
+        "sandbox_daily_aggregates",
+        "sandbox_transactions",
+        "sandbox_datasets",
+        "sandbox_baseline_transactions",
+        "sandbox_baselines",
+    ]
+    # Both kinds of run reference protect a dataset: a single scenario run's
+    # fixture version, and a Mixed run's per payment source (migration 0007).
+    selection = next(query for query, _ in queries if "ranked_datasets" in query)
+    assert "FROM sandbox_simulation_runs" in selection
+    assert "event.source_fixture_version = dataset.fixture_version" in selection
+
+
+def test_pruning_superseded_datasets_is_dry_run_by_default(monkeypatch) -> None:
+    """Plan retention cleanup without deleting a dataset or baseline by default."""
+    queries: list[str] = []
+
+    class RecordingCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info) -> None:
+            return None
+
+        def execute(self, query: str, params: object = None) -> None:
+            queries.append(" ".join(query.split()))
+
+        def fetchall(self) -> list[tuple[str]] | list[tuple[str, str]]:
+            if "ranked_datasets" in queries[-1]:
+                return [("S04", "s04-v1")]
+            return [("baseline-v1",)]
+
+    class RecordingConnection(RecordingCursor):
+        def cursor(self) -> RecordingCursor:
+            return RecordingCursor()
+
+    monkeypatch.setattr(
+        service.psycopg, "connect", lambda database_url: RecordingConnection()
+    )
+
+    result = PsycopgScenarioRepository(
+        "postgresql://example.invalid/db"
+    ).prune_superseded_datasets()
+
+    assert result.datasets == 1
+    assert result.baselines == 1
+    assert not any(query.startswith("DELETE") for query in queries)
+
+
 def test_dataset_builder_persists_zero_activity_calendar_days() -> None:
     """Include zero activity days so charts never infer missing dates as absent data."""
     dataset = build_dataset(

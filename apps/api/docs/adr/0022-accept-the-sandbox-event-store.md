@@ -6,7 +6,7 @@ Owner: Darren Gidado (product owner)
 PRD revision/sections: Candidate v0.3  
 Backlog task: F3a deterministic Sandbox event data (spec 0001); Scenario analytics and deterministic live-feed overlay (spec 0003)  
 Related decisions: ADR-002, ADR-003, ADR-009, ADR-016, ADR-017, ADR-020 and ADR-021  
-Repository scope: `apps/api/server/sandbox_data/`, `apps/api/migrations/0001_sandbox_scenario_data.sql`, `apps/api/migrations/0002_sandbox_baselines_and_appends.sql`, `apps/api/scripts/import_plaid_sandbox_history.py`, `docs/contracts/sandbox-scenario-dataset.v1.schema.json`, `docs/contracts/sandbox-scenario-analytics.v1.schema.json`
+Repository scope: `apps/api/server/sandbox_data/`, `apps/api/migrations/0001_sandbox_scenario_data.sql`, `apps/api/migrations/0002_sandbox_baselines_and_appends.sql`, `apps/api/scripts/import_plaid_sandbox_history.py`, `apps/api/scripts/prune_sandbox_datasets.py`, `docs/contracts/sandbox-scenario-dataset.v1.schema.json`, `docs/contracts/sandbox-scenario-analytics.v1.schema.json`
 
 ## Context and evidence
 
@@ -52,9 +52,9 @@ The built store has these boundaries:
 accepted runtime source. They also record that aggregation grain and retention
 still need an explicit decision. The current replacement code deletes only a
 matching scenario and fixture version; a later import with a new fixture
-version can leave an older sanitised dataset in place. ADR-021 remains Proposed
-and separately governs whether any database-backed feature may be enabled
-publicly.
+version can leave an older sanitised dataset in place. ADR-021 was accepted on
+2026-09-28; its public-database guards are implemented in PR #18 and
+separately govern public database-backed features.
 
 ## Decision to be made
 
@@ -87,7 +87,7 @@ with the time-aware contracts, mapping, retention and overlay model below?
    (proposed).** Freeze the two v1 schemas, import boundary, retention and
    overlay invariants below; keep public use subject to ADR-021.
 3. **Accept it as a public or operational data source now.** This would need
-   ADR-021 acceptance and guards, an operational persistence decision, and a
+   ADR-021 guard compliance, an operational persistence decision, and a
    privacy and hosting decision. None is resolved here.
 
 ## Proposed decision
@@ -106,18 +106,22 @@ Option 2.
    child-first order. A referenced dataset is not replaced while foreign keys
    preserve simulation-run history.
 4. Before acceptance, implement and verify a retention policy for imported
-   sanitised datasets and their derived aggregates. It must retain data only
-   within each dataset's declared finite time boundary, define whether
-   superseded fixture versions remain available for replay, and clean them up
-   explicitly. Import manifests must record the boundary,
+   sanitised datasets and their derived aggregates. The built
+   `scripts/prune_sandbox_datasets.py` operator command defaults to a dry run;
+   `--apply` removes, for each scenario, only superseded versions that are not
+   the newest by `imported_at` and are not referenced by a simulation run.
+   It deletes appends, daily aggregates, transactions, and then the dataset;
+   it then removes unused baselines with no dataset reference. It prints
+   aggregate counts only, never identifiers, and is never called by a read or
+   run. Import manifests must record the boundary,
    fixture/baseline/overlay/enrichment versions and permitted fields; a new
    duration, field, precision or aggregation grain requires a versioned
    successor and ADR review.
 5. Accept the spec 0003 overlay model: scheduled, shown simulation payments
    are read-time additions to a run's analytics only. They never mutate the
    imported baseline or cause a provider call.
-6. Keep the public deployment database-free unless ADR-021 is accepted and
-   its guards are verified. This record does not supersede ADR-016 or
+6. Keep public database use within ADR-021's accepted guards, implemented in
+   PR #18. This record does not supersede ADR-016 or
    ADR-017's public boundary.
 
 ## Contracts and invariants
@@ -133,12 +137,13 @@ Option 2.
   the scenario, fixture version, baseline, overlay, enrichment and declared
   time boundary needed to reproduce its display.
 - **Retention before acceptance.** The runtime store must retain only the
-  sanitised datasets and derived aggregates allowed by an explicit retention
-  policy, within their declared boundaries, and hold no raw import archive.
-  The current code only replaces a matching fixture version, so it does not
-  yet meet this invariant for superseded versions. Replacement and cleanup
-  must be explicit and validated, never a side effect of viewing or running a
-  scenario.
+  active dataset per scenario plus any version referenced by a simulation run,
+  and their derived aggregates, within their declared boundaries; it holds no
+  raw import archive. The validated, explicit
+  `scripts/prune_sandbox_datasets.py` command defaults to dry run and, only
+  with `--apply`, deletes eligible superseded versions child first and unused
+  baselines. It reports counts only and is never a side effect of viewing or
+  running a scenario.
 - **Scenario isolation.** Reads and writes are constrained by scenario and
   fixture version. A deterministic overlay is scoped to its simulation run;
   one run's shown payments cannot change another run or the baseline.
@@ -182,12 +187,11 @@ fail if an API or importer payload changes without a versioned successor.
 
 ## Open questions
 
-- Is retaining only an active declared dataset sufficient for replay needs,
-  or should a future accepted design retain superseded sanitised versions and
-  define a longer retention schedule?
+- Retention is active dataset plus run-referenced versions; a future accepted
+  design may define a longer retention schedule for additional versions.
 - Which manifest format and review process should record a new imported time
   boundary before an explicit refresh?
-- If ADR-021 is accepted, do its public storage ceiling and sweep requirements
+- Do ADR-021's public storage ceiling and sweep requirements
   need dataset-specific values in addition to this record's active-dataset
   retention boundary?
 
