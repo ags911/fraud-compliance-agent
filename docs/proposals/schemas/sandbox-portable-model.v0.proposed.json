@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sandbox portable display-only model manifest",
+  "x-approval-status": "proposed",
+  "type": "object",
+  "required": ["model_version", "feature_order", "raw_sparkov_sha256", "model_sha256", "manifest_sha256", "platt", "metrics", "scope"],
+  "properties": {
+    "model_version": {"const": "sandbox-portable-xgb-v1"},
+    "feature_order": {"const": ["log_amount", "event_day_of_week_utc", "is_weekend", "card_prior_count", "card_prior_mean_amount", "amount_to_card_prior_mean", "card_merchant_prior_count", "card_category_prior_count"]},
+    "raw_sparkov_sha256": {"type": "object", "required": ["fraudTrain.csv", "fraudTest.csv"]},
+    "model_sha256": {"type": "string"}, "manifest_sha256": {"type": "string"},
+    "platt": {"type": "object", "required": ["a", "b"]},
+    "metrics": {"type": "object", "required": ["pr_auc", "roc_auc", "brier"]},
+    "scope": {"type": "string"}
+  },
+  "x-prohibitions": ["No routing", "No recommendation", "No case-saving decision", "No threshold", "Not a fraud probability"]
+}

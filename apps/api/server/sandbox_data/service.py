@@ -22,6 +22,8 @@ from server.public_database_guards import (
 )
 from server.sandbox_data.decisions import FeedDecision, feed_decision
 from server.sandbox_data.feed_cases import build_feed_case
+from server.sandbox_model import load_portable_model
+from server.sandbox_model.features import PortablePayment, build_feature_vector
 from server.showcase_cases.capture import CaseCaptureError, EventValidator
 from server.showcase_cases.repository import (
     CaseStorageCeiling,
@@ -853,10 +855,55 @@ class PsycopgScenarioRepository:
                         source_versions[item.source_scenario_id],
                     )
 
+                # Features use only the owning scenario's imported outbound
+                # history, then earlier scheduled payments from that scenario.
+                model = load_portable_model()
+                histories: dict[str, list[PortablePayment]] = {}
+                for source, fixture_version in source_versions.items():
+                    cursor.execute(
+                        """SELECT transaction_id, event_date, amount_minor, payee_reference, category_bucket
+                        FROM sandbox_transactions WHERE scenario_id = %s AND fixture_version = %s
+                          AND direction = 'outbound' ORDER BY event_date, transaction_id""",
+                        (source, fixture_version),
+                    )
+                    histories[source] = [
+                        PortablePayment(
+                            row["event_date"],
+                            row["transaction_id"],
+                            row["amount_minor"],
+                            row["payee_reference"],
+                            row["category_bucket"],
+                        )
+                        for row in cursor.fetchall()
+                    ]
+
+                def model_values(
+                    item: Any,
+                ) -> tuple[float | None, str | None, str | None]:
+                    """Score one scheduled outbound payment without affecting its decision.
+
+                    The return is deliberately nullable: a missing or invalid
+                    artifact leaves the durable decision and any later case unchanged.
+                    """
+                    source = item.source_scenario_id or scenario_id
+                    payment = PortablePayment(
+                        item.event.event_date,
+                        item.event.event_id or "",
+                        item.event.amount_minor,
+                        item.event.payee_reference,
+                        item.event.category_bucket,
+                    )
+                    if item.event.direction != "outbound" or model is None:
+                        return None, None, None
+                    values = build_feature_vector(payment, histories[source])
+                    score, input_hash = model.score(values)
+                    histories[source].append(payment)
+                    return round(score, 5), model.model_version, input_hash
+
                 # One batched insert: a feed schedules hundreds of events.
                 cursor.executemany(
-                    """INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    """INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis, model_score, model_version, model_input_sha256)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     [
                         (
                             run_id,
@@ -876,6 +923,7 @@ class PsycopgScenarioRepository:
                                 item.source_scenario_id or scenario_id,
                                 item.event.direction,
                             ),
+                            *model_values(item),
                         )
                         for item in schedule
                     ],

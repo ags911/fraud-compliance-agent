@@ -368,6 +368,21 @@ test.describe("Risk Console Cases tab", () => {
     await expect(drawer.getByTestId("case-model-signal")).toContainText("Not scored yet")
   })
 
+  test("shows a five-place display-only score, version, and mechanics label", async ({ page }) => {
+    const scored = {
+      ...FEED_DETAIL,
+      case: { ...FEED_DETAIL.case, model_score: 0.73412, model_version: "sandbox-portable-xgb-v1" },
+    }
+    await page.route("**/cases/run_*", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(scored) }),
+    )
+    await page.goto(`/?case=${FEED_ID}`)
+    const signal = page.getByTestId("case-model-signal")
+    await expect(signal).toContainText("0.73412")
+    await expect(signal).toContainText("sandbox-portable-xgb-v1")
+    await expect(signal).toContainText("Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It does not decide.")
+  })
+
   test("falls back to this visit's runs, unlinked, when case history is off", async ({ page }) => {
     await page.route(/\/cases(\?.*)?$/, (route) =>
       route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify(UNAVAILABLE) }),

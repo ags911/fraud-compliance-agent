@@ -42,8 +42,9 @@ def imported_roots(source: str) -> set[str]:
 
 def test_the_served_api_never_imports_the_modelling_library(repository_root) -> None:
     """A production image installed without dev dependencies must still start."""
-    for path in sorted((repository_root / "apps" / "api" / "server").glob("*.py")):
-        assert "modelling" not in imported_roots(path.read_text(encoding="utf-8")), path
+    for path in sorted((repository_root / "apps" / "api" / "server").rglob("*.py")):
+        roots = imported_roots(path.read_text(encoding="utf-8"))
+        assert not roots & {"modelling", "xgboost", "sklearn", "pandas"}, path
 
 
 def test_the_modelling_library_never_imports_the_api(repository_root) -> None:

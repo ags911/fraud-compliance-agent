@@ -178,7 +178,7 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
                   MODEL_SIGNAL_UNSCORED
                 ) : (
                   <>
-                    {summary.model_score.toFixed(3)}
+                    {summary.model_score.toFixed(5)}
                     {summary.model_version ? <span className="td-secondary"> · {summary.model_version}</span> : null}
                     <span className="case-fact-note">{MODEL_SIGNAL_NOTE}</span>
                   </>
