@@ -657,6 +657,13 @@ class PsycopgScenarioRepository:
                           SELECT 1 FROM sandbox_simulation_runs AS run
                           WHERE run.scenario_id = dataset.scenario_id
                             AND run.fixture_version = dataset.fixture_version
+                      )
+                      -- A Mixed run has no fixture version of its own; each of
+                      -- its payments references its source dataset instead.
+                      AND NOT EXISTS (
+                          SELECT 1 FROM sandbox_simulation_events AS event
+                          WHERE event.source_scenario_id = dataset.scenario_id
+                            AND event.source_fixture_version = dataset.fixture_version
                       )"""
                 )
                 dataset_versions = self._validated_dataset_versions(cursor.fetchall())

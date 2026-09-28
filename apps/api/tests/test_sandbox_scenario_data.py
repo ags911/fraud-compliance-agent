@@ -170,6 +170,11 @@ def test_pruning_superseded_datasets_keeps_current_and_run_referenced_versions(
         "sandbox_baseline_transactions",
         "sandbox_baselines",
     ]
+    # Both kinds of run reference protect a dataset: a single scenario run's
+    # fixture version, and a Mixed run's per payment source (migration 0007).
+    selection = next(query for query, _ in queries if "ranked_datasets" in query)
+    assert "FROM sandbox_simulation_runs" in selection
+    assert "event.source_fixture_version = dataset.fixture_version" in selection
 
 
 def test_pruning_superseded_datasets_is_dry_run_by_default(monkeypatch) -> None:
