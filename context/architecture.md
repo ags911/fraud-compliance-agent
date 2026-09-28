@@ -72,7 +72,10 @@ below for why that SDK is documented separately.
 - **Offline modelling boundary**: `apps/api/modelling/` (Sparkov benchmark
   library) is never imported by `server/` — enforced by
   `test_modelling_boundaries.py`. Its parameters live in the **accepted**
-  `config/fast-path-model-training.v1.json`.
+  `config/fast-path-model-training.v1.json`. ADR-024 additionally permits a
+  display-only, packaged booster JSON under `server/sandbox_model/`, evaluated
+  by a standard-library tree walker. The pinned `sandbox-portable-xgb-v1`
+  artifact is shipped in the wheel; an absent or invalid artifact is inert.
 - **No background jobs/queue/worker** exists; all work is synchronous
   per-request, bounded by concurrency/timeout/tool-budget controls.
 - **No database** (see §4). This is deliberate through MVP 1–3; PostgreSQL
@@ -262,9 +265,10 @@ spec 0002's `build_case` and `EventValidator` and saved in that same
 transaction, with `case_status` `saved`, `invalid` or `storage_off` on the
 payment. Caps are per browser and per origin (20 feed, 50 showcase), trimmed
 in the insert's transaction. Migration `0006_feed_decisions.sql` adds the
-columns, including a null `model_score`: the Sparkov trained display only
-score (slice 3) waits for an ADR and never decides a route, a recommendation
-or whether a case is saved.
+columns, including `model_score`: ADR-024 accepts a Sparkov-trained display
+only score when its pinned artifact is present. It never decides a route, a
+recommendation or whether a case is saved; absent/invalid model artifacts keep
+the value null.
 
 This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
 authorises a database nor changes the accepted database-free public showcase

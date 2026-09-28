@@ -479,6 +479,10 @@ class RecordingCursor:
     def fetchone(self):
         return self.answers.pop(0)
 
+    def fetchall(self):
+        """Return no imported history unless a focused test supplies one."""
+        return []
+
     def __enter__(self):
         return self
 
@@ -510,7 +514,7 @@ class RecordingConnection:
 def test_run_start_stores_the_rule_decision_on_every_scheduled_payment(
     monkeypatch, scenario_id, route, recommendation, basis
 ) -> None:
-    """AC-1, AC-2: decided at run start, from the rule alone, with no score."""
+    """AC-1 to AC-3: no model leaves rule decisions and values unchanged."""
     from server.sandbox_data import service
     from server.sandbox_data.simulation import build_scenario_schedule
 
@@ -535,6 +539,7 @@ def test_run_start_stores_the_rule_decision_on_every_scheduled_payment(
     monkeypatch.setattr(
         service.psycopg, "connect", lambda *args, **kwargs: RecordingConnection(cursor)
     )
+    monkeypatch.setattr(service, "portable_model", lambda: None)
     schedule = build_scenario_schedule(
         scenario_id, date(2026, 9, 23), RUN_ID, event_count=3
     )
@@ -545,10 +550,10 @@ def test_run_start_stores_the_rule_decision_on_every_scheduled_payment(
 
     [(query, rows)] = cursor.batches
     assert "deterministic_route, recommendation, recommendation_basis" in query
-    # No score column is written at run start until slice 3.
-    assert "model_score" not in query
+    assert "model_score, model_version, model_input_sha256" in query
     assert len(rows) == 3
-    assert {row[-3:] for row in rows} == {(route, recommendation, basis)}
+    assert {row[-6:-3] for row in rows} == {(route, recommendation, basis)}
+    assert {row[-3:] for row in rows} == {(None, None, None)}
 
 
 def test_a_workflow_scenario_schedule_stores_no_decision() -> None:

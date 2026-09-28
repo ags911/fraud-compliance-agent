@@ -92,6 +92,7 @@ from server.sandbox_data.service import (
     start_sandbox_simulation,
 )
 from server.sandbox_data.worker import run_simulation_worker
+from server.sandbox_model import portable_model
 from server.showcase_cases.capture import EventValidator
 from server.showcase_cases.models import CaseDetailResponse, CaseListResponse
 from server.showcase_cases.repository import (
@@ -487,6 +488,10 @@ def create_app() -> FastAPI:
 
     # Durable showcase cases (spec 0002) are off unless explicitly enabled with
     # a database, so the database free public deployment never stores cases.
+    # Load and verify the display only model once at startup (spec 0004
+    # AC-12). A missing or mismatched artifact logs one warning and leaves
+    # feed scores null; it never stops the API.
+    portable_model()
     case_settings = load_case_settings()
     public_database_guards = load_public_database_guard_settings()
     # Validate the proxy-hop setting once at startup rather than per request.

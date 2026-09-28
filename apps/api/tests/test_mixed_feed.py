@@ -56,6 +56,10 @@ class RecordingCursor:
     def fetchone(self):
         return self.answers.pop(0)
 
+    def fetchall(self):
+        """Return no imported history for schedule-shape tests."""
+        return []
+
     def __enter__(self):
         return self
 
@@ -163,15 +167,15 @@ def test_a_mixed_run_has_no_fixture_version_and_each_payment_names_its_source(
     assert "source_scenario_id, source_fixture_version, deterministic_route" in query
     for item, row in zip(schedule, rows, strict=True):
         decision = feed_decision(item.source_scenario_id)
-        # The last five columns: source, its fixture version, then its decision.
-        assert row[-5:] == (
+        # Source, fixture version and decision remain before display-only model values.
+        assert row[-8:-3] == (
             item.source_scenario_id,
             VERSIONS[item.source_scenario_id],
             decision.deterministic_route,
             decision.recommendation,
             decision.recommendation_basis,
         )
-    assert {row[-3] for row in rows} >= {"PASS", "HOLD", "INVESTIGATE"}
+    assert {row[-6] for row in rows} >= {"PASS", "HOLD", "INVESTIGATE"}
     assert run["scenario_id"] == MIXED_FEED_ID
     assert run["fixture_version"] is None
 
@@ -204,8 +208,8 @@ def test_a_single_scenario_run_records_no_source(monkeypatch) -> None:
     )
 
     [(_, rows)] = cursor.batches
-    assert {row[-5:-3] for row in rows} == {(None, None)}
-    assert {row[-2] for row in rows} == {"HOLD"}
+    assert {row[-8:-6] for row in rows} == {(None, None)}
+    assert {row[-5] for row in rows} == {"HOLD"}
 
 
 def test_a_mixed_run_needs_every_source_dataset(monkeypatch) -> None:

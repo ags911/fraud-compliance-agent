@@ -1,0 +1,9 @@
+{
+  "config_version": "sandbox-portable-model-v1",
+  "random_seed": 20260928,
+  "partitioning": {"chronological_train_cutpoint": "2020-03-06T07:15:17+00:00"},
+  "features": ["log_amount", "event_day_of_week_utc", "is_weekend", "card_prior_count", "card_prior_mean_amount", "amount_to_card_prior_mean", "card_merchant_prior_count", "card_category_prior_count"],
+  "xgboost": {"n_estimators": 200, "max_depth": 5, "learning_rate": 0.1, "subsample": 0.8, "colsample_bytree": 0.8, "nthread": 1, "tree_method": "hist"},
+  "calibration": {"method": "platt"},
+  "scope": "Display-only Sparkov synthetic mechanics evidence. No route, recommendation, case-saving rule, threshold, or fraud probability."
+}

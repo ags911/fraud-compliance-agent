@@ -1,5 +1,7 @@
 # Verify: score and route live feed payments · spec 0004 · updated 2026-09-24
-_Steps derived from spec 0004 acceptance criteria (slices 1 and 2; slice 3, AC-11 to AC-15, waits for its ADR). `/check verify` runs these; `/test` locks the durable ones._
+_Steps derived from spec 0004 acceptance criteria. ADR-024 unblocked slice 3;
+the trained portable artifact and automated checks are complete. `/check verify`
+runs these; `/test` locks the durable ones._
 
 ## UI / manual
 Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED=true` and `DATABASE_URL` from Doppler, then open the Risk Console at `/` (`/radar` before 2026-09-27; it still falls back to `/`).
@@ -28,6 +30,15 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - [x] Overlay counts ← the named run's revealed, decided events: a second browser ID asking for the same run gets 404 `sandbox_simulation_not_found` → AC-7
 - [x] "Live feed" ← `origin = feed`: a Run showcase case still shows `Recorded playback` → AC-10
 - [x] Model signal ← `model_score`: null shows `Not scored yet` → AC-10
+- [x] Mocked scored feed case → drawer shows five-place score, model version and the ADR-024 mechanics label; null still says `Not scored yet` → AC-10
+
+## Slice 3 verification
+
+- [x] Run `train_sandbox_portable_model.py` twice against owner-local raw Sparkov CSVs; model SHA-256 `8fb7909ad5192993eabbffd6e014ffb95626af0457a6c9aefc48bdfe3afcb576` and manifest SHA-256 `411a4aadbcc2a98d73fe9d383f0f2ae9f4eba6d1281570db8f25027fb57f532d` match → AC-11
+- [x] Verify the committed artifact's tree-walker parity against XGBoost, including missing branches, and its pinned-hash refusal → AC-12, AC-14
+- [x] Start a local Neon feed and inspect stored score, version and input digest; confirm the case copies score/version without changing rule decisions → AC-2, AC-3, AC-14 (2026-09-28, dev database: an S04 feed scored all 200 payments with `sandbox-portable-xgb-v1` and a 64 character digest; every feed case carried its payment's exact score; test rows deleted)
+- [x] A scored run start and an unscored one store identical rows apart from the three score columns and the clock's `due_at`; a scorer fault leaves null scores, logs one `sandbox_portable_score_failed`, and the run still starts → AC-2, AC-3 (`tests/test_sandbox_portable_model.py`)
+- [x] Build the API image, load and score the packaged model, and confirm `pip show xgboost` fails → AC-15
 
 ## Acceptance-criteria coverage
 - AC-1 · rule table tests, migration introspection, S01/S04 manual steps
@@ -40,4 +51,4 @@ Run the local API with `SHOWCASE_CASES_ENABLED=true`, `SIMULATION_WORKER_ENABLED
 - AC-8 · chart Playwright test and S02 manual step
 - AC-9 · Cases polling Playwright test and manual step
 - AC-10 · case page and drawer Playwright tests and manual step
-- AC-11 to AC-15 · slice 3, not built (blocked on the ADR)
+- AC-11 to AC-15 · artifact training, hash pinning, scorer/feature parity, tamper refusal, image packaging and no-runtime-XGBoost checks pass; local Neon persistence verified
