@@ -49,6 +49,7 @@ def main() -> None:
         "SHOWCASE_APPLY_SANDBOX_MIGRATIONS",
         "scripts/apply_sandbox_migrations.py",
         "steps.doppler.outputs.DATABASE_MIGRATION_URL",
+        "Refuse an unguarded public database",
     ):
         _require(workflow, fragment, ".github/workflows/deploy-showcase.yml")
 
