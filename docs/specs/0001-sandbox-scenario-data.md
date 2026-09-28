@@ -1,6 +1,6 @@
 # 0001 · Sandbox scenario data
 
-**Status**: Assumed
+**Status**: Accepted
 **Date**: 2026-09-23
 **Authorized by**: product owner, during /develop
 
@@ -65,6 +65,8 @@ or committed by this build.
 
 ## Ratify
 
-This decision was recorded by /develop, not deliberated. Run `/architect
-Sandbox scenario data` to deliberate and ratify it. Until then it stays
-flagged as an owed decision; it does not block the build.
+Ratified on 2026-09-28 by ADR-022 (`apps/api/docs/adr/0022-accept-the-sandbox-event-store.md`),
+which the product owner accepted. It accepts the assumption above for local
+and internal use: the two v1 Sandbox schemas, the import only Plaid boundary,
+migrations 0001 and 0002, and the retention command
+`scripts/prune_sandbox_datasets.py`. Public use stays subject to ADR-021.

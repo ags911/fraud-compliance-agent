@@ -1023,9 +1023,7 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
     ]
 
 
-SIMULATION_CONTRACT = (
-    "docs/proposals/schemas/sandbox-simulation.v0.proposed.openapi.json"
-)
+SIMULATION_CONTRACT = "docs/contracts/sandbox-simulation.v1.openapi.json"
 
 
 def _simulation_contract(repository_root) -> dict:
@@ -1034,7 +1032,7 @@ def _simulation_contract(repository_root) -> dict:
     )
 
 
-def test_run_responses_match_the_proposed_simulation_contract(
+def test_run_responses_match_the_simulation_contract(
     monkeypatch, repository_root
 ) -> None:
     """Start, status and cancel bodies, with and without a snapshot, fit the contract."""
@@ -1063,7 +1061,7 @@ def test_run_responses_match_the_proposed_simulation_contract(
         assert list(validator.iter_errors(body)) == []
 
 
-def test_every_simulation_error_code_is_in_the_proposed_contract(
+def test_every_simulation_error_code_is_in_the_contract(
     repository_root,
 ) -> None:
     """A route may only answer with a code the contract lists."""

@@ -20,8 +20,8 @@ Fraud Compliance Agent is a monorepo containing a provider-neutral
 payment-risk decision demo: a React/Vite operator console (`apps/web`) and a
 FastAPI backend (`apps/api`) that together demonstrate an auditable flow from
 transaction signals to a simulated outcome, evidence, oversight, and review.
-Per the PRD (`docs/product/prd.md`, v0.3, **status: candidate for approval,
-not yet the ground-truth PRD**) and `docs/project-context.md`: this is a
+Per the PRD (v0.3, never approved, **retired 2026-09-28** and archived at
+`docs/archive/docs/product/prd.md`; `context/` supersedes it): this is a
 **public recruiter/employer showcase, not a production financial service**.
 It is production-shaped in architecture, contract-first interfaces, typed
 state, testing, and data boundaries, but deliberately uses synthetic
@@ -29,13 +29,10 @@ scenarios and simulated actions. "It must not collect real customer data,
 execute a payment, make a compliance claim, or imply a live fraud-performance
 result."
 
-**Document authority hierarchy** (PRD §1, once approved): (1) the PRD, (2)
-accepted API ADRs and contracts, (3) the API Phase 0 backlog/PRD review, (4)
-the dual-tier build plan, (5) the Fraud Risk Console implementation plan.
-"An implementation plan may not silently override an accepted contract."
-Until the PRD's own approval record (§12) is complete, the **API
-repository's accepted Phase 0 ADR artifacts remain authoritative** for
-backend contracts.
+**Document authority hierarchy** (since the PRD's retirement on 2026-09-28):
+(1) `context/`, (2) accepted ADRs and contracts, which win over `context/`
+for backend contracts, (3) feature specs in `docs/specs/`. "An
+implementation plan may not silently override an accepted contract."
 
 ## Core Goals (PRD §2, §4)
 

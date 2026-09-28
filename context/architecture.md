@@ -118,7 +118,7 @@ state machine (`none → ACCEPTED → PROCESSING → PENDING_REVIEW/COMPLETED_NO
 exists as draft vocabulary only — "state names are proposed vocabulary, not
 accepted API enums."
 
-### Implemented deterministic Sandbox store (not accepted runtime)
+### Implemented deterministic Sandbox store (accepted by ADR-022 for local and internal use)
 
 The deterministic source-to-score slice uses a two-phase data path:
 

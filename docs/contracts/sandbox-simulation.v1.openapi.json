@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Fraud Compliance Agent Sandbox simulation API (proposed)",
-    "version": "0.1",
-    "description": "Proposed contract for the deterministic live feed (specs 0003, 0005, 0006 and 0008), describing the routes as built on 2026-09-27. Not accepted: it may move to docs/contracts/ as sandbox-simulation.v1 only through an ADR (ADR-021 requires it before public use). The routes are internal today (include_in_schema=False).",
-    "x-contract-version": "0.1",
-    "x-approval-status": "proposed",
+    "title": "Fraud Compliance Agent Sandbox simulation API",
+    "version": "1.0",
+    "description": "Contract for the deterministic live feed (specs 0003, 0005, 0006 and 0008), accepted by ADR-023 on 2026-09-28 with the shapes as built on 2026-09-27. Public use still needs every ADR-021 guard and Verification item. The routes are internal today (include_in_schema=False).",
+    "x-contract-version": "1.0",
+    "x-approval-status": "accepted",
     "x-runtime-consumption": "internal-only",
     "x-scope": "Synthetic, browser scoped live feed runs over sanitised Plaid Sandbox datasets. A run reveals scheduled synthetic payments; it never executes, approves or releases a payment.",
     "x-prohibitions": [
