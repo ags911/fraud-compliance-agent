@@ -180,7 +180,8 @@ jobs:
           fi
           cd apps/api
           uv sync --frozen
-          uv run python scripts/apply_sandbox_migrations.py
+          # --frozen, as in Verify's no SDK job: the private SDK is not checked out.
+          uv run --frozen python scripts/apply_sandbox_migrations.py
 
       - name: Review the resource-group deployment
         env:
