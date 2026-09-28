@@ -114,6 +114,9 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
       <div>
         <div className="section-heading">{copy.heading}</div>
         <div className="section-sub">{copy.description}</div>
+        {mode === "saved" ? (
+          <p className="panel-footnote">Saved cases are linked only to a random ID kept in this browser, and are deleted after 30 days. Nothing else about you is stored.</p>
+        ) : null}
       </div>
 
       {error ? <p className="status-error">{error}</p> : null}

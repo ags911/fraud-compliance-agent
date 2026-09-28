@@ -11,8 +11,15 @@ param apiImage = 'ghcr.io/replace-owner/fraud-compliance-agent-api@sha256:replac
 // Optional live-provider values are injected by the guarded workflow from
 // Doppler. Recorded playback needs none of them and remains the default.
 param groqApiKey = ''
+// The guarded public database remains disabled until ADR-021 verification is
+// complete. Inject this only from a private Doppler-backed parameter source.
+param databaseUrl = ''
 param showcaseGroqModel = ''
 param showcaseGroqAllowedModels = ''
+param showcaseCasesEnabled = 'false'
+param simulationWorkerEnabled = 'false'
+param publicDatabaseGuardsEnabled = 'false'
+param showcaseTrustedProxyHops = '0'
 param tags = {
   application: 'fraud-compliance-agent'
   environment: 'showcase'
