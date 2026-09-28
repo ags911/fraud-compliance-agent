@@ -280,8 +280,8 @@ implementation."
 | 0019 | Accept Plaid Sandbox-derived S04 account-activity evidence | **Accepted** (2026-09-22) | Widens `EvidenceItem.source_class` to include `plaid_sandbox_derived`; adds one S04 evidence item; fixture packet → v1.1 |
 | 0020 | Accept local case persistence and the showcase cases contract | **Accepted** (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
 | 0021 | Allow the public showcase one guarded PostgreSQL database | **Accepted** (2026-09-28; enablement gated on its Verification) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
-| 0022 | Accept the Sandbox event store | Proposed (2026-09-27) | Proposes the versioned, sanitised Plaid Sandbox store as the local/internal time-aware source for analytics and replay, with explicit import-only mapping, retention and spec 0003 overlay invariants; public use remains subject to ADR-021 |
-| 0023 | Accept the Sandbox simulation contract | Proposed (2026-09-28) | Proposes promotion of `sandbox-simulation.v0` to `sandbox-simulation.v1` with shapes unchanged; ADR-021 requires acceptance before public enablement |
+| 0022 | Accept the Sandbox event store | **Accepted** (2026-09-28) | Accepts the versioned, sanitised Plaid Sandbox store as the local/internal time-aware source for analytics and replay, with explicit import-only mapping, retention and spec 0003 overlay invariants; public use remains subject to ADR-021 |
+| 0023 | Accept the Sandbox simulation contract | **Accepted** (2026-09-28) | Promotes `sandbox-simulation.v0` to `docs/contracts/sandbox-simulation.v1.openapi.json` with shapes unchanged; satisfies ADR-021's contract prerequisite, switches nothing on |
 
 Full per-ADR invariants are preserved in
 [`architecture.md`](architecture.md#5-accepted-architecture-invariants-from-accepted-adrs--these-are-built-rules).
@@ -379,12 +379,12 @@ architecture part of this repo's accepted design.
 
 ## PRD Approval Status
 
-`docs/product/prd.md` v0.3 remains **"Candidate for approval"** — pending
-product-owner confirmation and three unassigned reviewer roles
-(API/architecture, data/ML, security/governance). Until its §12 approval
-record is complete, "the API repository's accepted Phase 0 artifacts remain
-authoritative for backend contracts." Four categories are explicitly *not*
-resolved by PRD approval alone even once granted: the primary provider
-adapter/canonical schema; training target/corpus/label maturity/leakage-safe
-partitions; calibration/threshold/route policy/release criteria/rollback;
-authentication/tenancy/persistence/evidence-delivery/hosting.
+**Retired** (2026-09-28, product owner decision). `docs/product/prd.md` v0.3
+never completed its §12 approval record and is archived at
+`docs/archive/docs/product/prd.md`. It is superseded by `context/`, which is
+the canonical product, architecture and delivery source, together with the
+accepted ADRs and contracts. The four questions the PRD left open stay open
+and need their own ADRs: the primary provider adapter and canonical schema;
+the training target, corpus, label maturity and leakage safe partitions;
+calibration, threshold, route policy, release criteria and rollback; and
+authentication, tenancy, persistence, evidence delivery and hosting.

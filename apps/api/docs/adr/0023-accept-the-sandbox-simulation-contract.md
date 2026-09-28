@@ -1,6 +1,6 @@
 # ADR-023 — Accept the Sandbox simulation contract
 
-Status: Proposed  
+Status: Accepted  
 Date: 2026-09-28  
 Owner: Darren Gidado (product owner)  
 PRD revision/sections: Candidate v0.3  
@@ -130,7 +130,7 @@ After acceptance:
 
 ## Acceptance record
 
-Accepted by:  
-Date:  
-Notes:  
+Accepted by: Darren Gidado (product owner)  
+Date: 2026-09-28  
+Notes: Accepted as written, by the owner's explicit choice in a Claude Code session; recorded by Claude on that instruction. The owner approves promotion of the current shapes without a further public API review. The contract moved to `docs/contracts/sandbox-simulation.v1.openapi.json` unchanged, and the contract tests read it there. Trusted proxy hops stay at 0 until the ADR-021 staging deployment confirms the ingress header chain. No setting is switched on.  
 

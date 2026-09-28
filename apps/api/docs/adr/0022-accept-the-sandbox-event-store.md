@@ -1,6 +1,6 @@
 # ADR-022 — Accept the Sandbox event store
 
-Status: Proposed  
+Status: Accepted  
 Date: 2026-09-27  
 Owner: Darren Gidado (product owner)  
 PRD revision/sections: Candidate v0.3  
@@ -197,6 +197,6 @@ fail if an API or importer payload changes without a versioned successor.
 
 ## Acceptance record
 
-Accepted by:  
-Date:  
-Notes:  
+Accepted by: Darren Gidado (product owner)  
+Date: 2026-09-28  
+Notes: Accepted as written, by the owner's explicit choice in a Claude Code session; recorded by Claude on that instruction. The pre-acceptance retention step is built and merged (`scripts/prune_sandbox_datasets.py`, PR #19). This ratifies spec 0001's assumption. Acceptance covers local and internal use only; public use stays subject to ADR-021.  
