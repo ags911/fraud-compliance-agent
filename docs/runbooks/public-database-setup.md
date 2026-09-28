@@ -151,8 +151,10 @@ visitors are sharing one identity, so the hop count is too low.
    browser, and are deleted after 30 days. Nothing else about you is
    stored."
 2. Copy its `?case=` link into a new tab. The case drawer should open.
-3. Start a live feed, watch payments route, then stop it. Reload the page:
-   the stopped board should keep its counts.
+3. Start a live feed, watch payments route, then stop it: the stopped board
+   keeps its counts. Reload the page: the board resets (spec 0006 keeps
+   display state in the browser only), but every saved feed case is still
+   listed.
 4. ADR-021 also asks for spec 0002's and 0003's `verify.md` to pass
    against the deployed site. Ask Claude to run `/check verify 0002` and
    `/check verify 0003` with the web URL.
