@@ -124,8 +124,10 @@ def main() -> None:
         "USER app",
         "SHOWCASE_LIVE_ENABLED=false",
         # Without it, case storage turns itself off at startup (cases 503).
-        "COPY docs/contracts/public-showcase-events.v1.schema.json "
-        "/app/showcase/docs/contracts/",
+        (
+            "COPY docs/contracts/public-showcase-events.v1.schema.json "
+            "/app/showcase/docs/contracts/"
+        ),
     ):
         _require(dockerfile, fragment, "apps/api/Dockerfile")
 
