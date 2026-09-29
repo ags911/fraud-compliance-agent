@@ -19,6 +19,8 @@ export type ConsoleCaseRow = {
   recommendation: "PASS" | "CHALLENGE" | "HOLD"
   investigationStatus: "skipped" | "complete" | "incomplete"
   evidenceCount: number
+  /** Display only model score for a scored feed case (ADR-024); never decides. */
+  modelScore: number | null
   mode: string
   /** Case page link; null for rows that were never saved. */
   href: string | null
@@ -75,7 +77,7 @@ const COPY = {
   saved: {
     heading: "Saved cases",
     description:
-      "Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed and no runtime model score is shown.",
+      "Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, is display only and never decides.",
     emptyTitle: "No saved cases yet",
     emptyEnding: "Saved cases stay in this browser for 30 days.",
     tableTitle: "Cases",
@@ -182,7 +184,7 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
               <table>
                 <thead>
                   <tr>
-                    <th>Time</th><th>Run</th><th>Scenario</th><th>Route</th><th>Recommendation</th><th>Investigation</th><th>Evidence</th><th>Mode</th>
+                    <th>Time</th><th>Run</th><th>Scenario</th><th>Route</th><th>Recommendation</th><th>Investigation</th><th>Evidence</th><th>Model score</th><th>Mode</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -212,11 +214,12 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
                         <td><span className={`risk-pill ${recommendationPillClass(row.recommendation)}`}>{row.recommendation}</span></td>
                         <td className="td-secondary">{row.investigationStatus}</td>
                         <td className="td-secondary">{row.evidenceCount}</td>
+                        <td className="td-mono">{row.modelScore === null ? "–" : row.modelScore.toFixed(3)}</td>
                         <td className="td-secondary">{row.mode}</td>
                       </tr>
                     ))
                   ) : (
-                    <tr><td className="empty-table" colSpan={8}>No cases match these filters.</td></tr>
+                    <tr><td className="empty-table" colSpan={9}>No cases match these filters.</td></tr>
                   )}
                 </tbody>
               </table>

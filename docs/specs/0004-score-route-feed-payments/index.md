@@ -117,6 +117,7 @@ Events rows from before 0006 with null decisions are skipped by the decisions ov
 | Drawer | "Live feed" pill and Mode | `origin` = `feed` |
 | Drawer | S04 / S05 route copy | fixed copy in AC-10, for `origin` feed with reason `existing_recorded_recommendation` |
 | Drawer | Model signal | case `model_score` and `model_version`, or "Not scored yet" when null |
+| Cases tab | Model score column (added 2026-09-29 at the owner's request) | case `model_score` to 3 places, or "–" when null (Run showcase cases and unscored feed cases) |
 
 **Key invariants**:
 - The score never feeds a route, a recommendation or the case rule; the rule table is the only source.
