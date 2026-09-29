@@ -106,8 +106,8 @@ chain cannot be hidden inside Plaid integration or dashboard work."
 
 F4a (added 2026-09-29 at the owner's request) is a substage between F4 and
 F5: an LLM written overview of the Risk Console's main dashboard, built on
-F4's bounded provider path. Not scoped or designed yet; it starts with
-`/scope`, then `/architect`.
+F4's bounded provider path. Scoped as feature 5 and designed in spec 0011
+under ADR-026 (accepted 2026-09-29); next is `/develop`.
 
 ### F3a in progress: deterministic Sandbox event data
 
@@ -292,6 +292,7 @@ implementation."
 | 0021 | Allow the public showcase one guarded PostgreSQL database | **Accepted** (2026-09-28; **enabled** 2026-09-28, budget email test due at first spend: a £0.01 `showcase-first-spend-test` budget emails at the first recorded penny) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
 | 0022 | Accept the Sandbox event store | **Accepted** (2026-09-28) | Accepts the versioned, sanitised Plaid Sandbox store as the local/internal time-aware source for analytics and replay, with explicit import-only mapping, retention and spec 0003 overlay invariants; public use remains subject to ADR-021 |
 | 0025 | Route rule cleared feed payments by model score | **Accepted and built** (2026-09-29) | F3, spec 0010: the score may only raise a rule PASS to CHALLENGE or HOLD at Sparkov precision thresholds; planted S01 outliers; events v2, cases v1.1, simulation v1.1 |
+| 0026 | Allow an AI written dashboard overview on the public showcase | **Accepted** (2026-09-29) | F4a, spec 0011: a server built, fact checked overview with a template fallback; its own live switch (off by default) and limits; nothing stored |
 | 0024 | Accept a display only Sparkov model score on feed cases | **Accepted** (2026-09-28) | Sparkov is the demo corpus; spec 0004 slice 3 scores feed payments as evidence only with a plain Python tree scorer over pinned booster JSON; never routes; routing by score (F3) needs its own ADR |
 | 0023 | Accept the Sandbox simulation contract | **Accepted** (2026-09-28) | Promotes `sandbox-simulation.v0` to `docs/contracts/sandbox-simulation.v1.openapi.json` with shapes unchanged; satisfies ADR-021's contract prerequisite, switches nothing on |
 
