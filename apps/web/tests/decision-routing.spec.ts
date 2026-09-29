@@ -11,11 +11,19 @@ const BROWSER_ID = "0b6f2d4e-7a1c-4e8b-9f3a-2c5d8e1f4a6b"
 
 type Outcome = "PASS" | "CHALLENGE" | "HOLD"
 
-function run(decided: Array<[number, Outcome]>) {
+// Spec 0010: which revealed sequences the model raised, and whether the
+// score routing policy is on (null when routing is off).
+type Routing = { raised: number[]; policy: { version: string; challenge: number; hold: number } | null }
+const POLICY = { version: "score-routing-v1", challenge: 0.39337, hold: 0.72222 }
+
+function run(decided: Array<[number, Outcome]>, routing: Routing = { raised: [], policy: null }) {
   const lane = (outcome: Outcome) => {
     const recent = decided
       .filter(([, recommendation]) => recommendation === outcome)
-      .map(([sequence, recommendation]) => ({ event_id: `evt-${sequence}`, sequence, recommendation }))
+      .map(([sequence, recommendation]) => {
+        const raised = routing.raised.includes(sequence)
+        return { event_id: `evt-${sequence}`, sequence, recommendation, routed_by: raised ? "model" : "rule", model_score: raised ? 0.95312 : 0.01 }
+      })
       .reverse()
     // Like the API, list only the newest 18 while the count keeps every payment.
     return { count: recent.length, recent: recent.slice(0, 18) }
@@ -29,13 +37,21 @@ function run(decided: Array<[number, Outcome]>) {
     scheduled_event_count: 200,
     appended_event_count: decided.length,
     next_due_at: null,
-    routing_snapshot: { by_recommendation: { PASS: lane("PASS"), CHALLENGE: lane("CHALLENGE"), HOLD: lane("HOLD") } },
+    routing_snapshot: {
+      by_recommendation: { PASS: lane("PASS"), CHALLENGE: lane("CHALLENGE"), HOLD: lane("HOLD") },
+      raised_by_model: decided.filter(([sequence]) => routing.raised.includes(sequence)).length,
+      routing_policy: routing.policy,
+    },
   }
 }
 
-async function stubRouting(page: Page, revealedDecisions: Array<[number, Outcome]> = [[1, "PASS"], [2, "PASS"]]) {
+async function stubRouting(
+  page: Page,
+  revealedDecisions: Array<[number, Outcome]> = [[1, "PASS"], [2, "PASS"]],
+  routing: Routing = { raised: [], policy: null },
+) {
   await page.addInitScript((id) => window.localStorage.setItem("showcase-browser-id", id), BROWSER_ID)
-  await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) => route.fulfill({ json: run([]) }))
+  await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) => route.fulfill({ json: run([], routing) }))
   // Later stream answers wait until the test calls `reveal`, so the empty
   // state can be checked before any decision arrives.
   let reveal = () => {}
@@ -44,17 +60,17 @@ async function stubRouting(page: Page, revealedDecisions: Array<[number, Outcome
   await page.route(`**/sandbox/simulation-runs/${RUN_ID}/events`, async (route) => {
     streams += 1
     if (streams > 1) await revealed
-    const body = streams === 1 ? run([]) : run(revealedDecisions)
+    const body = streams === 1 ? run([], routing) : run(revealedDecisions, routing)
     return route.fulfill({ contentType: "text/event-stream", body: `event: simulation_state\ndata: ${JSON.stringify(body)}\n\n` })
   })
   await page.route(`**/sandbox/simulation-runs/${RUN_ID}/cancel`, (route) =>
-    route.fulfill({ json: { ...run(revealedDecisions), state: "cancelled" } }),
+    route.fulfill({ json: { ...run(revealedDecisions, routing), state: "cancelled" } }),
   )
   const zero = { PASS: 0, CHALLENGE: 0, HOLD: 0 }
   await page.route(/\/cases(\?.*)?$/, (route) =>
     route.fulfill({
       json: {
-        contract_version: "1.0",
+        contract_version: "1.1",
         items: [],
         next_cursor: null,
         totals: {
@@ -130,6 +146,35 @@ test("a snapshot that reveals several payments keeps all lane counts exact and s
   await expect(sweep(page, "CHALLENGE")).toHaveCount(1)
   await expect(sweep(page, "PASS")).toHaveCount(0)
   await expect(sweep(page, "HOLD")).toHaveCount(0)
+})
+
+test("a payment the model raised is marked and counted, and the rule note says the model can raise", async ({ page }) => {
+  // Spec 0010 AC 9: S01's rule clears every payment; the planted outlier #10 was raised to HOLD.
+  const reveal = await stubRouting(page, [[9, "PASS"], [10, "HOLD"]], { raised: [10], policy: POLICY })
+  await page.goto("/?scenario=S01")
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  const board = page.getByRole("region", { name: "Live decision routing" })
+  await expect(board.getByText("Raised by model: 0")).toBeVisible()
+  reveal()
+
+  await expect(board.getByText("Last routed #10 → HOLD · model 0.953")).toBeVisible()
+  await expect(board.getByText("Raised by model: 1")).toBeVisible()
+  await expect(board.getByText("Every S01 payment follows its rule: PASS; the model can raise a payment the rules cleared.")).toBeVisible()
+  await expect(board.getByRole("list", { name: "Routed payments by outcome" }).getByRole("listitem")).toHaveText(["PASS 1", "CHALLENGE 0", "HOLD 1"])
+})
+
+test("with score routing off the board says so and marks nothing", async ({ page }) => {
+  const reveal = await stubRouting(page, [[1, "PASS"], [2, "PASS"]], { raised: [], policy: null })
+  await page.goto("/?scenario=S01")
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  reveal()
+  const board = page.getByRole("region", { name: "Live decision routing" })
+
+  await expect(board.getByText("Last routed #2 → PASS")).toBeVisible()
+  await expect(board.getByText("Score routing off")).toBeVisible()
+  await expect(board.getByText(/Raised by model/)).toHaveCount(0)
+  await expect(board.getByText(/· model/)).toHaveCount(0)
+  await expect(board.getByText("Every S01 payment follows its rule: PASS", { exact: true })).toBeVisible()
 })
 
 // The newest payment's sweep, clipped by its lane. A clip on the moving

@@ -3,6 +3,7 @@ import type { MouseEvent, ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ShowcaseCaseFilters } from "@/lib/showcase-cases"
+import { FEED_MODEL_SOURCE_LABEL } from "@/lib/showcase-labels"
 
 import { ConsoleMetricCard as MetricCard } from "./ConsoleMetricCard"
 import { recommendationPillClass } from "./console-pills"
@@ -21,6 +22,8 @@ export type ConsoleCaseRow = {
   evidenceCount: number
   /** Display only model score for a scored feed case (ADR-024); never decides. */
   modelScore: number | null
+  /** Feed cases: "model" when the score raised a rule PASS (spec 0010); else rule or null. */
+  routedBy: "rule" | "model" | null
   mode: string
   /** Case page link; null for rows that were never saved. */
   href: string | null
@@ -77,7 +80,7 @@ const COPY = {
   saved: {
     heading: "Saved cases",
     description:
-      "Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, is display only and never decides.",
+      "Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision.",
     emptyTitle: "No saved cases yet",
     emptyEnding: "Saved cases stay in this browser for 30 days.",
     tableTitle: "Cases",
@@ -215,7 +218,7 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
                         <td className="td-secondary">{row.investigationStatus}</td>
                         <td className="td-secondary">{row.evidenceCount}</td>
                         <td className="td-mono">{row.modelScore === null ? "–" : row.modelScore.toFixed(3)}</td>
-                        <td className="td-secondary">{row.mode}</td>
+                        <td className="td-secondary">{row.routedBy === "model" ? FEED_MODEL_SOURCE_LABEL : row.mode}</td>
                       </tr>
                     ))
                   ) : (

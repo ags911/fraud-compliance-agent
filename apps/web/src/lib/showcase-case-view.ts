@@ -1,6 +1,7 @@
 import type { ShowcaseCaseDetail, ShowcaseStoredEvent } from "@/lib/showcase-cases"
 import type {
   ShowcaseInvestigationResultEvent,
+  ShowcaseModelRouting,
   ShowcaseInvestigationSkippedEvent,
   ShowcaseRouteResolvedEvent,
   ShowcaseRunStartedEvent,
@@ -29,6 +30,8 @@ export type ShowcaseCaseView = {
   toolCalls: ShowcaseToolCallEvent[]
   toolResults: ShowcaseToolResultEvent[]
   investigation: ShowcaseInvestigationResultEvent | undefined
+  /** Set only on a model raised feed case (v2 events, spec 0010). */
+  modelRouting: ShowcaseModelRouting | undefined
   stageEvents: Record<ShowcaseCaseStage, ShowcaseStoredEvent[]>
 }
 
@@ -54,6 +57,7 @@ export function readShowcaseCase(detail: ShowcaseCaseDetail): ShowcaseCaseView {
     toolCalls: payloadsOf<ShowcaseToolCallEvent>(events, "tool_call"),
     toolResults: payloadsOf<ShowcaseToolResultEvent>(events, "tool_result"),
     investigation: payloadsOf<ShowcaseInvestigationResultEvent>(events, "investigation_result")[0],
+    modelRouting: payloadsOf<{ model_routing?: ShowcaseModelRouting }>(events, "run_result")[0]?.model_routing,
     stageEvents,
   }
 }

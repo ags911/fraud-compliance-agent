@@ -55,17 +55,19 @@ function summary(caseId: string, overrides: Record<string, unknown>) {
     started_at: "2026-09-24T09:15:02Z",
     completed_at: "2026-09-24T09:15:04Z",
     expires_at: "2026-10-24T09:15:04Z",
-    contract_version: "1.0",
+    contract_version: "1.1",
     origin: "showcase",
     model_score: null,
     model_version: null,
+    routed_by: null,
+    event_contract_version: "1",
     ...overrides,
   }
 }
 
 function detail(caseSummary: ReturnType<typeof summary>, payloads: Record<string, unknown>[]) {
   return {
-    contract_version: "1.0",
+    contract_version: "1.1",
     case: caseSummary,
     events: payloads.map((payload) => ({
       sequence: payload.sequence,
@@ -171,6 +173,7 @@ const FEED_EVENT = (n: number) => `evt_feed_3f2a9c1e7b4d_007_${n}`
 const FEED_DETAIL = detail(
   summary(FEED_ID, {
     origin: "feed",
+    routed_by: "rule",
     investigation_status: "skipped",
     tool_call_count: 0,
     evidence_count: 0,
@@ -203,6 +206,55 @@ const FEED_DETAIL = detail(
   ],
 )
 
+// A payment the rules cleared and the model raised (spec 0010): v2 events.
+const RAISED_ID = "run_feed_3f2a9c1e7b4d_010"
+const raisedIdentity = (sequence: number, event: string) => ({
+  ...identity(RAISED_ID, "S01", sequence, event),
+  schema_version: "2.0",
+  event_id: `evt_feed_3f2a9c1e7b4d_010_${sequence}`,
+})
+const RAISED_DETAIL = detail(
+  summary(RAISED_ID, {
+    scenario_id: "S01",
+    origin: "feed",
+    deterministic_route: "PASS",
+    investigation_status: "skipped",
+    recommendation: "HOLD",
+    recommendation_basis: "model_threshold",
+    tool_call_count: 0,
+    evidence_count: 0,
+    event_count: 4,
+    model_score: 0.95312,
+    model_version: "sandbox-portable-xgb-v1",
+    routed_by: "model",
+    event_contract_version: "2",
+  }),
+  [
+    { ...raisedIdentity(1, "run_started"), requested_mode: "recorded", execution_mode: "recorded", fallback_reason: null, provider: null, model_id: null, data_label: "synthetic" },
+    { ...raisedIdentity(2, "route_resolved"), deterministic_route: "PASS", investigation_eligibility: "skipped" },
+    { ...raisedIdentity(3, "investigation_skipped"), reason: "deterministic_clear_route" },
+    {
+      ...raisedIdentity(4, "run_result"),
+      investigation_status: "skipped",
+      recommendation: "HOLD",
+      recommendation_basis: "model_threshold",
+      authority_status: "not_evaluated",
+      simulated_action: "none",
+      execution_mode: "recorded",
+      data_label: "synthetic",
+      model_routing: {
+        score: 0.95312,
+        challenge: 0.39337,
+        hold: 0.72222,
+        rule_recommendation: "PASS",
+        policy_version: "score-routing-v1",
+        model_version: "sandbox-portable-xgb-v1",
+        synthetic_outlier: true,
+      },
+    },
+  ],
+)
+
 const CARRIED_COPY = "Carried from the scenario's recorded investigation; no agent ran for this payment."
 
 function zeroScenarios() {
@@ -212,7 +264,7 @@ function zeroScenarios() {
 }
 
 const CASE_PAGE = {
-  contract_version: "1.0",
+  contract_version: "1.1",
   items: [S05_DETAIL.case, S04_DETAIL.case],
   next_cursor: null,
   totals: {
@@ -402,7 +454,53 @@ test.describe("Risk Console Cases tab", () => {
     await expect(feedRow.getByRole("cell").nth(7)).toHaveText("0.083")
     const showcaseRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: S04_ID }) })
     await expect(showcaseRow.getByRole("cell").nth(7)).toHaveText("–")
-    await expect(page.getByText(/A model score, where shown, is display only and never decides\./)).toBeVisible()
+    await expect(page.getByText(/A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision\./)).toBeVisible()
+  })
+
+  test("lists a model raised case as raised by model and tells its route story", async ({ page }) => {
+    await page.route(/\/cases(\?.*)?$/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...CASE_PAGE, items: [RAISED_DETAIL.case, FEED_DETAIL.case, ...CASE_PAGE.items] }),
+      }),
+    )
+    await page.route("**/cases/run_*", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(RAISED_DETAIL) }),
+    )
+    await page.goto("/?scenario=S01")
+    await page.getByRole("tab", { name: /^Cases/ }).click()
+
+    const raisedRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: RAISED_ID }) })
+    await expect(raisedRow.getByRole("cell").nth(8)).toHaveText("Live feed · raised by model")
+    const ruleRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: FEED_ID }) })
+    await expect(ruleRow.getByRole("cell").nth(8)).toHaveText("Live feed")
+
+    await page.getByRole("link", { name: RAISED_ID }).click()
+    const drawer = page.getByRole("dialog")
+    await expect(drawer.locator(".console-source-pill").first()).toHaveText("Live feed · raised by model")
+    await expect(drawer).toContainText("A model score raised this payment the rules cleared.")
+    const route = drawer.getByTestId("case-model-route")
+    await expect(route).toContainText(
+      "The rules cleared this payment. Its model score, 0.953, is at or above the HOLD threshold of 0.722 (policy score-routing-v1), so it was raised to HOLD.",
+    )
+    await expect(route).toContainText("A synthetic outlier added to S01's feed to show the model catching what the rules cleared.")
+    await expect(drawer.getByTestId("case-stage-route")).not.toContainText("Investigation skipped")
+    const signal = drawer.getByTestId("case-model-signal")
+    await expect(signal).toContainText("0.95312")
+    await expect(signal).toContainText("Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability.")
+    await expect(signal).not.toContainText("It does not decide")
+  })
+
+  test("a rule decided feed case has no route story or outlier note", async ({ page }) => {
+    await page.route("**/cases/run_*", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FEED_DETAIL) }),
+    )
+    await page.goto(`/?case=${FEED_ID}`)
+    const drawer = page.getByRole("dialog")
+    await expect(drawer.getByTestId("case-stage-route")).toContainText(CARRIED_COPY)
+    await expect(drawer.getByTestId("case-model-route")).toHaveCount(0)
+    await expect(drawer).toContainText("no model score decided anything")
   })
 
   test("falls back to this visit's runs, unlinked, when case history is off", async ({ page }) => {

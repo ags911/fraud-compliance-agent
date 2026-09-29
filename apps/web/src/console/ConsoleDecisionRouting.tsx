@@ -1,7 +1,7 @@
 import { useId } from "react"
 import { EvilSankeyChart } from "@/components/evilcharts/charts/recharts-sankey-chart"
 import type { ChartConfig } from "@/components/evilcharts/ui/recharts-chart"
-import { EMPTY_ROUTING_SUMMARY, ROUTING_OUTCOMES, routingRuleNote, routingSankeyData, routingSummary } from "@/lib/routing-summary"
+import { EMPTY_ROUTING_SUMMARY, ROUTING_OUTCOMES, modelRouteMarker, routingRuleNote, routingSankeyData, routingSummary } from "@/lib/routing-summary"
 import type { SandboxSimulationRun } from "@/lib/sandbox-simulation"
 import { useRoutingBoardHidden } from "@/lib/useRoutingBoardHidden"
 
@@ -20,7 +20,11 @@ const chartConfig = {
   HOLD: { label: "HOLD", colors: color("var(--sev-high)") },
 } satisfies ChartConfig
 
-/** Fixed, read only Sankey of revealed deterministic feed decisions (spec 0006). */
+/**
+ * Fixed, read only Sankey of revealed feed decisions (spec 0006). Each was
+ * decided at run start by its scenario's rule, and a rule PASS may have been
+ * raised by the model score (spec 0010), which the footer marks and counts.
+ */
 export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingProps) {
   // Every outcome is drawn from the start, at zero before any payment.
   // Workflow scenarios have no payment schedule, so they get no chart.
@@ -47,7 +51,7 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
     status === "live"
       ? "Routing live payments."
       : status === "finished" && summary
-        ? `Routing finished: ${summary.counts.PASS} pass, ${summary.counts.CHALLENGE} challenge, ${summary.counts.HOLD} hold.`
+        ? `Routing finished: ${summary.counts.PASS} pass, ${summary.counts.CHALLENGE} challenge, ${summary.counts.HOLD} hold${summary.routingPolicy ? `, ${summary.raisedByModel} raised by model` : ""}.`
         : ""
 
   return (
@@ -110,7 +114,12 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
             )}
           </div>
           <p className="console-routing-footer">
-            {summary.last ? <span>Last routed <strong>#{summary.last.sequence}</strong> → {summary.last.recommendation}{summary.last.routed_by === "model" && summary.last.model_score !== null && summary.last.model_score !== undefined ? ` · model ${summary.last.model_score.toFixed(3)}` : ""}</span> : <span>{quiet}</span>}
+            {summary.last ? <span>Last routed <strong>#{summary.last.sequence}</strong> → {summary.last.recommendation}{modelRouteMarker(summary.last)}</span> : <span>{quiet}</span>}
+            {run?.routing_snapshot ? (
+              <span className="console-routing-model">
+                {summary.routingPolicy ? `Raised by model: ${summary.raisedByModel}` : "Score routing off"}
+              </span>
+            ) : null}
             {ruleNote ? <span className="console-routing-rule">{ruleNote}</span> : null}
           </p>
         </div>
