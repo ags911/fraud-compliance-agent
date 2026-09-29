@@ -106,6 +106,18 @@
   .topbar-actions [data-slot="button"]{ height:32px; padding:0 0.875rem; border-radius:9999px; }
   .topbar-actions [data-slot="select-trigger"]{ height:32px; padding:0 0.625rem; }
 
+  /* The hosted API sleeps when idle; while it starts, one quiet line says
+     so, in the content column. The empty live region takes no space. */
+  .console-wake-notice-inner{
+    display:flex; align-items:center; gap:10px;
+    max-width: var(--console-content-width); margin: 16px auto 0; padding: 0 24px;
+    color: var(--lch-text-secondary); font-size:12.5px; line-height:1.55;
+  }
+  .console-wake-notice-inner strong{ color: var(--lch-text-primary); font-weight:500; }
+  .console-wake-spinner{ width:14px; height:14px; flex-shrink:0; animation: console-wake-spin 1s linear infinite; }
+  @keyframes console-wake-spin{ to{ transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .console-wake-spinner{ animation:none; } }
+
   /* ---------------- Tabs ---------------- */
 
   /* Tab bar styled after the Stripe Radar dashboard's own tabs (layout
