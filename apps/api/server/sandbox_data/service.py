@@ -1463,6 +1463,135 @@ class PsycopgScenarioRepository:
             ),
         }
 
+    def read_overview_sources(
+        self,
+        scenario_id: str,
+        simulation_run_id: str | None = None,
+        browser_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Read everything a scenario overview's facts need, in one connection (spec 0011).
+
+        The same queries as ``read_analytics`` and ``read_decisions``, for one
+        payment scenario or the Mixed feed's five sources. Unlike those reads,
+        a run that is unknown, another browser's, or for another scenario is
+        not an error: it is left out, and ``feed`` is None, so the overview
+        never reveals whether a run exists.
+
+        Args:
+            scenario_id: ``S01`` to ``S05``, or ``MIX`` for the Mixed feed.
+            simulation_run_id: The viewer's feed run, if any.
+            browser_id: The viewer's validated browser ID, if any.
+
+        Returns:
+            ``parts``: per source scenario, its boundary, rule recommendation,
+            daily aggregates with the run's shown payments added, imported
+            outbound payments per day and the run's revealed decided payments
+            per day. ``feed``: the run's safe snapshot, or None.
+
+        Raises:
+            ScenarioNotDecided: For S06 to S08, which have no decision rule.
+            ScenarioDatasetNotFound: If a source scenario was never imported.
+            SandboxDataUnavailable: If the store cannot be read.
+        """
+        sources = MIXED_FEED_SOURCES if scenario_id == MIXED_FEED_ID else (scenario_id,)
+        decisions = {source: feed_decision(source) for source in sources}
+        if any(decision is None for decision in decisions.values()):
+            if scenario_id in SCENARIO_IDS:
+                raise ScenarioNotDecided(scenario_id)
+            raise ScenarioDatasetNotFound(scenario_id)
+        try:
+            with (
+                psycopg.connect(
+                    self._database_url, row_factory=psycopg.rows.dict_row
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
+                datasets = []
+                for source in sources:
+                    cursor.execute(
+                        """SELECT scenario_id, fixture_version, start_date, end_date
+                    FROM sandbox_datasets WHERE scenario_id = %s ORDER BY imported_at DESC LIMIT 1""",
+                        (source,),
+                    )
+                    dataset = cursor.fetchone()
+                    if dataset is None:
+                        raise ScenarioDatasetNotFound(source)
+                    datasets.append(dataset)
+                feed: dict[str, object] | None = None
+                if simulation_run_id is not None and browser_id is not None:
+                    try:
+                        snapshot = self.read_simulation_run_cursor(
+                            cursor, simulation_run_id, browser_id
+                        )
+                        # The run must be this view's own: a single scenario's
+                        # run for that scenario, a Mixed run for the Mixed feed,
+                        # on the datasets being read.
+                        if snapshot["scenario_id"] != scenario_id:
+                            raise ScenarioSimulationNotFound(simulation_run_id)
+                        for dataset in datasets:
+                            self._require_owned_run(
+                                cursor, simulation_run_id, browser_id, dataset
+                            )
+                        feed = snapshot
+                    except ScenarioSimulationNotFound:
+                        feed = None
+                parts = []
+                for dataset in datasets:
+                    key = (dataset["scenario_id"], dataset["fixture_version"])
+                    cursor.execute(
+                        """SELECT aggregate_date, transaction_count, outbound_amount_minor, category_counts
+                    FROM sandbox_daily_aggregates WHERE scenario_id = %s AND fixture_version = %s ORDER BY aggregate_date""",
+                        key,
+                    )
+                    aggregates = cursor.fetchall()
+                    cursor.execute(
+                        """SELECT event_date, count(*) AS payments FROM sandbox_transactions
+                    WHERE scenario_id = %s AND fixture_version = %s AND direction = 'outbound'
+                    GROUP BY event_date""",
+                        key,
+                    )
+                    imported = cursor.fetchall()
+                    revealed: list[dict[str, Any]] = []
+                    if feed is not None:
+                        # A Mixed run's payments from other scenarios are left out.
+                        cursor.execute(
+                            """SELECT event_date, amount_minor, direction, category_bucket
+                        FROM sandbox_simulation_events WHERE run_id = %s AND appended_at IS NOT NULL
+                          AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))""",
+                            (simulation_run_id, *key),
+                        )
+                        aggregates = _overlay_shown_events(
+                            aggregates, cursor.fetchall()
+                        )
+                        cursor.execute(
+                            """SELECT event_date, recommendation, count(*) AS payments
+                        FROM sandbox_simulation_events
+                        WHERE run_id = %s AND appended_at IS NOT NULL AND direction = 'outbound'
+                          AND recommendation IS NOT NULL
+                          AND (source_scenario_id IS NULL OR (source_scenario_id = %s AND source_fixture_version = %s))
+                        GROUP BY event_date, recommendation""",
+                            (simulation_run_id, *key),
+                        )
+                        revealed = cursor.fetchall()
+                    parts.append(
+                        {
+                            "scenario_id": dataset["scenario_id"],
+                            "start_date": dataset["start_date"],
+                            "end_date": dataset["end_date"],
+                            "rule_recommendation": decisions[
+                                dataset["scenario_id"]
+                            ].recommendation,
+                            "aggregates": aggregates,
+                            "imported": imported,
+                            "revealed": revealed,
+                        }
+                    )
+        except ScenarioDatasetNotFound:
+            raise
+        except psycopg.Error as error:
+            raise SandboxDataUnavailable("Sandbox database is unavailable") from error
+        return {"parts": parts, "feed": feed}
+
 
 def _decision_days(
     start_date: date,
@@ -1554,6 +1683,20 @@ def load_sandbox_decisions(
     if not database_url:
         raise SandboxDataUnavailable("DATABASE_URL is not configured")
     return PsycopgScenarioRepository(database_url).read_decisions(
+        scenario_id, simulation_run_id, browser_id
+    )
+
+
+def load_sandbox_overview_sources(
+    scenario_id: str,
+    simulation_run_id: str | None = None,
+    browser_id: str | None = None,
+) -> dict[str, Any]:
+    """Load one scenario's overview inputs (spec 0011); see ``read_overview_sources``."""
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if not database_url:
+        raise SandboxDataUnavailable("DATABASE_URL is not configured")
+    return PsycopgScenarioRepository(database_url).read_overview_sources(
         scenario_id, simulation_run_id, browser_id
     )
 

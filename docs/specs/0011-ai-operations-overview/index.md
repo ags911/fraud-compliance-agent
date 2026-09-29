@@ -1,7 +1,7 @@
 # 0011. AI operations overview on the Risk Console (F4a)
 
 **Date**: 2026-09-29
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

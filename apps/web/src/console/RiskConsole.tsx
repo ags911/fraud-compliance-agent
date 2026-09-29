@@ -36,6 +36,8 @@ import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import { useConsoleTour } from "@/lib/useConsoleTour"
+import { overviewUnavailableReason, type OverviewSnapshot } from "@/lib/sandbox-overview"
+import { useScenarioOverview } from "@/lib/useScenarioOverview"
 import { useServerWarmup } from "@/lib/useServerWarmup"
 import { FEED_SOURCE_LABEL } from "@/lib/showcase-labels"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
@@ -43,6 +45,7 @@ import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 import { ConsoleCaseDrawer } from "./ConsoleCaseDrawer"
 import { ConsoleCasesPanel, type ConsoleCaseRow, type ConsoleCasesSummary } from "./ConsoleCasesPanel"
 import { ConsoleLiveSwitch } from "./ConsoleLiveSwitch"
+import { ConsoleOverviewCard } from "./ConsoleOverviewCard"
 import { ConsoleMetricCard as MetricCard } from "./ConsoleMetricCard"
 import { ConsoleRangeToggle } from "./ConsoleRangeToggle"
 import { ConsoleRecommendationChart } from "./ConsoleRecommendationChart"
@@ -262,6 +265,35 @@ export function RiskConsole() {
   )
   const decisionTotal = decisionSeries.reduce((sum, datum) => sum + datum.PASS + datum.CHALLENGE + datum.HOLD, 0)
 
+  // What the Overview card's request is based on (spec 0011 AC-9): when any of
+  // it changes after an overview is written, the card says it is out of date.
+  const feedRun = feed.state.status === "live" || feed.state.status === "finished" ? feed.state.run : null
+  const scenarioCases = useMemo(() => {
+    if (cases.state.status !== "ready") return null
+    const sources = mixed ? scenarios.map(({ id }) => id) : [scenarioId]
+    const counts = { PASS: 0, CHALLENGE: 0, HOLD: 0 }
+    for (const source of sources) {
+      const bySource = cases.state.totals.by_scenario[source]
+      if (!bySource) continue
+      counts.PASS += bySource.PASS
+      counts.CHALLENGE += bySource.CHALLENGE
+      counts.HOLD += bySource.HOLD
+    }
+    return counts
+  }, [cases.state, mixed, scenarioId])
+  const overviewSnapshot = useMemo<OverviewSnapshot>(
+    () => ({
+      scenarioId,
+      range,
+      runId: feed.runId,
+      feedState: feedRun?.state ?? feed.state.status,
+      feedShown: feedRun?.appended_event_count ?? 0,
+      cases: scenarioCases,
+    }),
+    [scenarioId, range, feed.runId, feedRun, feed.state.status, scenarioCases],
+  )
+  const overview = useScenarioOverview(overviewSnapshot)
+
   // ---- Cases tab -----------------------------------------------------------
   // Saved cases when storage is on; this visit's runs as the fallback (AC-10).
   const casesMode = cases.state.status === "ready" ? "saved" : cases.state.status === "unavailable" ? "fallback" : "loading"
@@ -435,6 +467,12 @@ export function RiskConsole() {
               </div>
               <ConsoleRangeToggle label="Scenario date range" onChange={setRange} value={range} />
             </div>
+
+            <ConsoleOverviewCard
+              disabledReason={overviewUnavailableReason(scenarioId)}
+              onWrite={overview.write}
+              state={overview.state}
+            />
 
             <div className="console-summary-grid" id="console-summary" aria-label={`${mixed ? MIXED_FEED_LABEL : scenarioId} Sandbox activity summary`}>
               <MetricCard

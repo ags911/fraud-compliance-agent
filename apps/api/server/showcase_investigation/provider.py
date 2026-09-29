@@ -58,12 +58,42 @@ class GroqInvestigationProvider:
         self.model_id = model_id
         self._client = client or AsyncGroq(api_key=api_key, max_retries=0)
 
-    async def _complete_json(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+    async def complete_json(
+        self, messages: list[dict[str, str]], *, max_completion_tokens: int
+    ) -> dict[str, Any]:
+        """Return one decoded JSON object under a caller's output token cap.
+
+        The dashboard overview (spec 0011) calls this with its own cap of 400;
+        investigations keep 800 through ``select_tools`` and ``assess``.
+
+        Args:
+            messages: Server-authored instructions containing synthetic facts
+                only. Caller-authored prompts are never accepted.
+            max_completion_tokens: The most output tokens the model may write.
+
+        Returns:
+            Decoded provider JSON, not the raw provider response.
+
+        Raises:
+            ProviderUnavailable: If the provider call fails or has no content.
+            InvalidProviderOutput: If content is not exactly one JSON object.
+
+        Side effects:
+            Makes one external Groq request and retains no raw response.
+        """
+        return await self._complete_json(
+            messages, max_completion_tokens=max_completion_tokens
+        )
+
+    async def _complete_json(
+        self, messages: list[dict[str, str]], *, max_completion_tokens: int = 800
+    ) -> dict[str, Any]:
         """Return one decoded JSON object while redacting provider failures.
 
         Args:
             messages: Server-authored instructions containing synthetic facts
                 only. Caller-authored prompts are never accepted.
+            max_completion_tokens: Output token cap; 800 for investigations.
 
         Returns:
             Decoded provider JSON, not the raw provider response.
@@ -83,7 +113,7 @@ class GroqInvestigationProvider:
                 response_format={"type": "json_object"},
                 include_reasoning=False,
                 temperature=0,
-                max_completion_tokens=800,
+                max_completion_tokens=max_completion_tokens,
             )
             content = response.choices[0].message.content
             if not content:
