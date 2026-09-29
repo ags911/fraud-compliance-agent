@@ -1,0 +1,480 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "showcase-cases.v1.1.schema.json",
+  "title": "Showcase cases read responses",
+  "description": "Read contract for durable showcase cases. v1.1 (spec 0010, ADR-025) adds routed_by and event_contract_version to each summary and allows the model_threshold basis; every v1.0 field is unchanged. A case's stored events are public-showcase-events.v1 payloads, or v2 payloads when event_contract_version is \"2\" (a feed payment the model raised).",
+  "x-contract-version": "1.1",
+  "x-approval-status": "accepted",
+  "x-runtime-consumption": "internal-only",
+  "x-request-header": {
+    "name": "X-Showcase-Browser-Id",
+    "description": "Anonymous scoping key: a lowercase version 4 UUID created by the browser. Not authentication.",
+    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/caseListResponse"
+    },
+    {
+      "$ref": "#/$defs/caseDetailResponse"
+    },
+    {
+      "$ref": "#/$defs/errorResponse"
+    }
+  ],
+  "$defs": {
+    "recommendation": {
+      "enum": [
+        "PASS",
+        "CHALLENGE",
+        "HOLD"
+      ]
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^S0[1-8]$"
+    },
+    "caseId": {
+      "type": "string",
+      "pattern": "^run_[a-z0-9_]{3,64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recommendationCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "PASS",
+        "CHALLENGE",
+        "HOLD"
+      ],
+      "properties": {
+        "PASS": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "CHALLENGE": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "HOLD": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "caseSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "scenario_id",
+        "requested_mode",
+        "execution_mode",
+        "fallback_reason",
+        "provider",
+        "model_id",
+        "deterministic_route",
+        "investigation_status",
+        "recommendation",
+        "recommendation_basis",
+        "failure_reason",
+        "authority_status",
+        "tool_call_count",
+        "evidence_count",
+        "event_count",
+        "fixture_version",
+        "started_at",
+        "completed_at",
+        "expires_at",
+        "contract_version",
+        "origin",
+        "model_score",
+        "model_version",
+        "routed_by",
+        "event_contract_version"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/caseId"
+        },
+        "scenario_id": {
+          "$ref": "#/$defs/scenarioId"
+        },
+        "requested_mode": {
+          "enum": [
+            "recorded",
+            "live"
+          ]
+        },
+        "execution_mode": {
+          "enum": [
+            "recorded",
+            "live"
+          ]
+        },
+        "fallback_reason": {
+          "enum": [
+            null,
+            "live_disabled",
+            "admission_limited",
+            "provider_unavailable"
+          ]
+        },
+        "provider": {
+          "enum": [
+            null,
+            "groq"
+          ]
+        },
+        "model_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deterministic_route": {
+          "enum": [
+            "PASS",
+            "HOLD",
+            "INVESTIGATE"
+          ]
+        },
+        "investigation_status": {
+          "enum": [
+            "skipped",
+            "complete",
+            "incomplete"
+          ]
+        },
+        "recommendation": {
+          "$ref": "#/$defs/recommendation"
+        },
+        "recommendation_basis": {
+          "enum": [
+            "deterministic",
+            "evidence_grounded",
+            "fail_safe",
+            "model_threshold"
+          ]
+        },
+        "failure_reason": {
+          "enum": [
+            null,
+            "provider_unavailable",
+            "tool_failed",
+            "invalid_output",
+            "timeout",
+            "tool_budget_exhausted"
+          ]
+        },
+        "authority_status": {
+          "const": "not_evaluated"
+        },
+        "tool_call_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fixture_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "completed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "contract_version": {
+          "const": "1.1"
+        },
+        "origin": {
+          "enum": [
+            "showcase",
+            "feed"
+          ],
+          "description": "showcase: saved from a Run showcase stream. feed: a live feed payment decided by its scenario's rule (spec 0004), which the model may have raised (spec 0010)."
+        },
+        "model_score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The feed payment's model score, trained on Sparkov synthetic data (ADR-024). It may only raise a rule PASS (ADR-025); it is never a fraud probability."
+        },
+        "model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "routed_by": {
+          "enum": [
+            null,
+            "rule",
+            "model"
+          ],
+          "description": "Feed cases only: rule when the scenario's rule decided, model when the score raised a rule PASS. Null for showcase cases."
+        },
+        "event_contract_version": {
+          "enum": [
+            "1",
+            "2"
+          ],
+          "description": "Which public-showcase-events version the stored events use: 2 only for a model raised feed case."
+        }
+      },
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "showcase"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "properties": {
+          "model_score": {
+            "const": null
+          },
+          "model_version": {
+            "const": null
+          },
+          "routed_by": {
+            "const": null
+          },
+          "event_contract_version": {
+            "const": "1"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "routed_by": {
+                "const": "model"
+              }
+            },
+            "required": [
+              "routed_by"
+            ]
+          },
+          "then": {
+            "properties": {
+              "event_contract_version": {
+                "const": "2"
+              },
+              "recommendation_basis": {
+                "const": "model_threshold"
+              },
+              "recommendation": {
+                "enum": [
+                  "CHALLENGE",
+                  "HOLD"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "event_contract_version": {
+                "const": "1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "storedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "event_id",
+        "event_type",
+        "recorded_at",
+        "payload"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "event_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recorded_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "payload": {
+          "type": "object",
+          "description": "One accepted public-showcase-events payload, exactly as emitted: v1, or v2 when the case's event_contract_version is \"2\"."
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "by_recommendation",
+        "by_scenario",
+        "deterministic_passes",
+        "fail_safe_holds",
+        "completed_investigations"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "by_recommendation": {
+          "$ref": "#/$defs/recommendationCounts"
+        },
+        "by_scenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "S01",
+            "S02",
+            "S03",
+            "S04",
+            "S05",
+            "S06",
+            "S07",
+            "S08"
+          ],
+          "patternProperties": {
+            "^S0[1-8]$": {
+              "$ref": "#/$defs/recommendationCounts"
+            }
+          }
+        },
+        "deterministic_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fail_safe_holds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completed_investigations": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "caseListResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "items",
+        "next_cursor",
+        "totals"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1.1"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/caseSummary"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "totals": {
+          "$ref": "#/$defs/totals"
+        }
+      }
+    },
+    "caseDetailResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "case",
+        "events"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1.1"
+        },
+        "case": {
+          "$ref": "#/$defs/caseSummary"
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/storedEvent"
+          }
+        }
+      }
+    },
+    "errorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detail"
+      ],
+      "properties": {
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "enum": [
+                "cases_unavailable",
+                "invalid_browser_id",
+                "invalid_cursor",
+                "invalid_parameters",
+                "case_not_found"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

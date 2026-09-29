@@ -92,8 +92,8 @@ from server.sandbox_data.service import (
     start_sandbox_simulation,
 )
 from server.sandbox_data.worker import run_simulation_worker
-from server.sandbox_model import portable_model
-from server.showcase_cases.capture import EventValidator
+from server.sandbox_model import portable_model, score_routing_policy
+from server.showcase_cases.capture import READ_CONTRACT_VERSION, EventValidator
 from server.showcase_cases.models import CaseDetailResponse, CaseListResponse
 from server.showcase_cases.repository import (
     PAGE_SIZE,
@@ -490,8 +490,11 @@ def create_app() -> FastAPI:
     # a database, so the database free public deployment never stores cases.
     # Load and verify the display only model once at startup (spec 0004
     # AC-12). A missing or mismatched artifact logs one warning and leaves
-    # feed scores null; it never stops the API.
+    # feed scores null; it never stops the API. The score routing policy
+    # (spec 0010 AC-4) loads the same way; without it every payment keeps its
+    # rule decision.
     portable_model()
+    score_routing_policy()
     case_settings = load_case_settings()
     public_database_guards = load_public_database_guard_settings()
     # Validate the proxy-hop setting once at startup rather than per request.
@@ -758,7 +761,7 @@ def create_app() -> FastAPI:
             raise _case_store_unavailable(error.diagnostic) from error
         return CaseListResponse.model_validate(
             {
-                "contract_version": "1.1",
+                "contract_version": READ_CONTRACT_VERSION,
                 "items": page.items,
                 "next_cursor": page.next_cursor,
                 "totals": page.totals,

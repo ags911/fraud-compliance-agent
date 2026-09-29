@@ -18,6 +18,7 @@ from server.public_database_guards import (
 )
 from server.showcase_cases.capture import (
     MAX_CASES_BY_ORIGIN,
+    READ_CONTRACT_VERSION,
     CaseRecord,
 )
 
@@ -164,14 +165,14 @@ def decode_cursor(cursor: str) -> tuple[datetime, str]:
 
 
 def _summary(row: dict[str, Any]) -> dict[str, Any]:
-    """Shape one database row as the proposed case summary (no browser ID)."""
+    """Shape one database row as the case summary (no browser ID)."""
     summary = {column: row[column] for column in _SUMMARY_COLUMNS}
     for column in ("started_at", "completed_at", "expires_at"):
         summary[column] = summary[column].isoformat()
     # NUMERIC reads back as Decimal; the summary carries a plain number.
     if summary["model_score"] is not None:
         summary["model_score"] = float(summary["model_score"])
-    summary["contract_version"] = "1.1"
+    summary["contract_version"] = READ_CONTRACT_VERSION
     return summary
 
 
@@ -440,7 +441,7 @@ class PsycopgCaseRepository:
         except psycopg.Error as error:
             raise CasesUnavailable(case_storage_diagnostic(error)) from error
         return {
-            "contract_version": "1.1",
+            "contract_version": READ_CONTRACT_VERSION,
             "case": _summary(row),
             "events": [
                 {**event, "recorded_at": event["recorded_at"].isoformat()}

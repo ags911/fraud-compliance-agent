@@ -20,6 +20,9 @@ MAX_CASES_BY_ORIGIN = {
     "feed": MAX_FEED_CASES_PER_BROWSER,
 }
 CONTRACT_VERSION = "1.0"
+# The showcase-cases read contract a response reports. v1.1 (spec 0010) adds
+# routed_by and event_contract_version; stored rows keep their 1.0 record.
+READ_CONTRACT_VERSION = "1.1"
 
 
 class CaseCaptureError(ValueError):

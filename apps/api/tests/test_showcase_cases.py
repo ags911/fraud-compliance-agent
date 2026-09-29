@@ -20,6 +20,7 @@ from jsonschema import Draft202012Validator
 from server.main import create_app
 from server.showcase_cases.capture import (
     MAX_CASES_PER_BROWSER,
+    READ_CONTRACT_VERSION,
     RETENTION,
     CapturedEvent,
     CaseCaptureError,
@@ -39,7 +40,7 @@ from server.showcase_cases.settings import load_case_settings, valid_browser_id
 from server.showcase_cases.stream import CaseRecorder, record_case_stream
 
 BROWSER_ID = "3f2b8c1e-9a4d-4b6e-8f0a-1c2d3e4f5a6b"
-CASES_CONTRACT = "docs/contracts/showcase-cases.v1.schema.json"
+CASES_CONTRACT = "docs/contracts/showcase-cases.v1.1.schema.json"
 EVENTS_SCHEMA = "docs/contracts/public-showcase-events.v1.schema.json"
 
 
@@ -350,13 +351,13 @@ def test_read_shapes_match_the_proposed_contract(
     summary = _summary(_row(record))
 
     list_response = {
-        "contract_version": "1.0",
+        "contract_version": "1.1",
         "items": [summary],
         "next_cursor": None,
         "totals": empty_totals(),
     }
     detail_response = {
-        "contract_version": "1.0",
+        "contract_version": "1.1",
         "case": summary,
         "events": [
             {
@@ -386,11 +387,17 @@ def test_read_shapes_match_the_proposed_contract(
 def test_the_contract_is_accepted_and_the_proposal_is_gone(
     repository_root: Path,
 ) -> None:
-    """ADR-020 accepted the cases contract; only the accepted copy remains."""
+    """ADR-020 accepted the cases contract and ADR-025 its v1.1; v1 stays."""
     schema = json.loads((repository_root / CASES_CONTRACT).read_text(encoding="utf-8"))
+    frozen = json.loads(
+        (repository_root / "docs/contracts/showcase-cases.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
 
     assert schema["x-approval-status"] == "accepted"
-    assert schema["x-contract-version"] == "1.0"
+    assert schema["x-contract-version"] == "1.1"
+    assert frozen["x-contract-version"] == "1.0"
     assert not (
         repository_root
         / "docs/proposals/schemas/showcase-cases.v0.proposed.schema.json"
@@ -430,7 +437,7 @@ class InMemoryCaseRepository:
             raise CaseNotFound(case_id)
         record = stored[0]
         return {
-            "contract_version": "1.0",
+            "contract_version": READ_CONTRACT_VERSION,
             "case": _summary(_row(record)),
             "events": [
                 {
@@ -565,7 +572,7 @@ def test_case_read_limit_runs_after_storage_check_and_before_browser_check(
     monkeypatch.setenv("PUBLIC_DATABASE_GUARDS_ENABLED", "true")
     monkeypatch.setenv("SHOWCASE_CLIENT_CASE_READS_PER_MINUTE", "1")
     # Recreate after configuring the process-local limiter.
-    from server import main
+    import server.main as main
 
     monkeypatch.setenv("SHOWCASE_CASES_ENABLED", "true")
     monkeypatch.setenv("DATABASE_URL", "postgresql://example/db")

@@ -2,10 +2,13 @@
 
 A feed case is four public-showcase-events.v1 payloads, built through spec
 0002's ``build_case`` and ``EventValidator``, so it is stored, listed and
-opened exactly like a Run showcase case.
+opened exactly like a Run showcase case. A payment the model raised (spec 0010,
+ADR-025) is instead four public-showcase-events.v2 payloads whose result
+explains the score and thresholds.
 """
 
 import dataclasses
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -16,6 +19,27 @@ from server.showcase_cases.capture import (
     EventValidator,
     build_case,
 )
+
+
+@dataclass(frozen=True)
+class ModelRouting:
+    """Why the model raised a rule cleared payment, as its v2 case states it.
+
+    Attributes:
+        score: The stored score, rounded to 5 places.
+        challenge: The policy's CHALLENGE threshold.
+        hold: The policy's HOLD threshold.
+        policy_version: The policy the payment stored at run start.
+        model_version: The model that produced the score.
+        synthetic_outlier: Whether the payment is a planted S01 outlier.
+    """
+
+    score: float
+    challenge: float
+    hold: float
+    policy_version: str
+    model_version: str
+    synthetic_outlier: bool
 
 
 def _run_hex(simulation_run_id: str) -> str:
@@ -43,9 +67,7 @@ def build_feed_case(
     validator: EventValidator,
     model_score: float | None = None,
     model_version: str | None = None,
-    routed_by: str | None = None,
-    policy_version: str | None = None,
-    synthetic_outlier: bool = False,
+    model_routing: ModelRouting | None = None,
 ) -> CaseRecord:
     """Build and validate the case for one revealed non PASS feed payment.
 
@@ -59,16 +81,20 @@ def build_feed_case(
         validator: The compiled accepted event schema.
         model_score: The payment's display only score, if one exists.
         model_version: The version of the model that produced that score.
+        model_routing: Set only when the model raised the payment; the case
+            then uses ``public-showcase-events.v2`` and ``validator`` must be
+            the v2 schema.
 
     Returns:
         A ``feed`` case whose events are valid ``public-showcase-events.v1``
-        payloads, expiring 30 days after ``due_at``.
+        payloads (v2 when ``model_routing`` is set), expiring 30 days after
+        ``due_at``.
 
     Raises:
         CaseCaptureError: If any event fails validation; nothing is stored.
     """
     case_id = feed_case_id(simulation_run_id, sequence)
-    version = "2.0" if routed_by == "model" else "1.0"
+    version = "1.0" if model_routing is None else "2.0"
     prefix = f"evt_feed_{_run_hex(simulation_run_id)}_{sequence:03d}"
 
     # Built explicitly: the runtime's identity helper would truncate these IDs.
@@ -102,27 +128,20 @@ def build_feed_case(
             **identity(4, "run_result"),
             "investigation_status": "skipped",
             "recommendation": decision.recommendation,
-            "recommendation_basis": "model_threshold"
-            if routed_by == "model"
-            else decision.recommendation_basis,
+            "recommendation_basis": decision.recommendation_basis,
             "authority_status": "not_evaluated",
             "simulated_action": "none",
             "execution_mode": "recorded",
             "data_label": "synthetic",
             **(
-                {
+                {}
+                if model_routing is None
+                else {
                     "model_routing": {
-                        "score": model_score,
-                        "challenge": None,
-                        "hold": None,
+                        **dataclasses.asdict(model_routing),
                         "rule_recommendation": "PASS",
-                        "policy_version": policy_version,
-                        "model_version": model_version,
-                        "synthetic_outlier": synthetic_outlier,
                     }
                 }
-                if routed_by == "model"
-                else {}
             ),
         },
     ]
@@ -135,6 +154,6 @@ def build_feed_case(
         origin="feed",
         model_score=model_score,
         model_version=model_version,
-        routed_by=routed_by or "rule",
-        event_contract_version="2" if routed_by == "model" else "1",
+        routed_by="rule" if model_routing is None else "model",
+        event_contract_version="1" if model_routing is None else "2",
     )

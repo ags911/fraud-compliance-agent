@@ -39,20 +39,25 @@ def choose_thresholds(
     """
     if len(scores) != len(labels) or not scores:
         raise ValueError("scores and labels must be non-empty and aligned")
-    candidates = sorted(set(scores))
+    total = len(scores)
+    positives = sum(labels)
+    # One pass from the highest score down gives, for every distinct score,
+    # how many rows (and frauds) are at or above it; a threshold equal to a
+    # score flags that score (spec 0010 AC-2).
+    at_or_above: dict[float, tuple[int, int]] = {}
+    true_positives = 0
+    ranked = sorted(zip(scores, labels, strict=True), reverse=True)
+    for flagged, (score, label) in enumerate(ranked, start=1):
+        true_positives += label
+        at_or_above[score] = (flagged, true_positives)
+    candidates = sorted(at_or_above)
 
     def metric(threshold: float) -> dict[str, float]:
-        flagged = [
-            label
-            for score, label in zip(scores, labels, strict=True)
-            if score >= threshold
-        ]
-        positives = sum(labels)
-        true_positives = sum(flagged)
+        count, hits = at_or_above[threshold]
         return {
-            "precision": true_positives / len(flagged),
-            "recall": true_positives / positives if positives else 0.0,
-            "alert_rate": len(flagged) / len(scores),
+            "precision": hits / count,
+            "recall": hits / positives if positives else 0.0,
+            "alert_rate": count / total,
         }
 
     def first(target: float) -> tuple[float, dict[str, float]] | None:
@@ -117,9 +122,7 @@ def main() -> None:
     partitions = assign_partitions(
         frame["source"],
         frame["event_time"],
-        __import__("pandas").Timestamp(
-            config["partitioning"]["chronological_train_cutpoint"]
-        ),
+        pd.Timestamp(config["partitioning"]["chronological_train_cutpoint"]),
     )
     test = rich.loc[partitions == "test", config["features"]]
     scores = [

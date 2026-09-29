@@ -21,8 +21,13 @@ from server.public_database_guards import (
     table_has_capacity,
 )
 from server.sandbox_data.decisions import FeedDecision, feed_decision
-from server.sandbox_data.feed_cases import build_feed_case
-from server.sandbox_model import portable_model, route_rule_pass, score_routing_policy
+from server.sandbox_data.feed_cases import ModelRouting, build_feed_case
+from server.sandbox_model import (
+    policy_for_version,
+    portable_model,
+    route_rule_pass,
+    score_routing_policy,
+)
 from server.sandbox_model.features import PortablePayment, build_feature_vector
 from server.showcase_cases.capture import CaseCaptureError, EventValidator
 from server.showcase_cases.repository import (
@@ -832,33 +837,29 @@ class PsycopgScenarioRepository:
                 )
                 now = datetime.now(UTC)
 
-                # The deterministic table decides first. ADR-025 permits a
-                # verified score policy only to raise a rule PASS.
+                # The rule table decides first (spec 0004). Under ADR-025 a
+                # verified policy may only raise a rule PASS, by the stored,
+                # rounded score (spec 0010 AC-2); nothing lowers a decision.
                 def decided(
                     source: str, direction: str, score: float | None
-                ) -> tuple[str | None, str | None, str | None, str | None, str | None]:
+                ) -> tuple[str | None, ...]:
+                    """Return rule decision, route, final decision, basis, routed by, policy."""
                     decision = feed_decision(source)
                     if decision is None or direction != "outbound":
-                        return (None, None, None, None, None)
-                    escalation = (
-                        route_rule_pass(score, policy)
-                        if decision.recommendation == "PASS"
-                        else None
+                        return (None, None, None, None, None, None)
+                    assessed = (
+                        policy is not None
+                        and score is not None
+                        and decision.recommendation == "PASS"
                     )
-                    if escalation:
-                        return (
-                            decision.deterministic_route,
-                            escalation,
-                            "model_threshold",
-                            "model",
-                            policy.policy_version,
-                        )
+                    raised = route_rule_pass(score, policy) if assessed else None
                     return (
-                        decision.deterministic_route,
                         decision.recommendation,
-                        decision.recommendation_basis,
-                        "rule",
-                        None,
+                        decision.deterministic_route,
+                        raised or decision.recommendation,
+                        "model_threshold" if raised else decision.recommendation_basis,
+                        "model" if raised else "rule",
+                        policy.policy_version if assessed and policy else None,
                     )
 
                 def lineage(item: Any) -> tuple[str | None, str | None]:
@@ -935,15 +936,18 @@ class PsycopgScenarioRepository:
                 def scheduled_row(item: Any) -> tuple[object, ...]:
                     """Build one complete durable schedule row from fixed run-start facts."""
                     score, model_version, input_hash = model_values(item)
-                    source = item.source_scenario_id or scenario_id
-                    decision = feed_decision(source)
                     (
+                        rule_recommendation,
                         deterministic_route,
                         recommendation,
                         basis,
                         routed_by,
                         policy_version,
-                    ) = decided(source, item.event.direction, score)
+                    ) = decided(
+                        item.source_scenario_id or scenario_id,
+                        item.event.direction,
+                        score,
+                    )
                     return (
                         run_id,
                         item.sequence,
@@ -957,7 +961,7 @@ class PsycopgScenarioRepository:
                         item.event.category_bucket,
                         item.event.payee_reference,
                         item.event.payment_channel,
-                        decision.recommendation if decision else None,
+                        rule_recommendation,
                         routed_by,
                         policy_version,
                         item.synthetic_outlier,
@@ -1009,6 +1013,7 @@ class PsycopgScenarioRepository:
             outcome: {"count": 0, "recent": []}
             for outcome in ("PASS", "CHALLENGE", "HOLD")
         }
+        raised_by_model = 0
         if int(run["appended_event_count"]) > 0:
             cursor.execute(
                 """SELECT event_id, sequence, recommendation, routed_by, model_score
@@ -1022,6 +1027,7 @@ class PsycopgScenarioRepository:
                 outcome = str(event["recommendation"])
                 lane = routing[outcome]
                 lane["count"] = int(lane["count"]) + 1
+                raised_by_model += event["routed_by"] == "model"
                 recent = lane["recent"]
                 if isinstance(recent, list) and len(recent) < 18:
                     recent.append(
@@ -1029,9 +1035,9 @@ class PsycopgScenarioRepository:
                             "event_id": event["event_id"],
                             "sequence": event["sequence"],
                             "recommendation": outcome,
-                            "routed_by": event.get("routed_by"),
+                            "routed_by": event["routed_by"],
                             "model_score": float(event["model_score"])
-                            if event.get("model_score") is not None
+                            if event["model_score"] is not None
                             else None,
                         }
                     )
@@ -1046,12 +1052,8 @@ class PsycopgScenarioRepository:
             "next_due_at": next_due.isoformat() if next_due else None,
             "routing_snapshot": {
                 "by_recommendation": routing,
-                "raised_by_model": sum(
-                    1
-                    for lane in routing.values()
-                    for item in lane["recent"]
-                    if item.get("routed_by") == "model"
-                ),
+                # Every revealed payment the model raised, never truncated.
+                "raised_by_model": raised_by_model,
                 "routing_policy": (
                     {
                         "version": policy.policy_version,
@@ -1222,6 +1224,12 @@ class PsycopgScenarioRepository:
             case_status = "storage_off"
         else:
             try:
+                routing = _model_routing(event)
+                validator = (
+                    case_validator if routing is None else _feed_case_validator("2")
+                )
+                if validator is None:
+                    raise CaseCaptureError("event schema unavailable")
                 record = build_feed_case(
                     simulation_run_id=run_id,
                     sequence=sequence,
@@ -1234,19 +1242,12 @@ class PsycopgScenarioRepository:
                         event["recommendation_basis"],
                     ),
                     due_at=event["due_at"],
-                    validator=(
-                        _feed_case_validator("2")
-                        if event.get("routed_by") == "model"
-                        else case_validator
-                    )
-                    or case_validator,
+                    validator=validator,
                     model_score=float(event["model_score"])
                     if event["model_score"] is not None
                     else None,
                     model_version=event["model_version"],
-                    routed_by=event.get("routed_by"),
-                    policy_version=event.get("routing_policy_version"),
-                    synthetic_outlier=bool(event.get("synthetic_outlier")),
+                    model_routing=routing,
                 )
             except (CaseCaptureError, KeyError, TypeError, ValueError):
                 # Revealed but never retried: the payment is shown, no case is kept.
@@ -1634,6 +1635,32 @@ def cancel_sandbox_simulation(run_id: str, browser_id: str) -> dict[str, object]
 def _compiled_event_validator(schema_path: Path) -> EventValidator:
     """Compile the accepted event schema once per path, not on every poll."""
     return EventValidator(schema_path)
+
+
+def _model_routing(event: dict[str, Any]) -> ModelRouting | None:
+    """Return a model raised payment's routing story, or None for a rule route.
+
+    The thresholds come from the shipped policy the payment stored at run
+    start (spec 0010 AC-7).
+
+    Raises:
+        ValueError: If the payment was raised by the model but that policy is
+            not loaded; the payment is then shown with no case, never with an
+            unexplained one.
+    """
+    if event.get("routed_by") != "model":
+        return None
+    policy = policy_for_version(event.get("routing_policy_version"))
+    if policy is None or event["model_score"] is None:
+        raise ValueError("routing policy unavailable")
+    return ModelRouting(
+        score=float(event["model_score"]),
+        challenge=policy.challenge,
+        hold=policy.hold,
+        policy_version=policy.policy_version,
+        model_version=str(event["model_version"]),
+        synthetic_outlier=bool(event["synthetic_outlier"]),
+    )
 
 
 def _feed_case_validator(version: str = "1") -> EventValidator | None:
