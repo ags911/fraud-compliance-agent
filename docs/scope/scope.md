@@ -13,7 +13,7 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 | 2 | Mixed feed | Slice 1 | done |
 | 3 | Visible feed lifecycle | Slice 1 | done |
 | 4 | Score routing (F3) | Slice 2 | done |
-| 5 | AI operations overview (F4a) | Slice 3 | planned |
+| 5 | AI operations overview (F4a) | Slice 3 | in-progress |
 
 ## Slice 1: Live decision routing
 
@@ -63,10 +63,16 @@ The rules decide every feed payment first. When they clear one, the model score 
 
 ## Slice 3: AI overview
 
-### 5. AI operations overview (F4a) · planned
+### 5. AI operations overview (F4a) · in-progress
 On request, an AI model writes a short plain overview of the selected scenario's dashboard: activity, rule and model decisions, the live feed and recent cases. It is labelled as AI written about synthetic data, and it never decides or changes anything.
 **Done when:** a "Write overview" button produces a short overview grounded only in the figures on screen, clearly labelled as AI written, within a spending and rate limit, with an honest message when the model is unavailable.
-- [ ] Design it: /architect AI operations overview
+- [x] Design it (spec): [0011](../specs/0011-ai-operations-overview/index.md)
+- [ ] Build it: /develop AI operations overview
+  - [ ] Template overview from real facts: contract, facts builder, route, Overview card (AC 1 to AC 3, AC 5, AC 7, AC 8, AC 10)
+  - [ ] Live model, checked: config, switch, limits, token cap, fact check, reason lines (AC 4 to AC 6)
+  - [ ] Finish: out of date detection, deployment checks, full tests (AC 9, AC 11)
+- [ ] Verify it: /check verify AI operations overview
+- [ ] Test it: /test AI operations overview
 
 ## Legend
 
