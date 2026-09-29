@@ -97,11 +97,17 @@ default).
 | ◐ | F3 — Fast-path operations foundation | Deferred extension 1 |
 | ◐ | F3a — Approved source-to-score foundation | Deferred extension 1 |
 | ◐ | F4 — Investigation foundation | Deferred extension 2 |
+| — | F4a — AI operations overview | Deferred extension 2 |
 | — | F5 — Human-review foundation | Deferred extension 2 |
 | — | F6 — Monitoring/integration-health/replay/hardening | Deferred extension 3 |
 
 "F3a is an explicit substage between F3 and F4, added so the source-to-score
 chain cannot be hidden inside Plaid integration or dashboard work."
+
+F4a (added 2026-09-29 at the owner's request) is a substage between F4 and
+F5: an LLM written overview of the Risk Console's main dashboard, built on
+F4's bounded provider path. Not scoped or designed yet; it starts with
+`/scope`, then `/architect`.
 
 ### F3a in progress: deterministic Sandbox event data
 
