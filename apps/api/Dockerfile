@@ -90,6 +90,7 @@ COPY config/sandbox-score-routing.v1.json /app/showcase/config/
 COPY fixtures/s01-s08/scenarios.v1.json /app/showcase/fixtures/s01-s08/
 # Saved cases (spec 0002) validate each stored event against this schema.
 COPY docs/contracts/public-showcase-events.v1.schema.json /app/showcase/docs/contracts/
+COPY docs/contracts/public-showcase-events.v2.schema.json /app/showcase/docs/contracts/
 
 WORKDIR /app
 USER app

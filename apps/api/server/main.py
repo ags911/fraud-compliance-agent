@@ -758,7 +758,7 @@ def create_app() -> FastAPI:
             raise _case_store_unavailable(error.diagnostic) from error
         return CaseListResponse.model_validate(
             {
-                "contract_version": "1.0",
+                "contract_version": "1.1",
                 "items": page.items,
                 "next_cursor": page.next_cursor,
                 "totals": page.totals,

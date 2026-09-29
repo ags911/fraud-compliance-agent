@@ -1187,7 +1187,8 @@ class PsycopgScenarioRepository:
         # reports its true count; nothing is revealed after it.
         cursor.execute(
             """SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
-                event.model_score, event.model_version, event.case_id,
+                event.model_score, event.model_version, event.routed_by,
+                event.routing_policy_version, event.synthetic_outlier, event.case_id,
                 COALESCE(event.source_scenario_id, run.scenario_id) AS scenario_id, run.browser_id
             FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
             WHERE event.run_id = %s AND event.sequence = %s AND event.appended_at IS NULL
@@ -1233,11 +1234,19 @@ class PsycopgScenarioRepository:
                         event["recommendation_basis"],
                     ),
                     due_at=event["due_at"],
-                    validator=case_validator,
+                    validator=(
+                        _feed_case_validator("2")
+                        if event.get("routed_by") == "model"
+                        else case_validator
+                    )
+                    or case_validator,
                     model_score=float(event["model_score"])
                     if event["model_score"] is not None
                     else None,
                     model_version=event["model_version"],
+                    routed_by=event.get("routed_by"),
+                    policy_version=event.get("routing_policy_version"),
+                    synthetic_outlier=bool(event.get("synthetic_outlier")),
                 )
             except (CaseCaptureError, KeyError, TypeError, ValueError):
                 # Revealed but never retried: the payment is shown, no case is kept.
@@ -1627,7 +1636,7 @@ def _compiled_event_validator(schema_path: Path) -> EventValidator:
     return EventValidator(schema_path)
 
 
-def _feed_case_validator() -> EventValidator | None:
+def _feed_case_validator(version: str = "1") -> EventValidator | None:
     """Return the event schema when case storage is on, else None (storage off).
 
     The same switch as Run showcase cases: ``SHOWCASE_CASES_ENABLED`` plus a
@@ -1637,7 +1646,7 @@ def _feed_case_validator() -> EventValidator | None:
     if not settings.ready:
         return None
     try:
-        return _compiled_event_validator(settings.event_schema_path)
+        return _compiled_event_validator(settings.event_schema_path_for(version))
     except (OSError, ValueError):
         return None
 

@@ -43,6 +43,9 @@ def build_feed_case(
     validator: EventValidator,
     model_score: float | None = None,
     model_version: str | None = None,
+    routed_by: str | None = None,
+    policy_version: str | None = None,
+    synthetic_outlier: bool = False,
 ) -> CaseRecord:
     """Build and validate the case for one revealed non PASS feed payment.
 
@@ -65,12 +68,13 @@ def build_feed_case(
         CaseCaptureError: If any event fails validation; nothing is stored.
     """
     case_id = feed_case_id(simulation_run_id, sequence)
+    version = "2.0" if routed_by == "model" else "1.0"
     prefix = f"evt_feed_{_run_hex(simulation_run_id)}_{sequence:03d}"
 
     # Built explicitly: the runtime's identity helper would truncate these IDs.
     def identity(number: int, event: str) -> dict[str, Any]:
         return {
-            "schema_version": "1.0",
+            "schema_version": version,
             "event_id": f"{prefix}_{number}",
             "run_id": case_id,
             "scenario_id": scenario_id,
@@ -98,11 +102,28 @@ def build_feed_case(
             **identity(4, "run_result"),
             "investigation_status": "skipped",
             "recommendation": decision.recommendation,
-            "recommendation_basis": decision.recommendation_basis,
+            "recommendation_basis": "model_threshold"
+            if routed_by == "model"
+            else decision.recommendation_basis,
             "authority_status": "not_evaluated",
             "simulated_action": "none",
             "execution_mode": "recorded",
             "data_label": "synthetic",
+            **(
+                {
+                    "model_routing": {
+                        "score": model_score,
+                        "challenge": None,
+                        "hold": None,
+                        "rule_recommendation": "PASS",
+                        "policy_version": policy_version,
+                        "model_version": model_version,
+                        "synthetic_outlier": synthetic_outlier,
+                    }
+                }
+                if routed_by == "model"
+                else {}
+            ),
         },
     ]
     record = build_case(
@@ -110,5 +131,10 @@ def build_feed_case(
         validator,
     )
     return dataclasses.replace(
-        record, origin="feed", model_score=model_score, model_version=model_version
+        record,
+        origin="feed",
+        model_score=model_score,
+        model_version=model_version,
+        routed_by=routed_by or "rule",
+        event_contract_version="2" if routed_by == "model" else "1",
     )

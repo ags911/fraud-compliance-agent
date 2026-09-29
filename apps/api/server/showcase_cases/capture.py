@@ -70,6 +70,8 @@ class CaseRecord:
     # Display only evidence on a feed case; null until spec 0004 slice 3.
     model_score: float | None = None
     model_version: str | None = None
+    routed_by: str | None = None
+    event_contract_version: str = "1"
 
 
 class EventValidator:

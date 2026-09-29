@@ -17,7 +17,6 @@ from server.public_database_guards import (
     table_has_capacity,
 )
 from server.showcase_cases.capture import (
-    CONTRACT_VERSION,
     MAX_CASES_BY_ORIGIN,
     CaseRecord,
 )
@@ -60,6 +59,8 @@ _SUMMARY_COLUMNS = (
     "origin",
     "model_score",
     "model_version",
+    "routed_by",
+    "event_contract_version",
 )
 # Column lists are composed from these fixed identifiers, never from input.
 _SELECT_SUMMARY = sql.SQL(", ").join(map(sql.Identifier, _SUMMARY_COLUMNS))
@@ -170,6 +171,7 @@ def _summary(row: dict[str, Any]) -> dict[str, Any]:
     # NUMERIC reads back as Decimal; the summary carries a plain number.
     if summary["model_score"] is not None:
         summary["model_score"] = float(summary["model_score"])
+    summary["contract_version"] = "1.1"
     return summary
 
 
@@ -438,7 +440,7 @@ class PsycopgCaseRepository:
         except psycopg.Error as error:
             raise CasesUnavailable(case_storage_diagnostic(error)) from error
         return {
-            "contract_version": CONTRACT_VERSION,
+            "contract_version": "1.1",
             "case": _summary(row),
             "events": [
                 {**event, "recorded_at": event["recorded_at"].isoformat()}
