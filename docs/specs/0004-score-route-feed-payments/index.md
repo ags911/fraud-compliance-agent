@@ -120,7 +120,7 @@ Events rows from before 0006 with null decisions are skipped by the decisions ov
 | Cases tab | Model score column (added 2026-09-29 at the owner's request) | case `model_score` to 3 places, or "–" when null (Run showcase cases and unscored feed cases) |
 
 **Key invariants**:
-- The score never feeds a route, a recommendation or the case rule; the rule table is the only source.
+- The rule table decides first; ADR-025 permits a verified score policy only to raise a rule PASS, never lower a decision or bypass the case rule.
 - A payment has at most one feed case, saved in the same transaction as its reveal, never twice and never after a trim.
 - Each browser has at most 20 feed and 50 showcase cases; each trim touches only its origin.
 - Imported datasets are never written (spec 0003).
@@ -175,7 +175,7 @@ Build approach: none recorded, so thin end to end slices. Slices 1 and 2 build n
 **Positive**:
 - The Cases tab, its KPIs and the chart move during a demo, and the mock chart is gone.
 - Slices 1 and 2 need no contract change and no new dependency, so they can ship now.
-- When slice 3 lands, a real, reproducible model appears with its limits stated, and the deterministic rule stays the only decider.
+- When slice 3 lands, a real, reproducible model appears with its limits stated; see ADR-025 for the narrow score escalation exception.
 
 **Negative / tradeoffs**:
 - Outcomes are one colour per scenario: every S02 payment is HOLD. Varied outcomes need a per payment policy that does not exist yet.

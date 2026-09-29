@@ -128,6 +128,7 @@ def main() -> None:
             "COPY docs/contracts/public-showcase-events.v1.schema.json "
             "/app/showcase/docs/contracts/"
         ),
+        "COPY config/sandbox-score-routing.v1.json /app/showcase/config/",
     ):
         _require(dockerfile, fragment, "apps/api/Dockerfile")
 

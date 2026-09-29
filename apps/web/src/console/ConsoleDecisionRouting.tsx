@@ -110,7 +110,7 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
             )}
           </div>
           <p className="console-routing-footer">
-            {summary.last ? <span>Last routed <strong>#{summary.last.sequence}</strong> → {summary.last.recommendation}</span> : <span>{quiet}</span>}
+            {summary.last ? <span>Last routed <strong>#{summary.last.sequence}</strong> → {summary.last.recommendation}{summary.last.routed_by === "model" && summary.last.model_score !== null && summary.last.model_score !== undefined ? ` · model ${summary.last.model_score.toFixed(3)}` : ""}</span> : <span>{quiet}</span>}
             {ruleNote ? <span className="console-routing-rule">{ruleNote}</span> : null}
           </p>
         </div>

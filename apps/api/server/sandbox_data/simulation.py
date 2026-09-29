@@ -45,6 +45,7 @@ class ScheduledSimulationEvent:
     delay_seconds: int
     event: SanitisedEvent
     source_scenario_id: str | None = None
+    synthetic_outlier: bool = False
 
 
 def _unit(seed: str, scenario_id: str, sequence: int) -> float:
@@ -83,21 +84,37 @@ def build_scenario_schedule(
     category, payees, typical_amount = shape
     schedule: list[ScheduledSimulationEvent] = []
     for sequence in range(1, event_count + 1):
+        # Every twentieth S01 payment, offset at ten, is a labelled planted
+        # outlier. It demonstrates escalation mechanics without claiming a
+        # real-world fraud observation (ADR-025).
+        synthetic_outlier = scenario_id == "S01" and sequence % 20 == 10
         # Amounts vary by up to 30% either side of the scenario's typical amount.
         variation = 0.7 + 0.6 * _unit(seed, scenario_id, sequence)
+        amount_minor = round(typical_amount * variation)
+        payee_reference = payees[(sequence - 1) % len(payees)]
+        if synthetic_outlier:
+            amount_minor = round(
+                typical_amount * (5 + 15 * _unit(seed, "S01_outlier", sequence))
+            )
+            payee_reference = "payee_s01_recurring"
         event = SanitisedEvent(
             event_date=event_date,
             available_date=event_date,
-            amount_minor=round(typical_amount * variation),
+            amount_minor=amount_minor,
             currency="GBP",
             direction="outbound",
             category_bucket=category,
-            payee_reference=payees[(sequence - 1) % len(payees)],
+            payee_reference=payee_reference,
             payment_channel="simulated",
             event_id=f"simulation_{run_id}_{sequence}",
         )
         schedule.append(
-            ScheduledSimulationEvent(sequence, (sequence - 1) * interval_seconds, event)
+            ScheduledSimulationEvent(
+                sequence,
+                (sequence - 1) * interval_seconds,
+                event,
+                synthetic_outlier=synthetic_outlier,
+            )
         )
     return tuple(schedule)
 
@@ -155,7 +172,11 @@ def build_mixed_schedule(
         item = by_source[source][sequence - 1]
         schedule.append(
             ScheduledSimulationEvent(
-                sequence, item.delay_seconds, item.event, source_scenario_id=source
+                sequence,
+                item.delay_seconds,
+                item.event,
+                source_scenario_id=source,
+                synthetic_outlier=item.synthetic_outlier,
             )
         )
     return tuple(schedule)

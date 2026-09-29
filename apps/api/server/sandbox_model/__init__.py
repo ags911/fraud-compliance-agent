@@ -5,5 +5,10 @@ from server.sandbox_model.scorer import (
     load_portable_model,
     portable_model,
 )
+from server.sandbox_model.routing_policy import (
+    ScoreRoutingPolicy,
+    route_rule_pass,
+    score_routing_policy,
+)
 
-__all__ = ["PortableModel", "load_portable_model", "portable_model"]
+__all__ = ["PortableModel", "ScoreRoutingPolicy", "load_portable_model", "portable_model", "route_rule_pass", "score_routing_policy"]

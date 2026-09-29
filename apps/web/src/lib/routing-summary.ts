@@ -4,7 +4,7 @@ import type { SandboxSimulationRun } from "@/lib/sandbox-simulation"
 
 export const ROUTING_OUTCOMES = ["PASS", "CHALLENGE", "HOLD"] as const
 export type RoutingOutcome = (typeof ROUTING_OUTCOMES)[number]
-export type RoutingToken = { event_id: string; sequence: number; recommendation: RoutingOutcome }
+export type RoutingToken = { event_id: string; sequence: number; recommendation: RoutingOutcome; routed_by?: "rule" | "model" | null; model_score?: number | null }
 
 export type RoutingSummary = {
   /** Every revealed payment by outcome, from the run's routing snapshot. */
@@ -63,8 +63,8 @@ export function routingSankeyData(summary: RoutingSummary): SankeyData {
  * routed anything, or without a run.
  */
 export function routingRuleNote(scenarioId: string | null, summary: RoutingSummary): string | null {
-  if (scenarioId === "MIX") return "Payments from S01 to S05, each decided by its own scenario's rule."
+  if (scenarioId === "MIX") return "Payments from S01 to S05, each decided by its own scenario's rule; the model can raise a payment the rules cleared."
   const routed = ROUTING_OUTCOMES.filter((outcome) => summary.counts[outcome] > 0)
   if (!scenarioId || routed.length !== 1) return null
-  return `Every ${scenarioId} payment follows its rule: ${routed[0]}`
+  return `Every ${scenarioId} payment follows its rule: ${routed[0]}; the model can raise a payment the rules cleared.`
 }
