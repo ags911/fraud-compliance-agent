@@ -155,7 +155,7 @@ Web deep link: `/?case=<case id>` on the Risk Console (originally a `/transactio
 |---|---|---|---|
 | Tab label | Session | Cases, count `totals.total` | Cases, count of this visit's runs |
 | Section heading | Synthetic showcase decision stream | Saved cases | This visit's runs |
-| Section description | Only completed, synthetic showcase runs from this browser session appear here. No payments are executed and no runtime model score is shown. | Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed and no runtime model score is shown. | Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown. |
+| Section description | Only completed, synthetic showcase runs from this browser session appear here. No payments are executed and no runtime model score is shown. | Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, is display only and never decides. (Amended 2026-09-29 with ADR-024.) | Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown. |
 | Empty state title | No showcase runs yet | No saved cases yet | No showcase runs yet |
 | Empty state copy ending | Runs stay in this browser session only. | Saved cases stay in this browser for 30 days. | Runs stay in this browser session only. |
 | Table title | Current session decisions | Cases | This visit's decisions |

@@ -359,6 +359,8 @@ test.describe("Risk Console Cases tab", () => {
     await expect(feedRow).toContainText("Live feed")
     const showcaseRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: S04_ID }) })
     await expect(showcaseRow).toContainText("recorded")
+    // No score yet: the Model score cell shows a dash, never an invented value.
+    await expect(feedRow.getByRole("cell").nth(7)).toHaveText("–")
 
     await page.getByRole("link", { name: FEED_ID }).click()
     const drawer = page.getByRole("dialog")
@@ -381,6 +383,26 @@ test.describe("Risk Console Cases tab", () => {
     await expect(signal).toContainText("0.73412")
     await expect(signal).toContainText("sandbox-portable-xgb-v1")
     await expect(signal).toContainText("Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It does not decide.")
+  })
+
+  test("lists a scored feed case's display only score in the Model score column", async ({ page }) => {
+    const scored = { ...FEED_DETAIL.case, model_score: 0.08252, model_version: "sandbox-portable-xgb-v1" }
+    await page.route(/\/cases(\?.*)?$/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...CASE_PAGE, items: [scored, ...CASE_PAGE.items] }),
+      }),
+    )
+    await page.goto("/?scenario=S01")
+    await page.getByRole("tab", { name: /^Cases/ }).click()
+
+    await expect(page.getByRole("columnheader", { name: "Model score" })).toBeVisible()
+    const feedRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: FEED_ID }) })
+    await expect(feedRow.getByRole("cell").nth(7)).toHaveText("0.083")
+    const showcaseRow = page.getByRole("row").filter({ has: page.getByRole("link", { name: S04_ID }) })
+    await expect(showcaseRow.getByRole("cell").nth(7)).toHaveText("–")
+    await expect(page.getByText(/A model score, where shown, is display only and never decides\./)).toBeVisible()
   })
 
   test("falls back to this visit's runs, unlinked, when case history is off", async ({ page }) => {
