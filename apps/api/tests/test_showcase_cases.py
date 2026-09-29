@@ -707,7 +707,9 @@ class ListingCaseRepository(InMemoryCaseRepository):
             totals["total"] += 1
             totals["by_recommendation"][record.recommendation] += 1
             totals["by_scenario"][record.scenario_id][record.recommendation] += 1
-            totals["deterministic_passes"] += record.deterministic_route == "PASS"
+            totals["deterministic_passes"] += (
+                record.deterministic_route == "PASS" and record.recommendation == "PASS"
+            )
             totals["fail_safe_holds"] += record.recommendation_basis == "fail_safe"
             totals["completed_investigations"] += (
                 record.investigation_status == "complete"

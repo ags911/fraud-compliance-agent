@@ -1,7 +1,7 @@
 # 0010. Score routing for rule cleared feed payments (F3)
 
 **Date**: 2026-09-29
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 
@@ -21,7 +21,7 @@ Today every live feed payment is decided by its scenario's rule, and the model s
 - **AC-3**: The score never lowers a rule decision. A database check rejects any row with `routed_by = 'model'` unless `rule_recommendation = 'PASS'`, `model_score` is not null and `recommendation` is CHALLENGE or HOLD.
 - **AC-4**: If the model is missing, the policy file is missing or invalid, its digest does not match the pinned constant, or its `model_version` differs from the loaded model, every payment gets its rule decision with `routed_by = 'rule'` and a null `routing_policy_version`, and the API logs warnings exactly once each: a missing or refused model keeps its existing single `sandbox_portable_model_unavailable` warning and logs no routing warning; a policy problem (missing, invalid, digest, or model version mismatch) logs `sandbox_score_routing_unavailable` once per process; a scoring fault keeps spec 0004's single `sandbox_portable_score_failed` per run start and leaves that payment on its rule decision. A feed never fails to start because of routing.
 - **AC-5**: `apps/api/scripts/derive_score_routing_policy.py` (local only) rebuilds the Sparkov test partition exactly as the trainer does (`modelling.richer_features.load_raw_sparkov`, the same eight features, the partitions in `config/sandbox-portable-model.v1.json`), refuses to run if the raw files' SHA256 differ from the model manifest's `raw_sparkov_sha256`, scores every row with the server's own `PortableModel` rounded to 5 places, and writes `config/sandbox-score-routing.v1.json`. Candidate thresholds are the distinct rounded test scores; a candidate that flags no row is skipped; the top 0.1% threshold is the score of the row ranked `ceil(0.001 * n)` from the top. The rules: CHALLENGE is the lowest threshold where test precision is at least 0.50; HOLD is the lowest threshold where precision is at least 0.90, or, if precision never reaches 0.90, the score at the top 0.1% alert rate. The file records each threshold, the rule that produced it, the precision, recall and alert rate there, `policy_version` `score-routing-v1` and the `model_version`. The script fails if HOLD is not above CHALLENGE. The file is written with sorted keys and compact JSON (as the model manifest), and two runs write byte identical files. A published policy file is never edited: a new policy is a new file and version, and every shipped version stays in the package.
-- **AC-6**: Within a run, the 10th, 30th, 50th and so on S01 payment, counted by S01's own order in that run (so the rule holds inside the Mixed feed, where payments are picked by overall position), is a synthetic outlier: amount = S01's typical amount times a seeded multiplier between 5 and 20, payee `payee_s01_recurring`, and `synthetic_outlier = true` stored on the scheduled payment when the schedule is built. Their rule decision stays PASS. On the current S01 dataset at least 8 in 10 outliers score at or above CHALLENGE and at least 95% of normal S01 payments stay below it; if not, the multiplier range is tuned and the new range recorded in this spec.
+- **AC-6**: Within a run, the 10th, 30th, 50th and so on S01 payment, counted by S01's own order in that run (so the rule holds inside the Mixed feed, where payments are picked by overall position), is a synthetic outlier: amount = S01's typical amount times a seeded multiplier between 7 and 9 (tuned from 5 to 20, see below), payee `payee_s01_recurring`, and `synthetic_outlier = true` stored on the scheduled payment when the schedule is built. Their rule decision stays PASS. On the current S01 dataset at least 8 in 10 outliers score at or above CHALLENGE and at least 95% of normal S01 payments stay below it; if not, the multiplier range is tuned and the new range recorded in this spec. Tuned 2026-09-29: with 5 to 20, only 6 of 10 outliers reached CHALLENGE on the S01 dataset, because the Sparkov model scores 7 to 9 times S01's typical amount highest and larger amounts lower; with 7 to 9, 9 of 10 are raised (6 HOLD, 3 CHALLENGE) and every normal payment stays below 0.04.
 - **AC-7**: A model raised payment is saved as a feed case under the existing rules and caps (spec 0004 AC-4, AC-5). Its events validate against `public-showcase-events.v2`: `route_resolved` PASS and skipped, `investigation_skipped` `deterministic_clear_route`, and `run_result` with the final recommendation, `recommendation_basis` `model_threshold` and a `model_routing` object (score, both thresholds read from the policy version the payment stored, `rule_recommendation` PASS, `policy_version`, `model_version`, and `synthetic_outlier` from the stored column). The case row has `routed_by = 'model'` and `event_contract_version = '2'`. Every other case stays on v1 unchanged.
 - **AC-8**: Contracts, each written as a complete JSON schema before its code: `docs/contracts/public-showcase-events.v2.schema.json` (events carry `schema_version` "2.0"; v1 untouched, Run showcase keeps emitting v1); `showcase-cases` v1.1 (list and case responses report `contract_version` "1.1"; summaries gain nullable `routed_by` (`rule`, `model` or null); a case's events validate against the version its `event_contract_version` names, chosen by a v1/v2 validator registry); `sandbox-simulation` v1.1 (each `recent` item gains nullable `routed_by` and `model_score`; the snapshot gains `raised_by_model` (integer, 0 or more) and `routing_policy`, which is `{version: string, challenge: number, hold: number}` or null whenever routing is off for any reason). Contract tests cover all three, and existing v1 cases still read and validate.
 - **AC-9**: The routing board marks model routed payments in its "Last routed" line and lane lists (for example `#12 → HOLD · model 0.953`), shows "Raised by model: N" while the policy is on and "Score routing off" when it is off, and its rule note reads "Payments from S01 to S05, each decided by its own scenario's rule; the model can raise a payment the rules cleared."
@@ -81,7 +81,7 @@ Rows before 0008 read as rule routed. The existing `recommendation` column holds
 | Run start | score | the ADR-024 model and features, computed as today |
 | Run start | thresholds, `routing_policy_version` | the verified policy file |
 | Run start | final `recommendation`, `routed_by` | AC-2 applied to the rule decision, score and thresholds |
-| Schedule build | outlier amount and payee | AC-6: S01 typical amount 4200 times `5 + 15 * _unit(seed, "S01_outlier", sequence)`, payee `payee_s01_recurring` |
+| Schedule build | outlier amount and payee | AC-6: S01 typical amount 4200 times `7 + 2 * _unit(seed, "S01_outlier", sequence)`, `sequence` being S01's own count in the run, payee `payee_s01_recurring` |
 | Case save | `synthetic_outlier` | the payment's stored `synthetic_outlier` column |
 | Case save | `model_routing` fields | the payment row plus the shipped policy file named by its `routing_policy_version` |
 | Snapshot | `raised_by_model` | count of revealed payments with `routed_by = 'model'` |
@@ -154,6 +154,31 @@ Build approach: Tracer Bullet (from `docs/scope/scope.md`): the first slice runs
 
 - [x] Cross check (Codex, 2026-09-29): nine findings; fixes applied for the Mixed feed outlier rule, stored outlier flag, policy immutability, rounding and ties, policy script inputs, the basis checks and validator registry, contract shapes, web wiring and warnings.
 
-- [ ] Accept ADR-025 before building (owner).
-- [ ] Add a scope row for F3 (or build straight from this spec).
-- [ ] After build: amend spec 0003 (S01 schedule) and spec 0004 (decider wording), and update `apps/api/AGENTS.md`'s decider rule.
+- [x] Accept ADR-025 before building (owner, 2026-09-29).
+- [x] Add a scope row for F3 (feature 4).
+- [x] After build: amend spec 0003 (S01 schedule) and spec 0004 (decider wording), and update `apps/api/AGENTS.md`'s decider rule.
+
+## Build notes (2026-09-29)
+
+Built by Codex (policy script, migration, loader, first run start wiring) and
+finished by Claude. Verified against the dev database; see [verify.md](verify.md).
+Choices the spec left open or that the build changed:
+
+- **Outlier range tuned** from 5 to 20 to 7 to 9 times S01's typical amount (AC-6 records why).
+- **Model signal label on a raised case.** AC-10 keeps the ADR-024 label, but
+  its last sentence, "It does not decide", is untrue on a case the model
+  raised. Such a case shows "Trained on Sparkov synthetic data. A mechanics
+  demo, not a fraud probability. It raised this payment the rules cleared; it
+  can never lower a rule decision." Every other case keeps the ADR-024 label.
+  The Cases tab description and the drawer header were reworded the same way.
+- **Contracts as new files.** `showcase-cases.v1.1.schema.json` and
+  `sandbox-simulation.v1.1.openapi.json` sit beside the frozen v1 files, which
+  are unchanged. Stored case rows keep their `1.0` record version; responses
+  report `1.1`.
+- **Deterministic pass count.** A raised case keeps its rule's PASS route but
+  ends CHALLENGE or HOLD, so the Cases tab's "via deterministic route" now
+  counts only cases whose route and recommendation are both PASS.
+- **Tour step without a highlight.** The routing board is on the Cases tab, so
+  the "Raised by model" step is a centred popover that says where to find it.
+- **Policy script speed.** Threshold selection is one sorted pass; the output
+  is byte identical to the first, slower run.

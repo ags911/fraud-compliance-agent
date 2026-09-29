@@ -52,12 +52,14 @@ class ScheduledSimulationEvent:
 
 
 # Spec 0010 AC-6 (ADR-025): the 10th, 30th, 50th and so on S01 payment, by
-# S01's own order in the run, is a planted outlier of 5 to 20 times S01's
-# typical amount, paid to its familiar recurring payee.
+# S01's own order in the run, is a planted outlier of 7 to 9 times S01's
+# typical amount, paid to its familiar recurring payee. The range was tuned on
+# the S01 dataset (2026-09-29): the Sparkov model scores 7 to 9 times highest,
+# while 10 to 20 times scored lower and raised only 6 of 10.
 _OUTLIER_SCENARIO = "S01"
 _OUTLIER_EVERY = 20
 _OUTLIER_OFFSET = 10
-_OUTLIER_MULTIPLIER = (5.0, 20.0)
+_OUTLIER_MULTIPLIER = (7.0, 9.0)
 _OUTLIER_PAYEE = "payee_s01_recurring"
 
 

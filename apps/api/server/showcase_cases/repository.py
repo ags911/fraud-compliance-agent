@@ -164,6 +164,25 @@ def decode_cursor(cursor: str) -> tuple[datetime, str]:
     return position, case_id
 
 
+def _add_group(totals: dict[str, Any], group: dict[str, Any]) -> None:
+    """Add one grouped count of cases to the list totals, in place.
+
+    A deterministic pass is a case whose route was PASS and that ended PASS.
+    A payment the model raised (spec 0010) keeps its rule's PASS route but
+    ends CHALLENGE or HOLD, so it is not one.
+    """
+    count = group["cases"]
+    totals["total"] += count
+    totals["by_recommendation"][group["recommendation"]] += count
+    totals["by_scenario"][group["scenario_id"]][group["recommendation"]] += count
+    if group["deterministic_route"] == "PASS" and group["recommendation"] == "PASS":
+        totals["deterministic_passes"] += count
+    if group["recommendation_basis"] == "fail_safe":
+        totals["fail_safe_holds"] += count
+    if group["investigation_status"] == "complete":
+        totals["completed_investigations"] += count
+
+
 def _summary(row: dict[str, Any]) -> dict[str, Any]:
     """Shape one database row as the case summary (no browser ID)."""
     summary = {column: row[column] for column in _SUMMARY_COLUMNS}
@@ -391,18 +410,7 @@ class PsycopgCaseRepository:
 
         totals = empty_totals()
         for group in groups:
-            count = group["cases"]
-            totals["total"] += count
-            totals["by_recommendation"][group["recommendation"]] += count
-            totals["by_scenario"][group["scenario_id"]][group["recommendation"]] += (
-                count
-            )
-            if group["deterministic_route"] == "PASS":
-                totals["deterministic_passes"] += count
-            if group["recommendation_basis"] == "fail_safe":
-                totals["fail_safe_holds"] += count
-            if group["investigation_status"] == "complete":
-                totals["completed_investigations"] += count
+            _add_group(totals, group)
 
         page = rows[:limit]
         next_cursor = (

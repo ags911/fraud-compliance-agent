@@ -43,7 +43,12 @@ from server.sandbox_model import (
     score_routing_policy,
 )
 from server.showcase_cases.capture import EventValidator
-from server.showcase_cases.repository import PsycopgCaseRepository, _summary
+from server.showcase_cases.repository import (
+    PsycopgCaseRepository,
+    _add_group,
+    _summary,
+    empty_totals,
+)
 
 POLICY = ScoreRoutingPolicy("score-routing-v1", "sandbox-portable-xgb-v1", 0.4, 0.7)
 V1_EVENTS = "docs/contracts/public-showcase-events.v1.schema.json"
@@ -257,7 +262,7 @@ def test_every_twentieth_s01_payment_from_the_tenth_is_a_planted_outlier() -> No
     outliers = [item for item in schedule if item.synthetic_outlier]
     assert [item.sequence for item in outliers] == list(range(10, 201, 20))
     for item in outliers:
-        assert 5 * 4200 <= item.event.amount_minor <= 20 * 4200
+        assert 7 * 4200 <= item.event.amount_minor <= 9 * 4200
         assert item.event.payee_reference == "payee_s01_recurring"
     # Every other payment is exactly the schedule spec 0003 already defined.
     for item, before in zip(schedule, plain, strict=True):
@@ -692,3 +697,27 @@ def test_the_decisions_overlay_counts_each_payments_final_recommendation() -> No
     )
 
     assert counted["totals"] == {"PASS": 25, "CHALLENGE": 1, "HOLD": 1}
+
+
+def test_a_model_raised_case_is_not_counted_as_a_deterministic_pass() -> None:
+    """Its route was the rule's PASS, but it ended HOLD."""
+    totals = empty_totals()
+    for recommendation, basis in (
+        ("PASS", "deterministic"),
+        ("HOLD", "model_threshold"),
+    ):
+        _add_group(
+            totals,
+            {
+                "scenario_id": "S01",
+                "recommendation": recommendation,
+                "deterministic_route": "PASS",
+                "recommendation_basis": basis,
+                "investigation_status": "skipped",
+                "cases": 2,
+            },
+        )
+
+    assert totals["total"] == 4
+    assert totals["by_recommendation"] == {"PASS": 2, "CHALLENGE": 0, "HOLD": 2}
+    assert totals["deterministic_passes"] == 2

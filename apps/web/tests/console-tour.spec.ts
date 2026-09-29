@@ -80,6 +80,9 @@ test.describe("Risk Console tour", () => {
 
     const copy: string[] = []
     for (let index = 0; index < STEPS.length; index += 1) {
+      // Wait for the step to change before reading it, or a slow render
+      // reads the previous step's text again.
+      await expect(title(page)).toHaveText(STEPS[index].title)
       copy.push((await page.locator(".driver-popover-description").textContent()) ?? "")
       if (index < STEPS.length - 1) await page.locator(".driver-popover-next-btn").click()
     }
