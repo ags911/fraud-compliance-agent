@@ -117,7 +117,7 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
           {summary.scenario_id} · <span className={`risk-pill ${recommendationPillClass(summary.recommendation)}`}>{summary.recommendation}</span>
         </SheetTitle>
         <SheetDescription className="case-drawer-sub">
-          <span className="td-mono">{summary.case_id}</span> · Synthetic data: no payment was executed and no runtime model score was used.
+          <span className="td-mono">{summary.case_id}</span> · Synthetic data: no payment was executed and no model score decided anything.
         </SheetDescription>
       </SheetHeader>
 
