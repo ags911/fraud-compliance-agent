@@ -12,6 +12,7 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 | 1 | Live decision routing | Slice 1 | done |
 | 2 | Mixed feed | Slice 1 | done |
 | 3 | Visible feed lifecycle | Slice 1 | done |
+| 4 | Score routing (F3) | Slice 2 | in-progress |
 
 ## Slice 1: Live decision routing
 
@@ -45,6 +46,19 @@ The auto-started feed waits for a visible tab, stops after two hidden minutes wi
 - [x] Build it: /develop visible feed lifecycle
 - [x] Verify it: /check verify visible feed lifecycle
 - [x] Test it: /test visible feed lifecycle
+
+## Slice 2: Score routing
+
+### 4. Score routing (F3) · in-progress
+The rules decide every feed payment first. When they clear one, the model score (trained on Sparkov synthetic data) can raise it to CHALLENGE or HOLD at two thresholds measured on Sparkov, and never lowers a rule decision. Planted S01 outliers show the model catching what the rules cleared, and the page says they are planted.
+**Done when:** model raised payments appear on the routing board with their score, save v2 cases that explain the score and threshold, and a missing model or policy falls back to the rules with one warning.
+- [x] Design it (spec): [0010](../specs/0010-score-routing/index.md)
+- [ ] Build it: /develop score routing
+  - [ ] Policy file, migration, routing at run start, S01 outliers, board marker (AC 1 to AC 6, AC 9)
+  - [ ] Events v2, case contracts, drawer story and table mode (AC 7, AC 8, AC 10, AC 11)
+  - [ ] Chart copy, tour step, image shipping, full tests (AC 12 to AC 14)
+- [ ] Verify it: /check verify score routing
+- [ ] Test it: /test score routing
 
 ## Legend
 
