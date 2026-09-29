@@ -2,9 +2,9 @@ import { showcaseBrowserHeaders } from "@/lib/showcase-browser-id"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
 /**
- * Types and fetchers for durable showcase cases, mirroring the proposed
- * `docs/contracts/showcase-cases.v1.schema.json` (spec 0002).
- * Internal and not yet an accepted contract.
+ * Types and fetchers for durable showcase cases, mirroring the accepted
+ * `docs/contracts/showcase-cases.v1.1.schema.json` (spec 0002; v1.1 adds
+ * score routing, spec 0010).
  */
 
 export type ShowcaseCaseSummary = {
@@ -18,7 +18,7 @@ export type ShowcaseCaseSummary = {
   deterministic_route: "PASS" | "HOLD" | "INVESTIGATE"
   investigation_status: "skipped" | "complete" | "incomplete"
   recommendation: "PASS" | "CHALLENGE" | "HOLD"
-  recommendation_basis: "deterministic" | "evidence_grounded" | "fail_safe"
+  recommendation_basis: "deterministic" | "evidence_grounded" | "fail_safe" | "model_threshold"
   failure_reason:
     | "provider_unavailable"
     | "tool_failed"
@@ -34,12 +34,16 @@ export type ShowcaseCaseSummary = {
   started_at: string
   completed_at: string
   expires_at: string
-  contract_version: "1.0"
+  contract_version: "1.1"
   /** "feed": a live feed payment decided by its scenario's rule (spec 0004). */
   origin: "showcase" | "feed"
-  /** A feed case's display only model score; null until an ADR approves one. */
+  /** A feed case's model score (ADR-024), or null when unscored. */
   model_score: number | null
   model_version: string | null
+  /** Feed cases: "model" when the score raised a rule PASS (spec 0010). Null for showcase cases. */
+  routed_by: "rule" | "model" | null
+  /** "2" when the stored events are public-showcase-events.v2 (a model raised case). */
+  event_contract_version: "1" | "2"
 }
 
 export type ShowcaseStoredEvent = {
@@ -47,12 +51,12 @@ export type ShowcaseStoredEvent = {
   event_id: string
   event_type: string
   recorded_at: string
-  /** One accepted public-showcase-events.v1 payload, exactly as emitted. */
+  /** One accepted public-showcase-events payload (v1, or v2 for a model raised case), exactly as emitted. */
   payload: Record<string, unknown>
 }
 
 export type ShowcaseCaseDetail = {
-  contract_version: "1.0"
+  contract_version: "1.1"
   case: ShowcaseCaseSummary
   events: ShowcaseStoredEvent[]
 }
@@ -113,7 +117,7 @@ export type ShowcaseCaseTotals = {
 }
 
 export type ShowcaseCasePage = {
-  contract_version: "1.0"
+  contract_version: "1.1"
   items: ShowcaseCaseSummary[]
   next_cursor: string | null
   totals: ShowcaseCaseTotals

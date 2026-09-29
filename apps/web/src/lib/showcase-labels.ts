@@ -76,3 +76,24 @@ export const MODEL_SIGNAL_UNSCORED = 'Not scored yet'
 
 export const MODEL_SIGNAL_NOTE =
   'Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It does not decide.'
+
+// Score routing (spec 0010): the model may raise a payment its rule cleared.
+export const FEED_MODEL_SOURCE_LABEL = 'Live feed · raised by model'
+
+/** The Route stage story for a model raised case, with that case's values. */
+export function modelRouteCopy(routing: {
+  score: number
+  challenge: number
+  hold: number
+  policy_version: string
+}, recommendation: 'CHALLENGE' | 'HOLD'): string {
+  const threshold = recommendation === 'HOLD' ? routing.hold : routing.challenge
+  return `The rules cleared this payment. Its model score, ${routing.score.toFixed(3)}, is at or above the ${recommendation} threshold of ${threshold.toFixed(3)} (policy ${routing.policy_version}), so it was raised to ${recommendation}.`
+}
+
+/** The Model signal label on a case the model raised, where "It does not decide" would be untrue. */
+export const MODEL_SIGNAL_ROUTED_NOTE =
+  'Trained on Sparkov synthetic data. A mechanics demo, not a fraud probability. It raised this payment the rules cleared; it can never lower a rule decision.'
+
+export const SYNTHETIC_OUTLIER_NOTE =
+  "A synthetic outlier added to S01's feed to show the model catching what the rules cleared."

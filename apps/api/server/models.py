@@ -157,11 +157,16 @@ class SandboxScenarioDecisions(StrictFiniteModel):
 
 
 class SandboxRoutedPayment(StrictFiniteModel):
-    """One revealed payment on the routing board: opaque ID and outcome only."""
+    """One revealed payment on the routing board: opaque ID and outcome only.
+
+    Sandbox simulation v1.1 (spec 0010) adds who routed it and its score.
+    """
 
     event_id: str = Field(min_length=1, max_length=128)
     sequence: int = Field(gt=0)
     recommendation: Literal["PASS", "CHALLENGE", "HOLD"]
+    routed_by: Literal["rule", "model"] | None = None
+    model_score: float | None = Field(default=None, ge=0, le=1)
 
 
 class SandboxRoutingLane(StrictFiniteModel):
@@ -171,10 +176,24 @@ class SandboxRoutingLane(StrictFiniteModel):
     recent: list[SandboxRoutedPayment] = Field(max_length=18)
 
 
+class SandboxRoutingPolicy(StrictFiniteModel):
+    """The loaded score routing policy's version and thresholds (spec 0010)."""
+
+    version: str = Field(min_length=1)
+    challenge: float = Field(ge=0, le=1)
+    hold: float = Field(ge=0, le=1)
+
+
 class SandboxRoutingSnapshot(StrictFiniteModel):
-    """A run's revealed payments grouped by recommendation (spec 0006)."""
+    """A run's revealed payments grouped by recommendation (spec 0006).
+
+    ``raised_by_model`` counts every shown payment the model raised, and
+    ``routing_policy`` is null whenever score routing is off (spec 0010).
+    """
 
     by_recommendation: dict[Literal["PASS", "CHALLENGE", "HOLD"], SandboxRoutingLane]
+    raised_by_model: int = Field(default=0, ge=0)
+    routing_policy: SandboxRoutingPolicy | None = None
 
 
 class SandboxSimulationRun(StrictFiniteModel):

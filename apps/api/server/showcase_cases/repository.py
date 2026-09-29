@@ -17,8 +17,8 @@ from server.public_database_guards import (
     table_has_capacity,
 )
 from server.showcase_cases.capture import (
-    CONTRACT_VERSION,
     MAX_CASES_BY_ORIGIN,
+    READ_CONTRACT_VERSION,
     CaseRecord,
 )
 
@@ -60,6 +60,8 @@ _SUMMARY_COLUMNS = (
     "origin",
     "model_score",
     "model_version",
+    "routed_by",
+    "event_contract_version",
 )
 # Column lists are composed from these fixed identifiers, never from input.
 _SELECT_SUMMARY = sql.SQL(", ").join(map(sql.Identifier, _SUMMARY_COLUMNS))
@@ -162,14 +164,34 @@ def decode_cursor(cursor: str) -> tuple[datetime, str]:
     return position, case_id
 
 
+def _add_group(totals: dict[str, Any], group: dict[str, Any]) -> None:
+    """Add one grouped count of cases to the list totals, in place.
+
+    A deterministic pass is a case whose route was PASS and that ended PASS.
+    A payment the model raised (spec 0010) keeps its rule's PASS route but
+    ends CHALLENGE or HOLD, so it is not one.
+    """
+    count = group["cases"]
+    totals["total"] += count
+    totals["by_recommendation"][group["recommendation"]] += count
+    totals["by_scenario"][group["scenario_id"]][group["recommendation"]] += count
+    if group["deterministic_route"] == "PASS" and group["recommendation"] == "PASS":
+        totals["deterministic_passes"] += count
+    if group["recommendation_basis"] == "fail_safe":
+        totals["fail_safe_holds"] += count
+    if group["investigation_status"] == "complete":
+        totals["completed_investigations"] += count
+
+
 def _summary(row: dict[str, Any]) -> dict[str, Any]:
-    """Shape one database row as the proposed case summary (no browser ID)."""
+    """Shape one database row as the case summary (no browser ID)."""
     summary = {column: row[column] for column in _SUMMARY_COLUMNS}
     for column in ("started_at", "completed_at", "expires_at"):
         summary[column] = summary[column].isoformat()
     # NUMERIC reads back as Decimal; the summary carries a plain number.
     if summary["model_score"] is not None:
         summary["model_score"] = float(summary["model_score"])
+    summary["contract_version"] = READ_CONTRACT_VERSION
     return summary
 
 
@@ -388,18 +410,7 @@ class PsycopgCaseRepository:
 
         totals = empty_totals()
         for group in groups:
-            count = group["cases"]
-            totals["total"] += count
-            totals["by_recommendation"][group["recommendation"]] += count
-            totals["by_scenario"][group["scenario_id"]][group["recommendation"]] += (
-                count
-            )
-            if group["deterministic_route"] == "PASS":
-                totals["deterministic_passes"] += count
-            if group["recommendation_basis"] == "fail_safe":
-                totals["fail_safe_holds"] += count
-            if group["investigation_status"] == "complete":
-                totals["completed_investigations"] += count
+            _add_group(totals, group)
 
         page = rows[:limit]
         next_cursor = (
@@ -438,7 +449,7 @@ class PsycopgCaseRepository:
         except psycopg.Error as error:
             raise CasesUnavailable(case_storage_diagnostic(error)) from error
         return {
-            "contract_version": CONTRACT_VERSION,
+            "contract_version": READ_CONTRACT_VERSION,
             "case": _summary(row),
             "events": [
                 {**event, "recorded_at": event["recorded_at"].isoformat()}

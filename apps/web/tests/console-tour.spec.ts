@@ -2,17 +2,19 @@ import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Page } from "@playwright/test"
 
 // Risk Console's opt in spotlight tour (spec 0007, driver.js). It must never start by
-// itself, must visit its six targets in order, and must describe only what
-// Risk Console has today.
+// itself, must visit its seven steps in order, and must describe only what
+// Risk Console has today. "Raised by model" (spec 0010) has no target: its
+// routing board sits on the Cases tab.
 const overlay = (page: Page) => page.locator(".driver-overlay")
 const title = (page: Page) => page.locator(".driver-popover-title")
 const progress = (page: Page) => page.locator(".driver-popover-progress-text")
 
-const STEPS = [
+const STEPS: { title: string; target: string | null }[] = [
   { title: "Choose a scenario", target: "#console-scenario-trigger" },
   { title: "The live feed", target: "#console-live-switch" },
   { title: "Run showcase", target: "#console-run-showcase" },
   { title: "Cases", target: "#console-cases-tab" },
+  { title: "Raised by model", target: null },
   { title: "Scenario figures", target: "#console-summary" },
   { title: "Recommendations over time", target: "#console-recommendations" },
 ]
@@ -41,12 +43,12 @@ test.describe("Risk Console tour", () => {
     await expect(overlay(page)).toHaveCount(0)
   })
 
-  test("starts at step 1 of 6 with Next and close, but no Back", async ({ page }) => {
+  test("starts at step 1 of 7 with Next and close, but no Back", async ({ page }) => {
     await open(page)
     await startTour(page)
 
     await expect(title(page)).toHaveText("Choose a scenario")
-    await expect(progress(page)).toHaveText("Step 1 of 6")
+    await expect(progress(page)).toHaveText("Step 1 of 7")
     await expect(page.locator(".driver-popover-next-btn")).toBeVisible()
     await expect(page.locator(".driver-popover-prev-btn")).toBeHidden()
     await expect(page.locator(".driver-popover-close-btn")).toBeVisible()
@@ -59,7 +61,7 @@ test.describe("Risk Console tour", () => {
     for (const [index, step] of STEPS.entries()) {
       await expect(title(page)).toHaveText(step.title)
       await expect(progress(page)).toHaveText(`Step ${index + 1} of ${STEPS.length}`)
-      await expect(page.locator(step.target)).toHaveClass(/driver-active-element/)
+      if (step.target) await expect(page.locator(step.target)).toHaveClass(/driver-active-element/)
       if (index < STEPS.length - 1) await page.locator(".driver-popover-next-btn").click()
     }
     await expect(page.locator(".driver-popover-next-btn")).toHaveText("Finish")
@@ -78,11 +80,16 @@ test.describe("Risk Console tour", () => {
 
     const copy: string[] = []
     for (let index = 0; index < STEPS.length; index += 1) {
+      // Wait for the step to change before reading it, or a slow render
+      // reads the previous step's text again.
+      await expect(title(page)).toHaveText(STEPS[index].title)
       copy.push((await page.locator(".driver-popover-description").textContent()) ?? "")
       if (index < STEPS.length - 1) await page.locator(".driver-popover-next-btn").click()
     }
     const text = copy.join(" ")
-    expect(text).toContain("No model score decides anything")
+    expect(text).toContain("The model can only raise a live feed payment the rules cleared")
+    expect(text).toContain("Sparkov synthetic data")
+    expect(text).toContain("not a fraud probability")
     expect(text).toContain("read only")
     // Planned stages stay out until they ship.
     expect(text).not.toMatch(/Health|review queue|S06|S07|S08|coming soon/i)

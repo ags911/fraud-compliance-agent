@@ -12,11 +12,15 @@ import {
   FAILURE_REASON_LABELS,
   FALLBACK_REASON_LABELS,
   FEED_CARRIED_ROUTE_COPY,
+  FEED_MODEL_SOURCE_LABEL,
   FEED_SOURCE_LABEL,
   INVESTIGATION_LABELS,
   MODEL_SIGNAL_NOTE,
+  MODEL_SIGNAL_ROUTED_NOTE,
   MODEL_SIGNAL_UNSCORED,
+  modelRouteCopy,
   SKIP_REASON_LABELS,
+  SYNTHETIC_OUTLIER_NOTE,
   TOOL_LABELS,
 } from "@/lib/showcase-labels"
 import type { ShowcaseCaseState } from "@/lib/useShowcaseCase"
@@ -106,9 +110,11 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
   const { detail } = state
   const summary = detail.case
   const view = readShowcaseCase(detail)
-  const { runStarted, route, skipped, toolCalls, toolResults, investigation } = view
+  const { runStarted, route, skipped, toolCalls, toolResults, investigation, modelRouting } = view
   const incomplete = summary.investigation_status === "incomplete"
   const isFeed = summary.origin === "feed"
+  // Spec 0010: the rules cleared this payment and the model score raised it.
+  const raised = isFeed && modelRouting && summary.recommendation !== "PASS" ? modelRouting : null
 
   return (
     <>
@@ -117,7 +123,10 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
           {summary.scenario_id} · <span className={`risk-pill ${recommendationPillClass(summary.recommendation)}`}>{summary.recommendation}</span>
         </SheetTitle>
         <SheetDescription className="case-drawer-sub">
-          <span className="td-mono">{summary.case_id}</span> · Synthetic data: no payment was executed and no model score decided anything.
+          <span className="td-mono">{summary.case_id}</span> ·{" "}
+          {raised
+            ? "Synthetic data: no payment was executed. A model score raised this payment the rules cleared."
+            : "Synthetic data: no payment was executed and no model score decided anything."}
         </SheetDescription>
       </SheetHeader>
 
@@ -140,7 +149,7 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
           <Fact label="Mode">
             <span className="case-pills">
               <span className="console-source-pill">
-                {isFeed ? FEED_SOURCE_LABEL : summary.execution_mode === "live" ? "Live model run" : "Recorded playback"}
+                {isFeed ? (raised ? FEED_MODEL_SOURCE_LABEL : FEED_SOURCE_LABEL) : summary.execution_mode === "live" ? "Live model run" : "Recorded playback"}
               </span>
               <span className="console-source-pill">Synthetic data</span>
             </span>
@@ -160,7 +169,12 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
             <Fact label="Deterministic route">{route?.deterministic_route ?? summary.deterministic_route}</Fact>
             <Fact label="Investigation eligibility">{route ? ELIGIBILITY_LABELS[route.investigation_eligibility] : "Not recorded"}</Fact>
           </dl>
-          {skipped ? (
+          {raised ? (
+            <div data-testid="case-model-route">
+              <p className="card-copy">{modelRouteCopy(raised, summary.recommendation as "CHALLENGE" | "HOLD")}</p>
+              {raised.synthetic_outlier ? <p className="card-copy td-secondary">{SYNTHETIC_OUTLIER_NOTE}</p> : null}
+            </div>
+          ) : skipped ? (
             <p className="card-copy">
               {/* An S04 or S05 feed payment carries its scenario's recorded outcome (spec 0004). */}
               {isFeed && skipped.reason === "existing_recorded_recommendation"
@@ -180,7 +194,7 @@ function CaseBody({ state }: { state: Extract<ShowcaseCaseState, { status: "foun
                   <>
                     {summary.model_score.toFixed(5)}
                     {summary.model_version ? <span className="td-secondary"> · {summary.model_version}</span> : null}
-                    <span className="case-fact-note">{MODEL_SIGNAL_NOTE}</span>
+                    <span className="case-fact-note">{raised ? MODEL_SIGNAL_ROUTED_NOTE : MODEL_SIGNAL_NOTE}</span>
                   </>
                 )}
               </Fact>

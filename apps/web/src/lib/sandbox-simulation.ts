@@ -20,8 +20,10 @@ export type SandboxSimulationRun = {
   routing_snapshot?: {
     by_recommendation: Record<"PASS" | "CHALLENGE" | "HOLD", {
       count: number
-      recent: Array<{ event_id: string; sequence: number; recommendation: "PASS" | "CHALLENGE" | "HOLD" }>
+      recent: Array<{ event_id: string; sequence: number; recommendation: "PASS" | "CHALLENGE" | "HOLD"; routed_by?: "rule" | "model" | null; model_score?: number | null }>
     }>
+    raised_by_model?: number
+    routing_policy?: { version: string; challenge: number; hold: number } | null
   }
 }
 

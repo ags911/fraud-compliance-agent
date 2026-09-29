@@ -270,6 +270,20 @@ only score when its pinned artifact is present. It never decides a route, a
 recommendation or whether a case is saved; absent/invalid model artifacts keep
 the value null.
 
+**Score routing (F3, spec 0010, ADR-025).** At run start the rule table
+decides every outbound feed payment first and its result is stored as
+`rule_recommendation`. When the verified model and the pinned policy
+`config/sandbox-score-routing.v1.json` (`score-routing-v1`, thresholds from
+Sparkov test precision) are both loaded, a rule PASS whose rounded score
+reaches CHALLENGE or HOLD is raised (`routed_by = model`,
+`recommendation_basis = model_threshold`); nothing lowers a decision, and the
+database check `score_routing_escalates_only` enforces it (migration 0008).
+Without the model or policy every payment keeps its rule decision. Every 20th
+S01 payment is a labelled planted outlier. A raised payment saves a
+`public-showcase-events.v2` case whose `run_result.model_routing` states the
+score and thresholds; every other case stays v1. Reads use
+`showcase-cases.v1.1` and `sandbox-simulation.v1.1`.
+
 This is a proposed extension of ADR-002, ADR-003 and ADR-009. It neither
 authorises a database nor changes the accepted database-free public showcase
 contracts.

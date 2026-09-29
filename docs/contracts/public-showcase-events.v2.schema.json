@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fraud-compliance-agent:contract:public-showcase-events:v2",
+  "title": "Model-raised feed case events",
+  "description": "Events of a saved feed case whose payment the model raised (spec 0010, ADR-025): run_started, route_resolved (the rule's PASS), investigation_skipped, and run_result with the model_threshold basis and a model_routing object. public-showcase-events.v1 stays frozen and is still what Run showcase emits.",
+  "x-contract-version": "2.0",
+  "x-approval-status": "accepted",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/start"
+    },
+    {
+      "$ref": "#/$defs/route"
+    },
+    {
+      "$ref": "#/$defs/skipped"
+    },
+    {
+      "$ref": "#/$defs/result"
+    }
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "event_id",
+        "run_id",
+        "scenario_id",
+        "sequence",
+        "event"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "2.0"
+        },
+        "event_id": {
+          "type": "string",
+          "pattern": "^evt_[a-z0-9_]{3,64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^run_[a-z0-9_]{3,64}$"
+        },
+        "scenario_id": {
+          "enum": [
+            "S01",
+            "S02",
+            "S03",
+            "S04",
+            "S05"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "event": {
+          "type": "string"
+        }
+      }
+    },
+    "start": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_id",
+            "run_id",
+            "scenario_id",
+            "sequence",
+            "event",
+            "requested_mode",
+            "execution_mode",
+            "fallback_reason",
+            "provider",
+            "model_id",
+            "data_label"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "2.0"
+            },
+            "event_id": {
+              "type": "string"
+            },
+            "run_id": {
+              "type": "string"
+            },
+            "scenario_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer"
+            },
+            "event": {
+              "const": "run_started"
+            },
+            "requested_mode": {
+              "const": "recorded"
+            },
+            "execution_mode": {
+              "const": "recorded"
+            },
+            "fallback_reason": {
+              "const": null
+            },
+            "provider": {
+              "const": null
+            },
+            "model_id": {
+              "const": null
+            },
+            "data_label": {
+              "const": "synthetic"
+            }
+          }
+        }
+      ]
+    },
+    "route": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_id",
+            "run_id",
+            "scenario_id",
+            "sequence",
+            "event",
+            "deterministic_route",
+            "investigation_eligibility"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "2.0"
+            },
+            "event_id": {
+              "type": "string"
+            },
+            "run_id": {
+              "type": "string"
+            },
+            "scenario_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer"
+            },
+            "event": {
+              "const": "route_resolved"
+            },
+            "deterministic_route": {
+              "const": "PASS"
+            },
+            "investigation_eligibility": {
+              "const": "skipped"
+            }
+          }
+        }
+      ]
+    },
+    "skipped": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_id",
+            "run_id",
+            "scenario_id",
+            "sequence",
+            "event",
+            "reason"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "2.0"
+            },
+            "event_id": {
+              "type": "string"
+            },
+            "run_id": {
+              "type": "string"
+            },
+            "scenario_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer"
+            },
+            "event": {
+              "const": "investigation_skipped"
+            },
+            "reason": {
+              "const": "deterministic_clear_route"
+            }
+          }
+        }
+      ]
+    },
+    "result": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_id",
+            "run_id",
+            "scenario_id",
+            "sequence",
+            "event",
+            "investigation_status",
+            "recommendation",
+            "recommendation_basis",
+            "authority_status",
+            "simulated_action",
+            "execution_mode",
+            "data_label",
+            "model_routing"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "2.0"
+            },
+            "event_id": {
+              "type": "string"
+            },
+            "run_id": {
+              "type": "string"
+            },
+            "scenario_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer"
+            },
+            "event": {
+              "const": "run_result"
+            },
+            "investigation_status": {
+              "const": "skipped"
+            },
+            "recommendation": {
+              "enum": [
+                "CHALLENGE",
+                "HOLD"
+              ]
+            },
+            "recommendation_basis": {
+              "const": "model_threshold"
+            },
+            "authority_status": {
+              "const": "not_evaluated"
+            },
+            "simulated_action": {
+              "const": "none"
+            },
+            "execution_mode": {
+              "const": "recorded"
+            },
+            "data_label": {
+              "const": "synthetic"
+            },
+            "model_routing": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "score",
+                "challenge",
+                "hold",
+                "rule_recommendation",
+                "policy_version",
+                "model_version",
+                "synthetic_outlier"
+              ],
+              "properties": {
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "challenge": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "hold": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "rule_recommendation": {
+                  "const": "PASS"
+                },
+                "policy_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "model_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "synthetic_outlier": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "x-runtime-consumption": "allowed"
+}

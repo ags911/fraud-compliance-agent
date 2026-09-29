@@ -84,6 +84,14 @@ export function useConsoleTour() {
           },
         },
         {
+          // No highlight: the routing board sits on the Cases tab (spec 0010 AC 13).
+          popover: {
+            title: "Raised by model",
+            description:
+              "The rules clear a payment first. The model can still raise a cleared payment to CHALLENGE or HOLD, and the routing board on the Cases tab counts these as Raised by model. The score comes from Sparkov synthetic data: a mechanics demo, not a fraud probability.",
+          },
+        },
+        {
           element: "#console-summary",
           popover: {
             title: "Scenario figures",
@@ -97,7 +105,7 @@ export function useConsoleTour() {
           popover: {
             title: "Recommendations over time",
             description:
-              "Every outbound payment, decided by the scenario's deterministic rule. No model score decides anything.",
+              "Every outbound payment, decided by the scenario's deterministic rule. The model can only raise a live feed payment the rules cleared.",
             side: "top",
             align: "start",
             doneBtnText: "Finish",

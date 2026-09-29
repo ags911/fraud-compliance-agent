@@ -30,7 +30,7 @@ from server.showcase_cases.capture import (
 from server.showcase_cases.repository import PsycopgCaseRepository, _summary
 
 EVENTS_SCHEMA = "docs/contracts/public-showcase-events.v1.schema.json"
-CASES_CONTRACT = "docs/contracts/showcase-cases.v1.schema.json"
+CASES_CONTRACT = "docs/contracts/showcase-cases.v1.1.schema.json"
 RUN_ID = "3f2a9c1e-7b4d-4e8b-9f3a-2c5d8e1f4a6b"
 BROWSER = "0b6f2d4e-7a1c-4e8b-9f3a-2c5d8e1f4a6b"
 OWNER = {"X-Showcase-Browser-Id": BROWSER}

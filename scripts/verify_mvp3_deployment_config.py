@@ -128,8 +128,21 @@ def main() -> None:
             "COPY docs/contracts/public-showcase-events.v1.schema.json "
             "/app/showcase/docs/contracts/"
         ),
+        # Spec 0010: without the policy, score routing turns itself off;
+        # without the v2 schema, model raised payments save no case.
+        "COPY config/sandbox-score-routing.v1.json /app/showcase/config/",
+        (
+            "COPY docs/contracts/public-showcase-events.v2.schema.json "
+            "/app/showcase/docs/contracts/"
+        ),
     ):
         _require(dockerfile, fragment, "apps/api/Dockerfile")
+    for fragment in (
+        "!docs/contracts/public-showcase-events.v1.schema.json",
+        "!config/sandbox-score-routing.v1.json",
+        "!docs/contracts/public-showcase-events.v2.schema.json",
+    ):
+        _require(dockerignore, fragment, ".dockerignore")
 
     # A public checkout has no private SDK source tree, so every Make command
     # must reuse the frozen environment instead of resolving it again.

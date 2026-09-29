@@ -4,7 +4,9 @@ import type { SandboxSimulationRun } from "@/lib/sandbox-simulation"
 
 export const ROUTING_OUTCOMES = ["PASS", "CHALLENGE", "HOLD"] as const
 export type RoutingOutcome = (typeof ROUTING_OUTCOMES)[number]
-export type RoutingToken = { event_id: string; sequence: number; recommendation: RoutingOutcome }
+export type RoutingToken = { event_id: string; sequence: number; recommendation: RoutingOutcome; routed_by?: "rule" | "model" | null; model_score?: number | null }
+
+export type RoutingPolicy = { version: string; challenge: number; hold: number }
 
 export type RoutingSummary = {
   /** Every revealed payment by outcome, from the run's routing snapshot. */
@@ -12,12 +14,18 @@ export type RoutingSummary = {
   total: number
   /** The newest revealed decision, or null before the first one. */
   last: RoutingToken | null
+  /** Revealed payments the model raised from a rule PASS (spec 0010). */
+  raisedByModel: number
+  /** The score routing policy in force, or null when score routing is off. */
+  routingPolicy: RoutingPolicy | null
 }
 
 /**
  * Risk Console's decision routing board (spec 0006) reads only this: counts and the
- * newest decision from the run's `routing_snapshot`. Null until the run has
- * a snapshot. Nothing here scores, thresholds, or reroutes a payment.
+ * newest decision from the run's `routing_snapshot`, plus how many payments
+ * the model raised and the policy in force (spec 0010). Null until the run has
+ * a snapshot. Nothing here scores, thresholds, or reroutes a payment: the
+ * server decided every route at run start.
  */
 export function routingSummary(run: SandboxSimulationRun | null): RoutingSummary | null {
   const snapshot = run?.routing_snapshot?.by_recommendation
@@ -27,11 +35,32 @@ export function routingSummary(run: SandboxSimulationRun | null): RoutingSummary
     (best, token) => (!best || token.sequence > best.sequence ? token : best),
     null,
   )
-  return { counts, total: counts.PASS + counts.CHALLENGE + counts.HOLD, last }
+  return {
+    counts,
+    total: counts.PASS + counts.CHALLENGE + counts.HOLD,
+    last,
+    raisedByModel: run?.routing_snapshot?.raised_by_model ?? 0,
+    routingPolicy: run?.routing_snapshot?.routing_policy ?? null,
+  }
 }
 
 /** The board's summary before a run has any snapshot: every outcome at zero. */
-export const EMPTY_ROUTING_SUMMARY: RoutingSummary = { counts: { PASS: 0, CHALLENGE: 0, HOLD: 0 }, total: 0, last: null }
+export const EMPTY_ROUTING_SUMMARY: RoutingSummary = {
+  counts: { PASS: 0, CHALLENGE: 0, HOLD: 0 },
+  total: 0,
+  last: null,
+  raisedByModel: 0,
+  routingPolicy: null,
+}
+
+/**
+ * What the board adds after a routed payment the model raised, for example
+ * ` · model 0.953` in `#12 → HOLD · model 0.953` (spec 0010 AC 9); empty for
+ * a payment its rule decided.
+ */
+export function modelRouteMarker(token: RoutingToken): string {
+  return token.routed_by === "model" && typeof token.model_score === "number" ? ` · model ${token.model_score.toFixed(3)}` : ""
+}
 
 // Smallest drawn share of an outcome's band, so its node and inside label
 // stay visible at zero or at a small count.
@@ -60,11 +89,18 @@ export function routingSankeyData(summary: RoutingSummary): SankeyData {
  * rule sends every payment to one outcome, named here from what was actually
  * routed, never from a copy of the rules. The Mixed feed (`MIX`) says each
  * payment keeps its own scenario's rule. Null before a single scenario has
- * routed anything, or without a run.
+ * routed anything, or without a run. While score routing is on (spec 0010 AC
+ * 9), the note adds that the model can raise a payment the rules cleared; only
+ * a rule PASS can be raised, so a run with raised payments followed PASS.
  */
 export function routingRuleNote(scenarioId: string | null, summary: RoutingSummary): string | null {
-  if (scenarioId === "MIX") return "Payments from S01 to S05, each decided by its own scenario's rule."
-  const routed = ROUTING_OUTCOMES.filter((outcome) => summary.counts[outcome] > 0)
+  const raises = " the model can raise a payment the rules cleared."
+  if (scenarioId === "MIX") {
+    const base = "Payments from S01 to S05, each decided by its own scenario's rule"
+    return summary.routingPolicy ? `${base};${raises}` : `${base}.`
+  }
+  const routed = summary.raisedByModel > 0 ? ["PASS"] : ROUTING_OUTCOMES.filter((outcome) => summary.counts[outcome] > 0)
   if (!scenarioId || routed.length !== 1) return null
-  return `Every ${scenarioId} payment follows its rule: ${routed[0]}`
+  const base = `Every ${scenarioId} payment follows its rule: ${routed[0]}`
+  return summary.routingPolicy && routed[0] === "PASS" ? `${base};${raises}` : base
 }

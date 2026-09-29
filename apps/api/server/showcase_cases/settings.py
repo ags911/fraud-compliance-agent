@@ -9,6 +9,7 @@ from server.showcase_investigation.settings import _explicit_boolean
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 EVENT_SCHEMA_PATH = Path("docs/contracts/public-showcase-events.v1.schema.json")
+EVENT_V2_SCHEMA_PATH = Path("docs/contracts/public-showcase-events.v2.schema.json")
 
 # Anonymous browser scoping key: a lowercase version 4 UUID, nothing else.
 _BROWSER_ID = re.compile(
@@ -33,6 +34,12 @@ class CaseSettings:
     def event_schema_path(self) -> Path:
         """Return the accepted event schema used to validate stored events."""
         return self.root / EVENT_SCHEMA_PATH
+
+    def event_schema_path_for(self, version: str) -> Path:
+        """Return the immutable event schema selected by a stored version."""
+        return self.root / (
+            EVENT_V2_SCHEMA_PATH if version == "2" else EVENT_SCHEMA_PATH
+        )
 
 
 def load_case_settings() -> CaseSettings:

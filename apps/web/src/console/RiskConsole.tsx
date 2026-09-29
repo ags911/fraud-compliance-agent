@@ -270,6 +270,7 @@ export function RiskConsole() {
     investigationStatus: run.investigationStatus,
     evidenceCount: run.evidenceCount,
     modelScore: null,
+    routedBy: null,
     mode: modeLabel(run.executionMode, run.fallbackReason),
     href: null,
     notSaved,
@@ -292,6 +293,7 @@ export function RiskConsole() {
       investigationStatus: item.investigation_status,
       evidenceCount: item.evidence_count,
       modelScore: item.model_score,
+      routedBy: item.routed_by,
       mode: caseModeLabel(item),
       href: `/?case=${encodeURIComponent(item.case_id)}`,
       notSaved: false,
@@ -457,7 +459,7 @@ export function RiskConsole() {
                 badge="Sandbox"
                 categoryLabel="Date"
                 data={decisionSeries}
-                description={`${paymentsLabel(decisionTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by ${mixed ? "each payment's own scenario rule, S01 to S05 combined" : "the scenario's deterministic recommendation"}.`}
+                description={`${paymentsLabel(decisionTotal)} over ${countFormatter.format(windowDayCount(dateWindow))} days, daily by ${mixed ? "each payment's own scenario rule, S01 to S05 combined" : "the scenario's deterministic recommendation"}. Rule cleared live feed payments may be raised by the model.`}
                 yAxisWidth={CHART_Y_AXIS_WIDTH}
                 emptyMessage={
                   decisionsLoading

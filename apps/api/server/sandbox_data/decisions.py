@@ -1,8 +1,7 @@
 """Decide live feed payments by their scenario's accepted route (spec 0004).
 
-This table is the only source of a feed payment's route and recommendation.
-A model score, when one exists, is display only evidence and never reads or
-changes anything here.
+This table decides first. Under ADR-025, a verified model policy may only
+raise its PASS result; it can never lower a deterministic recommendation.
 """
 
 from dataclasses import dataclass

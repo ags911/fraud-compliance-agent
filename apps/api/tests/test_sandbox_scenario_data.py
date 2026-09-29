@@ -822,6 +822,8 @@ def _routing(pass_count: int = 0, challenge: int = 0, hold: int = 0) -> dict:
                     "event_id": f"evt-{outcome}-{index}",
                     "sequence": 100 - index,
                     "recommendation": outcome,
+                    "routed_by": "rule",
+                    "model_score": None,
                 }
                 for index in range(min(count, 18))
             ],
@@ -832,7 +834,9 @@ def _routing(pass_count: int = 0, challenge: int = 0, hold: int = 0) -> dict:
             "PASS": lane("PASS", pass_count),
             "CHALLENGE": lane("CHALLENGE", challenge),
             "HOLD": lane("HOLD", hold),
-        }
+        },
+        "raised_by_model": 0,
+        "routing_policy": None,
     }
 
 
@@ -842,7 +846,13 @@ def test_routing_snapshot_counts_every_payment_but_lists_only_the_newest_18() ->
         (sequence, "HOLD" if sequence % 5 else "PASS") for sequence in range(30, 0, -1)
     ]
     events = [
-        {"event_id": f"evt-{sequence}", "sequence": sequence, "recommendation": outcome}
+        {
+            "event_id": f"evt-{sequence}",
+            "sequence": sequence,
+            "recommendation": outcome,
+            "routed_by": "rule",
+            "model_score": None,
+        }
         for sequence, outcome in revealed
     ]
     run = {
@@ -867,11 +877,14 @@ def test_routing_snapshot_counts_every_payment_but_lists_only_the_newest_18() ->
     assert [item["sequence"] for item in snapshot["HOLD"]["recent"]][:3] == [29, 28, 27]
     assert all(item["recommendation"] == "HOLD" for item in snapshot["HOLD"]["recent"])
     assert snapshot["CHALLENGE"] == {"count": 0, "recent": []}
-    # Opaque items only: no amount, payee, score or basis leaves the store.
+    # Opaque items only: no amount, payee or basis leaves the store. Spec
+    # 0010 adds who routed the payment and its score.
     assert set(snapshot["PASS"]["recent"][0]) == {
         "event_id",
         "sequence",
         "recommendation",
+        "routed_by",
+        "model_score",
     }
     # The read is one ordered query over this run's revealed payments.
     assert any(
@@ -880,8 +893,11 @@ def test_routing_snapshot_counts_every_payment_but_lists_only_the_newest_18() ->
     )
 
 
-def test_routing_snapshot_is_empty_before_any_payment_without_a_query() -> None:
+def test_routing_snapshot_is_empty_before_any_payment_without_a_query(
+    monkeypatch,
+) -> None:
     """covers: AC 5. Every outcome is present at zero before the first payment."""
+    monkeypatch.setattr(service, "score_routing_policy", lambda: None)
     run = {
         **_run("run-test", "pending", 0),
         "created_at": None,
@@ -899,7 +915,9 @@ def test_routing_snapshot_is_empty_before_any_payment_without_a_query() -> None:
         "by_recommendation": {
             outcome: {"count": 0, "recent": []}
             for outcome in ("PASS", "CHALLENGE", "HOLD")
-        }
+        },
+        "raised_by_model": 0,
+        "routing_policy": None,
     }
     assert len(cursor.queries) == 2
 
@@ -1023,7 +1041,7 @@ def test_the_worker_logs_sweeps_and_store_outages_once(monkeypatch, caplog) -> N
     ]
 
 
-SIMULATION_CONTRACT = "docs/contracts/sandbox-simulation.v1.openapi.json"
+SIMULATION_CONTRACT = "docs/contracts/sandbox-simulation.v1.1.openapi.json"
 
 
 def _simulation_contract(repository_root) -> dict:

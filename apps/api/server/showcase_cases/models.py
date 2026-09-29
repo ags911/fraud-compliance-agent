@@ -30,7 +30,9 @@ class CaseSummary(StrictShowcaseModel):
     deterministic_route: Literal["PASS", "HOLD", "INVESTIGATE"]
     investigation_status: Literal["skipped", "complete", "incomplete"]
     recommendation: Recommendation
-    recommendation_basis: Literal["deterministic", "evidence_grounded", "fail_safe"]
+    recommendation_basis: Literal[
+        "deterministic", "evidence_grounded", "fail_safe", "model_threshold"
+    ]
     failure_reason: (
         Literal[
             "provider_unavailable",
@@ -49,12 +51,14 @@ class CaseSummary(StrictShowcaseModel):
     started_at: str
     completed_at: str
     expires_at: str
-    contract_version: Literal["1.0"]
+    contract_version: Literal["1.1"]
     # Spec 0004: which path saved the case, and a feed case's display only
     # model score (null until an ADR approves it; it never decides anything).
     origin: Literal["showcase", "feed"]
     model_score: float | None = Field(ge=0, le=1)
     model_version: str | None
+    routed_by: Literal["rule", "model"] | None
+    event_contract_version: Literal["1", "2"]
 
 
 class StoredCaseEvent(StrictShowcaseModel):
@@ -70,7 +74,7 @@ class StoredCaseEvent(StrictShowcaseModel):
 class CaseDetailResponse(StrictShowcaseModel):
     """One case with its full, ordered audit trail."""
 
-    contract_version: Literal["1.0"]
+    contract_version: Literal["1.1"]
     case: CaseSummary
     events: list[StoredCaseEvent] = Field(min_length=1)
 
@@ -98,7 +102,7 @@ class CaseTotals(StrictShowcaseModel):
 class CaseListResponse(StrictShowcaseModel):
     """One newest first page of cases, the next page cursor, and the totals."""
 
-    contract_version: Literal["1.0"]
+    contract_version: Literal["1.1"]
     items: list[CaseSummary] = Field(max_length=20)
     next_cursor: str | None
     totals: CaseTotals

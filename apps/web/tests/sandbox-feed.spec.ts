@@ -166,6 +166,8 @@ test("the recommendations chart shows decided payments, not mock data, and count
   await expect(chart.locator(".console-source-pill")).toHaveText("Sandbox")
   await expect(page.getByText("Mock data")).toHaveCount(0)
   await expect(chart.locator(".card-copy")).toContainText("5 payments")
+  // Spec 0010 AC 12: the overlay counts final decisions, which the model may have raised.
+  await expect(chart.locator(".card-copy")).toContainText("Rule cleared live feed payments may be raised by the model.")
 
   await page.getByRole("switch", { name: "Live feed" }).click()
   await expect(chart.locator(".card-copy")).toContainText("7 payments")

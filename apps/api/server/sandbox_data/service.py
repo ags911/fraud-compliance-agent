@@ -21,8 +21,13 @@ from server.public_database_guards import (
     table_has_capacity,
 )
 from server.sandbox_data.decisions import FeedDecision, feed_decision
-from server.sandbox_data.feed_cases import build_feed_case
-from server.sandbox_model import portable_model
+from server.sandbox_data.feed_cases import ModelRouting, build_feed_case
+from server.sandbox_model import (
+    policy_for_version,
+    portable_model,
+    route_rule_pass,
+    score_routing_policy,
+)
 from server.sandbox_model.features import PortablePayment, build_feature_vector
 from server.showcase_cases.capture import CaseCaptureError, EventValidator
 from server.showcase_cases.repository import (
@@ -832,19 +837,29 @@ class PsycopgScenarioRepository:
                 )
                 now = datetime.now(UTC)
 
-                # Every outbound payment is decided now, by its scenario's rule
-                # alone (spec 0004); a Mixed payment by its source scenario's
-                # (spec 0008). The model score stays null until slice 3.
+                # The rule table decides first (spec 0004). Under ADR-025 a
+                # verified policy may only raise a rule PASS, by the stored,
+                # rounded score (spec 0010 AC-2); nothing lowers a decision.
                 def decided(
-                    source: str, direction: str
-                ) -> tuple[str | None, str | None, str | None]:
+                    source: str, direction: str, score: float | None
+                ) -> tuple[str | None, ...]:
+                    """Return rule decision, route, final decision, basis, routed by, policy."""
                     decision = feed_decision(source)
                     if decision is None or direction != "outbound":
-                        return (None, None, None)
+                        return (None, None, None, None, None, None)
+                    assessed = (
+                        policy is not None
+                        and score is not None
+                        and decision.recommendation == "PASS"
+                    )
+                    raised = route_rule_pass(score, policy) if assessed else None
                     return (
-                        decision.deterministic_route,
                         decision.recommendation,
-                        decision.recommendation_basis,
+                        decision.deterministic_route,
+                        raised or decision.recommendation,
+                        "model_threshold" if raised else decision.recommendation_basis,
+                        "model" if raised else "rule",
+                        policy.policy_version if assessed and policy else None,
                     )
 
                 def lineage(item: Any) -> tuple[str | None, str | None]:
@@ -858,6 +873,7 @@ class PsycopgScenarioRepository:
                 # Features use only the owning scenario's imported outbound
                 # history, then earlier scheduled payments from that scenario.
                 model = portable_model()
+                policy = score_routing_policy()
                 score_failed = False
                 histories: dict[str, list[PortablePayment]] = {}
                 for source, fixture_version in source_versions.items():
@@ -917,33 +933,52 @@ class PsycopgScenarioRepository:
                         return None, None, None
                     return round(score, 5), model.model_version, input_hash
 
+                def scheduled_row(item: Any) -> tuple[object, ...]:
+                    """Build one complete durable schedule row from fixed run-start facts."""
+                    score, model_version, input_hash = model_values(item)
+                    (
+                        rule_recommendation,
+                        deterministic_route,
+                        recommendation,
+                        basis,
+                        routed_by,
+                        policy_version,
+                    ) = decided(
+                        item.source_scenario_id or scenario_id,
+                        item.event.direction,
+                        score,
+                    )
+                    return (
+                        run_id,
+                        item.sequence,
+                        item.event.event_id,
+                        now + timedelta(seconds=item.delay_seconds),
+                        item.event.event_date,
+                        item.event.available_date,
+                        item.event.amount_minor,
+                        item.event.currency,
+                        item.event.direction,
+                        item.event.category_bucket,
+                        item.event.payee_reference,
+                        item.event.payment_channel,
+                        rule_recommendation,
+                        routed_by,
+                        policy_version,
+                        item.synthetic_outlier,
+                        *lineage(item),
+                        deterministic_route,
+                        recommendation,
+                        basis,
+                        score,
+                        model_version,
+                        input_hash,
+                    )
+
                 # One batched insert: a feed schedules hundreds of events.
                 cursor.executemany(
-                    """INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis, model_score, model_version, model_input_sha256)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    [
-                        (
-                            run_id,
-                            item.sequence,
-                            item.event.event_id,
-                            now + timedelta(seconds=item.delay_seconds),
-                            item.event.event_date,
-                            item.event.available_date,
-                            item.event.amount_minor,
-                            item.event.currency,
-                            item.event.direction,
-                            item.event.category_bucket,
-                            item.event.payee_reference,
-                            item.event.payment_channel,
-                            *lineage(item),
-                            *decided(
-                                item.source_scenario_id or scenario_id,
-                                item.event.direction,
-                            ),
-                            *model_values(item),
-                        )
-                        for item in schedule
-                    ],
+                    """INSERT INTO sandbox_simulation_events (run_id, sequence, event_id, due_at, event_date, available_date, amount_minor, currency, direction, category_bucket, payee_reference, payment_channel, rule_recommendation, routed_by, routing_policy_version, synthetic_outlier, source_scenario_id, source_fixture_version, deterministic_route, recommendation, recommendation_basis, model_score, model_version, model_input_sha256)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    [scheduled_row(item) for item in schedule],
                 )
                 return self.read_simulation_run_cursor(cursor, run_id, browser_id)
         except (
@@ -978,9 +1013,10 @@ class PsycopgScenarioRepository:
             outcome: {"count": 0, "recent": []}
             for outcome in ("PASS", "CHALLENGE", "HOLD")
         }
+        raised_by_model = 0
         if int(run["appended_event_count"]) > 0:
             cursor.execute(
-                """SELECT event_id, sequence, recommendation
+                """SELECT event_id, sequence, recommendation, routed_by, model_score
                     FROM sandbox_simulation_events
                     WHERE run_id = %s AND appended_at IS NOT NULL
                       AND recommendation IN ('PASS', 'CHALLENGE', 'HOLD')
@@ -991,6 +1027,7 @@ class PsycopgScenarioRepository:
                 outcome = str(event["recommendation"])
                 lane = routing[outcome]
                 lane["count"] = int(lane["count"]) + 1
+                raised_by_model += event["routed_by"] == "model"
                 recent = lane["recent"]
                 if isinstance(recent, list) and len(recent) < 18:
                     recent.append(
@@ -998,6 +1035,10 @@ class PsycopgScenarioRepository:
                             "event_id": event["event_id"],
                             "sequence": event["sequence"],
                             "recommendation": outcome,
+                            "routed_by": event["routed_by"],
+                            "model_score": float(event["model_score"])
+                            if event["model_score"] is not None
+                            else None,
                         }
                     )
         return {
@@ -1009,7 +1050,20 @@ class PsycopgScenarioRepository:
             "scheduled_event_count": run["scheduled_event_count"],
             "appended_event_count": run["appended_event_count"],
             "next_due_at": next_due.isoformat() if next_due else None,
-            "routing_snapshot": {"by_recommendation": routing},
+            "routing_snapshot": {
+                "by_recommendation": routing,
+                # Every revealed payment the model raised, never truncated.
+                "raised_by_model": raised_by_model,
+                "routing_policy": (
+                    {
+                        "version": policy.policy_version,
+                        "challenge": policy.challenge,
+                        "hold": policy.hold,
+                    }
+                    if (policy := score_routing_policy()) is not None
+                    else None
+                ),
+            },
         }
 
     def read_simulation_run(self, run_id: str, browser_id: str) -> dict[str, object]:
@@ -1135,7 +1189,8 @@ class PsycopgScenarioRepository:
         # reports its true count; nothing is revealed after it.
         cursor.execute(
             """SELECT event.due_at, event.deterministic_route, event.recommendation, event.recommendation_basis,
-                event.model_score, event.model_version, event.case_id,
+                event.model_score, event.model_version, event.routed_by,
+                event.routing_policy_version, event.synthetic_outlier, event.case_id,
                 COALESCE(event.source_scenario_id, run.scenario_id) AS scenario_id, run.browser_id
             FROM sandbox_simulation_events AS event JOIN sandbox_simulation_runs AS run USING (run_id)
             WHERE event.run_id = %s AND event.sequence = %s AND event.appended_at IS NULL
@@ -1169,6 +1224,12 @@ class PsycopgScenarioRepository:
             case_status = "storage_off"
         else:
             try:
+                routing = _model_routing(event)
+                validator = (
+                    case_validator if routing is None else _feed_case_validator("2")
+                )
+                if validator is None:
+                    raise CaseCaptureError("event schema unavailable")
                 record = build_feed_case(
                     simulation_run_id=run_id,
                     sequence=sequence,
@@ -1181,11 +1242,12 @@ class PsycopgScenarioRepository:
                         event["recommendation_basis"],
                     ),
                     due_at=event["due_at"],
-                    validator=case_validator,
+                    validator=validator,
                     model_score=float(event["model_score"])
                     if event["model_score"] is not None
                     else None,
                     model_version=event["model_version"],
+                    model_routing=routing,
                 )
             except (CaseCaptureError, KeyError, TypeError, ValueError):
                 # Revealed but never retried: the payment is shown, no case is kept.
@@ -1575,7 +1637,33 @@ def _compiled_event_validator(schema_path: Path) -> EventValidator:
     return EventValidator(schema_path)
 
 
-def _feed_case_validator() -> EventValidator | None:
+def _model_routing(event: dict[str, Any]) -> ModelRouting | None:
+    """Return a model raised payment's routing story, or None for a rule route.
+
+    The thresholds come from the shipped policy the payment stored at run
+    start (spec 0010 AC-7).
+
+    Raises:
+        ValueError: If the payment was raised by the model but that policy is
+            not loaded; the payment is then shown with no case, never with an
+            unexplained one.
+    """
+    if event.get("routed_by") != "model":
+        return None
+    policy = policy_for_version(event.get("routing_policy_version"))
+    if policy is None or event["model_score"] is None:
+        raise ValueError("routing policy unavailable")
+    return ModelRouting(
+        score=float(event["model_score"]),
+        challenge=policy.challenge,
+        hold=policy.hold,
+        policy_version=policy.policy_version,
+        model_version=str(event["model_version"]),
+        synthetic_outlier=bool(event["synthetic_outlier"]),
+    )
+
+
+def _feed_case_validator(version: str = "1") -> EventValidator | None:
     """Return the event schema when case storage is on, else None (storage off).
 
     The same switch as Run showcase cases: ``SHOWCASE_CASES_ENABLED`` plus a
@@ -1585,7 +1673,7 @@ def _feed_case_validator() -> EventValidator | None:
     if not settings.ready:
         return None
     try:
-        return _compiled_event_validator(settings.event_schema_path)
+        return _compiled_event_validator(settings.event_schema_path_for(version))
     except (OSError, ValueError):
         return None
 

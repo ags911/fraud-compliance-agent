@@ -123,6 +123,20 @@ export interface ShowcaseRunResultEvent extends ShowcaseEventIdentity {
   data_label: 'synthetic'
 }
 
+/**
+ * Why the model raised a rule cleared feed payment: the `model_routing` object
+ * on a public-showcase-events.v2 `run_result` (spec 0010).
+ */
+export interface ShowcaseModelRouting {
+  score: number
+  challenge: number
+  hold: number
+  rule_recommendation: 'PASS'
+  policy_version: string
+  model_version: string
+  synthetic_outlier: boolean
+}
+
 export type ShowcaseEvent =
   | ShowcaseRunStartedEvent
   | ShowcaseRouteResolvedEvent
