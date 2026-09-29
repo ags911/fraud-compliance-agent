@@ -13,6 +13,7 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 | 2 | Mixed feed | Slice 1 | done |
 | 3 | Visible feed lifecycle | Slice 1 | done |
 | 4 | Score routing (F3) | Slice 2 | done |
+| 5 | AI operations overview (F4a) | Slice 3 | planned |
 
 ## Slice 1: Live decision routing
 
@@ -59,6 +60,13 @@ The rules decide every feed payment first. When they clear one, the model score 
   - [x] Chart copy, tour step, image shipping, full tests (AC 12 to AC 14)
 - [x] Verify it: /check verify score routing ([verify.md](../specs/0010-score-routing/verify.md))
 - [x] Test it: /test score routing (`tests/test_score_routing.py`, four Playwright specs)
+
+## Slice 3: AI overview
+
+### 5. AI operations overview (F4a) · planned
+On request, an AI model writes a short plain overview of the selected scenario's dashboard: activity, rule and model decisions, the live feed and recent cases. It is labelled as AI written about synthetic data, and it never decides or changes anything.
+**Done when:** a "Write overview" button produces a short overview grounded only in the figures on screen, clearly labelled as AI written, within a spending and rate limit, with an honest message when the model is unavailable.
+- [ ] Design it: /architect AI operations overview
 
 ## Legend
 
