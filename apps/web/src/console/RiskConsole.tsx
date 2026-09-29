@@ -36,6 +36,7 @@ import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
 import { useConsoleTour } from "@/lib/useConsoleTour"
+import { useServerWarmup } from "@/lib/useServerWarmup"
 import { FEED_SOURCE_LABEL } from "@/lib/showcase-labels"
 import type { ShowcaseScenarioId } from "@/lib/showcase-types"
 
@@ -46,6 +47,7 @@ import { ConsoleMetricCard as MetricCard } from "./ConsoleMetricCard"
 import { ConsoleRangeToggle } from "./ConsoleRangeToggle"
 import { ConsoleRecommendationChart } from "./ConsoleRecommendationChart"
 import { ConsoleScenarioActivityChart } from "./ConsoleScenarioActivityChart"
+import { ConsoleWakeNotice } from "./ConsoleWakeNotice"
 
 const scenarios: ReadonlyArray<{ id: ShowcaseScenarioId; label: string }> = [
   { id: "S01", label: "Trusted recurring payment" },
@@ -145,6 +147,8 @@ export function RiskConsole() {
   const feed = useSandboxFeed(scenarioId)
   const { trackRun, pollQuietly } = cases
   const tour = useConsoleTour()
+  // The hosted API sleeps when idle; say so while it starts.
+  const serverWarmup = useServerWarmup()
 
   useEffect(() => {
     let active = true
@@ -397,6 +401,8 @@ export function RiskConsole() {
           </div>
         </div>
       </div>
+
+      <ConsoleWakeNotice state={serverWarmup} />
 
       <TabsPrimitive.Root
         value={tab}
