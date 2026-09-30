@@ -193,11 +193,12 @@ test("the newest payment sweeps along its own lane only", async ({ page }) => {
   const group = sweep(page, "PASS")
   await expect(group).toHaveAttribute("clip-path", /link-sweep-clip/)
   await expect(page.locator("g[data-sweep]")).toHaveCount(1)
-  // The clipped group stays still while its band travels inside it.
+  // The clipped group stays still while the item travels the lane's centre
+  // curve: its head is a dash whose offset runs along the path.
   await expect.poll(() => group.evaluate((element) => getComputedStyle(element).transform)).toBe("none")
-  await expect
-    .poll(() => group.locator("path").first().evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).e))
-    .toBeGreaterThan(20)
+  const head = group.locator("path").last()
+  await expect(head).toHaveAttribute("d", /^M[\d.]+,[\d.]+ C/)
+  await expect.poll(() => head.evaluate((element) => Number(element.getAttribute("stroke-dashoffset")))).toBeLessThan(-0.3)
   await expect(group.locator("[clip-path]")).toHaveCount(0)
   // Only the route animates: the outcome nodes carry no glow.
   await expect(page.getByRole("region", { name: "Live decision routing" }).locator("rect[filter]")).toHaveCount(0)
