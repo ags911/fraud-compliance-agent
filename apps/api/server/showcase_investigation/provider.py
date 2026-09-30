@@ -2,9 +2,9 @@
 
 import json
 from collections.abc import Sequence
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
-from groq import AsyncGroq
+from groq import AsyncGroq, BadRequestError
 from pydantic import ValidationError
 
 from server.showcase_investigation.errors import (
@@ -58,12 +58,56 @@ class GroqInvestigationProvider:
         self.model_id = model_id
         self._client = client or AsyncGroq(api_key=api_key, max_retries=0)
 
-    async def _complete_json(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+    async def complete_json(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        max_completion_tokens: int,
+        reasoning_effort: Literal["low"] | None = None,
+    ) -> dict[str, Any]:
+        """Return one decoded JSON object under a caller's output token cap.
+
+        The dashboard overview (spec 0011) calls this with its own cap of 400;
+        investigations keep 800 through ``select_tools`` and ``assess``.
+
+        Args:
+            messages: Server-authored instructions containing synthetic facts
+                only. Caller-authored prompts are never accepted.
+            max_completion_tokens: The most output tokens the model may write.
+            reasoning_effort: Optional low reasoning effort for the two
+                supported GPT OSS overview models. Omitted for investigations.
+
+        Returns:
+            Decoded provider JSON, not the raw provider response.
+
+        Raises:
+            ProviderUnavailable: If the provider call fails or has no content.
+            InvalidProviderOutput: If content is not exactly one JSON object.
+
+        Side effects:
+            Makes one external Groq request and retains no raw response.
+        """
+        return await self._complete_json(
+            messages,
+            max_completion_tokens=max_completion_tokens,
+            reasoning_effort=reasoning_effort,
+        )
+
+    async def _complete_json(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        max_completion_tokens: int = 800,
+        reasoning_effort: Literal["low"] | None = None,
+    ) -> dict[str, Any]:
         """Return one decoded JSON object while redacting provider failures.
 
         Args:
             messages: Server-authored instructions containing synthetic facts
                 only. Caller-authored prompts are never accepted.
+            max_completion_tokens: Output token cap; 800 for investigations.
+            reasoning_effort: Optional low reasoning effort for an overview.
+                Investigations leave this unset.
 
         Returns:
             Decoded provider JSON, not the raw provider response.
@@ -77,14 +121,19 @@ class GroqInvestigationProvider:
             provider output, exceptions, or hidden reasoning.
         """
         try:
-            response = await self._client.chat.completions.create(
-                model=self.model_id,
-                messages=messages,
-                response_format={"type": "json_object"},
-                include_reasoning=False,
-                temperature=0,
-                max_completion_tokens=800,
-            )
+            request: dict[str, Any] = {
+                "model": self.model_id,
+                "messages": messages,
+                "response_format": {"type": "json_object"},
+                "include_reasoning": False,
+                "temperature": 0,
+                "max_completion_tokens": max_completion_tokens,
+            }
+            # Groq accepts low effort only for the overview's two approved GPT
+            # OSS models. Leaving the key out preserves investigation behavior.
+            if reasoning_effort is not None:
+                request["reasoning_effort"] = reasoning_effort
+            response = await self._client.chat.completions.create(**request)
             content = response.choices[0].message.content
             if not content:
                 raise ProviderUnavailable("provider returned no validated content")
@@ -94,6 +143,14 @@ class GroqInvestigationProvider:
             return decoded
         except InvalidProviderOutput:
             raise
+        except BadRequestError as error:
+            # Groq rejects a response that cannot satisfy JSON mode. The provider
+            # is reachable, but its output is unusable, so retain that distinction.
+            if _is_json_validation_failure(error):
+                raise InvalidProviderOutput(
+                    "provider could not produce valid JSON output"
+                ) from error
+            raise ProviderUnavailable("live provider is unavailable") from error
         except (json.JSONDecodeError, TypeError, ValueError) as error:
             raise InvalidProviderOutput("provider output is not valid JSON") from error
         except Exception as error:
@@ -200,3 +257,27 @@ class GroqInvestigationProvider:
             raise InvalidProviderOutput(
                 "provider returned an invalid assessment"
             ) from error
+
+
+def _is_json_validation_failure(error: BadRequestError) -> bool:
+    """Return whether Groq rejected the response because JSON mode could not finish.
+
+    Args:
+        error: A Groq HTTP 400 response, whose body is untrusted provider data.
+
+    Returns:
+        True only for Groq's documented ``json_validate_failed`` code, whether
+        it appears at the top level or inside the provider's ``error`` object.
+
+    Side effects:
+        None. The provider response is inspected only to choose a redacted
+        internal error category and is never logged or returned.
+    """
+    body = error.body
+    if not isinstance(body, dict):
+        return False
+    code = body.get("code")
+    nested = body.get("error")
+    if isinstance(nested, dict):
+        code = nested.get("code", code)
+    return code == "json_validate_failed"

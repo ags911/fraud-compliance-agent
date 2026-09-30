@@ -97,3 +97,34 @@ export const MODEL_SIGNAL_ROUTED_NOTE =
 
 export const SYNTHETIC_OUTLIER_NOTE =
   "A synthetic outlier added to S01's feed to show the model catching what the rules cleared."
+
+// Dashboard overview (spec 0011): who wrote it, why the AI did not, and what
+// was left out. Fixed wording; the server never supplies label text.
+export const OVERVIEW_LIVE_LABEL = (modelId: string) =>
+  `Written by an AI model (${modelId}) from the synthetic figures on this page. It can be wrong and it never decides anything.`
+
+export const OVERVIEW_TEMPLATE_LABEL = 'Template summary from the synthetic figures on this page. No AI model was used.'
+
+/** One reason line when live overviews are on but this one could not be used; none when switched off. */
+export const OVERVIEW_FALLBACK_LABELS: Record<
+  'live_disabled' | 'admission_limited' | 'provider_unavailable' | 'timeout' | 'invalid_output' | 'ungrounded',
+  string | null
+> = {
+  live_disabled: null,
+  admission_limited: 'The AI overview limit is reached, so this is the template summary.',
+  provider_unavailable: 'The AI model is unavailable, so this is the template summary.',
+  timeout: 'The AI model took too long, so this is the template summary.',
+  invalid_output: "The AI overview didn't pass the fact check, so this is the template summary.",
+  ungrounded: "The AI overview didn't pass the fact check, so this is the template summary.",
+}
+
+/** What the facts left out, from the response's `included` flags (AC-7). */
+export function overviewNotIncluded(included: { feed: boolean; cases: boolean }): string | null {
+  if (!included.feed && !included.cases) return "Your live feed and cases aren't included."
+  if (!included.feed) return "Your live feed isn't included."
+  if (!included.cases) return "Your saved cases aren't included."
+  return null
+}
+
+export const OVERVIEW_OUT_OF_DATE = 'Figures have changed since this was written.'
+export const OVERVIEW_UNAVAILABLE = 'The overview is unavailable right now.'

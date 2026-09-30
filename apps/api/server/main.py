@@ -64,6 +64,8 @@ from server.models import (
     HealthResponse,
     PresetRunRequest,
     RunRequest,
+    SandboxOverview,
+    SandboxOverviewRequest,
     SandboxScenarioAnalytics,
     SandboxScenarioDecisions,
     SandboxSimulationRun,
@@ -75,6 +77,8 @@ from server.public_database_guards import (
     load_public_database_guard_settings,
 )
 from server.records import read_record
+from server.sandbox_data.overview import build_overview_facts, scenario_label
+from server.sandbox_data.overview_writer import OverviewWriter, load_overview_settings
 from server.sandbox_data.service import (
     SandboxDataUnavailable,
     ScenarioDatasetNotFound,
@@ -88,6 +92,7 @@ from server.sandbox_data.service import (
     cancel_sandbox_simulation,
     load_sandbox_analytics,
     load_sandbox_decisions,
+    load_sandbox_overview_sources,
     load_sandbox_simulation_run,
     start_sandbox_simulation,
 )
@@ -413,6 +418,7 @@ async def _stream_bounded_run(
 
 
 _CASE_BROWSER_HEADER = "X-Showcase-Browser-Id"
+_OVERVIEW_PATH = re.compile(r"/sandbox/scenarios/[^/]+/overview")
 
 
 def _simulation_browser_id(request: Request) -> str:
@@ -504,6 +510,19 @@ def create_app() -> FastAPI:
         if public_database_guards.enabled
         else None
     )
+    # The dashboard overview (spec 0011) has its own read limit per visitor,
+    # always on, even while the public database guards are off (AC-6).
+    overview_read_limiter = ClientWindowLimiter(
+        public_database_guards.client_case_reads_per_minute
+    )
+    try:
+        overview_writer: OverviewWriter | None = OverviewWriter(
+            load_overview_settings()
+        )
+    except ShowcaseRuntimeUnavailable:
+        # Without its accepted config the overview route answers 503; nothing
+        # else depends on it.
+        overview_writer = None
     case_repository: PsycopgCaseRepository | None = None
     case_recorder: CaseRecorder | None = None
     if case_settings.ready and case_settings.database_url:
@@ -570,6 +589,11 @@ def create_app() -> FastAPI:
                         "message": "Check the case filters and page size.",
                     }
                 },
+            )
+        if _OVERVIEW_PATH.fullmatch(request.url.path):
+            # Never echo the request body back (the run ID travels in it).
+            return JSONResponse(
+                status_code=422, content={"detail": "invalid_overview_request"}
             )
         if request.url.path == "/showcase/investigations":
             detail = ShowcaseErrorDetail(
@@ -689,6 +713,92 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=503, detail="sandbox_scenario_data_unavailable"
             ) from error
+
+    @app.post(
+        "/sandbox/scenarios/{scenario_id}/overview",
+        include_in_schema=False,
+        response_model=SandboxOverview,
+        responses={
+            404: {"model": DemoError},
+            422: {"model": DemoError},
+            429: {"model": DemoError},
+            503: {"model": DemoError},
+        },
+    )
+    async def sandbox_scenario_overview(
+        scenario_id: str, body: SandboxOverviewRequest, request: Request
+    ) -> SandboxOverview:
+        """Write a short overview of one scenario's dashboard figures (spec 0011).
+
+        The server builds the facts from stored data; the browser sends only
+        the range and its own run ID. The viewer's run and cases enter the
+        facts only when they are its own; otherwise they are left out, never
+        an error. Nothing is stored, and nothing is decided or changed.
+        """
+        if not overview_read_limiter.allow(client_identity(request)):
+            raise HTTPException(status_code=429, detail="overview_rate_limited")
+        if re.fullmatch(r"S0[6-8]", scenario_id):
+            raise HTTPException(status_code=404, detail="sandbox_scenario_not_decided")
+        if not re.fullmatch(r"S0[1-5]|MIX", scenario_id):
+            raise HTTPException(status_code=404, detail="sandbox_scenario_not_found")
+        if overview_writer is None:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            )
+        # A missing or malformed browser ID is treated as none, never a 400:
+        # the overview is still written without the viewer's feed and cases.
+        browser_id = valid_browser_id(request.headers.get(_CASE_BROWSER_HEADER))
+        try:
+            # psycopg is synchronous; the reads run off the event loop.
+            sources = await asyncio.to_thread(
+                load_sandbox_overview_sources,
+                scenario_id,
+                body.simulation_run_id if browser_id else None,
+                browser_id,
+            )
+            label = scenario_label(scenario_id)
+        except ScenarioNotDecided as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_decided"
+            ) from error
+        except ScenarioDatasetNotFound as error:
+            raise HTTPException(
+                status_code=404, detail="sandbox_scenario_not_found"
+            ) from error
+        except (SandboxDataUnavailable, OSError, KeyError, ValueError) as error:
+            raise HTTPException(
+                status_code=503, detail="sandbox_scenario_data_unavailable"
+            ) from error
+        case_totals = None
+        if browser_id is not None and case_repository is not None:
+            try:
+                page = await asyncio.to_thread(
+                    case_repository.list_cases, browser_id, limit=1
+                )
+                case_totals = page.totals
+            except CasesUnavailable:
+                # Only the cases are left out; the overview is still written.
+                case_totals = None
+        facts = build_overview_facts(
+            scenario_id, body.range, sources, case_totals, label
+        )
+        overview = await overview_writer.write(facts, client_identity(request))
+        return SandboxOverview(
+            contract_version="1.0",
+            scenario_id=scenario_id,
+            range=body.range,
+            window={
+                "start": facts.window_start.isoformat(),
+                "end": facts.window_end.isoformat(),
+                "days": facts.window_days,
+            },
+            source=overview.source,
+            model_id=overview.model_id,
+            headline=overview.headline,
+            points=overview.points,
+            fallback_reason=overview.fallback_reason,
+            included={"feed": facts.feed_included, "cases": facts.cases_included},
+        )
 
     @app.get(
         "/cases",

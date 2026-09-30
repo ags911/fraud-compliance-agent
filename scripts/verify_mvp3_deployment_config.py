@@ -90,6 +90,7 @@ def main() -> None:
         )
 
     required_settings = {
+        "SHOWCASE_OVERVIEW_LIVE_ENABLED": "false",
         "SHOWCASE_CASES_ENABLED": "false",
         "SIMULATION_WORKER_ENABLED": "false",
         "PUBLIC_DATABASE_GUARDS_ENABLED": "false",
@@ -135,14 +136,30 @@ def main() -> None:
             "COPY docs/contracts/public-showcase-events.v2.schema.json "
             "/app/showcase/docs/contracts/"
         ),
+        # Spec 0011: without its accepted limits the overview route is 503.
+        "COPY config/public-showcase-overview.v1.json /app/showcase/config/",
+        (
+            "COPY docs/contracts/sandbox-overview.v1.schema.json "
+            "/app/showcase/docs/contracts/"
+        ),
     ):
         _require(dockerfile, fragment, "apps/api/Dockerfile")
     for fragment in (
         "!docs/contracts/public-showcase-events.v1.schema.json",
         "!config/sandbox-score-routing.v1.json",
         "!docs/contracts/public-showcase-events.v2.schema.json",
+        "!config/public-showcase-overview.v1.json",
+        "!docs/contracts/sandbox-overview.v1.schema.json",
     ):
         _require(dockerignore, fragment, ".dockerignore")
+
+    # Spec 0011 (AC-11): live overviews stay off unless an operator opts in,
+    # in code as well as in the deployment template.
+    _require(
+        _read("apps/api/server/sandbox_data/overview_writer.py"),
+        '_explicit_boolean("SHOWCASE_OVERVIEW_LIVE_ENABLED", False)',
+        "apps/api/server/sandbox_data/overview_writer.py",
+    )
 
     # A public checkout has no private SDK source tree, so every Make command
     # must reuse the frozen environment instead of resolving it again.

@@ -32,6 +32,9 @@ param showcaseGroqModel string = ''
 @description('Comma-separated server-side allowlist for the optional Groq model.')
 param showcaseGroqAllowedModels string = ''
 
+@description('Enable live AI written dashboard overviews (spec 0011, ADR-026). Off until the owner confirms a Groq spending limit or alert.')
+param showcaseOverviewLiveEnabled string = 'false'
+
 @description('Enable saved showcase cases only when a guarded public database is ready.')
 param showcaseCasesEnabled string = 'false'
 
@@ -133,6 +136,11 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
                 // time-bounded operator procedure is required for that window.
                 name: 'SHOWCASE_LIVE_ENABLED'
                 value: 'false'
+              }
+              {
+                // The dashboard overview's own switch (spec 0011); off by default.
+                name: 'SHOWCASE_OVERVIEW_LIVE_ENABLED'
+                value: showcaseOverviewLiveEnabled
               }
               {
                 name: 'SHOWCASE_GROQ_MODEL'

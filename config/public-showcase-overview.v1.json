@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "status": "accepted",
+  "owner": "showcase-api",
+  "approval_scope": "F4a AI operations overview limits, accepted by the product owner with ADR-026 on 2026-09-29.",
+  "effective_scope": "Live model calls for the Risk Console's dashboard overview only (spec 0011). Run showcase keeps its own limits in public-showcase-investigation.v1.json; the two never share counters.",
+  "runtime_consumption": "allowed",
+  "template_summary": {
+    "continuously_public": true,
+    "fallback_when_live_unavailable": true,
+    "label": "template"
+  },
+  "live_mode": {
+    "enabled_by_default": false,
+    "enablement": "SHOWCASE_OVERVIEW_LIVE_ENABLED",
+    "maximum_concurrent_overviews": 1,
+    "per_observed_client": {
+      "maximum_overviews": 3,
+      "window_seconds": 600,
+      "client_key_boundary": "trusted_ingress_metadata_only"
+    },
+    "per_process_enablement_window": {
+      "maximum_overviews": 20,
+      "maximum_duration_seconds": 1800,
+      "durability": "process_local_resets_on_restart"
+    },
+    "overall_overview_timeout_seconds": 20,
+    "maximum_completion_tokens": 400,
+    "reasoning_effort": "low",
+    "limit_outcome": "labelled_template_summary"
+  },
+  "provider_policy": {
+    "live_provider": "groq",
+    "model_selection": "SHOWCASE_GROQ_MODEL within SHOWCASE_GROQ_ALLOWED_MODELS, as Run showcase",
+    "alternate_llm_fallback": "forbidden",
+    "output_boundary": "headline and points, every figure fact checked against the server built facts",
+    "raw_prompt_logging": false,
+    "raw_provider_output_logging": false,
+    "record_boundary": "nothing_stored"
+  },
+  "always_on_anonymous_live_mode": {
+    "allowed": false,
+    "required_before_enablement": "reliable_provider_spending_limit_or_budget_alert"
+  },
+  "notes": "These are safety limits, not latency, capacity, availability, or cost claims. Counters are process local and reset on restart."
+}

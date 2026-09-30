@@ -76,6 +76,7 @@ ENV PATH=/opt/venv/bin:$PATH \
     # and supplies a key.
     DEMO_ALLOW_EXTERNAL_INVESTIGATION=false \
     SHOWCASE_LIVE_ENABLED=false \
+    SHOWCASE_OVERVIEW_LIVE_ENABLED=false \
     # Accepted showcase configuration and fixtures are copied below this root.
     FCA_SHOWCASE_ROOT=/app/showcase \
     # There is no repository inside the image, so the read-only model-summary
@@ -91,6 +92,10 @@ COPY fixtures/s01-s08/scenarios.v1.json /app/showcase/fixtures/s01-s08/
 # Saved cases (spec 0002) validate each stored event against this schema.
 COPY docs/contracts/public-showcase-events.v1.schema.json /app/showcase/docs/contracts/
 COPY docs/contracts/public-showcase-events.v2.schema.json /app/showcase/docs/contracts/
+# The dashboard overview (spec 0011): its accepted limits, without which the
+# overview route answers 503, and its response contract.
+COPY config/public-showcase-overview.v1.json /app/showcase/config/
+COPY docs/contracts/sandbox-overview.v1.schema.json /app/showcase/docs/contracts/
 
 WORKDIR /app
 USER app
