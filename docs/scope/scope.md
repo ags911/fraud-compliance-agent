@@ -84,7 +84,7 @@ Finish a polished, truthful public demonstration of the existing synthetic flow.
   - [x] Add concise portfolio handoff documentation for the architecture, synthetic data and guardrails
 - [ ] Verify it: /check verify portfolio release closeout
 - [ ] Test it: /test portfolio release closeout
-- [ ] Deploy and smoke test the public Azure release
+- [x] Deploy and smoke test the public Azure release
 
 ## Deferred after the portfolio release
 
