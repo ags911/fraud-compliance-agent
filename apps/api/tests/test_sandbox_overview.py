@@ -10,6 +10,8 @@ from typing import Any
 import jsonschema
 import pytest
 from fastapi.testclient import TestClient
+from groq import BadRequestError
+from httpx import Request, Response
 
 from server import main
 from server.main import create_app
@@ -350,14 +352,17 @@ def test_only_the_accepted_shape_is_used() -> None:
 # ---- The live writer (AC-4 to AC-6, AC-8) ----------------------------------
 
 
-def _settings(live: bool = True, ready: bool = True) -> OverviewSettings:
+def _settings(
+    live: bool = True, ready: bool = True, model_id: str = "allowed-model"
+) -> OverviewSettings:
     return OverviewSettings(
         live_enabled=live,
         groq_api_key="test-key" if ready else None,
-        groq_model="allowed-model",
-        groq_allowed_models=("allowed-model",),
+        groq_model=model_id,
+        groq_allowed_models=(model_id,),
         limits=LIMITS,
         max_completion_tokens=400,
+        reasoning_effort="low",
     )
 
 
@@ -369,9 +374,15 @@ class FakeProvider:
         self.error = error
         self.calls: list[dict[str, Any]] = []
 
-    async def complete_json(self, messages, *, max_completion_tokens):
+    async def complete_json(
+        self, messages, *, max_completion_tokens, reasoning_effort=None
+    ):
         self.calls.append(
-            {"messages": messages, "max_completion_tokens": max_completion_tokens}
+            {
+                "messages": messages,
+                "max_completion_tokens": max_completion_tokens,
+                "reasoning_effort": reasoning_effort,
+            }
         )
         if self.error is not None:
             raise self.error
@@ -426,8 +437,20 @@ def test_a_grounded_live_overview_is_used_with_its_model() -> None:
     # The model sees only the server built facts, with the token cap of 400.
     [call] = provider.calls
     assert call["max_completion_tokens"] == 400
+    assert call["reasoning_effort"] is None
     assert json.loads(call["messages"][1]["content"]) == _facts().written
     assert admission.released == 1
+
+
+@pytest.mark.parametrize("model_id", ["openai/gpt-oss-20b", "openai/gpt-oss-120b"])
+def test_supported_gpt_oss_overviews_use_low_reasoning_effort(model_id) -> None:
+    """Use the accepted low effort only for the two Groq supported model IDs."""
+    provider = FakeProvider(GROUNDED)
+
+    result = _write(OverviewWriter(_settings(model_id=model_id), provider=provider))
+
+    assert result.source == "live"
+    assert provider.calls[0]["reasoning_effort"] == "low"
 
 
 def test_switch_off_is_the_template_and_takes_no_slot() -> None:
@@ -513,6 +536,16 @@ def test_a_live_call_logs_one_fixed_line_only(caplog) -> None:
     ]
 
 
+def test_the_live_prompt_requires_the_accepted_number_of_points() -> None:
+    """Keep the provider instruction aligned with the response contract."""
+    provider = FakeProvider(GROUNDED)
+
+    assert _write(OverviewWriter(_settings(), provider=provider)).source == "live"
+
+    system_message = provider.calls[0]["messages"][0]["content"]
+    assert "exactly 3 to 5 points" in system_message
+
+
 def test_the_overview_limits_never_share_run_showcases_counters() -> None:
     overview = OverviewWriter(_settings(), provider=FakeProvider(GROUNDED))
     for _ in range(3):
@@ -533,14 +566,17 @@ def test_accepted_config_loads_with_the_switch_off_by_default(monkeypatch) -> No
     assert settings.live_enabled is False
     assert settings.limits == LIMITS
     assert settings.max_completion_tokens == 400
+    assert settings.reasoning_effort == "low"
 
 
-def test_the_token_cap_is_400_for_overviews_and_800_for_investigations() -> None:
-    seen: list[int] = []
+def test_overviews_can_set_effort_without_changing_investigations() -> None:
+    seen: list[tuple[int, str | None]] = []
 
     class Completions:
         async def create(self, **kwargs):
-            seen.append(kwargs["max_completion_tokens"])
+            seen.append(
+                (kwargs["max_completion_tokens"], kwargs.get("reasoning_effort"))
+            )
             message = type("M", (), {"content": json.dumps({"tools": []})})
             return type("R", (), {"choices": [type("C", (), {"message": message})]})
 
@@ -549,10 +585,34 @@ def test_the_token_cap_is_400_for_overviews_and_800_for_investigations() -> None
     )
     provider = GroqInvestigationProvider("key", "model", client=client)
 
-    asyncio.run(provider.complete_json([], max_completion_tokens=400))
+    asyncio.run(
+        provider.complete_json([], max_completion_tokens=400, reasoning_effort="low")
+    )
     with pytest.raises(InvalidProviderOutput):
         asyncio.run(provider.select_tools({}, ["get_payee_evidence"]))
-    assert seen == [400, 800]
+    assert seen == [(400, "low"), (800, None)]
+
+
+def test_a_groq_json_validation_failure_is_invalid_output() -> None:
+    """Label Groq JSON mode refusal as unusable output, not an outage."""
+
+    class Completions:
+        async def create(self, **kwargs):
+            request = Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+            response = Response(400, request=request)
+            raise BadRequestError(
+                "JSON validation failed",
+                response=response,
+                body={"error": {"code": "json_validate_failed"}},
+            )
+
+    client = type(
+        "Client", (), {"chat": type("Chat", (), {"completions": Completions()})}
+    )
+    provider = GroqInvestigationProvider("key", "model", client=client)
+
+    with pytest.raises(InvalidProviderOutput):
+        asyncio.run(provider.complete_json([], max_completion_tokens=400))
 
 
 # ---- The route (AC-1, AC-2, AC-6, AC-7, AC-8) -------------------------------
@@ -833,6 +893,20 @@ def test_the_viewers_own_run_is_overlaid(monkeypatch) -> None:
     assert sources["feed"]["run_id"] == RUN_ID
     assert any(
         "FROM sandbox_simulation_events WHERE run_id" in s for s in cursor.statements
+    )
+
+
+def test_the_overview_read_uses_one_repeatable_read_snapshot(monkeypatch) -> None:
+    """Require every overview figure to come from the same database snapshot."""
+    cursor = OverviewCursor(
+        _run(), owner_run={"scenario_id": "S01", "fixture_version": "s01-v1"}
+    )
+
+    _read(monkeypatch, cursor)
+
+    assert (
+        cursor.statements[0]
+        == "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"
     )
 
 

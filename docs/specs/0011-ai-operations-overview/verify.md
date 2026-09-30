@@ -18,6 +18,7 @@ Run the API locally with `DATABASE_URL` (for example `doppler run -- uv run uvic
 - [ ] Stop the API and press the button → "The overview is unavailable right now." and the button stays usable → AC-10
 - [ ] Live, with the switch on and a ready provider → the label "Written by an AI model (<model>) from the synthetic figures on this page. It can be wrong and it never decides anything." and no reason line; every figure in it matches a card → AC-4
 - [ ] Live, press the button 4 times within 10 minutes → the fourth answer is the template with "The AI overview limit is reached, so this is the template summary." → AC-5, AC-6
+- [ ] Live with `SHOWCASE_GROQ_MODEL=openai/gpt-oss-120b`, the revised prompt and `reasoning_effort` `low` → one overview returns `source` `live` with 3 to 5 grounded points → AC-4
 - [ ] Live with `SHOWCASE_GROQ_MODEL` not in the allowlist → template with "The AI model is unavailable, so this is the template summary." → AC-5, AC-6
 - [ ] S06 to S08 cannot be picked today (the picker offers S01 to S05 and Mixed); when they are added, the button must be disabled with "Workflow scenarios have no payment decisions to summarise." → AC-1
 

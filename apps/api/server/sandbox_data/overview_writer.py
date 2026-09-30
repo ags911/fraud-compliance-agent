@@ -48,8 +48,10 @@ SYSTEM_PROMPT = (
     "Summarise only the facts given. Copy every figure and date exactly as "
     "written; never round, convert, abbreviate or compute. Do not give advice, "
     "predict, or recommend any action on a payment. Reply as JSON: "
-    "{headline, points}."
+    "{headline, points}, with exactly 3 to 5 points."
 )
+
+_LOW_EFFORT_MODEL_IDS = frozenset({"openai/gpt-oss-20b", "openai/gpt-oss-120b"})
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,7 @@ class OverviewSettings:
     groq_allowed_models: tuple[str, ...]
     limits: LiveLimits
     max_completion_tokens: int
+    reasoning_effort: Literal["low"]
 
     @property
     def provider_ready(self) -> bool:
@@ -111,8 +114,11 @@ def load_overview_settings(root: Path | None = None) -> OverviewSettings:
             timeout_seconds=int(live["overall_overview_timeout_seconds"]),
         )
         max_tokens = int(live["maximum_completion_tokens"])
+        reasoning_effort = str(live["reasoning_effort"])
         if min(limits.__dict__.values()) <= 0 or max_tokens <= 0:
             raise ValueError("overview limits must be positive")
+        if reasoning_effort != "low":
+            raise ValueError("overview reasoning effort must be low")
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
         raise ShowcaseRuntimeUnavailable(
             "accepted overview configuration is unavailable"
@@ -130,6 +136,7 @@ def load_overview_settings(root: Path | None = None) -> OverviewSettings:
         groq_allowed_models=allowed_models,
         limits=limits,
         max_completion_tokens=max_tokens,
+        reasoning_effort=reasoning_effort,
     )
 
 
@@ -139,9 +146,20 @@ class OverviewProvider(Protocol):
     model_id: str
 
     async def complete_json(
-        self, messages: list[dict[str, str]], *, max_completion_tokens: int
+        self,
+        messages: list[dict[str, str]],
+        *,
+        max_completion_tokens: int,
+        reasoning_effort: Literal["low"] | None = None,
     ) -> dict[str, Any]:
-        """Return one decoded JSON object for server authored messages."""
+        """Return one decoded JSON object for server authored messages.
+
+        Args:
+            messages: Server authored messages containing synthetic facts only.
+            max_completion_tokens: The caller's output budget.
+            reasoning_effort: Optional low effort request for a supported GPT
+                OSS overview call. It is omitted for every other model.
+        """
 
 
 @dataclass(frozen=True)
@@ -238,6 +256,11 @@ class OverviewWriter:
                         },
                     ],
                     max_completion_tokens=self.settings.max_completion_tokens,
+                    reasoning_effort=(
+                        self.settings.reasoning_effort
+                        if self.settings.groq_model in _LOW_EFFORT_MODEL_IDS
+                        else None
+                    ),
                 )
         except TimeoutError:
             return self._template(facts, "timeout")

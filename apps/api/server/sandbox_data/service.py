@@ -1506,6 +1506,11 @@ class PsycopgScenarioRepository:
                 ) as connection,
                 connection.cursor() as cursor,
             ):
+                # A feed event can land while this read is in progress. Keep every
+                # card and decision figure on one read only PostgreSQL snapshot.
+                cursor.execute(
+                    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"
+                )
                 datasets = []
                 for source in sources:
                     cursor.execute(

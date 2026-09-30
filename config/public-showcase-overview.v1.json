@@ -26,6 +26,7 @@
     },
     "overall_overview_timeout_seconds": 20,
     "maximum_completion_tokens": 400,
+    "reasoning_effort": "low",
     "limit_outcome": "labelled_template_summary"
   },
   "provider_policy": {
