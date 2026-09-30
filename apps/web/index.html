@@ -264,6 +264,19 @@
   .console-routing-footer{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; margin-top:10px; color:var(--lch-text-secondary); font-size:11.5px; font-variant-numeric:tabular-nums; }
   .console-routing-footer strong{ color:var(--lch-text-primary); font-weight:500; }
   .console-routing-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  /* Overview card (spec 0011): the routing card's header and body bands. The
+     body is a polite live region, kept in the tree while empty so a finished
+     overview is announced; it gains padding only once it has content. */
+  .console-overview{ border:1px solid var(--lch-border-soft); border-radius:var(--radius-md); background:var(--lch-bg-panel); }
+  .console-overview-header{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:10px 16px; padding:var(--card-pad-y) var(--card-pad-x); }
+  .console-overview-header > div:first-child{ flex:1 1 260px; }
+  .console-overview-header .card-copy{ margin-top:4px; }
+  .console-overview-button{ height:32px; padding:0 0.875rem; border-radius:var(--radius-pill); flex-shrink:0; }
+  .console-overview-body:not(:empty){ display:grid; gap:8px; padding:var(--card-pad-y) var(--card-pad-x); border-top:1px solid var(--lch-border-soft); }
+  .console-overview-headline{ color:var(--lch-text-primary); font-size:13px; font-weight:600; line-height:1.5; }
+  .console-overview-points{ display:grid; gap:4px; padding-left:18px; list-style:disc; color:var(--lch-text-primary); font-size:12.5px; line-height:1.55; font-variant-numeric:tabular-nums; }
+  .console-overview-label, .console-overview-note{ color:var(--lch-text-secondary); font-size:11.5px; line-height:1.6; }
+  .console-overview-stale{ color:var(--lch-text-primary); font-size:12px; font-weight:500; }
   /* Current session recommendations -- the Rules Performance card's
      structure (header, distribution bar, legend toggles, stacked chart,
      data disclosure; src/components/rules-performance-chart.tsx) in this

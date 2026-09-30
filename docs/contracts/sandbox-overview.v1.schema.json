@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sandbox-overview.v1.schema.json",
+  "title": "Sandbox scenario overview response",
+  "description": "A short overview of one scenario's Risk Console figures (spec 0011, ADR-026). The server builds the facts from stored data; the headline and points are either written by the allowlisted model and fact checked, or built from the same facts by fixed rules. Nothing is stored and nothing is decided.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scenario_id", "range", "window", "source", "model_id", "headline", "points", "fallback_reason", "included"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "scenario_id": {"enum": ["S01", "S02", "S03", "S04", "S05", "MIX"]},
+    "range": {"enum": ["7", "30", "all"]},
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "days"],
+      "properties": {
+        "start": {"type": "string", "format": "date"},
+        "end": {"type": "string", "format": "date"},
+        "days": {"type": "integer", "minimum": 1}
+      }
+    },
+    "source": {"enum": ["live", "template"]},
+    "model_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 128},
+    "headline": {"type": "string", "minLength": 1, "maxLength": 160},
+    "points": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 200}
+    },
+    "fallback_reason": {
+      "enum": [null, "live_disabled", "admission_limited", "provider_unavailable", "timeout", "invalid_output", "ungrounded"]
+    },
+    "included": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feed", "cases"],
+      "properties": {
+        "feed": {"type": "boolean"},
+        "cases": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"source": {"const": "live"}}},
+      "then": {"properties": {"model_id": {"type": "string"}, "fallback_reason": {"const": null}}},
+      "else": {"properties": {"model_id": {"const": null}, "fallback_reason": {"type": "string"}}}
+    }
+  ]
+}

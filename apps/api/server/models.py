@@ -215,6 +215,68 @@ class SandboxSimulationRun(StrictFiniteModel):
     routing_snapshot: SandboxRoutingSnapshot | None = None
 
 
+class SandboxOverviewRequest(StrictFiniteModel):
+    """Ask for one scenario's overview (spec 0011): the range and the viewer's run.
+
+    The browser sends no figures or text; the server builds the facts. The run
+    ID travels in the body so it stays out of URLs and access logs.
+    """
+
+    model_config = ConfigDict(
+        allow_inf_nan=False, str_strip_whitespace=True, extra="forbid"
+    )
+
+    range: Literal["7", "30", "all"]
+    simulation_run_id: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    )
+
+
+class SandboxOverviewWindow(StrictFiniteModel):
+    """The calendar days an overview covers, both ends included."""
+
+    start: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    end: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    days: int = Field(ge=1)
+
+
+class SandboxOverviewIncluded(StrictFiniteModel):
+    """Whether the viewer's own feed and saved cases are in the facts."""
+
+    feed: bool
+    cases: bool
+
+
+class SandboxOverview(StrictFiniteModel):
+    """One scenario overview (``sandbox-overview.v1``, ADR-026).
+
+    ``source`` says who wrote it: the allowlisted model, fact checked, or the
+    fixed template. It never decides or changes anything.
+    """
+
+    contract_version: Literal["1.0"]
+    scenario_id: Literal["S01", "S02", "S03", "S04", "S05", "MIX"]
+    range: Literal["7", "30", "all"]
+    window: SandboxOverviewWindow
+    source: Literal["live", "template"]
+    model_id: str | None = Field(min_length=1, max_length=128)
+    headline: str = Field(min_length=1, max_length=160)
+    points: list[str] = Field(min_length=3, max_length=5)
+    fallback_reason: (
+        Literal[
+            "live_disabled",
+            "admission_limited",
+            "provider_unavailable",
+            "timeout",
+            "invalid_output",
+            "ungrounded",
+        ]
+        | None
+    )
+    included: SandboxOverviewIncluded
+
+
 class HistoryPoint(StrictFiniteModel):
     """One bounded, amount-only historical observation for the demo pipeline."""
 

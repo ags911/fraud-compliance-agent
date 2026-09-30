@@ -1,7 +1,7 @@
 # 0011. AI operations overview on the Risk Console (F4a)
 
 **Date**: 2026-09-29
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -17,8 +17,8 @@ An "Overview" card on the Scenario tab writes a short, plain summary of what the
 **Acceptance criteria**:
 - **AC-1**: The Scenario tab shows an "Overview" card above the four figure cards, with a "Write overview" button, for S01 to S05 and the Mixed feed. For S06 to S08 the button is disabled with the reason "Workflow scenarios have no payment decisions to summarise."
 - **AC-2**: Pressing the button sends the scenario in the path and, in a JSON body, the selected range (`7`, `30` or `all`) and, when the viewer's feed is running or finished, its run ID (never in the URL, so it stays out of access logs). The server builds the facts itself from stored data; the browser sends no figures or text.
-- **AC-3**: The facts cover the same days the dashboard shows (the dataset's last day, counted back 7 or 30 days but not past its first day; `all` is the whole dataset) and hold: scenario activity (transactions counting inbound and outbound, outbound spend, active days, largest day and its date, with the viewer's shown feed payments added), decision counts by PASS, CHALLENGE and HOLD for outbound payments only (with the viewer's run added), the viewer's run (state, payments shown of scheduled, the routing split, raised by model, and whether score routing is on, meaning the run's routing policy is loaded) when a run ID is given and belongs to the viewer, and the viewer's saved case counts for the scenario. The Mixed feed sums S01 to S05, as the dashboard does.
-- **AC-4**: When the overview switch is on, the provider is ready and the limits admit the call, the server asks the allowlisted Groq model for a JSON object with a `headline` and 3 to 5 `points`. The output is used only when it has that shape, stays within the length limits, and every figure in it is written exactly as the facts write it (counts such as `1,234`, money such as `£10,165.83`, dates such as `2 Sep 2026`); any other number, a `%`, a sign, rounding or an abbreviation fails. The viewer then sees it with the label "Written by an AI model (<model>) from the synthetic figures on this page. It can be wrong and it never decides anything."
+- **AC-3**: The facts cover the same days the dashboard shows (the dataset's last day, counted back 7 or 30 days but not past its first day; `all` is the whole dataset) and hold: scenario activity (transactions counting inbound and outbound, outbound spend, active days, largest day and its date, with the viewer's shown feed payments added), decision counts by PASS, CHALLENGE and HOLD for outbound payments only (with the viewer's run added), the viewer's run (state, payments shown of scheduled, the routing split, raised by model, and whether score routing is on, meaning the run's routing policy is loaded) when a run ID is given and belongs to the viewer, and the viewer's saved case counts for the scenario. The facts use one consistent database snapshot across activity, decisions, feed and cases. The Mixed feed sums S01 to S05, as the dashboard does.
+- **AC-4**: When the overview switch is on, the provider is ready and the limits admit the call, the server asks the allowlisted Groq model for a JSON object with a `headline` and 3 to 5 `points`. The overview prompt says exactly 3 to 5 points. For exactly `openai/gpt-oss-20b` and `openai/gpt-oss-120b`, the call uses the accepted `reasoning_effort` `low`; it is omitted for every other model. The output is used only when it has that shape, stays within the length limits, and every figure in it is written exactly as the facts write it (counts such as `1,234`, money such as `£10,165.83`, dates such as `2 Sep 2026`); any other number, a `%`, a sign, rounding or an abbreviation fails. The viewer then sees it with the label "Written by an AI model (<model>) from the synthetic figures on this page. It can be wrong and it never decides anything."
 - **AC-5**: Otherwise the viewer sees a template summary (a headline and 3 to 5 points built from the same facts by fixed rules) labelled "Template summary from the synthetic figures on this page. No AI model was used." When the live switch is on but a live overview could not be used, one reason line says why: the limit is reached, the model was unavailable, it took too long, or its output did not pass the fact check. With the switch off (the public default) the response carries `fallback_reason` `live_disabled` and the card shows no reason line, only the template label.
 - **AC-6**: Live calls have their own limits, in an accepted config file: at most 1 at a time, 3 per visitor per 10 minutes, 20 per 30 minute window, and a 20 second timeout. They never use Run showcase's allowance, and Run showcase never uses theirs. Every request, template or live, also passes an overview read limit per visitor that is always on (even with the public database guards off), at `SHOWCASE_CLIENT_CASE_READS_PER_MINUTE` or its default, answering 429 `overview_rate_limited` when exceeded. The live checks run in this order: switch off gives `live_disabled`; a missing key or a model not on the allowlist gives `provider_unavailable`; neither takes a slot. Only then is an admission slot taken (`admission_limited` when refused), the call runs under the 20 second timeout, and the slot is always released.
 - **AC-7**: What cannot be read is left out, and the overview is still written. No browser ID, or a malformed one (treated as none, never a 400): feed and cases are left out, with "Your live feed and cases aren't included." A run ID that is unknown or belongs to another browser: only the feed is left out, with "Your live feed isn't included.", and no error reveals whether it exists. Case storage off or failing: only cases are left out, with "Your saved cases aren't included."
@@ -77,6 +77,7 @@ The response contract is written first as `docs/proposals/schemas/sandbox-overvi
 | Live call | model ID | `SHOWCASE_GROQ_MODEL`, which must be in `SHOWCASE_GROQ_ALLOWED_MODELS` (as Run showcase) |
 | Live call | on or off | `SHOWCASE_OVERVIEW_LIVE_ENABLED`, then provider readiness (key present, model allowlisted) |
 | Live call | output token cap | a new `max_completion_tokens` argument on the provider's JSON helper (default 800, unchanged for investigations); the overview passes 400 from its config |
+| Live call | reasoning effort | `reasoning_effort` `low` in `config/public-showcase-overview.v1.json`, passed only when the selected model is `openai/gpt-oss-20b` or `openai/gpt-oss-120b`; the provider helper omits it for every other model and investigations |
 | Live call | limits and timeout | `config/public-showcase-overview.v1.json` |
 | Visitor key for limits | client key | `client_identity(request)` with `SHOWCASE_TRUSTED_PROXY_HOPS` (as the case read limit) |
 | Read limit | requests per visitor per minute | a separate, always on `ClientWindowLimiter` at `SHOWCASE_CLIENT_CASE_READS_PER_MINUTE` (or its default) |
@@ -89,7 +90,7 @@ The response contract is written first as `docs/proposals/schemas/sandbox-overvi
 
 **Template rules** (deterministic, no model): headline "`<Scenario label>`: `<transactions>` transactions and `<spend>` outbound spend over `<days>` days." Points in this order: decisions ("`<n>` PASS, `<n>` CHALLENGE and `<n>` HOLD."), largest day ("The largest day was `<date>`, with `<spend>` outbound.", or "No day had outbound spend."), active days ("Payments landed on `<n>` of `<days>` days."), then, only when present, feed ("Your live feed has shown `<shown>` of `<scheduled>` payments; the model raised `<n>`.", or "…; score routing is off.") and cases ("You have `<n>` saved cases for this scenario."). The first three are always present, so there are always 3 to 5 points.
 
-**Model call** (reusing `server/showcase_investigation/provider.py`'s JSON call helper, given a new `max_completion_tokens` argument): temperature 0, JSON response mode, at most 400 output tokens, one system message ("Summarise only the facts given. Copy every figure and date exactly as written; never round, convert, abbreviate or compute. Do not give advice, predict, or recommend any action on a payment. Reply as JSON: {headline, points}."), one user message holding the facts as JSON. Headline at most 160 characters; each point at most 200; 3 to 5 points.
+**Model call** (reusing `server/showcase_investigation/provider.py`'s JSON call helper, given a new `max_completion_tokens` and optional `reasoning_effort` argument): temperature 0, JSON response mode, at most 400 output tokens, and `reasoning_effort` `low` only for `openai/gpt-oss-20b` and `openai/gpt-oss-120b`. One system message says "Summarise only the facts given. Copy every figure and date exactly as written; never round, convert, abbreviate or compute. Do not give advice, predict, or recommend any action on a payment. Reply as JSON: {headline, points}, with exactly 3 to 5 points." One user message holds the facts as JSON. Headline at most 160 characters; each point at most 200; 3 to 5 points.
 
 **Fact check**: skip scenario IDs (`S0` followed by a digit); then find every figure in the headline and points: money (`£` and digits), dates (a day, a month name, a year), and any other run of digits with its commas, decimal point, sign or `%`. Each must equal, character for character, a token the facts write (a count, a money amount, a date, or the window's day count). Any other figure, a `%`, a sign or a number word such as "ten thousand" fails. Any miss gives `ungrounded` and the template.
 
@@ -105,7 +106,7 @@ The response contract is written first as `docs/proposals/schemas/sandbox-overvi
 
 **Configuration required**:
 - `SHOWCASE_OVERVIEW_LIVE_ENABLED`: turns live overviews on; explicit boolean, default `false`; a Bicep parameter defaulting to `'false'`.
-- `config/public-showcase-overview.v1.json`: accepted limits (concurrency 1, 3 per client per 600 seconds, 20 per 1,800 second window, 20 second timeout, 400 output tokens), `status: accepted` after ADR-026.
+- `config/public-showcase-overview.v1.json`: accepted limits (concurrency 1, 3 per client per 600 seconds, 20 per 1,800 second window, 20 second timeout, 400 output tokens) and `reasoning_effort` `low` for `openai/gpt-oss-20b` and `openai/gpt-oss-120b`, `status: accepted` after ADR-026.
 - Reused, now always read for this route: `SHOWCASE_CLIENT_CASE_READS_PER_MINUTE` (its existing default applies when unset).
 - Reused, unchanged: `GROQ_API_KEY`, `SHOWCASE_GROQ_MODEL`, `SHOWCASE_GROQ_ALLOWED_MODELS`, `SHOWCASE_TRUSTED_PROXY_HOPS`, `DATABASE_URL`.
 
@@ -119,7 +120,8 @@ The response contract is written first as `docs/proposals/schemas/sandbox-overvi
 - Fact check cases: `10%`, `£10k`, `about £10,166`, a date not in the facts, and a count that exists only as money all fail; exact tokens pass, verifies **AC-4**.
 - Live check order: switch off and a provider that is not ready take no admission slot; a refused slot gives `admission_limited`; the slot is released after a timeout, verifies **AC-6**.
 - Template minimum: no feed, no cases and no outbound spend still give 3 points, verifies **AC-5**.
-- Token cap: the overview call passes 400 and investigations still pass 800, verifies **AC-4**.
+- Model request: the overview prompt requires 3 to 5 points; an `openai/gpt-oss-20b` or `openai/gpt-oss-120b` overview call passes 400 and `reasoning_effort` `low`, every other model and investigations omit reasoning effort, verifies **AC-4**.
+- Live smoke check: the revised prompt and accepted configuration produce `source` `live` through the application with `openai/gpt-oss-120b`, verifies **AC-4**.
 - Separate limits: overview calls exhaust their limit and Run showcase still admits, and the reverse, verifies **AC-6**.
 - Staleness: after a feed payment lands, after the feed stops with an unchanged count, and after a case moves between outcomes, the card shows "Figures have changed…" and no request is sent, verifies **AC-9**.
 - S06 to S08: button disabled with the reason; the API returns 404 `sandbox_scenario_not_decided`, verifies **AC-1**.
@@ -138,7 +140,7 @@ Build approach: Tracer Bullet (from `docs/scope/scope.md`): the first slice runs
 
 **Slice 2: the live model, checked**
 5. `config/public-showcase-overview.v1.json`, settings (`SHOWCASE_OVERVIEW_LIVE_ENABLED`), and a separate admission controller; satisfies **AC-6**.
-6. `max_completion_tokens` on the provider helper; the live call in the AC-6 check order, shape and length checks, the fact check, timeout, and every fallback reason; satisfies **AC-4**, **AC-5**, **AC-6**.
+6. `max_completion_tokens` and optional `reasoning_effort` on the provider helper; load the accepted effort from config, pass it only for `openai/gpt-oss-20b` and `openai/gpt-oss-120b` overview calls, and keep every other model and investigations unchanged. Add the live call in the AC-6 check order, shape and length checks, the fact check, timeout, and every fallback reason; satisfies **AC-4**, **AC-5**, **AC-6**.
 7. Card shows the live label and model ID and the reason line; satisfies **AC-4**, **AC-5**.
 
 **Slice 3: finish**
@@ -158,6 +160,7 @@ Build approach: Tracer Bullet (from `docs/scope/scope.md`): the first slice runs
 - The server now reproduces the dashboard's window and card rules, so the two must be changed together; tests pin both.
 - The number check is strict: a model that rewrites `£10,165.83` as "about £10k" is rejected and the template is shown. That is intended, but more live attempts end on the template.
 - Live overviews wait on the provider for up to 20 seconds, on top of any cold start.
+- The low effort setting is specific to short `openai/gpt-oss-20b` and `openai/gpt-oss-120b` overview calls. It is not a general change to investigation reasoning. A real provider smoke check is still needed before AC-4 can be accepted.
 
 **Neutral**:
 - No migration, no new provider, no new dependency.

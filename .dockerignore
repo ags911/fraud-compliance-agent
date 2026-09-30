@@ -36,6 +36,11 @@
 !docs/contracts/public-showcase-events.v1.schema.json
 !docs/contracts/public-showcase-events.v2.schema.json
 
+# The dashboard overview's accepted limits and its response contract (spec
+# 0011, ADR-026). Neither holds a secret or provider data.
+!config/public-showcase-overview.v1.json
+!docs/contracts/sandbox-overview.v1.schema.json
+
 # Never, under any pattern above.
 **/__pycache__
 **/*.py[cod]
