@@ -120,6 +120,22 @@ test("revealed decisions flow from the feed into their outcome nodes", async ({ 
   await expect(board.locator("[tabindex]:not([tabindex='-1'])")).toHaveCount(0)
 })
 
+test("a lane count lands with its route and pulses its destination once", async ({ page }) => {
+  const reveal = await stubRouting(page, [[1, "PASS"]])
+  await page.goto("/?scenario=S01")
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  const board = page.getByRole("region", { name: "Live decision routing" })
+
+  reveal()
+  await expect(page.locator("g[data-sweep='PASS']")).toHaveCount(1)
+  await page.waitForTimeout(300)
+  await expect(nodeText(page)).toHaveText(["Feed", "0", "PASS", "0", "CHALLENGE", "0", "HOLD", "0"])
+
+  await expect(nodeText(page)).toHaveText(["Feed", "1", "PASS", "1", "CHALLENGE", "0", "HOLD", "0"])
+  await expect(board.locator("[data-arrival-pulse='PASS']")).toHaveCount(1)
+  await expect(board.locator("[data-arrival-pulse='CHALLENGE'], [data-arrival-pulse='HOLD']")).toHaveCount(0)
+})
+
 test("a snapshot that reveals several payments keeps all lane counts exact and sweeps only its newest", async ({ page }) => {
   // covers: AC 2, AC 5; this is the worker-catch-up case from critical scenario 7.
   // The second simulation_state frame contains three newly revealed payments,

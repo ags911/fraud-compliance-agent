@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Routing motion comparison</title>
+    <style>
+      :root { --bg: lch(4 0 0); --panel: lch(8 0 0); --border: lch(20 0 0); --text: #f5f5f5; --muted: #999; --hold: #eb5757; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 32px; background: var(--bg); color: var(--text); font: 14px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+      main { width: min(1120px, 100%); }
+      h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+      .intro { margin: 7px 0 24px; color: var(--muted); }
+      .comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      article { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+      header { padding: 16px 18px 14px; border-bottom: 1px solid var(--border); }
+      h2 { margin: 0; font-size: 14px; }
+      header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+      svg { display: block; width: 100%; height: auto; }
+      .lane { fill: #363636; }
+      .node { fill: #4a2020; stroke: var(--hold); stroke-width: 1; }
+      .label { fill: #fff; font-size: 12px; font-weight: 600; text-anchor: middle; }
+      .value { fill: #ddd; font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; text-anchor: middle; }
+      .foot { padding: 0 18px 16px; color: var(--muted); font-size: 12px; }
+      .moving-tail { stroke: url(#moving-gradient); stroke-width: 56; stroke-linecap: butt; stroke-dasharray: 230 1000; animation: travel 1.2s cubic-bezier(.3,0,.2,1) infinite; }
+      .moving-head { stroke: var(--hold); stroke-width: 56; stroke-linecap: butt; stroke-dasharray: 2 1000; animation: travel 1.2s cubic-bezier(.3,0,.2,1) infinite; }
+      .glow-lane { fill: var(--hold); opacity: .18; animation: lane-glow .65s ease-in-out infinite alternate; }
+      .glow-node { animation: node-pulse .65s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+      @keyframes travel { from { stroke-dashoffset: 230; } to { stroke-dashoffset: -770; } }
+      @keyframes lane-glow { from { opacity: .08; } to { opacity: .42; } }
+      @keyframes node-pulse { from { opacity: 1; } to { opacity: .7; } }
+      @media (max-width: 720px) { body { padding: 18px; } .comparison { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .glow-lane { opacity: .22; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Live decision routing: motion comparison</h1>
+      <p class="intro">The same simulated HOLD decision. Left shows one travelling item. Right shows an aggregate-friendly active lane.</p>
+      <section class="comparison" aria-label="Routing motion options">
+        <article>
+          <header><h2>Moving gradient</h2><p>Best for a calm, low-rate feed.</p></header>
+          <svg viewBox="0 0 520 235" role="img" aria-label="A red gradient travels from Feed to HOLD">
+            <defs>
+              <linearGradient id="moving-gradient" x1="0" x2="1"><stop offset="0" stop-color="#eb5757" stop-opacity="0" /><stop offset="1" stop-color="#eb5757" stop-opacity=".9" /></linearGradient>
+              <clipPath id="moving-clip"><path d="M105 122 C220 122 295 150 412 150 L412 206 C295 206 220 178 105 178 Z" /></clipPath>
+            </defs>
+            <rect class="node" x="30" y="122" width="75" height="56" rx="4" /><text class="label" x="67" y="145">FEED</text><text class="value" x="67" y="165">42</text>
+            <path class="lane" d="M105 122 C220 122 295 150 412 150 L412 206 C295 206 220 178 105 178 Z" />
+            <g clip-path="url(#moving-clip)"><path class="moving-tail" d="M105 150 C220 150 295 178 412 178" /><path class="moving-head" d="M105 150 C220 150 295 178 412 178" /></g>
+            <rect class="node" x="412" y="150" width="78" height="56" rx="4" /><text class="label" x="451" y="173">HOLD</text><text class="value" x="451" y="193">42</text>
+          </svg>
+          <p class="foot">One item is legible. At high rates, repeated restarts compete for attention.</p>
+        </article>
+        <article>
+          <header><h2>Whole lane glow</h2><p>Best for high-rate, aggregated activity.</p></header>
+          <svg viewBox="0 0 520 235" role="img" aria-label="The full HOLD lane and node pulse red">
+            <rect class="node" x="30" y="122" width="75" height="56" rx="4" /><text class="label" x="67" y="145">FEED</text><text class="value" x="67" y="165">42</text>
+            <path class="lane" d="M105 122 C220 122 295 150 412 150 L412 206 C295 206 220 178 105 178 Z" />
+            <path class="glow-lane" d="M105 122 C220 122 295 150 412 150 L412 206 C295 206 220 178 105 178 Z" />
+            <g class="glow-node"><rect class="node" x="412" y="150" width="78" height="56" rx="4" /><text class="label" x="451" y="173">HOLD</text><text class="value" x="451" y="193">42</text></g>
+          </svg>
+          <p class="foot">No event queue. A continuing glow absorbs bursts while the count keeps climbing.</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

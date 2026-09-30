@@ -1,7 +1,8 @@
-import { useId } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { EvilSankeyChart } from "@/components/evilcharts/charts/recharts-sankey-chart"
 import type { ChartConfig } from "@/components/evilcharts/ui/recharts-chart"
 import { EMPTY_ROUTING_SUMMARY, ROUTING_OUTCOMES, modelRouteMarker, routingRuleNote, routingSankeyData, routingSummary } from "@/lib/routing-summary"
+import type { RoutingSummary } from "@/lib/routing-summary"
 import type { SandboxSimulationRun } from "@/lib/sandbox-simulation"
 import { useRoutingBoardHidden } from "@/lib/useRoutingBoardHidden"
 
@@ -21,6 +22,39 @@ const chartConfig = {
 } satisfies ChartConfig
 
 /**
+ * Holds a new snapshot at the source until the chart reports that its moving
+ * bar has reached the destination. This keeps the visible lane count and its
+ * arrival pulse in step with the route, while the underlying feed stays live.
+ */
+function useArrivingRoutingSummary(summary: RoutingSummary | null, runId: string | null) {
+  const [displayedSummary, setDisplayedSummary] = useState(summary)
+  const newestSummary = useRef(summary)
+  const displayedRunId = useRef(runId)
+
+  useEffect(() => {
+    newestSummary.current = summary
+    if (displayedRunId.current !== runId) {
+      displayedRunId.current = runId
+      const reset = window.setTimeout(() => setDisplayedSummary(summary), 0)
+      return () => window.clearTimeout(reset)
+    }
+
+    if (summary === null) {
+      const clear = window.setTimeout(() => setDisplayedSummary((current) => current === null ? current : null), 0)
+      return () => window.clearTimeout(clear)
+    }
+  }, [runId, summary?.last?.sequence, summary])
+
+  const settleArrival = useCallback((sequence: string | number) => {
+    const newest = newestSummary.current
+    if (newest?.last?.sequence !== sequence) return
+    setDisplayedSummary(newest)
+  }, [])
+
+  return { displayedSummary, settleArrival }
+}
+
+/**
  * Fixed, read only Sankey of revealed feed decisions (spec 0006). Each was
  * decided at run start by its scenario's rule, and a rule PASS may have been
  * raised by the model score (spec 0010), which the footer marks and counts.
@@ -29,7 +63,8 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
   // Every outcome is drawn from the start, at zero before any payment.
   // Workflow scenarios have no payment schedule, so they get no chart.
   const summary = status === "unsupported" ? null : routingSummary(run) ?? EMPTY_ROUTING_SUMMARY
-  const data = summary ? routingSankeyData(summary) : null
+  const { displayedSummary, settleArrival } = useArrivingRoutingSummary(summary, run?.run_id ?? null)
+  const data = displayedSummary ? routingSankeyData(displayedSummary) : null
   // Hiding stops the board's motion and frees its space without stopping the
   // feed (spec 0006 AC 9). It changes display only.
   const [hidden, setHidden] = useRoutingBoardHidden()
@@ -46,7 +81,7 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
             ? "No payments routed"
             : "Start Live to route simulated payments."
   // Why the lanes look as they do (spec 0008 AC 8), from the run's own data.
-  const ruleNote = summary ? routingRuleNote(run?.scenario_id ?? null, summary) : null
+  const ruleNote = displayedSummary ? routingRuleNote(run?.scenario_id ?? null, displayedSummary) : null
   const announcement =
     status === "live"
       ? "Routing live payments."
@@ -64,7 +99,7 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
         <div className="console-routing-pills">
           <span className="console-source-pill">Synthetic</span>
           <span className="console-source-pill">Read only</span>
-          {summary && data ? (
+          {displayedSummary && data ? (
             <button
               aria-controls={chartAreaId}
               aria-expanded={!hidden}
@@ -78,7 +113,7 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
         </div>
       </header>
       <p className="console-routing-sr" aria-live="polite">{announcement}</p>
-      {!summary || !data ? <p className="console-routing-empty">{quiet}</p> : (
+      {!displayedSummary || !data ? <p className="console-routing-empty">{quiet}</p> : (
         <div className={hidden ? "console-routing-body is-collapsed" : "console-routing-body"}>
           <div id={chartAreaId}>
             {hidden ? null : (
@@ -95,29 +130,35 @@ export function ConsoleDecisionRouting({ run, status }: ConsoleDecisionRoutingPr
                     sankeyProps={{ accessibilityLayer: false, margin: { top: 28, right: 5, bottom: 20, left: 5 } }}
                     sort={false}
                   >
-                    <EvilSankeyChart.Node minNodeHeight={44} radius={4}>
+                    <EvilSankeyChart.Node
+                      arrivalPulseKey={displayedSummary.last?.sequence ?? null}
+                      arrivalPulseTarget={displayedSummary.last?.recommendation ?? null}
+                      minNodeHeight={44}
+                      radius={4}
+                    >
                       <EvilSankeyChart.NodeLabel position="inside" showValues valueFormatter={(value) => value.toLocaleString()} />
                     </EvilSankeyChart.Node>
                     <EvilSankeyChart.Link
                       variant="source"
                       verticalPadding={8}
                       emptyTargetOpacity={0.15}
-                      pulseKey={summary.last?.sequence ?? null}
-                      pulseTarget={summary.last?.recommendation ?? null}
+                      onPulseArrival={settleArrival}
+                      pulseKey={summary?.last?.sequence ?? null}
+                      pulseTarget={summary?.last?.recommendation ?? null}
                     />
                   </EvilSankeyChart>
                 </div>
                 <ul className="console-routing-sr" aria-label="Routed payments by outcome">
-                  {ROUTING_OUTCOMES.map((outcome) => <li key={outcome}>{outcome} {summary.counts[outcome]}</li>)}
+                  {ROUTING_OUTCOMES.map((outcome) => <li key={outcome}>{outcome} {displayedSummary.counts[outcome]}</li>)}
                 </ul>
               </>
             )}
           </div>
           <p className="console-routing-footer">
-            {summary.last ? <span>Last routed <strong>#{summary.last.sequence}</strong> → {summary.last.recommendation}{modelRouteMarker(summary.last)}</span> : <span>{quiet}</span>}
+            {displayedSummary.last ? <span>Last routed <strong>#{displayedSummary.last.sequence}</strong> → {displayedSummary.last.recommendation}{modelRouteMarker(displayedSummary.last)}</span> : <span>{quiet}</span>}
             {run?.routing_snapshot ? (
               <span className="console-routing-model">
-                {summary.routingPolicy ? `Raised by model: ${summary.raisedByModel}` : "Score routing off"}
+                {displayedSummary.routingPolicy ? `Raised by model: ${displayedSummary.raisedByModel}` : "Score routing off"}
               </span>
             ) : null}
             {ruleNote ? <span className="console-routing-rule">{ruleNote}</span> : null}
