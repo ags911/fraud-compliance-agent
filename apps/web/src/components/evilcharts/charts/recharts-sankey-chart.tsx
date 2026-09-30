@@ -15,6 +15,7 @@ import {
   isValidElement,
   use,
   useCallback,
+  useEffect,
   useId,
   useMemo,
   useState,
@@ -35,7 +36,7 @@ import {
   LoadingIndicator,
 } from "@/components/evilcharts/ui/recharts-chart";
 import { ChartBackground, type BackgroundVariant } from "@/components/evilcharts/ui/recharts-background";
-import { motion, useReducedMotion } from "motion/react";
+import { animate, cubicBezier, motion, useReducedMotion } from "motion/react";
 
 // Constants
 const LOADING_ANIMATION_DURATION = 2000; // full loading cycle duration in milliseconds
@@ -43,6 +44,27 @@ const DEFAULT_NODE_WIDTH = 10;
 const DEFAULT_NODE_PADDING = 10;
 const DEFAULT_LINK_CURVATURE = 0.5;
 const DEFAULT_ITERATIONS = 32;
+
+// Nodes and bands glide to a new layout instead of snapping.
+const SETTLE_DURATION = 0.45; // seconds
+const SETTLE_EASE = [0.22, 1, 0.36, 1] as const; // ease-out
+
+// The routed item: a bright head with a fading tail, travelling the lane's
+// centre curve. Lengths are fractions of the lane (the path is normalised to 1).
+const SWEEP_DURATION = 1.2; // seconds
+const SWEEP_EASE = [0.3, 0, 0.2, 1] as const; // quick start, soft landing
+const SWEEP_HEAD = 0.05;
+// Overlapping tails of falling length: their opacities stack into a smooth fade.
+const SWEEP_TAILS = [0.3, 0.26, 0.22, 0.18, 0.14, 0.1, 0.07].map((length) => ({ length, opacity: 0.09 }));
+const SWEEP_TRAVEL = 1 + Math.max(...SWEEP_TAILS.map((tail) => tail.length)); // head end runs past the lane until the tail is in
+// Seconds until the head reaches the outcome node, when the layout and
+// counts settle so the new number lands with the item.
+const SWEEP_ARRIVAL = (() => {
+  const ease = cubicBezier(...SWEEP_EASE);
+  let t = 0;
+  while (t < 1 && ease(t) * SWEEP_TRAVEL < 1) t += 0.01;
+  return t * SWEEP_DURATION;
+})();
 
 type LinkVariant = "gradient" | "solid" | "source" | "target";
 type NodeLabelPosition = "inside" | "outside";
@@ -64,6 +86,7 @@ type SankeyChartContextValue = {
   isLoading: boolean; // whether the chart shows its loading skeleton
   selectedNode: string | null; // currently selected node name, or null when none
   selectNode: (nodeName: string | null) => void; // sets the selected node
+  settleMemory: SettleMemory; // last drawn geometry per node and band, for tweening across remounts
 };
 
 const SankeyChartContext = createContext<SankeyChartContextValue | null>(null);
@@ -132,6 +155,7 @@ export function EvilSankeyChart({
 }: EvilSankeyChartProps) {
   const chartId = useId().replace(/:/g, ""); // colon-free id keeps CSS/SVG selectors valid
   const [selectedNode, setSelectedNode] = useState<string | null>(defaultSelectedNode);
+  const [settleMemory] = useState<SettleMemory>(() => new Map());
 
   // Updates selection state and notifies the parent with the node's flow value
   const selectNode = useCallback(
@@ -151,8 +175,8 @@ export function EvilSankeyChart({
   );
 
   const contextValue = useMemo<SankeyChartContextValue>(
-    () => ({ data, config, chartId, isLoading, selectedNode, selectNode }),
-    [data, config, chartId, isLoading, selectedNode, selectNode],
+    () => ({ data, config, chartId, isLoading, selectedNode, selectNode, settleMemory }),
+    [data, config, chartId, isLoading, selectedNode, selectNode, settleMemory],
   );
 
   return (
@@ -316,7 +340,9 @@ const resolveSankeyRenderers = (children: ReactNode): Pick<SankeyProps, "node" |
   });
 
   return {
-    node: (props: SankeyNodeProps) => <SankeyNode {...props} nodeConfig={nodeProps} />,
+    node: (props: SankeyNodeProps) => (
+      <SankeyNode {...props} nodeConfig={nodeProps} pulseKey={(linkProps as LinkProps | null)?.pulseKey ?? null} />
+    ),
     link: (props: SankeyLinkProps) => <SankeyLink {...props} linkConfig={linkProps} />,
   };
 };
@@ -338,30 +364,104 @@ const resolveNodeLabel = (children: ReactNode): NodeLabelProps | null => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Settling — tweens nodes and bands between layouts
+// ─────────────────────────────────────────────────────────────────────────────
+
+type PulseKey = string | number | null;
+type Geometry = Record<string, number>;
+type SettleMemory = Map<string, { geometry: Geometry; pulseKey: PulseKey }>;
+
+const mixGeometry = <T extends Geometry>(from: T, to: T, progress: number): T =>
+  Object.fromEntries(
+    Object.keys(to).map((key) => [key, (from[key] ?? to[key]) + (to[key] - (from[key] ?? to[key])) * progress]),
+  ) as T;
+
+const sameGeometry = (a: Geometry, b: Geometry): boolean =>
+  Object.keys(b).every((key) => Math.abs((a[key] ?? Number.NaN) - b[key]) < 0.01);
+
+/**
+ * Recharts keys each node by its position and each band by its value, so a
+ * new count remounts them. The chart root remembers the last drawn geometry
+ * per stable id, and this tweens from it, so the layout glides instead of
+ * snapping. When a new item is routed (the pulse key changes), the change
+ * waits until the item reaches its node. Reduced motion settles at once.
+ */
+function useSettledGeometry<T extends Geometry>(id: string, target: T, pulseKey: PulseKey): T {
+  const { settleMemory } = useSankeyChart();
+  const reduceMotion = useReducedMotion() ?? false;
+  const [shown, setShown] = useState<T>(() => (settleMemory.get(id)?.geometry as T | undefined) ?? target);
+  // The effect reruns when the target's values change, not its identity.
+  const signature = Object.values(target).join(" ");
+
+  useEffect(() => {
+    const previous = settleMemory.get(id);
+    const from = (previous?.geometry as T | undefined) ?? target;
+    const remember = (geometry: T) => settleMemory.set(id, { geometry, pulseKey });
+
+    if (reduceMotion || previous === undefined || sameGeometry(from, target)) {
+      remember(target);
+      setShown(target);
+      return;
+    }
+
+    // Memory takes the new pulse key only once the tween moves, so a restart
+    // (a newer item, or StrictMode's second run) still waits for arrival.
+    const arriving = pulseKey !== null && previous.pulseKey !== pulseKey;
+    const controls = animate(0, 1, {
+      duration: SETTLE_DURATION,
+      ease: SETTLE_EASE,
+      delay: arriving ? SWEEP_ARRIVAL : 0,
+      onUpdate: (progress) => {
+        const geometry = mixGeometry(from, target, progress);
+        remember(geometry);
+        setShown(geometry);
+      },
+    });
+    return () => controls.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on `signature`
+  }, [id, signature, pulseKey, reduceMotion, settleMemory]);
+
+  return shown;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Node renderer — draws a single sankey node from the resolved <Node /> config
 // ─────────────────────────────────────────────────────────────────────────────
 
 type SankeyNodeRendererProps = SankeyNodeProps & {
   nodeConfig: NodeProps | null; // resolved props from the composed <Node />
+  pulseKey: PulseKey; // the composed <Link />'s pulse key, so a count lands with its item
 };
 
 /**
  * Renders a single sankey node rectangle, plus its optional label and value.
  * The root passes one of these per node, configured from the composed <Node />.
+ * Its position, size and count settle smoothly from the previous layout.
  */
-const SankeyNode = ({ x, y, width, height, payload, nodeConfig }: SankeyNodeRendererProps) => {
+const SankeyNode = ({ x: layoutX, y: layoutY, width: layoutWidth, height: layoutHeight, payload, nodeConfig, pulseKey }: SankeyNodeRendererProps) => {
   const { config, chartId, data, selectedNode, selectNode } = useSankeyChart();
+  const reduceMotion = useReducedMotion() ?? false;
 
   const radius = nodeConfig?.radius ?? 0;
-  const renderedNodeHeight = Math.max(height, nodeConfig?.minNodeHeight ?? 0);
-  const renderedNodeY = y + (height - renderedNodeHeight) / 2;
   const isClickable = nodeConfig?.isClickable ?? false;
   const label = resolveNodeLabel(nodeConfig?.children);
 
   const nodeName = payload.name;
   // A node may carry `displayValue` when its drawn size differs from its
   // real value (a size floor keeps empty nodes visible); the label shows it.
-  const nodeValue = (payload as RechartsSankeyNode & { displayValue?: number }).displayValue ?? payload.value;
+  const layoutValue = (payload as RechartsSankeyNode & { displayValue?: number }).displayValue ?? payload.value;
+  const settled = useSettledGeometry(
+    `node-${payload.name}`,
+    { x: layoutX, y: layoutY, width: layoutWidth, height: layoutHeight, value: layoutValue },
+    pulseKey,
+  );
+  const { x, y, width, height } = settled;
+  const renderedNodeHeight = Math.max(height, nodeConfig?.minNodeHeight ?? 0);
+  const renderedNodeY = y + (height - renderedNodeHeight) / 2;
+  const nodeValue = Math.round(settled.value);
+  // The count slides in when it changes, never on the node's first draw.
+  const [firstValue] = useState(nodeValue);
+  const countEnters = !reduceMotion && nodeValue !== firstValue;
   const nodeIcon = (payload as RechartsSankeyNode & { icon?: ReactNode }).icon;
 
   const isHighlighted = isNodeConnected(data, selectedNode, nodeName);
@@ -453,18 +553,24 @@ const SankeyNode = ({ x, y, width, height, payload, nodeConfig }: SankeyNodeRend
             {compactZeroValue ? `${configLabel} · ${valueFormatter(nodeValue)}` : configLabel}
           </text>
           {showValues && !compactZeroValue && (
-            <text
-              x={labelX}
-              y={valueY}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={nodeConfig?.valueColor ?? nodeConfig?.labelColor}
-              className="fill-foreground/60 font-mono text-xs font-medium tabular-nums transition-opacity duration-200 dark:fill-white"
-              opacity={dimmed ? 0.3 : 0.6}
+            <motion.g
+              key={nodeValue}
+              initial={countEnters ? { opacity: 0, y: 5 } : false}
+              animate={{ opacity: dimmed ? 0.3 : 0.6, y: 0 }}
+              transition={{ duration: 0.25, ease: SETTLE_EASE }}
               style={{ pointerEvents: "none" }}
             >
-              {valueFormatter(nodeValue)}
-            </text>
+              <text
+                x={labelX}
+                y={valueY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={nodeConfig?.valueColor ?? nodeConfig?.labelColor}
+                className="fill-foreground/60 font-mono text-xs font-medium tabular-nums dark:fill-white"
+              >
+                {valueFormatter(nodeValue)}
+              </text>
+            </motion.g>
           )}
         </>
       )}
@@ -509,16 +615,18 @@ type SankeyLinkRendererProps = SankeyLinkProps & {
 
 /**
  * Renders a single sankey link band, colored by the composed <Link /> variant.
- * Highlights the bands connected to the selected node and dims the rest.
+ * Highlights the bands connected to the selected node and dims the rest. The
+ * band settles smoothly from the previous layout, and the newest routed item
+ * travels its centre curve as a bright head with a fading tail.
  */
 const SankeyLink = ({
-  sourceX,
-  targetX,
-  sourceY,
-  targetY,
-  sourceControlX,
-  targetControlX,
-  linkWidth,
+  sourceX: layoutSourceX,
+  targetX: layoutTargetX,
+  sourceY: layoutSourceY,
+  targetY: layoutTargetY,
+  sourceControlX: layoutSourceControlX,
+  targetControlX: layoutTargetControlX,
+  linkWidth: layoutLinkWidth,
   index,
   payload,
   linkConfig,
@@ -528,15 +636,26 @@ const SankeyLink = ({
 
   const variant = linkConfig?.variant ?? "gradient";
   const verticalPadding = linkConfig?.verticalPadding ?? 0;
+  const pulseKey = linkConfig?.pulseKey ?? null;
 
   const sourceName = payload.source.name;
   const targetName = payload.target.name;
-  // The routing board has one source node. Glow only its newest outcome band,
-  // so the animation reads as one decision travelling across the whole path.
-  const isPulsing = sourceName === "FEED"
-    && targetName === linkConfig?.pulseTarget
-    && linkConfig.pulseKey !== null
-    && linkConfig.pulseKey !== undefined;
+  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth } = useSettledGeometry(
+    `link-${sourceName}-${targetName}`,
+    {
+      sourceX: layoutSourceX,
+      targetX: layoutTargetX,
+      sourceY: layoutSourceY,
+      targetY: layoutTargetY,
+      sourceControlX: layoutSourceControlX,
+      targetControlX: layoutTargetControlX,
+      linkWidth: layoutLinkWidth,
+    },
+    pulseKey,
+  );
+  // The routing board has one source node. Only its newest outcome band
+  // carries the item, so it reads as one decision crossing the whole path.
+  const isPulsing = sourceName === "FEED" && targetName === linkConfig?.pulseTarget && pulseKey !== null;
 
   const isConnected =
     selectedNode === null || selectedNode === sourceName || selectedNode === targetName;
@@ -549,19 +668,29 @@ const SankeyLink = ({
   const paddedLinkWidth = Math.max(1, linkWidth - verticalPadding);
   const halfWidth = paddedLinkWidth / 2;
 
-  // The sweep is a band about a fifth of the lane long, so on a short (narrow
-  // screen) lane it still reads as one item, and its speed stays similar.
-  const laneLength = Math.max(1, targetX - sourceX);
-  const sweepWidth = Math.min(160, Math.max(48, laneLength * 0.2));
-  const sweepDuration = Math.min(1.6, Math.max(0.9, laneLength / 550));
   const sweepColor = targetName in config ? `var(--color-${targetName}-0)` : "currentColor";
-  const sweepRect = `M${sourceX - sweepWidth},${Math.min(sourceY, targetY) - linkWidth - 20}h${sweepWidth}v${Math.abs(targetY - sourceY) + linkWidth * 2 + 40}h-${sweepWidth}Z`;
+  // The item is a round-capped pill on the lane's centre line, sized to the
+  // lane so it stays inside a thin band and does not swamp a wide one.
+  const sweepWidth = Math.min(10, Math.max(3, paddedLinkWidth * 0.6));
+  const centrePath = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
 
   const linkAreaPath = `M${sourceX},${sourceY - halfWidth}
     C${sourceControlX},${sourceY - halfWidth} ${targetControlX},${targetY - halfWidth} ${targetX},${targetY - halfWidth}
     L${targetX},${targetY + halfWidth}
     C${targetControlX},${targetY + halfWidth} ${sourceControlX},${sourceY + halfWidth} ${sourceX},${sourceY + halfWidth}
     Z`;
+
+  // Every dash ends at the same moving point (the head's front), which runs
+  // from the lane start until the longest tail has entered the node. The
+  // spacing exceeds the path, so each dash is drawn once.
+  const sweepDash = (length: number) => ({
+    initial: { pathLength: length, pathSpacing: 2, pathOffset: -length },
+    animate: { pathOffset: SWEEP_TRAVEL - length, opacity: [0, 1, 1, 0] },
+    transition: {
+      pathOffset: { duration: SWEEP_DURATION, ease: SWEEP_EASE },
+      opacity: { duration: SWEEP_DURATION, times: [0, 0.06, 0.78, 1] },
+    },
+  });
 
   return (
     <Layer>
@@ -581,15 +710,8 @@ const SankeyLink = ({
             <clipPath id={`${chartId}-link-sweep-clip-${index}`}>
               <path d={linkAreaPath} />
             </clipPath>
-            <linearGradient id={`${chartId}-link-sweep-${index}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={sweepColor} stopOpacity={0} />
-              <stop offset="28%" stopColor={sweepColor} stopOpacity={0.05} />
-              <stop offset="50%" stopColor={sweepColor} stopOpacity={1} />
-              <stop offset="72%" stopColor={sweepColor} stopOpacity={0.05} />
-              <stop offset="100%" stopColor={sweepColor} stopOpacity={0} />
-            </linearGradient>
-            <filter id={`${chartId}-link-pulse-${index}`} x="-8%" y="-45%" width="116%" height="190%">
-              <feGaussianBlur stdDeviation="5" />
+            <filter id={`${chartId}-link-pulse-${index}`} x="-20%" y="-50%" width="140%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" />
             </filter>
           </>
         )}
@@ -606,13 +728,11 @@ const SankeyLink = ({
         className="transition-opacity duration-200"
       />
       {isPulsing && (
-        // The clip sits on this group, not on the moving paths: a clip on a
-        // transformed element moves with it and never meets the lane.
         <g clipPath={`url(#${chartId}-link-sweep-clip-${index})`} pointerEvents="none" data-sweep={targetName}>
           {reduceMotion ? (
             // Reduced motion: the lane tints in place, with no travel.
             <motion.path
-              key={`link-sweep-still-${index}-${linkConfig.pulseKey}`}
+              key={`link-sweep-still-${index}-${pulseKey}`}
               d={linkAreaPath}
               fill={sweepColor}
               initial={{ opacity: 0 }}
@@ -620,27 +740,34 @@ const SankeyLink = ({
               transition={{ duration: 1.2, ease: "easeInOut" }}
             />
           ) : (
-            <>
-              {/* A narrow gradient travels inside the curved band, so its bright
-                  core follows the lane instead of flashing the whole route. */}
+            <g key={`link-sweep-${index}-${pulseKey}`} fill="none" strokeLinecap="round">
+              {SWEEP_TAILS.map((tail) => (
+                <motion.path
+                  key={tail.length}
+                  d={centrePath}
+                  stroke={sweepColor}
+                  strokeWidth={sweepWidth}
+                  strokeOpacity={tail.opacity}
+                  {...sweepDash(tail.length)}
+                />
+              ))}
               <motion.path
-                key={`link-sweep-glow-${index}-${linkConfig.pulseKey}`}
-                d={sweepRect}
-                fill={`url(#${chartId}-link-sweep-${index})`}
+                d={centrePath}
+                stroke={sweepColor}
+                strokeWidth={sweepWidth + 3}
+                strokeOpacity={0.55}
                 filter={`url(#${chartId}-link-pulse-${index})`}
-                initial={{ x: 0, opacity: 0 }}
-                animate={{ x: [0, laneLength + sweepWidth], opacity: [0, 0.7, 0.7, 0] }}
-                transition={{ duration: sweepDuration, ease: "easeInOut" }}
+                {...sweepDash(SWEEP_HEAD)}
               />
+              <motion.path d={centrePath} stroke={sweepColor} strokeWidth={sweepWidth} {...sweepDash(SWEEP_HEAD)} />
               <motion.path
-                key={`link-sweep-core-${index}-${linkConfig.pulseKey}`}
-                d={sweepRect}
-                fill={`url(#${chartId}-link-sweep-${index})`}
-                initial={{ x: 0, opacity: 0 }}
-                animate={{ x: [0, laneLength + sweepWidth], opacity: [0, 0.55, 0.55, 0] }}
-                transition={{ duration: sweepDuration, ease: "easeInOut" }}
+                d={centrePath}
+                stroke="white"
+                strokeWidth={Math.max(1.5, sweepWidth * 0.4)}
+                strokeOpacity={0.7}
+                {...sweepDash(SWEEP_HEAD)}
               />
-            </>
+            </g>
           )}
         </g>
       )}

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { motion } from "motion/react"
+import { motion, useReducedMotion } from "motion/react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
@@ -8,11 +8,16 @@ import type { ScenarioRange } from "@/lib/scenario-date-window"
 
 import { ConsoleRangeToggle } from "./ConsoleRangeToggle"
 
-// Recharts' <Bar> animates with these defaults (duration 1500ms, CSS
-// "ease" curve) -- mirrored here so the horizontal distribution bar's
-// segments grow in sync with the vertical chart's bars on mount, the same
-// pairing RulesPerformanceChart uses.
-const barGrowTransition = { duration: 1.5, ease: [0.25, 0.1, 0.25, 1] } as const
+// One timing for every part of the card: the distribution bar's sweep and
+// segment widths, and the stacked bars' grow and toggle morphs. Ease-out, so
+// the motion starts quickly and lands softly.
+const GROW_SECONDS = 1
+const GROW_EASE = [0.22, 1, 0.36, 1] as const
+const barGrowTransition = { duration: GROW_SECONDS, ease: GROW_EASE } as const
+const rechartsBarAnimation = {
+  animationDuration: GROW_SECONDS * 1000,
+  animationEasing: "cubic-bezier(0.22,1,0.36,1)", // GROW_EASE
+} as const
 
 export type ConsoleRecommendation = "PASS" | "CHALLENGE" | "HOLD"
 
@@ -96,6 +101,13 @@ export function ConsoleRecommendationChart({
     () => evenTicks(Math.max(0, ...data.map((item) => allKeys.reduce((sum, key) => (activeSeries.has(key) ? sum + item[key] : sum), 0)))),
     [activeSeries, data],
   )
+  // A hidden series keeps its <Bar> with zeroed values, so Recharts morphs
+  // the remaining stacks down instead of dropping the series at once.
+  const chartData = useMemo(
+    () => data.map((item) => ({ ...item, ...Object.fromEntries(allKeys.filter((key) => !activeSeries.has(key)).map((key) => [key, 0])) })),
+    [activeSeries, data],
+  )
+  const reduceMotion = useReducedMotion() ?? false
   const [hoveredKey, setHoveredKey] = useState<ConsoleRecommendation | null>(null)
   const [segmentCenter, setSegmentCenter] = useState(0)
   const [tooltipLeft, setTooltipLeft] = useState(0)
@@ -146,32 +158,41 @@ export function ConsoleRecommendationChart({
         ) : (
           <>
             <div className="console-outcome-distribution-wrap" ref={distributionWrapRef}>
-              <div
+              {/* The track sweeps in from the left as one piece. Every segment
+                  stays mounted, a hidden one at zero width, so the widths
+                  always sum to the full bar and no gap opens on a toggle. */}
+              <motion.div
+                animate={{ scaleX: 1 }}
                 aria-label={totals.map(({ label, value }) => `${label}: ${countLabel(value, unit)}`).join(", ")}
                 className="console-outcome-distribution"
+                initial={reduceMotion ? false : { scaleX: 0 }}
                 role="img"
+                style={{ originX: 0 }}
+                transition={barGrowTransition}
               >
                 {totals.map(({ key, label, value, color }) => {
-                  if (!activeSeries.has(key)) return null
-                  const percentage = (value / distributionDenominator) * 100
+                  const visible = activeSeries.has(key)
+                  const percentage = visible ? (value / distributionDenominator) * 100 : 0
                   return (
                     <motion.button
                       animate={{ width: `${percentage}%` }}
+                      aria-hidden={!visible}
                       aria-label={`${label}: ${countLabel(value, unit)}, ${percentage.toFixed(1)}% of visible ${unit.other}`}
                       className="console-outcome-distribution-segment"
-                      initial={{ width: 0 }}
+                      initial={false}
                       key={key}
+                      tabIndex={visible ? undefined : -1}
                       onBlur={() => setHoveredKey(null)}
                       onFocus={(event) => showSegmentTooltip(key, event.currentTarget)}
                       onMouseEnter={(event) => showSegmentTooltip(key, event.currentTarget)}
                       onMouseLeave={() => setHoveredKey(null)}
                       style={{ backgroundColor: color }}
-                      transition={barGrowTransition}
+                      transition={reduceMotion ? { duration: 0 } : barGrowTransition}
                       type="button"
                     />
                   )
                 })}
-              </div>
+              </motion.div>
               {hoveredTotal ? (
                 <div className="console-outcome-tooltip console-outcome-tooltip-floating" ref={distributionTooltipRef} role="tooltip" style={{ left: tooltipLeft }}>
                   <div className="console-outcome-tooltip-row">
@@ -201,13 +222,15 @@ export function ConsoleRecommendationChart({
               ))}
             </ul>
 
-            <ChartContainer aria-label={description} className="h-[285px] w-full" config={chartConfig} role="img">
+            {/* Keyed by range, so a new window grows in fresh rather than
+                morphing old columns into new dates. */}
+            <ChartContainer aria-label={description} className="h-[285px] w-full" config={chartConfig} key={activeRange ?? "all"} role="img">
               {/* Plot styling follows the Linear-style Insights Dashboard
                   reference (same reading as ConsoleRiskLevelChart): thin
                   square bars, dashed horizontal gridlines, a solid baseline
                   and no y-axis numbers -- exact counts live in the tooltip
                   and the "View chart data" table. */}
-              <BarChart accessibilityLayer data={[...data]} margin={{ top: 16, right: 8, bottom: 0, left: yAxisWidth ? 0 : 8 }}>
+              <BarChart accessibilityLayer data={chartData} margin={{ top: 16, right: 8, bottom: 0, left: yAxisWidth ? 0 : 8 }}>
                 <CartesianGrid stroke="var(--lch-border)" strokeDasharray="3 4" vertical={false} />
                 <XAxis
                   axisLine={{ stroke: "var(--lch-border)" }}
@@ -260,9 +283,8 @@ export function ConsoleRecommendationChart({
                 />
                 {[...outcomes]
                   .reverse()
-                  .filter(({ key }) => activeSeries.has(key))
                   .map(({ key }) => (
-                    <Bar barSize={10} dataKey={key} fill={`var(--color-${key})`} key={key} radius={0} stackId="outcomes" />
+                    <Bar barSize={10} dataKey={key} fill={`var(--color-${key})`} key={key} radius={0} stackId="outcomes" {...rechartsBarAnimation} />
                   ))}
               </BarChart>
             </ChartContainer>
