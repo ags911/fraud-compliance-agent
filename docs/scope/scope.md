@@ -14,7 +14,7 @@ This is a synthetic fraud operations portfolio showcase. It demonstrates enginee
 | 3 | Visible feed lifecycle | Slice 1 | done |
 | 4 | Score routing (F3) | Slice 2 | done |
 | 5 | AI operations overview (F4a) | Slice 3 | done |
-| 6 | Portfolio release closeout | Slice 3 | planned |
+| 6 | Portfolio release closeout | Slice 3 | done |
 
 ## Slice 1: Live decision routing
 
@@ -75,15 +75,15 @@ On request, an AI model writes a short plain overview of the selected scenario's
 - [x] Verify it: /check verify AI operations overview
 - [x] Test it: /test AI operations overview
 
-### 6. Portfolio release closeout · planned
+### 6. Portfolio release closeout · done
 Finish a polished, truthful public demonstration of the existing synthetic flow. Do not add product operations, live financial screening, authentication, or new data sources in this pass.
 **Done when:** Azure shows the tested routing experience and AI overview, the approved visual polish is committed, and the repository explains the simulated data boundary and the architecture choices a reviewer can inspect.
-- [ ] Finish the release pass: /develop portfolio release closeout
+- [x] Finish the release pass: /develop portfolio release closeout
   - [x] Commit the approved routing glow and preserve its focused desktop and mobile coverage
   - [x] Confirm the AI overview works live when enabled and falls back truthfully when unavailable
   - [x] Add concise portfolio handoff documentation for the architecture, synthetic data and guardrails
-- [ ] Verify it: /check verify portfolio release closeout
-- [ ] Test it: /test portfolio release closeout
+- [x] Verify it: /check verify portfolio release closeout
+- [x] Test it: /test portfolio release closeout
 - [x] Deploy and smoke test the public Azure release
 
 ## Deferred after the portfolio release
