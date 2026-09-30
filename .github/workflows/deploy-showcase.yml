@@ -22,8 +22,47 @@ permissions:
   contents: read
 
 jobs:
+  verified:
+    name: Reuse the Verify result
+    # Verify runs the same suite as make check (and more) on every push to
+    # main. When it has passed on this exact commit, the pre-deploy re-run is
+    # skipped; a failed Verify stops the release. Anything else (no run, a
+    # cancelled run, a run still going after 30 minutes, or a deploy from
+    # another branch) falls back to the full pre-deploy suite.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      passed: ${{ steps.verify.outputs.passed }}
+    steps:
+      - name: Wait for Verify on this commit
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed=false
+          for attempt in $(seq 1 60); do
+            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow verify.yml \
+              --commit "$GITHUB_SHA" --event push --branch main --limit 1 \
+              --json status,conclusion --jq '.[0] // empty | "\(.status) \(.conclusion)"')"
+            if [ -z "$run" ]; then
+              if [ "$attempt" -ge 4 ]; then echo "No Verify run for $GITHUB_SHA; running the full suite."; break; fi
+            elif [ "${run%% *}" = "completed" ]; then
+              case "${run#* }" in
+                success) passed=true; echo "Verify passed on $GITHUB_SHA." ;;
+                failure) echo "::error::Verify failed on $GITHUB_SHA; not deploying."; exit 1 ;;
+                *) echo "Verify ended ${run#* }; running the full suite." ;;
+              esac
+              break
+            fi
+            sleep 30
+          done
+          echo "passed=$passed" >> "$GITHUB_OUTPUT"
+
   preflight:
     name: Pre-deploy acceptance
+    needs: verified
+    if: needs.verified.outputs.passed != 'true'
     # Screenshot baselines use the same macOS Chrome profile as Verify.
     runs-on: macos-14
     steps:
@@ -56,8 +95,15 @@ jobs:
 
   deploy:
     name: Deploy synthetic showcase
-    needs: [preflight, infrastructure]
-    if: inputs.confirm_deploy
+    needs: [verified, preflight, infrastructure]
+    # Deploy only when this commit's suite passed: in Verify (the re-run was
+    # skipped) or in the pre-deploy re-run.
+    if: >-
+      !cancelled() && inputs.confirm_deploy
+      && needs.verified.result == 'success'
+      && needs.infrastructure.result == 'success'
+      && (needs.preflight.result == 'success'
+        || (needs.preflight.result == 'skipped' && needs.verified.outputs.passed == 'true'))
     runs-on: ubuntu-latest
     environment: showcase
     permissions:
