@@ -1,8 +1,9 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Page } from "@playwright/test"
 
-// Risk Console's opt in spotlight tour (spec 0007, driver.js). It must never start by
-// itself, must visit its seven steps in order, and must describe only what
+// Risk Console's spotlight tour (spec 0007, driver.js). It starts by itself
+// once for a new browser (AC-1, amended 2026-09-30), offers Skip on every step
+// but the last, visits its seven steps in order, and describes only what
 // Risk Console has today. "Raised by model" (spec 0010) has no target: its
 // routing board sits on the Cases tab.
 const overlay = (page: Page) => page.locator(".driver-overlay")
@@ -36,7 +37,8 @@ async function startTour(page: Page) {
 }
 
 test.describe("Risk Console tour", () => {
-  test("never starts by itself", async ({ page }) => {
+  // covers: AC-1 (the config marks every test browser as having seen the tour)
+  test("does not start by itself for a browser that has seen it", async ({ page }) => {
     await open(page)
     await page.waitForTimeout(600)
 
@@ -105,6 +107,24 @@ test.describe("Risk Console tour", () => {
     await expect(page.locator("#console-summary")).toBeVisible()
   })
 
+  // covers: AC-7
+  test("Skip tour is on every step but the last, and ends the tour", async ({ page }) => {
+    await open(page)
+    await startTour(page)
+    const skip = page.getByRole("button", { name: "Skip tour" })
+    for (let index = 0; index < STEPS.length; index += 1) {
+      await expect(title(page)).toHaveText(STEPS[index].title)
+      await expect(skip).toHaveCount(index < STEPS.length - 1 ? 1 : 0)
+      if (index < STEPS.length - 1) await page.locator(".driver-popover-next-btn").click()
+    }
+
+    await page.locator(".driver-popover-prev-btn").click()
+    await page.locator(".driver-popover-prev-btn").click()
+    await expect(title(page)).toHaveText("Raised by model")
+    await skip.click()
+    await expect(overlay(page)).toHaveCount(0)
+  })
+
   test("Escape and the close button both end the tour", async ({ page }) => {
     await open(page)
     await startTour(page)
@@ -150,5 +170,60 @@ test.describe("Risk Console tour", () => {
       .analyze()
 
     expect(results.violations.map((violation) => `${violation.id}: ${violation.help}`)).toEqual([])
+  })
+})
+
+test.describe("Risk Console tour on a first visit", () => {
+  // A new browser: nothing remembered, so the tour has never been seen.
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  async function firstVisit(page: Page, { health = 200, path = "/?scenario=S01" } = {}) {
+    await page.addInitScript(() => window.localStorage.setItem("console-live-feed", "off"))
+    await page.route("**/sandbox/scenarios/*/simulation-runs", (route) =>
+      route.fulfill({ status: 503, contentType: "application/json", body: "{}" }),
+    )
+    await page.route("**/health", (route) => route.fulfill({ status: health, json: { status: "ok" } }))
+    await page.goto(path)
+    await expect(page.locator("#console-scenario-trigger")).toBeVisible()
+  }
+
+  // covers: AC-1
+  test("starts once when the API answers, and not again after a reload", async ({ page }) => {
+    await firstVisit(page)
+    await expect(overlay(page)).toBeVisible()
+    await expect(title(page)).toHaveText("Choose a scenario")
+    await expect(progress(page)).toHaveText("Step 1 of 7")
+    expect(await page.evaluate(() => window.localStorage.getItem("console-tour-seen"))).toBe("1")
+
+    await page.keyboard.press("Escape")
+    await page.reload()
+    await expect(page.locator("#console-scenario-trigger")).toBeVisible()
+    await page.waitForTimeout(600)
+    await expect(overlay(page)).toHaveCount(0)
+  })
+
+  // covers: AC-1
+  test("waits for the API: with no answer it does not start", async ({ page }) => {
+    await firstVisit(page, { health: 503 })
+    await page.waitForTimeout(600)
+    await expect(overlay(page)).toHaveCount(0)
+  })
+
+  // covers: AC-1
+  test("a shared case link opens the case, not the tour", async ({ page }) => {
+    await firstVisit(page, { path: "/?scenario=S01&case=3f2a9c1e-7b4d-4e8a-9c2f-1a6b5d8e0f42" })
+    await page.waitForTimeout(600)
+    await expect(overlay(page)).toHaveCount(0)
+  })
+
+  // covers: AC-1
+  test("with storage blocked it still starts, and the page works", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked") } })
+    })
+    await page.route("**/health", (route) => route.fulfill({ json: { status: "ok" } }))
+    await page.goto("/?scenario=S01")
+    await expect(overlay(page)).toBeVisible()
+    await expect(title(page)).toHaveText("Choose a scenario")
   })
 })

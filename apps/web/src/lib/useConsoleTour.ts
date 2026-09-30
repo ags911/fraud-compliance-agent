@@ -2,12 +2,35 @@ import { useCallback, useEffect, useRef } from "react"
 import { driver, type Driver } from "driver.js"
 import "driver.js/dist/driver.css"
 
+// The tour starts by itself once per browser (spec 0007 AC-1, amended
+// 2026-09-30). Blocked storage reads as not seen, so the tour offers itself
+// again rather than never.
+const SEEN_KEY = "console-tour-seen"
+
+/** Whether this browser has already been shown the tour. */
+export function consoleTourSeen(): boolean {
+  try {
+    return window.localStorage.getItem(SEEN_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
+function rememberTourSeen() {
+  try {
+    window.localStorage.setItem(SEEN_KEY, "1")
+  } catch {
+    // A convenience only; without storage the tour may offer itself again.
+  }
+}
+
 /**
- * An opt in spotlight tour of Risk Console (spec 0007), built on driver.js with the
+ * A spotlight tour of Risk Console (spec 0007), built on driver.js with the
  * same options as the Overview tour (`useOverviewTour`).
  *
- * The tour never starts by itself and steps through with Next and Back only:
- * nothing on Risk Console has to happen in order. Each step describes only what Risk Console
+ * The console starts it once for a new browser; the help icon replays it. It
+ * steps through with Next and Back only, and every step but the last offers
+ * "Skip tour": nothing on Risk Console has to happen in order. Each step describes only what Risk Console
  * has today; later stages add their own steps when they ship. The highlighted
  * control stays usable, and the rest of the page is masked.
  *
@@ -28,6 +51,7 @@ export function useConsoleTour() {
 
   const start = useCallback(() => {
     stop()
+    rememberTourSeen()
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     const tour = driver({
       animate: !reduceMotion,
@@ -112,6 +136,16 @@ export function useConsoleTour() {
           },
         },
       ],
+      // "Skip tour" ends the tour from any step; the last step has Finish.
+      onPopoverRender: (popover, { driver: tour }) => {
+        if (tour.isLastStep()) return
+        const skip = document.createElement("button")
+        skip.type = "button"
+        skip.className = "console-tour-skip"
+        skip.textContent = "Skip tour"
+        skip.addEventListener("click", () => tour.destroy())
+        popover.footerButtons.prepend(skip)
+      },
       onDestroyed: () => {
         tourRef.current = null
       },

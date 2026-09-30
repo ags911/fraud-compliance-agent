@@ -35,7 +35,7 @@ import { useShowcaseCase } from "@/lib/useShowcaseCase"
 import { useShowcaseCases } from "@/lib/useShowcaseCases"
 import { useSandboxFeed } from "@/lib/useSandboxFeed"
 import { useShowcaseInvestigation } from "@/lib/useShowcaseInvestigation"
-import { useConsoleTour } from "@/lib/useConsoleTour"
+import { consoleTourSeen, useConsoleTour } from "@/lib/useConsoleTour"
 import { overviewUnavailableReason, type OverviewSnapshot } from "@/lib/sandbox-overview"
 import { useScenarioOverview } from "@/lib/useScenarioOverview"
 import { useServerWarmup } from "@/lib/useServerWarmup"
@@ -152,6 +152,19 @@ export function RiskConsole() {
   const tour = useConsoleTour()
   // The hosted API sleeps when idle; say so while it starts.
   const serverWarmup = useServerWarmup()
+
+  // A new browser gets the tour once, when the API has answered, so its
+  // figures are there to point at (spec 0007 AC-1, amended 2026-09-30). A
+  // shared case link opens that case instead.
+  const tourOffered = useRef(false)
+  const startTourOnce = tour.start
+  useEffect(() => {
+    if (tourOffered.current || serverWarmup !== "ready" || caseParam.caseId || tab !== "scenario") return
+    tourOffered.current = true
+    if (consoleTourSeen()) return
+    const frame = window.requestAnimationFrame(() => startTourOnce())
+    return () => window.cancelAnimationFrame(frame)
+  }, [serverWarmup, caseParam.caseId, tab, startTourOnce])
 
   useEffect(() => {
     let active = true

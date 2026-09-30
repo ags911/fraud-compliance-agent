@@ -12,6 +12,10 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "retain-on-failure",
+    // A new browser gets the guided tour once (spec 0007). Tests start as a
+    // returning browser so the tour's mask never covers the page under test;
+    // console-tour.spec.ts clears this to test the first visit.
+    storageState: { cookies: [], origins: [{ origin: baseURL, localStorage: [{ name: "console-tour-seen", value: "1" }] }] },
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], channel: "chrome", viewport: { width: 1440, height: 1000 } } },
