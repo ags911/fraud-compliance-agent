@@ -97,7 +97,7 @@ default).
 | ◐ | F3 — Fast-path operations foundation | Deferred extension 1 |
 | ◐ | F3a — Approved source-to-score foundation | Deferred extension 1 |
 | ◐ | F4 — Investigation foundation | Deferred extension 2 |
-| — | F4a — AI operations overview | Deferred extension 2 |
+| ✓ | F4a — AI operations overview | Deferred extension 2 |
 | — | F5 — Human-review foundation | Deferred extension 2 |
 | — | F6 — Monitoring/integration-health/replay/hardening | Deferred extension 3 |
 
@@ -107,7 +107,10 @@ chain cannot be hidden inside Plaid integration or dashboard work."
 F4a (added 2026-09-29 at the owner's request) is a substage between F4 and
 F5: an LLM written overview of the Risk Console's main dashboard, built on
 F4's bounded provider path. Scoped as feature 5 and designed in spec 0011
-under ADR-026 (accepted 2026-09-29); next is `/develop`.
+under ADR-026 (accepted 2026-09-29). Built, verified and tested; spec 0011
+Accepted on 2026-09-30. The public deployment serves the template overview:
+the deploy workflow leaves `SHOWCASE_OVERVIEW_LIVE_ENABLED` at its false
+default.
 
 ### F3a in progress: deterministic Sandbox event data
 
@@ -241,6 +244,19 @@ opens on a Mixed feed (`MIX`) that interleaves S01 to S05 payments, each carryin
 its source scenario, fixture version, and that scenario's decision. The auto-start
 waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
 with `keepalive`.
+
+**Delivery record, 2026-09-30 (portfolio release).** Scope feature 6, the
+portfolio release closeout, is done: the routing board's whole lane glow
+(replacing the comet sweep), the reviewer guide
+[`docs/portfolio.md`](../docs/portfolio.md), and `urllib3` 2.8.0 plus an
+`npm audit fix` for new advisories (PR #39). Deploy run `36780805289` from
+`f517afd` passed its smoke test: site and API `/health` 200, the overview
+answers `template`/`live_disabled`, CORS grants only the site origin, and
+Chrome loaded the console with no errors. A local check against Groq
+(`openai/gpt-oss-120b`) returned grounded live overviews and fell back at
+the 3 per 10 minute limit. Companies House, sanctions screening, human
+review, monitoring, WebSockets and new model training are deferred (see
+[`docs/scope/scope.md`](../docs/scope/scope.md)).
 
 **Delivery record, 2026-09-27.** Specs 0002, 0006, 0008 and 0009 are
 Accepted; spec 0003 is verified 28/28. ADR-022 is Proposed. Codex's fresh
