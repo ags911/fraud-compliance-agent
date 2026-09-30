@@ -120,7 +120,20 @@ test("revealed decisions flow from the feed into their outcome nodes", async ({ 
   await expect(board.locator("[tabindex]:not([tabindex='-1'])")).toHaveCount(0)
 })
 
-test("a snapshot that reveals several payments keeps all lane counts exact and sweeps only its newest", async ({ page }) => {
+test("a lane count and destination pulse begin with its glow", async ({ page }) => {
+  const reveal = await stubRouting(page, [[1, "PASS"]])
+  await page.goto("/?scenario=S01")
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  const board = page.getByRole("region", { name: "Live decision routing" })
+
+  reveal()
+  await expect(page.locator("g[data-route-glow='PASS']")).toHaveCount(1)
+  await expect(nodeText(page)).toHaveText(["Feed", "1", "PASS", "1", "CHALLENGE", "0", "HOLD", "0"])
+  await expect(board.locator("[data-arrival-pulse='PASS']")).toHaveCount(1)
+  await expect(board.locator("[data-arrival-pulse='CHALLENGE'], [data-arrival-pulse='HOLD']")).toHaveCount(0)
+})
+
+test("a snapshot that reveals several payments keeps all lane counts exact and glows only its newest", async ({ page }) => {
   // covers: AC 2, AC 5; this is the worker-catch-up case from critical scenario 7.
   // The second simulation_state frame contains three newly revealed payments,
   // rather than one routing frame per payment.
@@ -140,12 +153,12 @@ test("a snapshot that reveals several payments keeps all lane counts exact and s
     "HOLD 1",
   ])
   await expect(board.getByText("Last routed #43 → CHALLENGE")).toBeVisible()
-  // Comparing the snapshot's highest sequence with the prior frame animates
-  // only #43; the earlier catch-up payments settle without their own sweep.
-  await expect(page.locator("g[data-sweep]")).toHaveCount(1)
-  await expect(sweep(page, "CHALLENGE")).toHaveCount(1)
-  await expect(sweep(page, "PASS")).toHaveCount(0)
-  await expect(sweep(page, "HOLD")).toHaveCount(0)
+  // Comparing the snapshot's highest sequence with the prior frame glows
+  // only #43; the earlier catch-up payments settle without their own glow.
+  await expect(page.locator("g[data-route-glow]")).toHaveCount(1)
+  await expect(glow(page, "CHALLENGE")).toHaveCount(1)
+  await expect(glow(page, "PASS")).toHaveCount(0)
+  await expect(glow(page, "HOLD")).toHaveCount(0)
 })
 
 test("a payment the model raised is marked and counted, and the rule note says the model can raise", async ({ page }) => {
@@ -177,41 +190,33 @@ test("with score routing off the board says so and marks nothing", async ({ page
   await expect(board.getByText("Every S01 payment follows its rule: PASS", { exact: true })).toBeVisible()
 })
 
-// The newest payment's sweep, clipped by its lane. A clip on the moving
-// element itself travels with it and never meets the lane, so the sweep
-// would render nothing; the clip must sit on a still parent.
-function sweep(page: Page, outcome: Outcome) {
-  return page.getByRole("region", { name: "Live decision routing" }).locator(`g[data-sweep="${outcome}"]`)
+function glow(page: Page, outcome: Outcome) {
+  return page.getByRole("region", { name: "Live decision routing" }).locator(`g[data-route-glow="${outcome}"]`)
 }
 
-test("the newest payment sweeps along its own lane only", async ({ page }) => {
+test("the newest payment glows its full outcome lane only", async ({ page }) => {
   const reveal = await stubRouting(page)
   await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
 
-  const group = sweep(page, "PASS")
-  await expect(group).toHaveAttribute("clip-path", /link-sweep-clip/)
-  await expect(page.locator("g[data-sweep]")).toHaveCount(1)
-  // The clipped group stays still while the item travels the lane's centre
-  // curve: its head is a dash whose offset runs along the path.
-  await expect.poll(() => group.evaluate((element) => getComputedStyle(element).transform)).toBe("none")
-  const head = group.locator("path").last()
-  await expect(head).toHaveAttribute("d", /^M[\d.]+,[\d.]+ C/)
-  await expect.poll(() => head.evaluate((element) => Number(element.getAttribute("stroke-dashoffset")))).toBeLessThan(-0.3)
+  const group = glow(page, "PASS")
+  await expect(page.locator("g[data-route-glow]")).toHaveCount(1)
+  const lane = group.locator("path")
+  await expect(lane).toHaveCount(1)
+  await expect(lane).toHaveAttribute("d", /^M[\d.]+,[\d.]+\s+C/)
+  await expect(lane).toHaveAttribute("fill", "var(--color-PASS-0)")
   await expect(group.locator("[clip-path]")).toHaveCount(0)
-  // Only the route animates: the outcome nodes carry no glow.
-  await expect(page.getByRole("region", { name: "Live decision routing" }).locator("rect[filter]")).toHaveCount(0)
 })
 
-test("reduced motion tints the lane without travel", async ({ page }) => {
+test("reduced motion tints the glowing lane without animation", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" })
   const reveal = await stubRouting(page)
   await page.goto("/?scenario=S01")
   await page.getByRole("tab", { name: /^Cases/ }).click()
   reveal()
 
-  const group = sweep(page, "PASS")
+  const group = glow(page, "PASS")
   await expect(group.locator("path")).toHaveCount(1)
   await page.waitForTimeout(400)
   expect(await group.locator("path").evaluate((element) => getComputedStyle(element).transform)).toBe("none")

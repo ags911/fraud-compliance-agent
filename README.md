@@ -2,6 +2,9 @@
 
 Monorepo for the payment-risk engine and its operator console.
 
+Reviewing this project? Start with the [reviewer guide](docs/portfolio.md):
+what to look at, the synthetic data boundary, and the guardrails.
+
 ## Layout
 
 - `apps/api` — FastAPI modular monolith; owns operational facts, contracts,

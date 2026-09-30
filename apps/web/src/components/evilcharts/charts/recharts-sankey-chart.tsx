@@ -36,7 +36,7 @@ import {
   LoadingIndicator,
 } from "@/components/evilcharts/ui/recharts-chart";
 import { ChartBackground, type BackgroundVariant } from "@/components/evilcharts/ui/recharts-background";
-import { animate, cubicBezier, motion, useReducedMotion } from "motion/react";
+import { animate, motion, useReducedMotion } from "motion/react";
 
 // Constants
 const LOADING_ANIMATION_DURATION = 2000; // full loading cycle duration in milliseconds
@@ -49,22 +49,11 @@ const DEFAULT_ITERATIONS = 32;
 const SETTLE_DURATION = 0.45; // seconds
 const SETTLE_EASE = [0.22, 1, 0.36, 1] as const; // ease-out
 
-// The routed item: a bright head with a fading tail, travelling the lane's
-// centre curve. Lengths are fractions of the lane (the path is normalised to 1).
-const SWEEP_DURATION = 1.2; // seconds
-const SWEEP_EASE = [0.3, 0, 0.2, 1] as const; // quick start, soft landing
-const SWEEP_HEAD = 0.05;
-// Overlapping tails of falling length: their opacities stack into a smooth fade.
-const SWEEP_TAILS = [0.3, 0.26, 0.22, 0.18, 0.14, 0.1, 0.07].map((length) => ({ length, opacity: 0.09 }));
-const SWEEP_TRAVEL = 1 + Math.max(...SWEEP_TAILS.map((tail) => tail.length)); // head end runs past the lane until the tail is in
-// Seconds until the head reaches the outcome node, when the layout and
-// counts settle so the new number lands with the item.
-const SWEEP_ARRIVAL = (() => {
-  const ease = cubicBezier(...SWEEP_EASE);
-  let t = 0;
-  while (t < 1 && ease(t) * SWEEP_TRAVEL < 1) t += 0.01;
-  return t * SWEEP_DURATION;
-})();
+// A whole-lane glow shows aggregate activity without queuing individual
+// transactions. It remains legible when the feed becomes more active.
+const GLOW_DURATION = 0.6; // seconds
+const GLOW_EASE = [0.3, 0, 0.2, 1] as const;
+const ROUTE_ARRIVAL_DELAY = 0;
 
 type LinkVariant = "gradient" | "solid" | "source" | "target";
 type NodeLabelPosition = "inside" | "outside";
@@ -237,6 +226,8 @@ type NodeProps = {
   labelColor?: string; // optional explicit label fill for a themed chart
   valueColor?: string; // optional explicit value fill for a themed chart
   isClickable?: boolean; // lets nodes be selected by clicking them
+  arrivalPulseKey?: string | number | null; // a newly arrived item, used to pulse its outcome node once
+  arrivalPulseTarget?: string | null; // outcome node whose count has just landed
   children?: ReactNode; // optional <NodeLabel /> composition
 };
 
@@ -265,6 +256,7 @@ type LinkProps = {
   pulseTarget?: string | null; // destination node for the newest routed item
   pulseKey?: string | number | null; // changes to restart the path sweep
   emptyTargetOpacity?: number; // fill opacity for a band whose target shows a zero value
+  onPulseArrival?: (pulseKey: string | number) => void; // called once when the routed item reaches its outcome
 };
 
 /**
@@ -410,7 +402,7 @@ function useSettledGeometry<T extends Geometry>(id: string, target: T, pulseKey:
     const controls = animate(0, 1, {
       duration: SETTLE_DURATION,
       ease: SETTLE_EASE,
-      delay: arriving ? SWEEP_ARRIVAL : 0,
+      delay: arriving ? ROUTE_ARRIVAL_DELAY : 0,
       onUpdate: (progress) => {
         const geometry = mixGeometry(from, target, progress);
         remember(geometry);
@@ -476,6 +468,13 @@ const SankeyNode = ({ x: layoutX, y: layoutY, width: layoutWidth, height: layout
   const valueFormatter = label?.valueFormatter ?? ((value: number) => value.toLocaleString());
   const showValues = label?.showValues ?? false;
   const compactZeroValue = nodeConfig?.compactZeroValues && nodeValue === 0;
+  // A destination flashes only when a newly arrived item changes its count.
+  // Existing populated boards remain quiet when mounted or revisited.
+  const shouldPulseArrival = !reduceMotion
+    && nodeConfig?.arrivalPulseTarget === nodeName
+    && nodeConfig?.arrivalPulseKey !== null
+    && nodeConfig?.arrivalPulseKey !== undefined
+    && nodeValue !== firstValue;
 
   const labelX = x + width / 2;
   // A zero-value Sankey band can be too shallow for a two-line inside label.
@@ -509,6 +508,22 @@ const SankeyNode = ({ x: layoutX, y: layoutY, width: layoutWidth, height: layout
           selectNode(selectedNode === nodeName ? null : nodeName);
         }}
       />
+      {shouldPulseArrival && (
+        <rect
+          key={`node-arrival-${nodeName}-${nodeConfig?.arrivalPulseKey}`}
+          x={x}
+          y={renderedNodeY}
+          width={width}
+          height={renderedNodeHeight}
+          rx={radius}
+          ry={radius}
+          fill={hasConfigColor ? `var(--color-${nodeName}-0)` : "currentColor"}
+          data-arrival-pulse={nodeName}
+          style={{ pointerEvents: "none" }}
+        >
+          <animate attributeName="opacity" values="0;0.38;0" dur="0.48s" fill="freeze" />
+        </rect>
+      )}
       {label?.position === "inside" && (
         <>
           <rect
@@ -616,8 +631,8 @@ type SankeyLinkRendererProps = SankeyLinkProps & {
 /**
  * Renders a single sankey link band, colored by the composed <Link /> variant.
  * Highlights the bands connected to the selected node and dims the rest. The
- * band settles smoothly from the previous layout, and the newest routed item
- * travels its centre curve as a bright head with a fading tail.
+ * band settles smoothly from the previous layout, and the newest routed lane
+ * briefly glows to make aggregate activity legible.
  */
 const SankeyLink = ({
   sourceX: layoutSourceX,
@@ -637,6 +652,7 @@ const SankeyLink = ({
   const variant = linkConfig?.variant ?? "gradient";
   const verticalPadding = linkConfig?.verticalPadding ?? 0;
   const pulseKey = linkConfig?.pulseKey ?? null;
+  const onPulseArrival = linkConfig?.onPulseArrival;
 
   const sourceName = payload.source.name;
   const targetName = payload.target.name;
@@ -657,6 +673,17 @@ const SankeyLink = ({
   // carries the item, so it reads as one decision crossing the whole path.
   const isPulsing = sourceName === "FEED" && targetName === linkConfig?.pulseTarget && pulseKey !== null;
 
+  useEffect(() => {
+    if (!isPulsing || pulseKey === null || !onPulseArrival) return;
+
+    if (reduceMotion) {
+      onPulseArrival(pulseKey);
+      return;
+    }
+
+    onPulseArrival(pulseKey);
+  }, [isPulsing, onPulseArrival, pulseKey, reduceMotion]);
+
   const isConnected =
     selectedNode === null || selectedNode === sourceName || selectedNode === targetName;
 
@@ -669,28 +696,11 @@ const SankeyLink = ({
   const halfWidth = paddedLinkWidth / 2;
 
   const sweepColor = targetName in config ? `var(--color-${targetName}-0)` : "currentColor";
-  // The item is a round-capped pill on the lane's centre line, sized to the
-  // lane so it stays inside a thin band and does not swamp a wide one.
-  const sweepWidth = Math.min(10, Math.max(3, paddedLinkWidth * 0.6));
-  const centrePath = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
-
   const linkAreaPath = `M${sourceX},${sourceY - halfWidth}
     C${sourceControlX},${sourceY - halfWidth} ${targetControlX},${targetY - halfWidth} ${targetX},${targetY - halfWidth}
     L${targetX},${targetY + halfWidth}
     C${targetControlX},${targetY + halfWidth} ${sourceControlX},${sourceY + halfWidth} ${sourceX},${sourceY + halfWidth}
     Z`;
-
-  // Every dash ends at the same moving point (the head's front), which runs
-  // from the lane start until the longest tail has entered the node. The
-  // spacing exceeds the path, so each dash is drawn once.
-  const sweepDash = (length: number) => ({
-    initial: { pathLength: length, pathSpacing: 2, pathOffset: -length },
-    animate: { pathOffset: SWEEP_TRAVEL - length, opacity: [0, 1, 1, 0] },
-    transition: {
-      pathOffset: { duration: SWEEP_DURATION, ease: SWEEP_EASE },
-      opacity: { duration: SWEEP_DURATION, times: [0, 0.06, 0.78, 1] },
-    },
-  });
 
   return (
     <Layer>
@@ -705,16 +715,6 @@ const SankeyLink = ({
           />
         )}
         <LinkStrokeGradient chartId={chartId} index={index} />
-        {isPulsing && (
-          <>
-            <clipPath id={`${chartId}-link-sweep-clip-${index}`}>
-              <path d={linkAreaPath} />
-            </clipPath>
-            <filter id={`${chartId}-link-pulse-${index}`} x="-20%" y="-50%" width="140%" height="200%">
-              <feGaussianBlur stdDeviation="2.5" />
-            </filter>
-          </>
-        )}
       </defs>
       <path
         d={linkAreaPath}
@@ -728,46 +728,22 @@ const SankeyLink = ({
         className="transition-opacity duration-200"
       />
       {isPulsing && (
-        <g clipPath={`url(#${chartId}-link-sweep-clip-${index})`} pointerEvents="none" data-sweep={targetName}>
+        <g pointerEvents="none" data-route-glow={targetName}>
           {reduceMotion ? (
-            // Reduced motion: the lane tints in place, with no travel.
+            <path
+              d={linkAreaPath}
+              fill={sweepColor}
+              opacity={0.24}
+            />
+          ) : (
             <motion.path
-              key={`link-sweep-still-${index}-${pulseKey}`}
+              key={`link-glow-${index}-${pulseKey}`}
               d={linkAreaPath}
               fill={sweepColor}
               initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0.35, 0] }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
+              animate={{ opacity: [0, 0.38, 0] }}
+              transition={{ duration: GLOW_DURATION, ease: GLOW_EASE, times: [0, 0.35, 1] }}
             />
-          ) : (
-            <g key={`link-sweep-${index}-${pulseKey}`} fill="none" strokeLinecap="round">
-              {SWEEP_TAILS.map((tail) => (
-                <motion.path
-                  key={tail.length}
-                  d={centrePath}
-                  stroke={sweepColor}
-                  strokeWidth={sweepWidth}
-                  strokeOpacity={tail.opacity}
-                  {...sweepDash(tail.length)}
-                />
-              ))}
-              <motion.path
-                d={centrePath}
-                stroke={sweepColor}
-                strokeWidth={sweepWidth + 3}
-                strokeOpacity={0.55}
-                filter={`url(#${chartId}-link-pulse-${index})`}
-                {...sweepDash(SWEEP_HEAD)}
-              />
-              <motion.path d={centrePath} stroke={sweepColor} strokeWidth={sweepWidth} {...sweepDash(SWEEP_HEAD)} />
-              <motion.path
-                d={centrePath}
-                stroke="white"
-                strokeWidth={Math.max(1.5, sweepWidth * 0.4)}
-                strokeOpacity={0.7}
-                {...sweepDash(SWEEP_HEAD)}
-              />
-            </g>
           )}
         </g>
       )}
