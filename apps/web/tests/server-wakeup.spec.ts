@@ -35,7 +35,8 @@ test("says the demo server is starting while the API wakes, then clears", async 
 
   const notice = page.getByRole("status").filter({ hasText: NOTICE })
   await expect(notice).toBeVisible()
-  await expect(notice).toContainText("It sleeps when nobody is using it, so the first load can take about 30 seconds.")
+  await expect(notice).toContainText("It sleeps when nobody is using it, so the first load takes about 15 to 25 seconds.")
+  await expect(page.getByRole("progressbar", { name: "Demo server start, estimated" })).toBeVisible()
   // The dashboard stays usable underneath.
   await expect(page.getByRole("combobox", { name: "Synthetic showcase scenario" })).toBeVisible()
   // The same WCAG scope as tests/accessibility.spec.ts.
@@ -44,6 +45,40 @@ test("says the demo server is starting while the API wakes, then clears", async 
 
   wake()
   await expect(page.getByText(NOTICE)).toHaveCount(0)
+  await expect(page.getByRole("progressbar")).toHaveCount(0)
+})
+
+test("the bar eases towards the usual start time and says so when a start runs long", async ({ page }) => {
+  await page.clock.install()
+  await stubQuietApi(page)
+  const wake = await slowHealth(page)
+  await page.goto("/")
+
+  const bar = page.getByRole("progressbar", { name: "Demo server start, estimated" })
+  const percent = async () => Number(await bar.getAttribute("aria-valuenow"))
+  await page.clock.fastForward("00:05")
+  await expect(bar).toBeVisible()
+  const early = await percent()
+  expect(early).toBeGreaterThan(0)
+
+  // Measured starts took 15 to 22 seconds: by 18 the bar is most of the way
+  // there but not full, and it still moves on.
+  await page.clock.fastForward("00:13")
+  await expect.poll(percent).toBeGreaterThan(early)
+  const typical = await percent()
+  expect(typical).toBeGreaterThanOrEqual(80)
+  expect(typical).toBeLessThan(100)
+  await expect(page.getByText(NOTICE)).toBeVisible()
+
+  // Past 25 seconds the sentence changes, and the bar still never fills.
+  await page.clock.fastForward("00:08")
+  await expect(page.getByRole("status").filter({ hasText: "Taking longer than usual, nearly there…" })).toBeVisible()
+  await expect(page.getByText(NOTICE)).toHaveCount(0)
+  expect(await percent()).toBeLessThan(100)
+
+  wake()
+  await expect(bar).toHaveCount(0)
+  await expect(page.getByText("Taking longer than usual, nearly there…")).toHaveCount(0)
 })
 
 test("a warm API never shows the notice", async ({ page }) => {
