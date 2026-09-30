@@ -83,6 +83,7 @@ async function stubOverview(page: Page, body: Record<string, unknown>) {
 
 const card = (page: Page) => page.locator("#console-overview")
 
+// covers: AC-1, AC-2, AC-5
 test("a template overview is labelled, with no reason line while live is off", async ({ page }) => {
   await stubScenario(page)
   const requests = await stubOverview(page, overview())
@@ -104,6 +105,7 @@ test("a template overview is labelled, with no reason line while live is off", a
   expect(request.headers()["x-showcase-browser-id"]).toBe(BROWSER_ID)
 })
 
+// covers: AC-4, AC-7
 test("a live overview names its model, and says what was left out", async ({ page }) => {
   await stubScenario(page)
   await stubOverview(
@@ -130,6 +132,7 @@ const reasons = [
   ["ungrounded", "The AI overview didn't pass the fact check, so this is the template summary."],
 ] as const
 
+// covers: AC-5, AC-6, AC-7
 for (const [reason, line] of reasons) {
   test(`a template after ${reason} carries one reason line`, async ({ page }) => {
     await stubScenario(page)
@@ -145,6 +148,7 @@ for (const [reason, line] of reasons) {
   })
 }
 
+// covers: AC-10
 test("while writing the button is disabled, and the result is announced politely", async ({ page }) => {
   await stubScenario(page)
   let release: () => void = () => undefined
@@ -166,6 +170,7 @@ test("while writing the button is disabled, and the result is announced politely
   await expect(card(page).getByRole("button", { name: "Write overview" })).toBeEnabled()
 })
 
+// covers: AC-10
 test("an unreachable API says so and keeps the button", async ({ page }) => {
   await stubScenario(page)
   await page.route("**/sandbox/scenarios/*/overview", (route) => route.abort())
@@ -176,6 +181,7 @@ test("an unreachable API says so and keeps the button", async ({ page }) => {
   await expect(card(page).getByRole("button", { name: "Write overview" })).toBeEnabled()
 })
 
+// covers: AC-2, AC-9
 test("changing the range makes the overview out of date without asking again", async ({ page }) => {
   await stubScenario(page)
   const requests = await stubOverview(page, overview())
@@ -197,6 +203,7 @@ test("changing the range makes the overview out of date without asking again", a
   expect(requests[1].postDataJSON()).toEqual({ range: "7" })
 })
 
+// covers: AC-2, AC-9
 test("a running feed sends its run ID in the body, and stopping it with the same count dates the overview", async ({ page }) => {
   await stubScenario(page, { feedOn: true })
   await page.route("**/sandbox/scenarios/S01/simulation-runs", (route) => route.fulfill({ json: run("pending", 0) }))
@@ -218,6 +225,47 @@ test("a running feed sends its run ID in the body, and stopping it with the same
   expect(requests).toHaveLength(1)
 })
 
+// covers: AC-9
+test("a change in saved cases makes the overview out of date without asking again", async ({ page }) => {
+  await stubScenario(page)
+  const zero = { PASS: 0, CHALLENGE: 0, HOLD: 0 }
+  let s01 = zero
+  await page.route(/\/cases(\?.*)?$/, (route) => {
+    const total = s01.PASS + s01.CHALLENGE + s01.HOLD
+    return route.fulfill({
+      json: {
+        contract_version: "1.0",
+        items: [],
+        next_cursor: null,
+        totals: {
+          total,
+          by_recommendation: s01,
+          by_scenario: { ...Object.fromEntries(["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08"].map((id) => [id, zero])), S01: s01 },
+          deterministic_passes: s01.PASS,
+          fail_safe_holds: 0,
+          completed_investigations: 0,
+        },
+      },
+    })
+  })
+  const requests = await stubOverview(page, overview())
+  await page.goto("/?scenario=S01")
+  await card(page).getByRole("button", { name: "Write overview" }).click()
+  await expect(card(page).getByText(overview().headline)).toBeVisible()
+  await expect(card(page).getByText("Figures have changed since this was written.")).toHaveCount(0)
+
+  // A case is saved elsewhere; opening the Cases tab reads the new totals.
+  s01 = { ...zero, PASS: 1 }
+  await page.getByRole("tab", { name: /^Cases/ }).click()
+  await expect(page.getByRole("tab", { name: /^Cases/ })).toContainText("1")
+  await page.getByRole("tab", { name: /^Scenario/ }).click()
+
+  await expect(card(page).getByText("Figures have changed since this was written.")).toBeVisible()
+  await expect(card(page).getByRole("button", { name: "Write again" })).toBeVisible()
+  expect(requests).toHaveLength(1)
+})
+
+// covers: AC-1
 test("the Mixed feed asks for its own overview", async ({ page }) => {
   await stubScenario(page)
   const requests = await stubOverview(page, overview({ scenario_id: "MIX", headline: "Mixed feed · S01 to S05: 60 transactions." }))
@@ -227,6 +275,7 @@ test("the Mixed feed asks for its own overview", async ({ page }) => {
   expect(new URL(requests[0].url()).pathname).toBe("/sandbox/scenarios/MIX/overview")
 })
 
+// covers: AC-10
 test("a shown overview has no automatically detectable WCAG A/AA violations", async ({ page }, testInfo) => {
   await stubScenario(page)
   await page.route("**/sandbox/scenarios/*/overview", (route) =>
