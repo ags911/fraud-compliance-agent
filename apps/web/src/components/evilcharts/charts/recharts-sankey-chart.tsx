@@ -49,18 +49,11 @@ const DEFAULT_ITERATIONS = 32;
 const SETTLE_DURATION = 0.45; // seconds
 const SETTLE_EASE = [0.22, 1, 0.36, 1] as const; // ease-out
 
-// The routed item is one full-height, continuously fading bar. The path is
-// normalised to 1, so its gradient remains smooth at each responsive width.
-const SWEEP_DURATION = 1.2; // seconds
-const SWEEP_EASE = [0.3, 0, 0.2, 1] as const; // quick start, soft landing
-// About two pixels on the desktop route: a crisp direction cue, not a block.
-const SWEEP_HEAD = 0.003;
-const SWEEP_TAILS = Array.from({ length: 64 }, (_, index) => ({
-  length: 0.3 - (index * 0.298) / 63,
-  opacity: 0.0125,
-}));
-const SWEEP_TRAVEL = 1 + Math.max(...SWEEP_TAILS.map((tail) => tail.length));
-const SWEEP_ARRIVAL = SWEEP_DURATION;
+// A whole-lane glow shows aggregate activity without queuing individual
+// transactions. It remains legible when the feed becomes more active.
+const GLOW_DURATION = 0.6; // seconds
+const GLOW_EASE = [0.3, 0, 0.2, 1] as const;
+const ROUTE_ARRIVAL_DELAY = 0;
 
 type LinkVariant = "gradient" | "solid" | "source" | "target";
 type NodeLabelPosition = "inside" | "outside";
@@ -409,7 +402,7 @@ function useSettledGeometry<T extends Geometry>(id: string, target: T, pulseKey:
     const controls = animate(0, 1, {
       duration: SETTLE_DURATION,
       ease: SETTLE_EASE,
-      delay: arriving ? SWEEP_ARRIVAL : 0,
+      delay: arriving ? ROUTE_ARRIVAL_DELAY : 0,
       onUpdate: (progress) => {
         const geometry = mixGeometry(from, target, progress);
         remember(geometry);
@@ -638,8 +631,8 @@ type SankeyLinkRendererProps = SankeyLinkProps & {
 /**
  * Renders a single sankey link band, colored by the composed <Link /> variant.
  * Highlights the bands connected to the selected node and dims the rest. The
- * band settles smoothly from the previous layout, and the newest routed item
- * travels its centre curve as a bright head with a fading tail.
+ * band settles smoothly from the previous layout, and the newest routed lane
+ * briefly glows to make aggregate activity legible.
  */
 const SankeyLink = ({
   sourceX: layoutSourceX,
@@ -688,8 +681,7 @@ const SankeyLink = ({
       return;
     }
 
-    const arrival = window.setTimeout(() => onPulseArrival(pulseKey), SWEEP_ARRIVAL * 1000);
-    return () => window.clearTimeout(arrival);
+    onPulseArrival(pulseKey);
   }, [isPulsing, onPulseArrival, pulseKey, reduceMotion]);
 
   const isConnected =
@@ -704,28 +696,11 @@ const SankeyLink = ({
   const halfWidth = paddedLinkWidth / 2;
 
   const sweepColor = targetName in config ? `var(--color-${targetName}-0)` : "currentColor";
-  // The moving item fills the lane's full drawn height. The clip path keeps
-  // its round edges inside the curved band, including narrow and floored
-  // outcomes, instead of leaving a thin line through a wide path.
-  const sweepWidth = paddedLinkWidth;
-  const centrePath = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
-
   const linkAreaPath = `M${sourceX},${sourceY - halfWidth}
     C${sourceControlX},${sourceY - halfWidth} ${targetControlX},${targetY - halfWidth} ${targetX},${targetY - halfWidth}
     L${targetX},${targetY + halfWidth}
     C${targetControlX},${targetY + halfWidth} ${sourceControlX},${sourceY + halfWidth} ${sourceX},${sourceY + halfWidth}
     Z`;
-
-  // Every slice ends at the same moving point. Sixty four short slices keep
-  // the full-height bar visually continuous without a separate solid head.
-  const sweepDash = (length: number) => ({
-    initial: { pathLength: length, pathSpacing: 2, pathOffset: -length },
-    animate: { pathOffset: SWEEP_TRAVEL - length, opacity: [0, 1, 1, 0] },
-    transition: {
-      pathOffset: { duration: SWEEP_DURATION, ease: SWEEP_EASE },
-      opacity: { duration: SWEEP_DURATION, times: [0, 0.06, 0.78, 1] },
-    },
-  });
 
   return (
     <Layer>
@@ -740,13 +715,6 @@ const SankeyLink = ({
           />
         )}
         <LinkStrokeGradient chartId={chartId} index={index} />
-        {isPulsing && (
-          <>
-            <clipPath id={`${chartId}-link-sweep-clip-${index}`}>
-              <path d={linkAreaPath} />
-            </clipPath>
-          </>
-        )}
       </defs>
       <path
         d={linkAreaPath}
@@ -760,37 +728,22 @@ const SankeyLink = ({
         className="transition-opacity duration-200"
       />
       {isPulsing && (
-        <g clipPath={`url(#${chartId}-link-sweep-clip-${index})`} pointerEvents="none" data-sweep={targetName}>
+        <g pointerEvents="none" data-route-glow={targetName}>
           {reduceMotion ? (
-            // Reduced motion: the lane tints in place, with no travel.
+            <path
+              d={linkAreaPath}
+              fill={sweepColor}
+              opacity={0.24}
+            />
+          ) : (
             <motion.path
-              key={`link-sweep-still-${index}-${pulseKey}`}
+              key={`link-glow-${index}-${pulseKey}`}
               d={linkAreaPath}
               fill={sweepColor}
               initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0.35, 0] }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
+              animate={{ opacity: [0, 0.38, 0] }}
+              transition={{ duration: GLOW_DURATION, ease: GLOW_EASE, times: [0, 0.35, 1] }}
             />
-          ) : (
-            <g key={`link-sweep-${index}-${pulseKey}`} fill="none" strokeLinecap="butt">
-              {SWEEP_TAILS.map((tail) => (
-                <motion.path
-                  key={tail.length}
-                  d={centrePath}
-                  stroke={sweepColor}
-                  strokeWidth={sweepWidth}
-                  strokeOpacity={tail.opacity}
-                  {...sweepDash(tail.length)}
-                />
-              ))}
-              <motion.path
-                d={centrePath}
-                stroke={sweepColor}
-                strokeOpacity={0.92}
-                strokeWidth={sweepWidth}
-                {...sweepDash(SWEEP_HEAD)}
-              />
-            </g>
           )}
         </g>
       )}

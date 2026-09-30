@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { EvilSankeyChart } from "@/components/evilcharts/charts/recharts-sankey-chart"
 import type { ChartConfig } from "@/components/evilcharts/ui/recharts-chart"
 import { EMPTY_ROUTING_SUMMARY, ROUTING_OUTCOMES, modelRouteMarker, routingRuleNote, routingSankeyData, routingSummary } from "@/lib/routing-summary"
@@ -22,17 +22,22 @@ const chartConfig = {
 } satisfies ChartConfig
 
 /**
- * Holds a new snapshot at the source until the chart reports that its moving
- * bar has reached the destination. This keeps the visible lane count and its
- * arrival pulse in step with the route, while the underlying feed stays live.
+ * Holds a new snapshot until the chart reports that its lane has started to
+ * glow. This keeps the visible lane count and its arrival pulse in step with
+ * the route, while the underlying feed stays live.
  */
 function useArrivingRoutingSummary(summary: RoutingSummary | null, runId: string | null) {
   const [displayedSummary, setDisplayedSummary] = useState(summary)
   const newestSummary = useRef(summary)
   const displayedRunId = useRef(runId)
 
-  useEffect(() => {
+  // A layout effect runs before the chart's own effects, so the chart's
+  // arrival callback always sees this render's summary.
+  useLayoutEffect(() => {
     newestSummary.current = summary
+  }, [summary])
+
+  useEffect(() => {
     if (displayedRunId.current !== runId) {
       displayedRunId.current = runId
       const reset = window.setTimeout(() => setDisplayedSummary(summary), 0)
