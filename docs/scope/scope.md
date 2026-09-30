@@ -1,6 +1,6 @@
 # Scope: Fraud Compliance Agent
 
-The product is a synthetic fraud operations showcase. This scope tracks new delivery work that follows the repository baseline.
+This is a synthetic fraud operations portfolio showcase. It demonstrates engineering judgement through safe, inspectable flows. It is not a production product plan.
 
 **Build approach:** Tracer Bullet (complete a thin working path before expanding it).
 **Workflow:** Beta (verify, then test after development).
@@ -14,6 +14,7 @@ The product is a synthetic fraud operations showcase. This scope tracks new deli
 | 3 | Visible feed lifecycle | Slice 1 | done |
 | 4 | Score routing (F3) | Slice 2 | done |
 | 5 | AI operations overview (F4a) | Slice 3 | in-progress |
+| 6 | Portfolio release closeout | Slice 3 | planned |
 
 ## Slice 1: Live decision routing
 
@@ -73,6 +74,26 @@ On request, an AI model writes a short plain overview of the selected scenario's
   - [x] Finish: out of date detection, deployment checks, full tests (AC 9, AC 11)
 - [ ] Verify it: /check verify AI operations overview
 - [ ] Test it: /test AI operations overview
+
+### 6. Portfolio release closeout · planned
+Finish a polished, truthful public demonstration of the existing synthetic flow. Do not add product operations, live financial screening, authentication, or new data sources in this pass.
+**Done when:** Azure shows the tested routing experience and AI overview, the approved visual polish is committed, and the repository explains the simulated data boundary and the architecture choices a reviewer can inspect.
+- [ ] Finish the release pass: /develop portfolio release closeout
+  - [ ] Commit the approved routing glow and preserve its focused desktop and mobile coverage
+  - [ ] Confirm the AI overview works live when enabled and falls back truthfully when unavailable
+  - [ ] Add concise portfolio handoff documentation for the architecture, synthetic data and guardrails
+- [ ] Verify it: /check verify portfolio release closeout
+- [ ] Test it: /test portfolio release closeout
+- [ ] Deploy and smoke test the public Azure release
+
+## Deferred after the portfolio release
+
+- External Companies House enrichment
+- Sanctions screening
+- Authenticated human review workflow
+- Health, replay and operational monitoring
+- WebSocket transport work
+- New model training pipeline
 
 ## Legend
 
