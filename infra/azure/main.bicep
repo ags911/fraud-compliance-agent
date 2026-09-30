@@ -191,6 +191,24 @@ resource apiContainerApp 'Microsoft.App/containerApps@2024-03-01' = {
               }
             }
           }
+          {
+            // Keep one replica warm 09:00 to 16:00 UK time on weekdays, when
+            // reviewers are most likely to visit, so they skip the cold start.
+            // 7 h x 23 weekdays = 161 replica hours, inside Azure's monthly
+            // free grant of 200 at 0.25 vCPU and 0.5 GiB. The feed worker keeps
+            // Neon awake for the same hours: about 40 of its 100 free CU hours
+            // at 0.25 CU. Widening this window needs a new cost check.
+            name: 'weekday-warm-window'
+            custom: {
+              type: 'cron'
+              metadata: {
+                timezone: 'Europe/London'
+                start: '0 9 * * 1-5'
+                end: '0 16 * * 1-5'
+                desiredReplicas: '1'
+              }
+            }
+          }
         ]
       }
     }

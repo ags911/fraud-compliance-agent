@@ -71,6 +71,12 @@ def main() -> None:
         "param staticWebAppLocation string = 'westus2'",
         "minReplicas: 0",
         "maxReplicas: 1",
+        # The warm window is sized to Azure's and Neon's free allowances.
+        "type: 'cron'",
+        "timezone: 'Europe/London'",
+        "start: '0 9 * * 1-5'",
+        "end: '0 16 * * 1-5'",
+        "desiredReplicas: '1'",
         "allowInsecure: false",
         "destination: null",
         "'https://${staticWebApp.properties.defaultHostname}'",
