@@ -130,7 +130,7 @@ Web deep link: `/?case=<case id>` on the Risk Console (originally a `/transactio
 | `GET /cases` | this browser's cases | `browser_id` column = header value, `expires_at` > now |
 | `GET /cases` | page order and next page | (`completed_at` desc, `case_id` desc); `next_cursor` from the last row |
 | `GET /cases` | `totals` | aggregate over all this browser's unexpired rows, ignoring filters |
-| Cases tab | stat cards and breakdown | `totals` (Runs completed = `total`; PASS, CHALLENGE, HOLD = `by_recommendation`; PASS detail = `deterministic_passes`; HOLD detail = `fail_safe_holds`; Runs detail = `completed_investigations`; breakdown chart = `by_scenario`) |
+| Cases tab | stat cards and breakdown | `totals` (Saved cases = `total`, "Runs completed" when case history is off, amended 2026-10-01; PASS, CHALLENGE, HOLD = `by_recommendation`; PASS detail = `deterministic_passes`; HOLD detail = `fail_safe_holds`; Runs detail = `completed_investigations`; breakdown chart = `by_scenario`) |
 | Cases tab | tab count badge | `totals.total` (fallback mode: this visit's run count) |
 | Cases tab | table rows and paging | `items[]`, then `next_cursor` for "Show more" |
 | Cases tab | "Time" column | `completed_at`, shown in the browser's local time |
@@ -155,7 +155,7 @@ Web deep link: `/?case=<case id>` on the Risk Console (originally a `/transactio
 |---|---|---|---|
 | Tab label | Session | Cases, count `totals.total` | Cases, count of this visit's runs |
 | Section heading | Synthetic showcase decision stream | Saved cases | This visit's runs |
-| Section description | Only completed, synthetic showcase runs from this browser session appear here. No payments are executed and no runtime model score is shown. | Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision. (Amended 2026-09-29 with ADR-024.) | Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown. |
+| Section description | Only completed, synthetic showcase runs from this browser session appear here. No payments are executed and no runtime model score is shown. | Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision. (Amended 2026-09-29 with ADR-024.) Amended 2026-10-01: "This browser's saved cases: CHALLENGE and HOLD payments from the live feed (the newest 20) and showcase runs (up to 50), kept for 30 days. PASS feed payments aren't saved." followed by the same last two sentences, and a note above the stat cards saying they count saved cases, not the run on the routing board. | Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown. |
 | Empty state title | No showcase runs yet | No saved cases yet | No showcase runs yet |
 | Empty state copy ending | Runs stay in this browser session only. | Saved cases stay in this browser for 30 days. | Runs stay in this browser session only. |
 | Table title | Current session decisions | Cases | This visit's decisions |

@@ -80,7 +80,14 @@ const COPY = {
   saved: {
     heading: "Saved cases",
     description:
-      "Completed synthetic showcase runs from this browser, kept for 30 days (up to 50). No payments are executed. A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision.",
+      "This browser's saved cases: CHALLENGE and HOLD payments from the live feed (the newest 20) and showcase runs (up to 50), kept for 30 days. PASS feed payments aren't saved. No payments are executed. A model score, where shown, can only raise a payment the rules cleared; it never lowers a decision.",
+    // The routing board above counts the current run's payments, PASS
+    // included; these cards count saved cases, so say so where they meet.
+    summaryLabel: "Saved cases",
+    summaryShare: "of cases",
+    summaryEmpty: "No cases yet",
+    summaryNote:
+      "These count this browser's saved cases, not the run on the routing board: PASS feed payments aren't saved, and only the newest 20 feed cases are kept.",
     emptyTitle: "No saved cases yet",
     emptyEnding: "Saved cases stay in this browser for 30 days.",
     tableTitle: "Cases",
@@ -90,6 +97,10 @@ const COPY = {
     heading: "This visit's runs",
     description:
       "Not saved: case history is off in this environment. Only this visit's runs appear here. No payments are executed and no runtime model score is shown.",
+    summaryLabel: "Runs completed",
+    summaryShare: "of runs",
+    summaryEmpty: "No runs yet",
+    summaryNote: null,
     emptyTitle: "No showcase runs yet",
     emptyEnding: "Runs stay in this browser session only.",
     tableTitle: "This visit's decisions",
@@ -148,9 +159,10 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
         </section>
       ) : (
         <>
+          {copy.summaryNote ? <p className="panel-footnote">{copy.summaryNote}</p> : null}
           <div className="console-summary-grid" aria-label="Cases summary">
             <MetricCard
-              label="Runs completed"
+              label={copy.summaryLabel}
               value={countFormatter.format(summary.total)}
               detail={`${plural(summary.completedInvestigations, "investigation", "investigations")} completed`}
             />
@@ -164,7 +176,7 @@ export function ConsoleCasesPanel(props: ConsoleCasesPanelProps) {
               label="CHALLENGE"
               swatch={recommendationColors.CHALLENGE}
               value={countFormatter.format(summary.CHALLENGE)}
-              detail={summary.total ? `${Math.round((summary.CHALLENGE / summary.total) * 100)}% of runs` : "No runs yet"}
+              detail={summary.total ? `${Math.round((summary.CHALLENGE / summary.total) * 100)}% ${copy.summaryShare}` : copy.summaryEmpty}
             />
             <MetricCard
               label="HOLD"

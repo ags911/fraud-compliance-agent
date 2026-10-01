@@ -309,7 +309,14 @@ test.describe("Risk Console Cases tab", () => {
     await page.goto("/?scenario=S01")
 
     await page.getByRole("tab", { name: /^Cases/ }).click()
-    await expect(page.getByText("Saved cases", { exact: true })).toBeVisible()
+    await expect(page.locator(".section-heading").getByText("Saved cases", { exact: true })).toBeVisible()
+    // The stat cards count saved cases, not the routing board's run, and say so.
+    const summary = page.getByLabel("Cases summary")
+    await expect(summary.locator(".stat-label").first()).toHaveText("Saved cases")
+    await expect(
+      page.getByText("These count this browser's saved cases, not the run on the routing board: PASS feed payments aren't saved, and only the newest 20 feed cases are kept."),
+    ).toBeVisible()
+    await expect(page.getByText(/^This browser's saved cases: CHALLENGE and HOLD payments from the live feed \(the newest 20\)/)).toBeVisible()
     await expect(page.getByText("Saved cases are linked only to a random ID kept in this browser, and are deleted after 30 days. Nothing else about you is stored.")).toBeVisible()
     const link = page.getByRole("link", { name: S04_ID })
     await expect(link).toHaveAttribute("href", `/?case=${S04_ID}`)
@@ -519,6 +526,9 @@ test.describe("Risk Console Cases tab", () => {
     await page.getByRole("tab", { name: /^Cases/ }).click()
     await expect(page.getByText("This visit's runs", { exact: true })).toBeVisible()
     await expect(page.getByText(/^Not saved: case history is off in this environment\./)).toBeVisible()
+    // Without storage the cards do count this visit's runs, so the label stays.
+    await expect(page.getByLabel("Cases summary").locator(".stat-label").first()).toHaveText("Runs completed")
+    await expect(page.getByText(/not the run on the routing board/)).toHaveCount(0)
     await expect(page.getByText("Saved cases are linked only to a random ID kept in this browser, and are deleted after 30 days. Nothing else about you is stored.")).toHaveCount(0)
     await expect(page.getByRole("row").filter({ hasText: S04_ID })).toContainText(/\d{1,2} [A-Z][a-z]{2}, \d{2}:\d{2}:\d{2}/)
     // Storage off is the public configuration, so no developer instruction shows.
