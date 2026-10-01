@@ -45,3 +45,9 @@ models/
 
 # Markdown
 docs/repository-inventory.md
+# Local agent files. Handoff briefs, reports and logs from agent runs stay on
+# the machine that ran them. Installed skills are reproducible from
+# skills-lock.json (committed), like node_modules from a lockfile.
+.agents/handoffs/
+.agents/skills/
+.claude/skills/
