@@ -452,7 +452,9 @@ what runs with what's planned is how a demo becomes a false claim."
 
 - **Topology**: React console → Azure Static Web Apps (Free); FastAPI demo
   API → Azure Container Apps Consumption, scale-to-zero (0–1 replicas, 0.25
-  vCPU/0.5 GiB, UK South). No database/cache/queue/VNet in the resource
+  vCPU/0.5 GiB, UK South), with one replica held warm 09:00–16:00
+  Europe/London on weekdays by a cron scale rule (added 2026-10-01; sized to
+  the free grants, pinned by the deployment verifier). No database/cache/queue/VNet in the resource
   group. `infra/azure/` holds reviewable Bicep (`subscription.bicep`,
   `main.bicep`) plus non-secret params; `.github/workflows/deploy-showcase.yml`
   builds the SDK-free image, publishes to GHCR by digest, authenticates via

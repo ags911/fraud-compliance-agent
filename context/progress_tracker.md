@@ -245,6 +245,25 @@ its source scenario, fixture version, and that scenario's decision. The auto-sta
 waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
 with `keepalive`.
 
+**Delivery record, 2026-10-01 (first visit experience and cost).** The
+Risk Console tour now starts once per browser (spec 0007 AC-1 amended,
+AC-7 "Skip tour" added; PR #42). Five measured cold starts of the hosted
+API took 15.5, 16.9, 17.4, 18.6 and 22.4 s to answer `/health`, and the
+first Neon read after that about 0.14 s, because the feed worker reads
+Neon every second and so wakes it with the API. The wake notice now says
+"about 15 to 25 seconds" and shows an estimated progress bar that never
+fills early, switching to "Taking longer than usual" after 25 s (PR #44).
+A cron scale rule keeps one replica warm 09:00 to 16:00 Europe/London on
+weekdays (PR #43): 161 replica hours in a 23 weekday month against Azure's
+200 hour free grant, and about 40 of Neon's 100 free CU hours at 0.25 CU;
+the deployment verifier pins the window. The deploy reuses a passed
+Verify run on the same commit instead of repeating `make check` (PR #45).
+Deploy run `36792565898` from `e28e574` was smoke tested: the rule is live
+on Azure, and a cold load showed the bar until the API answered at 18.6 s
+with no page errors. Owner action: fix the public Neon project
+(`polished-base`) at 0.25 CU minimum and maximum so autoscaling cannot
+exhaust its free CU hours.
+
 **Delivery record, 2026-09-30 (portfolio release).** Scope feature 6, the
 portfolio release closeout, is done: the routing board's whole lane glow
 (replacing the comet sweep), the reviewer guide
