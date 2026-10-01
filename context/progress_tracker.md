@@ -260,9 +260,12 @@ the deployment verifier pins the window. The deploy reuses a passed
 Verify run on the same commit instead of repeating `make check` (PR #45).
 Deploy run `36792565898` from `e28e574` was smoke tested: the rule is live
 on Azure, and a cold load showed the bar until the API answered at 18.6 s
-with no page errors. Owner action: fix the public Neon project
-(`polished-base`) at 0.25 CU minimum and maximum so autoscaling cannot
-exhaust its free CU hours.
+with no page errors. Done 2026-10-01 by the owner: the public Neon project
+(`polished-base`) is fixed at 0.25 CU minimum and maximum, so autoscaling
+cannot exhaust its free CU hours. It sits in a different Neon organisation
+from the local `dev` project. The Cases tab's stat cards now say they count
+saved cases, not the routing board's run (PR #47), and the untracked local
+agent files are ignored (PR #48).
 
 **Delivery record, 2026-09-30 (portfolio release).** Scope feature 6, the
 portfolio release closeout, is done: the routing board's whole lane glow
