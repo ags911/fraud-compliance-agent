@@ -1,18 +1,17 @@
 # AI Workflow Rules
 
-> Supplementary synthesis — see the authority note at the top of
-> [`project_overview.md`](project_overview.md). This file does not replace
-> the real instruction chain (`CLAUDE.md` → `AGENTS.md` →
-> `docs/project-context.md`); it consolidates working conventions that are
-> otherwise scattered across the PRD, ADRs, proposals, and the notebook/
-> experiment docs. Root `AGENTS.md` was not modified to point here.
+> Part of the canonical `/context/` baseline — see the authority note at the
+> top of [`project_overview.md`](project_overview.md). The instruction chain is
+> `CLAUDE.md` → `AGENTS.md` → `context/`. This file consolidates working
+> conventions that were scattered across the archived PRD and project guide,
+> the ADRs, proposals, and the notebook/experiment docs.
 
 ## Core Incremental-Development Rules
 
 1. **Never rewrite existing working logic unless explicitly commanded in a
    feature spec.** Make the smallest cohesive change that satisfies the
    task; avoid opportunistic refactors, new dependencies, or invented
-   product semantics (`docs/project-context.md`).
+   product semantics.
 2. **Always reuse existing utility functions, hooks, and UI primitives**
    before writing new ones — the `cn()` utility, the `src/lib/*` hook
    pattern, shadcn primitives in `src/components/ui/`, the `StrictFiniteModel`/
@@ -23,8 +22,8 @@
 
 ## Zero-Speculative-Logic Constraints (repository-wide, safety-critical)
 
-These are restated, nearly verbatim, across the PRD, `docs/project-context.md`,
-every ADR, and every proposal — treat them as hard rules, not style
+These were restated, nearly verbatim, across the archived PRD and project
+guide, every ADR, and every proposal — treat them as hard rules, not style
 preferences:
 
 - **A proposal is not a contract.** "Proposed" means reviewable but not
@@ -65,8 +64,7 @@ preferences:
   characterisation test "never approves a risk rule or target scenario
   mapping."
 - **If the required contract or approval does not exist, stop before
-  inventing its semantics.** Propose the contract or ADR change instead
-  (`docs/project-context.md`).
+  inventing its semantics.** Propose the contract or ADR change instead.
 
 ## Agent Tool / RAG Fixture Rules (the public showcase investigation)
 
@@ -225,14 +223,14 @@ release contracts.
 
 | Material | Authority | Lifecycle |
 |---|---|---|
-| `docs/project-context.md` | Canonical repository guidance | Keep current; link to it, don't repeat it |
-| `docs/product/prd.md` | Candidate product baseline | Promote once its approval record (§12) is complete |
+| `context/` | Canonical repository guidance | Keep current; link to it, don't repeat it |
+| `context/progress_tracker.md` | Current delivery status and decision log | One tracker; cannot approve contract or post-gate scope |
 | `docs/contracts/` | Accepted integration contracts only | Change through an ADR + matching tests |
-| `docs/product/implementation-plan.md` | Candidate delivery planning | One active plan; cannot approve PRD/contract/post-gate scope |
 | `docs/proposals/` | Non-binding review material | Promote accepted decisions; archive closed proposals |
-| `docs/experiments/`, `notebooks/` | Reproducibility evidence | Retain as evidence; never product authority |
-| `docs/architecture/` | Structural description | Keep in step with PRD/plan; approves nothing |
-| `docs/audits/`, generated inventories | Point-in-time control evidence | Keep the current standard; date-stamp audit snapshots |
+| `notebooks/` | Reproducibility evidence | Retain as evidence; never product authority |
+| `docs/architecture/` | Structural description | Keep in step with `context/`; approves nothing |
+| Generated inventories | Point-in-time control evidence | Date-stamp snapshots |
+| `docs/archive/` | History only: retired PRD, former project guide, superseded plans, past experiments and audits | Never cite for active development |
 
 "Do not add another planning document when an existing canonical or active
 plan can be updated." "Approval status, owner, and supersession should be
