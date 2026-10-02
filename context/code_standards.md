@@ -1,9 +1,9 @@
 # Code Standards
 
-> Supplementary synthesis — see the authority note at the top of
-> [`project_overview.md`](project_overview.md). Path-scoped `apps/web/AGENTS.md`
-> and `apps/api/AGENTS.md` remain authoritative for their trees;
-> `docs/project-context.md` remains authoritative repo-wide.
+> Part of the canonical `/context/` baseline — see the authority note at the
+> top of [`project_overview.md`](project_overview.md). Path-scoped
+> `apps/web/AGENTS.md` and `apps/api/AGENTS.md` remain authoritative for their
+> trees.
 
 ## TypeScript Conventions (`apps/web`)
 

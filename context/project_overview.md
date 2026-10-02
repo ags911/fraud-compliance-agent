@@ -1,14 +1,14 @@
 # Project Overview
 
-> **Relationship to existing docs.** This `/context/` directory is a
-> supplementary baseline, synthesized from every Markdown document in this
-> repository (PRD, ADRs, proposals, experiments, design docs, audits) as of
-> 2026-09-22. It does **not** replace or override `docs/project-context.md`,
-> which root `AGENTS.md`/`CLAUDE.md` name as the canonical instruction source,
-> nor the PRD/ADR authority chain those documents establish. Where this file
-> and a primary source disagree, the primary source wins — treat this as a
-> synthesis for orientation, not a new approval record. Root `AGENTS.md` has
-> not been modified to point here. **Every "accepted" vs "proposed"/
+> **Authority.** This `/context/` directory is the canonical instruction
+> source for this repository, as root [`AGENTS.md`](../AGENTS.md) states. It
+> was synthesized on 2026-09-22 from the repository's Markdown documents (PRD,
+> ADRs, proposals, experiments, design docs, audits). The former project guide
+> (`docs/project-context.md`) and the retired PRD are archived under
+> [`docs/archive/`](../docs/archive/) as history only; do not use them for
+> active development. Where a `context/` file and an accepted ADR or versioned
+> contract under `docs/contracts/` disagree, the ADR or contract wins and the
+> `context/` file gets fixed. **Every "accepted" vs "proposed"/
 > "candidate" marker below is load-bearing**: this repository repeatedly
 > states that a proposal, a notebook result, or a "decided" direction note is
 > not itself a contract acceptance — only a resolved ADR plus a versioned
