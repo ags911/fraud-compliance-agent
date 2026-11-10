@@ -1,8 +1,8 @@
 # API instructions
 
-Read the [repository context](../../context/project_overview.md) first
-(and the rest of `../../context/`). This file adds only rules that are
-specific to `apps/api`.
+Read the repository context named in the root [`AGENTS.md`](../../AGENTS.md)
+first: the two always-read files, plus the others your task touches. This
+file adds only rules that are specific to `apps/api`.
 
 - Python is pinned to 3.13 in `.python-version` (`>=3.11` is supported). Use
   `uv`; change `uv.lock` together with `pyproject.toml`.

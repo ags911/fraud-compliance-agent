@@ -1,8 +1,8 @@
 # Web console instructions
 
-Read the [repository context](../../context/project_overview.md) first
-(and the rest of `../../context/`). This file adds only rules that are
-specific to `apps/web`.
+Read the repository context named in the root [`AGENTS.md`](../../AGENTS.md)
+first: the two always-read files, plus the others your task touches. This
+file adds only rules that are specific to `apps/web`.
 
 - Focused checks, run from the repository root: `make web-lint`,
   `make web-build`, and `make web-test` (`npm test` in `apps/web`, Playwright
