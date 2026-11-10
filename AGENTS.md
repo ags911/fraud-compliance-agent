@@ -33,3 +33,12 @@ PRD/ADR/proposal corpus it pointed to, are archived under
 [`docs/archive/`](docs/archive/) and are historical only — do not read them
 for active development. The ADR index (`apps/api/docs/adr/README.md`) is
 the decision log; `context/progress_tracker.md` points to it.
+
+## Handoffs
+
+`.agents/handoffs/` is gitignored, so a handoff stays on the machine that
+wrote it. Before stopping on multi-step work, write or update a handoff there:
+what is done, what is next, and each decision with its reason. At the start of
+a task, read the newest handoff for that work if there is one. Durable
+decisions still go in an ADR or `context/progress_tracker.md`, not only in a
+handoff.
