@@ -298,43 +298,12 @@ not recommend or imply authority for an individual payment decision.
 - [ ] Keep suggested follow-ups operational and safe (for example, inspect a
   visible case group), never a payment-routing instruction.
 
-## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
+## Architectural Decisions Log
 
-Status legend from `docs/adr/README.md`: "`Proposed` means reviewable but
-not authorised; only an accepted ADR and its versioned contracts may govern
-implementation."
-
-| ADR | Title | Status | Decision (one line) |
-|---|---|---|---|
-| 0000 | Template | N/A | Defines required ADR sections; "an author must not fill in approval on someone else's behalf" |
-| 0001 | Application, SDK and package boundary | Proposed | This app owns fraud orchestration/contracts/persistence; consumes the pinned Arbiris SDK via packaged interfaces only, never the SDK's `examples/` |
-| 0002 | Canonical domain contract | Proposed | Six-entity separation (`SourceEvent`/`CanonicalTransaction`/`FeatureSnapshot`/`Prediction`/`RunContext`/`OutcomeLabel`); money = integer minor units + ISO currency |
-| 0003 | Plaid mapping and feature feasibility | Proposed | Continues local, zero-retention Sandbox analysis; mapping/feature artifacts remain candidates only |
-| 0004 | Fraud target and corpus | Proposed | Keeps F3 deterministic-only until a licensed corpus with mature labels is approved; Sparkov is mechanics-only evidence, not a label source |
-| 0005 | Model artifact and evaluation contract | Proposed | Freezes chronological partitions/calibration/metrics/threshold-selection protocol once ADR-004 resolves; XGBoost is a candidate, not a predetermined winner |
-| 0006 | Routing, authority and oversight | Proposed (sub-decisions accepted 2026-09-20) | Deterministic controls precede model routing; recommendations ≠ actions; **MVP 3 has no numeric runtime score/threshold** |
-| 0007 | Telemetry and signed evidence | Proposed | Separates operational telemetry from material signed evidence; Arbiris owns signing/generic evidence storage |
-| 0008 | Inventory, oversight-pack linkage | Proposed | Represents review lifecycle as separate operational facts; Arbiris owns agent inventory/evidence-pack assembly |
-| 0009 | PostgreSQL transitions and recovery | Proposed | PostgreSQL as proposed F3 store; idempotency/action-uniqueness/review-version DB constraints; no DB configured yet |
-| 0010 | Identity, roles and deployment | Proposed | Provider-neutral actor/role outline; synthetic identities local-only; deployed bypass forbidden |
-| 0011 | Operational acceptance and versioning | Proposed | Freezes versioned domain schemas/OpenAPI/event contracts once ADR-002–010 accepted |
-| 0012 | Freeze the current showcase API contract | **Accepted** (2026-09-19) | Accepts `demo-api.v1.openapi.json` + `demo-run-events.v1.schema.json` for the legacy showcase surface only |
-| 0013 | Adopt local-first F3 boundaries | **Accepted for F3 preparation only** (2026-09-20) | 8 local-first defaults; authorises preparation/review artifacts only, not an operational endpoint/DB/auth/model-serving |
-| 0014 | Adopt public-safe showcase investigation boundary | **Accepted for scoped preparation only** (2026-09-20) | Repository-owned SDK-free bounded investigation as planned MVP 3 runtime; S04 sole normal path, S05 its failure path; tool allowlist/budget/failure-contract/live-window D1–D10 decisions |
-| 0015 | Freeze the public-showcase investigation contract | **Accepted** (2026-09-20) | Accepts `public-showcase-api.v1.openapi.json` + `public-showcase-events.v1.schema.json` |
-| 0016 | Accept public-showcase S01–S08 fixtures | **Accepted** (2026-09-20) | Accepts `fixtures/s01-s08/scenarios.v1.json` as sole canonical fixture packet; S06–S08 behavior deferred |
-| 0017 | Implement public-showcase runtime | **Accepted** (2026-09-20) | Implements `apps/api/server/showcase_investigation/`; live mode off by default; no model identifier invented |
-| 0018 | Accept Plaid Sandbox-derived showcase fixture enrichment rules | **Accepted for its narrow boundary; superseded in part by 0019** (2026-09-22) | 6 derivation rules for a future `scenarios.v2` packet; found S01/S02 rules have no runtime effect |
-| 0019 | Accept Plaid Sandbox-derived S04 account-activity evidence | **Accepted** (2026-09-22) | Widens `EvidenceItem.source_class` to include `plaid_sandbox_derived`; adds one S04 evidence item; fixture packet → v1.1 |
-| 0020 | Accept local case persistence and the showcase cases contract | **Accepted** (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
-| 0021 | Allow the public showcase one guarded PostgreSQL database | **Accepted** (2026-09-28; **enabled** 2026-09-28, budget email test due at first spend: a £0.01 `showcase-first-spend-test` budget emails at the first recorded penny) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
-| 0022 | Accept the Sandbox event store | **Accepted** (2026-09-28) | Accepts the versioned, sanitised Plaid Sandbox store as the local/internal time-aware source for analytics and replay, with explicit import-only mapping, retention and spec 0003 overlay invariants; public use remains subject to ADR-021 |
-| 0025 | Route rule cleared feed payments by model score | **Accepted and built** (2026-09-29) | F3, spec 0010: the score may only raise a rule PASS to CHALLENGE or HOLD at Sparkov precision thresholds; planted S01 outliers; events v2, cases v1.1, simulation v1.1 |
-| 0026 | Allow an AI written dashboard overview on the public showcase | **Accepted** (2026-09-29) | F4a, spec 0011: a server built, fact checked overview with a template fallback; its own live switch (off by default) and limits; nothing stored |
-| 0024 | Accept a display only Sparkov model score on feed cases | **Accepted** (2026-09-28) | Sparkov is the demo corpus; spec 0004 slice 3 scores feed payments as evidence only with a plain Python tree scorer over pinned booster JSON; never routes; routing by score (F3) needs its own ADR |
-| 0023 | Accept the Sandbox simulation contract | **Accepted** (2026-09-28) | Promotes `sandbox-simulation.v0` to `docs/contracts/sandbox-simulation.v1.openapi.json` with shapes unchanged; satisfies ADR-021's contract prerequisite, switches nothing on |
-
-Full per-ADR invariants are preserved in
+The ADR folder is the decision log: see the index at
+[`apps/api/docs/adr/README.md`](../apps/api/docs/adr/README.md) (one line per
+ADR, 000 to 026, with status). Do not copy ADR titles, statuses or decisions
+into this file. Full per-ADR invariants are preserved in
 [`architecture.md`](architecture.md#5-accepted-architecture-invariants-from-accepted-adrs--these-are-built-rules).
 
 ## Data & Model Decision Log
