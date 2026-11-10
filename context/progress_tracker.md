@@ -4,88 +4,42 @@
 > `context/` baseline. It was generated 2026-09-22 by reading the former
 > `docs/product/implementation-plan.md` and `apps/api/docs/adr/` before both
 > were archived under `docs/archive/` (historical only, do not reference for
-> active development). Keep the tables below current as delivery status
-> changes. Since 2026-09-27 the web app is one page, the Risk Console
-> (`apps/web/index.html`); the MVP 1–3 screen tables below are the dated
-> record of what shipped then, not current routes.
+> active development). Keep the Current State block and the tables below
+> current as delivery status changes. Since 2026-09-27 the web app is one
+> page, the Risk Console (`apps/web/index.html`); the MVP 1–3 screen tables in
+> [`progress_history.md`](progress_history.md) are the dated record of what
+> shipped then, not current routes.
 
-## Active Phase
+## Current State (2026-11-10)
 
-**Brownfield documentation-consolidation baseline established.** This
-`/context/` directory synthesizes the PRD (v0.3, candidate), the
-implementation plan, all 20 ADR files, all 14 proposal docs, all 10
-experiment records, the design-system docs, the two point-in-time audits,
-and the vendored SDK's reference architecture, as of branch
-`feature/overview-live-model-work`, 2026-09-22.
+**Phase.** The portfolio release shipped on 2026-09-30 and all six features in
+[`docs/scope/scope.md`](../docs/scope/scope.md) are done. The public showcase
+(Azure Static Web Apps plus one Container App, with one guarded Neon database
+under ADR-021) is live. The last commit on `main` is dated 2026-10-01.
+Delivery stages: F0 to F2 and F4a done; F3, F3a and F4 partly built (local and
+internal use, as recorded below); F5 and F6 not started. Specs 0001, 0002,
+0004, 0006, 0008, 0009, 0010 and 0011 are Accepted; specs 0003, 0005 and 0007
+still say In Progress in their own headers.
 
-## MVP Completion Detail (progress dated 2026-09-21)
+**In flight.** No feature spec is being built. Open pull requests on
+2026-11-10: #50 (making `context/` authority wording consistent with
+`AGENTS.md`), ten Dependabot dependency bumps, and the context-loading tidy
+(tiered reads, ADR index, handoff rule, this tracker). Known open items: the
+`showcase-first-spend-test` budget email is untested until first spend
+(ADR-021), and manual assistive-technology review is pending.
 
-> **Retired 2026-09-27.** Every screen listed in the MVP 1–3 tables below
-> (Overview, Benchmark Insights, Not Found, the Rules Performance reference,
-> New transaction, Decision workspace, Showcase investigation) was removed
-> when the Risk Console became the only page (branch `refactor/risk-console`).
-> The APIs they used remain. The ticks record what was delivered and
-> verified at the time; the MVP gates' web checks now run against the
-> console (`make acceptance-mvp1`/`-mvp2` = lint, build, Playwright; the
-> MVP 2/3 local browser matrix scripts were deleted with their pages).
+**Next.** Not chosen in the repository: the owner picks. The documented
+candidates are closing specs 0003, 0005 and 0007, F5 (human review) and F6
+(monitoring, replay), and the deferred list in `docs/scope/scope.md`
+(Companies House enrichment, sanctions screening, human review, health and
+replay, WebSocket transport, new model training).
 
-### MVP 0 — Local engineering foundation
+**Decisions.** ADRs: the index at `apps/api/docs/adr/README.md`. Data and
+model choices: the Data & Model Decision Log below.
 
-No screens (infra-only). 9/9 ✓: monorepo separation; `make check`/CI (3
-jobs: web, API+SDK, API-no-SDK); FastAPI health/scenario/model-summary/
-streamed-run endpoints; web SSE consumers; documented data-governance
-boundaries; model training/eval moved to `apps/api/modelling` (2026-09-19,
-API suite 89→209 tests); frozen v1 API contract (2026-09-19, ADR-012);
-browser-to-local-API E2E for A–F+outage; API error redaction/CORS verified
-locally.
-
-### MVP 1 — Guided product walkthrough
-
-| Status | Screen | Route | Notes |
-|---|---|---|---|
-| ✓ | Overview | `/overview` | Shared app shell, zero state, guided tour, KPI strip; synthetic demo data labelled as representative. |
-| ✓ | Benchmark Insights | `/insights` | Read-only Sparkov benchmark evidence; cannot score a transaction, show drift, or make a production claim. |
-| ✓ | Not Found | `*` | Branded recovery screen for any unavailable route, no invented data. |
-| ✓ | Rules Performance reference | `/references/rules-performance-reference.html` | Frozen design reference only, not a product screen or data source. |
-
-6/6 automated ✓ (manual assistive-technology review pending): zero state/
-welcome dialog/tour/labelling; mechanics-only benchmark; recovery;
-visual-only reference; axe passes both widths; welcome-dialog/tour behavior
-decided 2026-09-19 (on-page checklist removed, driver.js 4-step opt-in
-tour).
-
-### MVP 2 — Live decision demonstration
-
-| Status | Screen | Route | Notes |
-|---|---|---|---|
-| ✓ | New transaction / decision run | `/transactions/new` | Streams validated SSE events from `POST /run`/`POST /run/preset/{scenario_id}`; every action simulated. |
-| ✓ | Decision workspace | `/transactions/run/:runId` or an in-place run result | Node status, model/rule outputs, counterfactual result, signed-record state, outage/fail-safe path. |
-| ✓ | Overview | `/overview` | Continues as entry point; must not manufacture aggregate history from a transient run. |
-
-6/6 ✓: scenario/run/SSE consumption; preset/custom-run + LLM-outage routes;
-dashboard merged into Overview route (2026-09-19, standalone `dashboard.html`
-removed); loading/cancellation/error/outage verification; simulated-outcome
-labelling; decision-workspace tour added.
-
-### MVP 3 — Azure public showcase
-
-| Status | Surface | Notes |
-|---|---|---|
-| ✓ | Web console | Azure Static Web Apps Free, verified at the public URL by workflow run `35611121637`. |
-| ✓ | Demo API | Azure Container Apps Consumption, 0–1 replicas. |
-| ✓ | Public-safe investigation | 3rd live-only tool `get_account_activity_evidence` added (ADR-018/019); budget 3 total/1 per tool. |
-| ✓ | Delivery | GitHub Actions, Azure OIDC, run `35611121637`, commit `942f92b`. |
-| ◐ | Cost/safety | Doppler config prepared but unused; budget-alert delivery unexercised. |
-| ◐ | Screens | MVP 1–2 screens remain; manual keyboard/screen-reader review pending. |
-
-9/12 ✓ + 3 ◐ (Doppler config, budget-alert delivery unexercised, tour
-API-status step).
-
-**Deliberate MVP 3 scope exclusions (not gaps)**: dashboard trends/
-sparklines/Plaid-scored history → F3a/F6; "what would change the outcome?"
-counterfactual → F3a; S06–S08 stateful behavior → F3–F6 (503 is expected
-today); real Groq execution optional/unclaimed (recorded playback is
-default).
+**History.** MVP tables, dated delivery records and audit history are in
+[`progress_history.md`](progress_history.md); read them only for what shipped
+when.
 
 ## Technical Delivery Sequence (F0–F6)
 
@@ -195,7 +149,8 @@ only, narrowed to a durable record of completed runs; 19 acceptance
 criteria, three Tracer Bullet slices. ADR-020 accepted `showcase-cases.v1` and case
 persistence for local and internal use on 2026-09-27; any
 public enablement additionally needs ADR-021 (Proposed), a rate
-limit, an expiry sweep and a hosting/secrets plan.
+limit, an expiry sweep and a hosting/secrets plan. [ADR-021 was accepted
+and enabled on 2026-09-28.]
 
 **Proposed regulatory-reference increment:** F4 may add a curated, dated FCA
 Handbook extract corpus and bounded RAG retrieval to support cited S04
@@ -245,48 +200,6 @@ its source scenario, fixture version, and that scenario's decision. The auto-sta
 waits for a visible tab, stops after 120 seconds hidden, and cancels on `pagehide`
 with `keepalive`.
 
-**Delivery record, 2026-10-01 (first visit experience and cost).** The
-Risk Console tour now starts once per browser (spec 0007 AC-1 amended,
-AC-7 "Skip tour" added; PR #42). Five measured cold starts of the hosted
-API took 15.5, 16.9, 17.4, 18.6 and 22.4 s to answer `/health`, and the
-first Neon read after that about 0.14 s, because the feed worker reads
-Neon every second and so wakes it with the API. The wake notice now says
-"about 15 to 25 seconds" and shows an estimated progress bar that never
-fills early, switching to "Taking longer than usual" after 25 s (PR #44).
-A cron scale rule keeps one replica warm 09:00 to 16:00 Europe/London on
-weekdays (PR #43): 161 replica hours in a 23 weekday month against Azure's
-200 hour free grant, and about 40 of Neon's 100 free CU hours at 0.25 CU;
-the deployment verifier pins the window. The deploy reuses a passed
-Verify run on the same commit instead of repeating `make check` (PR #45).
-Deploy run `36792565898` from `e28e574` was smoke tested: the rule is live
-on Azure, and a cold load showed the bar until the API answered at 18.6 s
-with no page errors. Done 2026-10-01 by the owner: the public Neon project
-(`polished-base`) is fixed at 0.25 CU minimum and maximum, so autoscaling
-cannot exhaust its free CU hours. It sits in a different Neon organisation
-from the local `dev` project. The Cases tab's stat cards now say they count
-saved cases, not the routing board's run (PR #47), and the untracked local
-agent files are ignored (PR #48).
-
-**Delivery record, 2026-09-30 (portfolio release).** Scope feature 6, the
-portfolio release closeout, is done: the routing board's whole lane glow
-(replacing the comet sweep), the reviewer guide
-[`docs/portfolio.md`](../docs/portfolio.md), and `urllib3` 2.8.0 plus an
-`npm audit fix` for new advisories (PR #39). Deploy run `36780805289` from
-`f517afd` passed its smoke test: site and API `/health` 200, the overview
-answers `template`/`live_disabled`, CORS grants only the site origin, and
-Chrome loaded the console with no errors. A local check against Groq
-(`openai/gpt-oss-120b`) returned grounded live overviews and fell back at
-the 3 per 10 minute limit. Companies House, sanctions screening, human
-review, monitoring, WebSockets and new model training are deferred (see
-[`docs/scope/scope.md`](../docs/scope/scope.md)).
-
-**Delivery record, 2026-09-27.** Specs 0002, 0006, 0008 and 0009 are
-Accepted; spec 0003 is verified 28/28. ADR-022 is Proposed. Codex's fresh
-model review is recorded at
-[`docs/reviews/2026-09-27-refactor-risk-console.md`](../docs/reviews/2026-09-27-refactor-risk-console.md)
-with an Approve verdict. Public-database guards remain on
-`feat/public-db-guards`, pending ADR-021.
-
 **Risk Console Operations brief** (proposed follow-up, 2026-09-26). Add an optional,
 read-only dashboard summary that turns the currently available, sanitised Risk Console
 data into a short evidence-linked brief: what changed, what needs attention,
@@ -298,43 +211,12 @@ not recommend or imply authority for an individual payment decision.
 - [ ] Keep suggested follow-ups operational and safe (for example, inspect a
   visible case group), never a payment-routing instruction.
 
-## Architectural Decisions Log (`apps/api/docs/adr/`, ADR-000 through ADR-019)
+## Architectural Decisions Log
 
-Status legend from `docs/adr/README.md`: "`Proposed` means reviewable but
-not authorised; only an accepted ADR and its versioned contracts may govern
-implementation."
-
-| ADR | Title | Status | Decision (one line) |
-|---|---|---|---|
-| 0000 | Template | N/A | Defines required ADR sections; "an author must not fill in approval on someone else's behalf" |
-| 0001 | Application, SDK and package boundary | Proposed | This app owns fraud orchestration/contracts/persistence; consumes the pinned Arbiris SDK via packaged interfaces only, never the SDK's `examples/` |
-| 0002 | Canonical domain contract | Proposed | Six-entity separation (`SourceEvent`/`CanonicalTransaction`/`FeatureSnapshot`/`Prediction`/`RunContext`/`OutcomeLabel`); money = integer minor units + ISO currency |
-| 0003 | Plaid mapping and feature feasibility | Proposed | Continues local, zero-retention Sandbox analysis; mapping/feature artifacts remain candidates only |
-| 0004 | Fraud target and corpus | Proposed | Keeps F3 deterministic-only until a licensed corpus with mature labels is approved; Sparkov is mechanics-only evidence, not a label source |
-| 0005 | Model artifact and evaluation contract | Proposed | Freezes chronological partitions/calibration/metrics/threshold-selection protocol once ADR-004 resolves; XGBoost is a candidate, not a predetermined winner |
-| 0006 | Routing, authority and oversight | Proposed (sub-decisions accepted 2026-09-20) | Deterministic controls precede model routing; recommendations ≠ actions; **MVP 3 has no numeric runtime score/threshold** |
-| 0007 | Telemetry and signed evidence | Proposed | Separates operational telemetry from material signed evidence; Arbiris owns signing/generic evidence storage |
-| 0008 | Inventory, oversight-pack linkage | Proposed | Represents review lifecycle as separate operational facts; Arbiris owns agent inventory/evidence-pack assembly |
-| 0009 | PostgreSQL transitions and recovery | Proposed | PostgreSQL as proposed F3 store; idempotency/action-uniqueness/review-version DB constraints; no DB configured yet |
-| 0010 | Identity, roles and deployment | Proposed | Provider-neutral actor/role outline; synthetic identities local-only; deployed bypass forbidden |
-| 0011 | Operational acceptance and versioning | Proposed | Freezes versioned domain schemas/OpenAPI/event contracts once ADR-002–010 accepted |
-| 0012 | Freeze the current showcase API contract | **Accepted** (2026-09-19) | Accepts `demo-api.v1.openapi.json` + `demo-run-events.v1.schema.json` for the legacy showcase surface only |
-| 0013 | Adopt local-first F3 boundaries | **Accepted for F3 preparation only** (2026-09-20) | 8 local-first defaults; authorises preparation/review artifacts only, not an operational endpoint/DB/auth/model-serving |
-| 0014 | Adopt public-safe showcase investigation boundary | **Accepted for scoped preparation only** (2026-09-20) | Repository-owned SDK-free bounded investigation as planned MVP 3 runtime; S04 sole normal path, S05 its failure path; tool allowlist/budget/failure-contract/live-window D1–D10 decisions |
-| 0015 | Freeze the public-showcase investigation contract | **Accepted** (2026-09-20) | Accepts `public-showcase-api.v1.openapi.json` + `public-showcase-events.v1.schema.json` |
-| 0016 | Accept public-showcase S01–S08 fixtures | **Accepted** (2026-09-20) | Accepts `fixtures/s01-s08/scenarios.v1.json` as sole canonical fixture packet; S06–S08 behavior deferred |
-| 0017 | Implement public-showcase runtime | **Accepted** (2026-09-20) | Implements `apps/api/server/showcase_investigation/`; live mode off by default; no model identifier invented |
-| 0018 | Accept Plaid Sandbox-derived showcase fixture enrichment rules | **Accepted for its narrow boundary; superseded in part by 0019** (2026-09-22) | 6 derivation rules for a future `scenarios.v2` packet; found S01/S02 rules have no runtime effect |
-| 0019 | Accept Plaid Sandbox-derived S04 account-activity evidence | **Accepted** (2026-09-22) | Widens `EvidenceItem.source_class` to include `plaid_sandbox_derived`; adds one S04 evidence item; fixture packet → v1.1 |
-| 0020 | Accept local case persistence and the showcase cases contract | **Accepted** (2026-09-27) | Accepts spec 0002/0004 case storage for local and internal use only; promotes `showcase-cases.v1`; supersedes in part ADR-017's "no path persists run state"; public showcase stays database free. Lives at `apps/api/docs/adr/0020-…` (ADR-000 to ADR-019 are archived) |
-| 0021 | Allow the public showcase one guarded PostgreSQL database | **Accepted** (2026-09-28; **enabled** 2026-09-28, budget email test due at first spend: a £0.01 `showcase-first-spend-test` budget emails at the first recorded penny) | One dedicated Neon (London) database for public cases, live feed and Sandbox analytics, behind per client limits, a site wide case sweep, a storage ceiling and a least privilege role; supersedes in part the database free wording of ADR-014/016/017 |
-| 0022 | Accept the Sandbox event store | **Accepted** (2026-09-28) | Accepts the versioned, sanitised Plaid Sandbox store as the local/internal time-aware source for analytics and replay, with explicit import-only mapping, retention and spec 0003 overlay invariants; public use remains subject to ADR-021 |
-| 0025 | Route rule cleared feed payments by model score | **Accepted and built** (2026-09-29) | F3, spec 0010: the score may only raise a rule PASS to CHALLENGE or HOLD at Sparkov precision thresholds; planted S01 outliers; events v2, cases v1.1, simulation v1.1 |
-| 0026 | Allow an AI written dashboard overview on the public showcase | **Accepted** (2026-09-29) | F4a, spec 0011: a server built, fact checked overview with a template fallback; its own live switch (off by default) and limits; nothing stored |
-| 0024 | Accept a display only Sparkov model score on feed cases | **Accepted** (2026-09-28) | Sparkov is the demo corpus; spec 0004 slice 3 scores feed payments as evidence only with a plain Python tree scorer over pinned booster JSON; never routes; routing by score (F3) needs its own ADR |
-| 0023 | Accept the Sandbox simulation contract | **Accepted** (2026-09-28) | Promotes `sandbox-simulation.v0` to `docs/contracts/sandbox-simulation.v1.openapi.json` with shapes unchanged; satisfies ADR-021's contract prerequisite, switches nothing on |
-
-Full per-ADR invariants are preserved in
+The ADR folder is the decision log: see the index at
+[`apps/api/docs/adr/README.md`](../apps/api/docs/adr/README.md) (one line per
+ADR, 000 to 026, with status). Do not copy ADR titles, statuses or decisions
+into this file. Full per-ADR invariants are preserved in
 [`architecture.md`](architecture.md#5-accepted-architecture-invariants-from-accepted-adrs--these-are-built-rules).
 
 ## Data & Model Decision Log
@@ -379,43 +261,6 @@ Full per-ADR invariants are preserved in
   `get_account_activity_evidence` tool actually changed runtime behavior
   (ADR-019) — S01/S02 derivation rules from ADR-018 turned out to affect
   fields the runtime never reads.
-
-## Audit History (point-in-time evidence, not living status)
-
-### 2026-09-18 repository audit — remediated
-
-Findings at audit time, all subsequently remediated per the doc's own
-update note: **P1** — UI claimed "Signature verified" without verifying
-anything (`RecordPanel.tsx`) → fixed, now shows signed-not-verified;
-**P1** — SDK submodule declared at the wrong path (`apps/api/.gitmodules`
-instead of root) → fixed, SDK now a real root gitlink pinned at
-`27844250f926fe0ade2250dd99975c7283defc80`; **P1** — repository inventory
-generation was machine-state-dependent (leaked `__pycache__`) → fixed, now
-based on tracked files, local/git-ignored, removed from CI; **P1** —
-`/run`/`/run/preset` were unauthenticated and unbounded → acceptable only
-for isolated local demo, addressed by the later public-showcase boundary
-design (recorded playback default, live mode gated); **P2** — invalid
-financial inputs accepted (negative amounts, `NaN`) → addressed via
-`StrictFiniteModel` bounds; **P2** — HTTP/stream failures could report as
-success → addressed in `useAgentRun.ts`; **P2** — a Stripe dashboard capture
-with a real account identifier was candidate commit material → removed;
-**P2** — web quality gates (`npm run check:payments-design`) not enforced
-and one check was failing → promoted into `make check`/CI. Verified 2026-09-18:
-`make check` passed, 43 Playwright tests (1 mobile-only skip), 21 API tests,
-no known dependency vulnerabilities.
-
-### 2026-09-21 MVP 3 Azure release — verified
-
-Recorded-only public showcase deployed and verified. Full detail (URLs,
-commit, image digest, verification checks, residual/deferred items) is in
-[`architecture.md`](architecture.md#9-deployment-architecture-azure--verified-2026-09-21)
-and the source record,
-[`docs/archive/docs/audits/2026-09-21-mvp3-azure-release.md`](../docs/archive/docs/audits/2026-09-21-mvp3-azure-release.md)
-(archived, historical only).
-"This record captures the first successful Azure release of the synthetic,
-database-free recruiter showcase. It is deployment evidence, not a
-production readiness, fraud-performance, zero-cost, or live-provider
-claim."
 
 ## Vendored SDK Linkage (reference only — see `architecture.md` §7)
 
