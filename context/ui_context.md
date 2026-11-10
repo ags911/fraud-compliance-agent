@@ -1,7 +1,7 @@
 # UI Context
 
-> Supplementary synthesis — see the authority note at the top of
-> [`project_overview.md`](project_overview.md). This file is the current,
+> Part of the canonical `/context/` baseline — see the authority note at the
+> top of [`project_overview.md`](project_overview.md). This file is the current,
 > approved description of the web app's UI. Changing a documented token,
 > geometry rule or chart convention is a design change requiring explicit
 > visual approval.

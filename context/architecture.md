@@ -1,11 +1,11 @@
 # Architecture
 
-> Supplementary synthesis — see the authority note at the top of
-> [`project_overview.md`](project_overview.md). `docs/architecture/system-architecture.md`
-> is explicit that it "describes structure only, does not approve anything";
-> where it disagrees with the PRD, the delivery plan, or `docs/project-context.md`,
-> those win. ADR status markers (**Proposed** / **Accepted** / **Accepted for
-> preparation only**) are preserved exactly as recorded in
+> Part of the canonical `/context/` baseline — see the authority note at the
+> top of [`project_overview.md`](project_overview.md).
+> `docs/architecture/system-architecture.md` is explicit that it "describes
+> structure only, does not approve anything"; where it disagrees with
+> `context/` or an accepted ADR, those win. ADR status markers (**Proposed** /
+> **Accepted** / **Accepted for preparation only**) are preserved exactly as recorded in
 > `apps/api/docs/adr/README.md` — do not treat a Proposed ADR's content as
 > built.
 
@@ -341,8 +341,8 @@ this narrow boundary)**:
 - Recorded playback is continuously public; live mode defaults off and
   needs an explicit server-side kill-switch enablement.
 
-**Legacy A–F / private-SDK migration gating (restated across ADR-013/014,
-PRD, project-context.md)**: the private-SDK A–F workflow is a local-only
+**Legacy A–F / private-SDK migration gating (restated across ADR-013/014 and
+the archived PRD and project guide)**: the private-SDK A–F workflow is a local-only
 compatibility reference until the S01–S08 contracts/fixtures are accepted
 and the repository-owned runtime's evaluation, browser-acceptance, and
 public-container boundary checks all pass. Passing those gates does not
