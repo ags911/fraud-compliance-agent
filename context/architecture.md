@@ -367,45 +367,25 @@ Accepted for scoped preparation only**; **0015–0017 Accepted**; **0018
 Accepted for its narrow boundary, superseded in part by 0019**; **0019
 Accepted**.
 
-## 7. Vendored Arbiris SDK — Reference Architecture Only (NOT this repo's design)
+## 7. Optional private SDK (not described here)
 
 `apps/api/vendor/arbiris-sdk/` is an optional, pinned git submodule (current
-reviewed pin `27844250f926fe0ade2250dd99975c7283defc80`) for a **separate
-product** — "Arbiris," an AI-agent compliance-infrastructure SDK for
-FCA-regulated financial services, with its own README, AGENTS.md,
-`docs/project-context.md`, dashboard, and ADRs. **It must never be modified**
-except for an explicit pin/upgrade task, and its A–F legacy workflow must
-never become a public-runtime dependency of this repo. Cite its architecture
-only as external reference, never as this repo's own design:
+reviewed pin `27844250f926fe0ade2250dd99975c7283defc80`) for a separate,
+private product. **It must never be modified** except for an explicit
+pin/upgrade task, and its A–F legacy workflow must never become a
+public-runtime dependency of this repo.
+
+The split is deliberate: the **framework is public, the implementation is
+closed**. This repository does not describe the SDK's internals, design,
+persistence or review material, and nobody should add them to a public file.
+Treat any detail about the SDK as closed unless the owner has said it belongs
+to the public framework.
 
 - **AARF** (Agentic Audit and Accountability Reference Framework) is the
-  SDK's own published open standard (CC BY 4.0) for AI-agent audit trails —
-  an intent-record schema, ECDSA P-256 signing, human-oversight tiers,
-  evidence-pack spec, and SM&CR governance mapping. Two schema generations
-  coexist: v0.1 (frozen) and v0.2/v0.3 (current). `apps/api/server/records.py`
-  in *this* repo reads AARF-shaped records — genuine provenance, but AARF
-  itself remains vendor-owned IP.
-- The SDK's own architecture (`docs/architecture/{agent,sdk}-technical-design.md`):
-  a LangGraph pipeline (`DataIngest → SimA → SimB → HumanReview →
-  Counterfactual → EvidencePack`), an `ArbirisClient`/`IntentRecordBuilder`/
-  `IntentRecordSigner` component chain, PostgreSQL + row-level-security
-  persistence, a planned Next.js 16 + Auth0 dashboard. **This repo's own
-  ADR-001 explicitly states the direction is to move generic Arbiris
-  governance capabilities (signing, evidence storage) into this repository
-  over time, rather than depending on the vendor package long-term** — so
-  some conceptual overlap with ADR-009 (PostgreSQL) and ADR-010
-  (identity/roles) is intentional convergent thinking, not duplication; each
-  remains independently decided and unaccepted in *this* repo.
-- **FCA review findings** (`docs/reviews/fca-review-findings.md`, vendor-owned):
-  a real regulatory-framing review found the SDK's signing/tamper-detection
-  technically strong, but flagged that SMF accountability must name an
-  individual (not a bare function code), that stated retention periods must
-  be labelled as the SDK's own recommendation rather than a regulatory
-  mandate (COBS/SYSC 9 don't prescribe them), and that an "Agent Inventory"
-  concept was under-represented. Preserved here as a labelled external
-  reference only — it is a finding about Arbiris, not about this repo.
-- The "A–F" legacy scenario naming used throughout this repo's own docs
-  originates from the vendored SDK's own demo agent design.
+  public framework for AI-agent audit trails. `apps/api/server/records.py` in
+  *this* repo reads AARF-shaped records the SDK writes.
+- The "A–F" legacy scenario naming used in this repo's own docs originates
+  from the SDK's demo agent.
 
 ## 8. System Architecture Diagram Content (`docs/architecture/system-architecture.md`)
 

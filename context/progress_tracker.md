@@ -262,16 +262,12 @@ into this file. Full per-ADR invariants are preserved in
   (ADR-019) — S01/S02 derivation rules from ADR-018 turned out to affect
   fields the runtime never reads.
 
-## Vendored SDK Linkage (reference only — see `architecture.md` §7)
+## Vendored SDK Linkage (see `architecture.md` §7)
 
-This repo's own ADR-001 names a stated direction of moving generic Arbiris
-governance capabilities (signing, evidence storage) into this repository
-over time rather than depending on the vendor package long-term. ADR-009
-(PostgreSQL) and ADR-010 (identity/roles) are independently decided but
-conceptually echo the vendored SDK's own PostgreSQL+RLS / Auth0+firm_id
-design. ADR-008 explicitly scopes agent inventory/evidence-pack assembly to
-the vendor package, not this repo. None of this makes the vendored SDK's
-architecture part of this repo's accepted design.
+The optional private SDK is pinned as a submodule and is not described in this
+repository: the framework (AARF) is public, the implementation is closed. ADR-008
+scopes agent inventory and evidence-pack assembly to the SDK, not this repo.
+None of this makes the SDK's design part of this repo's accepted design.
 
 ## PRD Approval Status
 
