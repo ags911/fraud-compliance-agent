@@ -18,6 +18,10 @@ plus any scoped `AGENTS.md` or `CLAUDE.md` closer to files being changed.
 Do not duplicate or override project rules in this file; update the
 relevant `context/` file instead.
 
+Active ADRs live in [`apps/api/docs/adr/`](apps/api/docs/adr/). Read its
+[index](apps/api/docs/adr/README.md) before changing anything an ADR covers,
+and do not reverse an accepted ADR without a new one that supersedes it.
+
 Before implementing a new feature spec, follow
 `context/ai_workflow_rules.md`'s core rules: never rewrite existing working
 logic unless a feature spec explicitly commands it; always reuse existing
@@ -27,5 +31,5 @@ writing new ones; and work on exactly one feature spec at a time.
 The prior canonical document, `docs/project-context.md`, and the legacy
 PRD/ADR/proposal corpus it pointed to, are archived under
 [`docs/archive/`](docs/archive/) and are historical only — do not read them
-for active development. `context/progress_tracker.md` carries their
-distilled decision log forward.
+for active development. The ADR index (`apps/api/docs/adr/README.md`) is
+the decision log; `context/progress_tracker.md` points to it.
