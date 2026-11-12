@@ -52,8 +52,11 @@ Not a conversion of this repo into the template.
 | 7 | `.github/CODEOWNERS` is absent. The template's AGENTS.md and README assume one exists. | Noted; optional step 4. | Mismatch |
 | 8 | The main checkout sits on `docs/fix-context-authority`, not `main`. The brief says to stop if another branch is checked out. | Pilot worktree cut from `main` instead. Main checkout left alone. | Process note |
 
-## Open decisions (waiting on the user)
+## Decisions (recorded 2026-11-12)
 
-- Step 2 items 2 to 6 above need the user's call before anything in `scripts/` or CI is added.
-- Step 3 needs the user to say where the template's rules go in `context/`.
-- Friction 1 needs confirmation that the Playwright test is flaky (and whether to log a repo issue).
+- ts tests: add a fast unit-test script for verify; keep Playwright out of verify. The new test dependency needs a named, approved package before it is added.
+- apps/web/.nvmrc: add it, containing 22.
+- New verify workflow runner: ubuntu-latest.
+- python profile: drop mypy from the profile (needs the profile edit to be approved in the PR). Ruff and pytest stay.
+
+Step 2 starts only after PR #77 is merged or declined.
