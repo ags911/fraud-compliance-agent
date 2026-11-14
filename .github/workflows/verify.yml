@@ -14,7 +14,7 @@ jobs:
     # Visual baselines are recorded with Chrome on macOS, so the browser tests
     # must run on macOS to keep text rasterisation stable. Its Chrome is
     # preinstalled, so no browser install step is needed.
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: apps/web
