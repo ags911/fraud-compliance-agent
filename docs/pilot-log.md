@@ -66,3 +66,7 @@ Not a conversion of this repo into the template.
 - python profile: drop mypy from the profile (needs the profile edit to be approved in the PR). Ruff and pytest stay.
 
 Step 2 starts only after PR #77 is merged or declined.
+
+## Pilot moved (2026-11-14)
+
+The owner moved the pilot to the private repository where active work now happens. Steps 2 to 4 will not run here. This log stays as the record of step 1 and the friction found in this repository. Item 9 is fixed by PR #78 (`macos-15`).
